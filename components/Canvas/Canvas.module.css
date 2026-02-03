@@ -1,0 +1,22 @@
+.container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--background);
+    /* Dot Grid Pattern */
+    background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    cursor: default;
+    position: relative;
+}
+
+.world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Ensure clicks pass through to container if not hitting an item */
+    pointer-events: auto;
+    will-change: transform;
+}

@@ -44,7 +44,6 @@ export default function ZoomWheel() {
                         min="0"
                         max="100"
                         step="1"
-                        orient="vertical" // Firefox specific, but general vertical styling handled in CSS
                         value={toSlider(scale)}
                         onChange={handleRangeChange}
                         className={styles.rangeInput}

@@ -1,12 +1,15 @@
 .header {
     position: fixed;
     top: 20px;
-    left: 20px;
+    left: 0;
+    width: 100%;
+    padding: 0 24px;
     display: flex;
     align-items: center;
-    gap: 24px;
+    justify-content: space-between;
     z-index: 100;
-    pointer-events: auto;
+    pointer-events: none;
+    /* Let clicks pass through empty areas */
 }
 
 .logo {
@@ -14,6 +17,7 @@
     align-items: center;
     gap: 12px;
     user-select: none;
+    pointer-events: auto;
 }
 
 .logoDot {
@@ -32,9 +36,12 @@
 }
 
 .searchWrapper {
-    position: relative;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
+    pointer-events: auto;
 }
 
 .searchIcon {

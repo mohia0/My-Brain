@@ -86,18 +86,8 @@ export default function MiniMap() {
                     />
                 </div>
 
-                <div className={styles.zoomControl}>
-                    <input
-                        type="range"
-                        min="0.1"
-                        max="3"
-                        step="0.1"
-                        value={scale}
-                        onChange={(e) => setScale(parseFloat(e.target.value))}
-                        className={styles.slider}
-                    />
-                </div>
             </div>
         </div>
+
     );
 }

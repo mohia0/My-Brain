@@ -10,7 +10,7 @@ const CANVAS_SIZE = 5000;
 const HALF_SIZE = CANVAS_SIZE / 2;
 
 export default function Canvas({ children }: { children: React.ReactNode }) {
-    const { scale, position, setPosition, setScale } = useCanvasStore();
+    const { scale, position, setPosition, setScale, currentTool } = useCanvasStore();
     const { items, setSelection, clearSelection, addItem } = useItemsStore();
 
     // Refs
@@ -25,11 +25,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
 
     // Initial load - Center canvas
     useEffect(() => {
-        // Only center if position is 0,0 (initial)
         if (position.x === 0 && position.y === 0) {
-            // Center viewport on the "Artboard"
-            // The artboard is from -HALF_SIZE to +HALF_SIZE
-            // We want center (0,0) to be in middle of screen
             const viewportW = window.innerWidth;
             const viewportH = window.innerHeight;
             setPosition(viewportW / 2, viewportH / 2);
@@ -65,7 +61,14 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             e.preventDefault();
             const zoomSensitivity = 0.001;
             const newScale = Math.min(Math.max(scale - e.deltaY * zoomSensitivity, 0.1), 5);
-            setScale(newScale);
+
+            // Calculate mouse position relative to container
+            const rect = containerRef.current?.getBoundingClientRect();
+            if (rect) {
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                useCanvasStore.getState().zoomAt(newScale, { x: mouseX, y: mouseY });
+            }
         } else {
             // Pan with wheel (standard touchpad behavior)
             let newX = position.x - e.deltaX;
@@ -99,9 +102,14 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     const handleMouseDown = (e: React.MouseEvent) => {
+        // Middle Mouse or Spacebar always Pans
         if (e.button === 1 || isSpacePressed) {
-            // Pan Mode
             e.preventDefault();
             isDragging.current = true;
             lastMousePos.current = { x: e.clientX, y: e.clientY };
@@ -110,7 +118,20 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         }
 
         if (e.button === 0) {
-            // Left Click behavior
+            // Hand Tool Logic -> Pan
+            if (currentTool === 'hand') {
+                e.preventDefault();
+                // Clear selection if clicking void
+                if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                    clearSelection();
+                }
+                isDragging.current = true;
+                lastMousePos.current = { x: e.clientX, y: e.clientY };
+                if (containerRef.current) containerRef.current.style.cursor = 'grabbing';
+                return;
+            }
+
+            // Mouse Tool Logic -> Selection
             if (e.target === containerRef.current || e.target === worldRef.current) {
                 // Background Click
 
@@ -140,10 +161,6 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             let newY = position.y + dy;
 
             // --- Strict Limits ---
-            // Prevent panning "void" into view.
-            // Left Edge (-2500) must be <= 0 (Screen Left)
-            // Right Edge (2500) must be >= Viewport Width
-
             const viewportW = window.innerWidth;
             const viewportH = window.innerHeight;
 
@@ -154,7 +171,6 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             const maxY = HALF_SIZE * scale;
 
             if (minX > maxX) {
-                // Content smaller than viewport -> Center it
                 newX = viewportW / 2;
             } else {
                 if (newX < minX) newX = minX;
@@ -162,7 +178,6 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             }
 
             if (minY > maxY) {
-                // Content smaller than viewport -> Center it
                 newY = viewportH / 2;
             } else {
                 if (newY < minY) newY = minY;
@@ -252,6 +267,14 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const getCursor = () => {
+        if (isDragging.current) return 'grabbing';
+        if (isSpacePressed) return 'grab';
+        if (currentTool === 'hand') return 'grab';
+        if (selectionBox) return 'crosshair';
+        return 'default';
+    };
+
     const gridSize = 40 * scale;
     const backgroundPosition = `${position.x}px ${position.y}px`;
 
@@ -259,6 +282,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         <div
             className={styles.container}
             ref={containerRef}
+            onContextMenu={handleContextMenu}
             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onDrop={handleDrop}
             onWheel={handleWheel}
@@ -269,7 +293,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             style={{
                 backgroundSize: `${gridSize}px ${gridSize}px`,
                 backgroundPosition: backgroundPosition,
-                cursor: isSpacePressed ? (isDragging.current ? 'grabbing' : 'grab') : 'default'
+                cursor: getCursor()
             }}
         >
             <div

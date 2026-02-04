@@ -14,10 +14,12 @@ import FolderItem from "@/components/Grid/FolderItem";
 import FloatingBar from "@/components/FloatingBar/FloatingBar";
 import FolderModal from "@/components/FolderModal/FolderModal";
 import AccountMenu from "@/components/AccountMenu/AccountMenu";
-
 import AuthModal from "@/components/AuthModal/AuthModal";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+
+import Toolbar from "@/components/Toolbar/Toolbar";
+import ZoomWheel from "@/components/ZoomWheel/ZoomWheel";
 
 export default function Home() {
   const { items, folders, fetchData, subscribeToChanges } = useItemsStore();
@@ -84,7 +86,8 @@ export default function Home() {
           ))}
         </Canvas>
         <MiniMap />
-        <MiniMap />
+        <Toolbar />
+        <ZoomWheel />
         <Inbox onItemClick={setSelectedItemId} />
         <AddButton />
         <FloatingBar />

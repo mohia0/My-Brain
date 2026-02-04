@@ -4,9 +4,7 @@
     left: 20px;
     width: 300px;
     max-height: calc(85vh - 80px);
-    background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: #111111;
     border: 1px solid var(--card-border);
     border-radius: 16px;
     display: flex;

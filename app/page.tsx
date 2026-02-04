@@ -20,6 +20,7 @@ import { supabase } from "@/lib/supabase";
 
 import Toolbar from "@/components/Toolbar/Toolbar";
 import ZoomWheel from "@/components/ZoomWheel/ZoomWheel";
+import OrganizeButton from '@/components/OrganizeButton/OrganizeButton';
 
 export default function Home() {
   const { items, folders, fetchData, subscribeToChanges } = useItemsStore();
@@ -90,6 +91,7 @@ export default function Home() {
         <ZoomWheel />
         <Inbox onItemClick={setSelectedItemId} />
         <FloatingBar />
+        <OrganizeButton />
         {selectedItemId && (
           <ItemModal
             itemId={selectedItemId}

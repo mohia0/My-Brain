@@ -2,10 +2,9 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background-color: var(--background);
-    /* Dot Grid Pattern */
-    background-image: radial-gradient(#333 1px, transparent 1px);
-    background-size: var(--grid-size) var(--grid-size);
+    background-color: #1e1e1e;
+    /* Dark Grey for outside area */
+    /* Dot Grid Pattern - Removed per user request */
     cursor: default;
     position: relative;
 }

@@ -28,10 +28,6 @@ export default function MiniMap() {
 
     return (
         <div className={styles.wrapper}>
-            <button className={styles.organizeBtn} onClick={layoutAllItems} title="Organize All Items">
-                <LayoutGrid size={18} />
-            </button>
-
             <div className={styles.mapContainer}>
                 <div
                     className={styles.container}

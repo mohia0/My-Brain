@@ -8,25 +8,7 @@
     z-index: 100;
 }
 
-.organizeBtn {
-    align-self: flex-start;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--card-border);
-    color: #ccc;
-    padding: 6px;
-    border-radius: 6px;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-}
 
-.organizeBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
 
 .mapContainer {
     display: flex;

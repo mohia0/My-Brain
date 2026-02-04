@@ -56,51 +56,69 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
-    const handleWheel = (e: React.WheelEvent) => {
-        if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            const zoomSensitivity = 0.001;
-            const newScale = Math.min(Math.max(scale - e.deltaY * zoomSensitivity, 0.1), 5);
+    // Native Wheel Event Listener (Non-passive for preventing browser zoom)
+    useEffect(() => {
+        const handleWheel = (e: WheelEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                // Multiplicative zoom for smooth feeling (like Google Maps/Figma)
+                const zoomFactor = -e.deltaY * 0.002;
+                const currentScale = useCanvasStore.getState().scale;
+                const newScale = Math.min(Math.max(currentScale * (1 + zoomFactor), 0.1), 5); // 0.1 to 5 scale limits
 
-            // Calculate mouse position relative to container
-            const rect = containerRef.current?.getBoundingClientRect();
-            if (rect) {
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                useCanvasStore.getState().zoomAt(newScale, { x: mouseX, y: mouseY });
-            }
-        } else {
-            // Pan with wheel (standard touchpad behavior)
-            let newX = position.x - e.deltaX;
-            let newY = position.y - e.deltaY;
-
-            // Strict Limits
-            const viewportW = window.innerWidth;
-            const viewportH = window.innerHeight;
-
-            const minX = viewportW - (HALF_SIZE * scale);
-            const maxX = HALF_SIZE * scale;
-
-            const minY = viewportH - (HALF_SIZE * scale);
-            const maxY = HALF_SIZE * scale;
-
-            if (minX > maxX) {
-                newX = viewportW / 2;
+                const rect = containerRef.current?.getBoundingClientRect();
+                if (rect) {
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    useCanvasStore.getState().zoomAt(newScale, { x: mouseX, y: mouseY });
+                }
             } else {
-                if (newX < minX) newX = minX;
-                if (newX > maxX) newX = maxX;
-            }
+                // Pan with wheel
+                const currentPos = useCanvasStore.getState().position;
+                const currentScale = useCanvasStore.getState().scale;
 
-            if (minY > maxY) {
-                newY = viewportH / 2;
-            } else {
-                if (newY < minY) newY = minY;
-                if (newY > maxY) newY = maxY;
-            }
+                let newX = currentPos.x - e.deltaX;
+                let newY = currentPos.y - e.deltaY;
 
-            setPosition(newX, newY);
+                // Strict limits logic (copied from store/previous logic if simpler or just reuse limit logic)
+                const viewportW = window.innerWidth;
+                const viewportH = window.innerHeight;
+                const HALF_SIZE = 2500; // Hardcoded from constant above
+
+                const minX = viewportW - (HALF_SIZE * currentScale);
+                const maxX = HALF_SIZE * currentScale;
+
+                const minY = viewportH - (HALF_SIZE * currentScale);
+                const maxY = HALF_SIZE * currentScale;
+
+                // Simple clamp
+                if (minX <= maxX) {
+                    newX = Math.max(minX, Math.min(maxX, newX));
+                } else {
+                    newX = viewportW / 2; // Center if worldview smaller than viewport (rare with 5000px)
+                }
+
+                if (minY <= maxY) {
+                    newY = Math.max(minY, Math.min(maxY, newY));
+                } else {
+                    newY = viewportH / 2;
+                }
+
+                useCanvasStore.getState().setPosition(newX, newY);
+            }
+        };
+
+        const container = containerRef.current;
+        if (container) {
+            container.addEventListener('wheel', handleWheel, { passive: false });
         }
-    };
+
+        return () => {
+            if (container) {
+                container.removeEventListener('wheel', handleWheel);
+            }
+        };
+    }, []);
 
     const handleContextMenu = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -229,7 +247,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         isDragging.current = false;
         setSelectionBox(null);
         if (containerRef.current) {
-            containerRef.current.style.cursor = isSpacePressed ? 'grab' : 'default';
+            if (currentTool === 'hand' || isSpacePressed) {
+                containerRef.current.style.cursor = 'grab';
+            } else {
+                containerRef.current.style.cursor = 'default';
+            }
         }
     };
 
@@ -275,8 +297,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         return 'default';
     };
 
-    const gridSize = 40 * scale;
-    const backgroundPosition = `${position.x}px ${position.y}px`;
+    const gridSize = 40; // Fixed grid size inside world
 
     return (
         <div
@@ -285,14 +306,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             onContextMenu={handleContextMenu}
             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onDrop={handleDrop}
-            onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             style={{
-                backgroundSize: `${gridSize}px ${gridSize}px`,
-                backgroundPosition: backgroundPosition,
                 cursor: getCursor()
             }}
         >
@@ -311,7 +329,10 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     top: -HALF_SIZE,
                     width: CANVAS_SIZE,
                     height: CANVAS_SIZE,
+                    backgroundColor: 'var(--background)', // Keep board original color
                     border: '2px solid rgba(255, 255, 255, 0.1)',
+                    backgroundImage: 'radial-gradient(#333 1px, transparent 1px)',
+                    backgroundSize: '40px 40px',
                     pointerEvents: 'none',
                     zIndex: -1
                 }} />

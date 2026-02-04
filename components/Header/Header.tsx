@@ -41,7 +41,7 @@ export default function Header() {
         const newX = (viewportW / 2) - (item.position_x * targetScale);
         const newY = (viewportH / 2) - (item.position_y * targetScale);
 
-        setPosition(newX, Math.min(newY, 100)); // Respect top limit logic if needed, but usually we just want to see it
+        setPosition(newX, newY);
 
         setShowResults(false);
         setQuery('');

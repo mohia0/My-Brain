@@ -6,6 +6,7 @@ import { Item } from '@/types';
 import { FileText, Link, Image as ImageIcon, Copy, Trash2 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { useCanvasStore } from '@/lib/store/canvasStore';
 import clsx from 'clsx';
 
 interface ItemCardProps {
@@ -15,18 +16,19 @@ interface ItemCardProps {
 
 export default function ItemCard({ item, onClick }: ItemCardProps) {
     const { duplicateItem, removeItem, selectedIds } = useItemsStore();
+    const { scale } = useCanvasStore();
 
     const isSelected = selectedIds.includes(item.id);
     const isDimmed = selectedIds.length > 0 && !isSelected;
 
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: item.id,
-        data: { ...item } // Pass item data for drag handlers
+        data: { ...item }
     });
 
-    // Create transform style but exclude scale to avoid double-scaling if canvas is scaled
+    // Compensate for canvas scale to prevent drag lag
     const style = transform ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        transform: `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)`,
     } : undefined;
 
     const [isDeleting, setIsDeleting] = React.useState(false);

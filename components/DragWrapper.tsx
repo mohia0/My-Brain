@@ -49,7 +49,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                 // Try finding item or folder
                 const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
                 if (el) {
-                    el.style.transform = `translate3d(${delta.x}px, ${delta.y}px, 0)`;
+                    el.style.transform = `translate3d(${delta.x / scale}px, ${delta.y / scale}px, 0)`;
                 }
             });
         }

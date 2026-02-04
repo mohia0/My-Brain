@@ -6,16 +6,17 @@ import { Folder as FolderIcon } from 'lucide-react';
 import { Folder } from '@/types';
 import styles from './FolderItem.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { useCanvasStore } from '@/lib/store/canvasStore';
+import clsx from 'clsx';
 
 interface FolderItemProps {
     folder: Folder;
     onClick?: () => void;
 }
 
-import clsx from 'clsx';
-
 export default function FolderItem({ folder, onClick }: FolderItemProps) {
     const { items, selectedIds } = useItemsStore();
+    const { scale } = useCanvasStore();
     const folderItems = items.filter(i => i.folder_id === folder.id);
 
     const isSelected = selectedIds.includes(folder.id);
@@ -32,7 +33,7 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
     });
 
     const style = transform ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        transform: `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)`,
     } : undefined;
 
     return (

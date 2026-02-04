@@ -89,7 +89,6 @@ export default function Home() {
         <Toolbar />
         <ZoomWheel />
         <Inbox onItemClick={setSelectedItemId} />
-        <AddButton />
         <FloatingBar />
         {selectedItemId && (
           <ItemModal

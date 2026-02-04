@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Brain</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="logo">
+                <div class="logo-dot"></div>
+                <h1>My Brain</h1>
+            </div>
+            <div id="status-indicator" class="status-dot tooltip" title="Connecting..."></div>
+        </header>
+
+        <!-- Auth View -->
+        <div id="auth-view" class="view hidden">
+            <div class="card">
+                <h2>Welcome Back</h2>
+                <p class="subtitle">Sign in to sync your captures.</p>
+                <form id="login-form">
+                    <input type="email" id="email" placeholder="Email" required />
+                    <input type="password" id="password" placeholder="Password" required />
+                    <div id="auth-error" class="error-msg hidden"></div>
+                    <button type="submit" id="login-btn">Sign In</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main View -->
+        <div id="main-view" class="view hidden">
+            <div id="tab-preview" class="tab-preview">
+                <img id="tab-favicon" src="" alt="" />
+                <div class="tab-info">
+                    <div id="tab-title" class="tab-title">Loading...</div>
+                    <div id="tab-url" class="tab-url">...</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="save-tab-btn" class="primary-btn">
+                    <span class="btn-text">Save Current Tab</span>
+                </button>
+                <button id="add-note-btn" class="secondary-btn">Add Quick Note</button>
+                <button id="logout-btn" class="text-btn">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- Note View -->
+        <div id="note-view" class="view hidden">
+            <header class="sub-header">
+                <button id="back-btn" class="icon-btn">←</button>
+                <h2>Quick Note</h2>
+            </header>
+            <textarea id="note-input" placeholder="Type your thought..."></textarea>
+            <button id="save-note-btn" class="primary-btn">Save Note</button>
+        </div>
+
+        <!-- Success/Error Toast -->
+        <div id="toast" class="toast hidden">Saved!</div>
+    </div>
+    <script src="popup.bundle.js"></script>
+</body>
+
+</html>

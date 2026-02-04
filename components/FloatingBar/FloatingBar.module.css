@@ -1,0 +1,134 @@
+.bar {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    padding: 8px 16px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+.count {
+    color: #888;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.actionBtn {
+    background: transparent;
+    border: none;
+    color: var(--foreground);
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+}
+
+.actionBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.delete:hover {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+}
+
+.confirmDelete {
+    background: #ff4444;
+    color: white;
+    width: auto;
+    padding: 8px 16px;
+    border-radius: 100px;
+}
+
+.confirmDelete:hover {
+    background: #cc0000;
+    color: white;
+}
+
+.closeBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #666;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Organize Button Animation */
+.organizeBtn {
+    overflow: hidden;
+    gap: 0;
+    padding: 8px 10px;
+    /* Adjust padding for pill shape */
+    border-radius: 100px;
+    /* Pill shape */
+    width: auto;
+}
+
+.btnText {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.organizeBtn:hover {
+    background: linear-gradient(135deg, #60A5FA, #A855F7);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+    padding-right: 16px;
+}
+
+.organizeBtn:hover .btnText {
+    max-width: 100px;
+    /* adjust based on text length */
+    opacity: 1;
+    margin-left: 8px;
+}

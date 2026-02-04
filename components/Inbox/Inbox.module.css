@@ -1,41 +1,199 @@
 .inboxWrapper {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 80px;
+    left: 20px;
     width: 300px;
-    max-height: 80vh;
+    max-height: calc(85vh - 80px);
     background: var(--card-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--card-border);
-    border-radius: 12px;
+    border-radius: 16px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-    /* Above Canvas */
+    z-index: 90;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.isOver {
+    background: rgba(96, 165, 250, 0.1);
+    border-color: #60A5FA;
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
 }
 
 .header {
     padding: 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     border-bottom: 1px solid var(--card-border);
     font-weight: 600;
+    font-size: 0.95rem;
     color: var(--foreground);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .content {
-    padding: 16px;
+    padding: 12px;
     overflow-y: auto;
-    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* Custom Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 4px;
 }
 
 .emptyState {
     color: #888;
     text-align: center;
     font-size: 0.9rem;
-    margin-top: 40px;
+    margin-top: 60px;
+    opacity: 0.6;
+}
+
+/* --- ITEM STYLES --- */
+
+.inboxItem {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.inboxItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.inboxItem:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+}
+
+/* Rich Link Item */
+.richItem {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    align-items: center;
+}
+
+.thumbnail {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: #000;
+}
+
+.meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.domain {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* Simple Item */
+.simpleItem {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    background: rgba(255, 255, 255, 0.05);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.simpleItem span {
+    font-size: 0.85rem;
+    color: var(--foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.isOverlay {
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border-color: #60A5FA;
+    cursor: grabbing;
+    background: rgba(30, 30, 30, 0.95);
+    z-index: 9999;
+}
+
+.moveBtn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #60A5FA;
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.inboxItem:hover .moveBtn {
+    opacity: 1;
+    right: 10px;
+}
+
+.moveBtn:hover {
+    transform: translateY(-50%) scale(1.1);
+    background: white;
+    color: #60A5FA;
 }

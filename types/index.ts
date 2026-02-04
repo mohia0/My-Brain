@@ -10,6 +10,7 @@ export interface Item {
     position_x: number;
     position_y: number;
     created_at: string;
+    status?: 'inbox' | 'active' | 'archived';
 }
 
 export interface Folder {
@@ -17,5 +18,14 @@ export interface Folder {
     user_id: string;
     name: string;
     parent_id?: string | null;
+    position_x: number;
+    position_y: number;
     created_at: string;
+}
+
+export interface Tag {
+    id: string;
+    user_id: string;
+    name: string;
+    color: string;
 }

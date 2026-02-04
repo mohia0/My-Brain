@@ -1,0 +1,88 @@
+.container {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+    background: var(--background);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px;
+    gap: 60px;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.sidebarHeader {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.backLink {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.backLink:hover {
+    color: white;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.navItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.active {
+    background: rgba(110, 86, 207, 0.1);
+    color: var(--accent);
+}
+
+.content {
+    padding-top: 10px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

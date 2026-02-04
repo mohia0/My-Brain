@@ -142,30 +142,68 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const selectedItems = state.items.filter(i => state.selectedIds.includes(i.id));
         if (selectedItems.length === 0) return state;
 
+        // Sort by position to maintain relative order (Top-Left to Bottom-Right)
+        selectedItems.sort((a, b) => {
+            const rowDiff = Math.abs(a.position_y - b.position_y);
+            if (rowDiff > 50) return a.position_y - b.position_y;
+            return a.position_x - b.position_x;
+        });
+
         const startX = Math.min(...selectedItems.map(i => i.position_x));
         const startY = Math.min(...selectedItems.map(i => i.position_y));
-        const cols = Math.ceil(Math.sqrt(selectedItems.length));
-        const itemWidth = 280;
-        const itemHeight = 200;
 
+        // Determine layout based on content types
+        const hasWideItems = selectedItems.some(i => i.type === 'link' && i.metadata?.image);
+        const colWidth = hasWideItems ? 300 : 200;
+        const gap = 40;
+        const effectiveColWidth = colWidth + gap;
+
+        // Calculate optimal columns
+        const cols = Math.ceil(Math.sqrt(selectedItems.length));
+        const colHeights = new Array(cols).fill(startY);
+
+        const newPositions = new Map();
         const updates: any[] = [];
-        const newItems = state.items.map(item => {
-            if (!state.selectedIds.includes(item.id)) return item;
-            const index = selectedItems.findIndex(i => i.id === item.id);
-            const col = index % cols;
-            const row = Math.floor(index / cols);
-            const newItem = {
-                ...item,
-                position_x: startX + (col * itemWidth),
-                position_y: startY + (row * itemHeight)
-            };
-            updates.push(newItem);
-            return newItem;
+
+        selectedItems.forEach(item => {
+            // Find shortest column (Masonry)
+            let colIndex = 0;
+            let minY = colHeights[0];
+            for (let i = 1; i < cols; i++) {
+                if (colHeights[i] < minY) {
+                    minY = colHeights[i];
+                    colIndex = i;
+                }
+            }
+
+            // Determine height based on item type
+            let height = 200; // Default approximation
+            if (item.type === 'link') {
+                if (item.metadata?.image) height = 100; // Capture Card
+                else height = 40; // Link Card
+            } else {
+                // For text/images, we approximate. 
+                // Ideally this would be dynamic, but 160-200 is a safe average for notes.
+                height = 160;
+            }
+
+            const x = startX + (colIndex * effectiveColWidth);
+            const y = minY;
+
+            newPositions.set(item.id, { x, y });
+            colHeights[colIndex] = y + height + gap;
+
+            updates.push({ id: item.id, position_x: x, position_y: y });
         });
 
         // Batch update in BG
-        updates.forEach(item => {
-            supabase.from('items').update({ position_x: item.position_x, position_y: item.position_y }).eq('id', item.id).then();
+        updates.forEach(u => {
+            supabase.from('items').update({ position_x: u.position_x, position_y: u.position_y }).eq('id', u.id).then();
+        });
+
+        const newItems = state.items.map(item => {
+            const pos = newPositions.get(item.id);
+            return pos ? { ...item, position_x: pos.x, position_y: pos.y } : item;
         });
 
         return { items: newItems };

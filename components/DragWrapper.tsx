@@ -25,7 +25,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     const sensors = useSensors(
         useSensor(MouseSensor, {
             activationConstraint: {
-                distance: 10,
+                distance: 3,
             },
         }),
         useSensor(TouchSensor)

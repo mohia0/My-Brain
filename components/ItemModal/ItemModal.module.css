@@ -28,6 +28,12 @@
     /* Allow copying from modal */
 }
 
+.compactModal {
+    height: auto;
+    max-height: 520px;
+    width: 800px;
+}
+
 @keyframes slideUp {
     from {
         transform: translateY(20px);
@@ -47,6 +53,10 @@
     grid-template-columns: 1.5fr 1fr;
     height: 100%;
     overflow: hidden;
+}
+
+.compactContent {
+    grid-template-columns: 1.2fr 1fr;
 }
 
 .leftColumn {
@@ -253,6 +263,30 @@
     justify-content: space-between;
     align-items: center;
     background: var(--modal-bg);
+}
+
+.footerLeft {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.convertBtn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.convertBtn:hover {
+    background: var(--card-hover);
+    color: var(--foreground);
+    border-color: var(--text-dim);
 }
 
 .deleteBtn {

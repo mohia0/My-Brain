@@ -7,32 +7,72 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 
 export default function Header() {
-    const { items, setSelection } = useItemsStore();
+    const { items, folders, setSelection } = useItemsStore();
     const { setPosition, setScale } = useCanvasStore();
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
 
-    const filteredItems = items.filter(item => {
+    const filteredFolders = folders.filter(folder => {
         if (!query) return false;
-        const text = (item.content + (item.metadata?.title || '')).toLowerCase();
-        return text.includes(query.toLowerCase());
+        const q = query.toLowerCase();
+        return folder.name.toLowerCase().includes(q);
     });
 
-    const handleResultClick = (item: any) => {
-        // Center on item at 170% zoom (0.65 * 1.7 = 1.105)
+    const filteredItems = items.filter(item => {
+        if (!query) return false;
+        const q = query.toLowerCase();
+
+        // Robust checking for optional properties
+        const title = (item.metadata?.title || '').toString().toLowerCase();
+        const content = (item.content || '').toString().toLowerCase();
+        const description = (item.metadata?.description || '').toString().toLowerCase();
+
+        // Ensure tags is actually an array before mapping
+        const tags = Array.isArray(item.metadata?.tags)
+            ? item.metadata.tags.map((t: any) => (t || '').toString().toLowerCase())
+            : [];
+
+        return title.includes(q) ||
+            content.includes(q) ||
+            description.includes(q) ||
+            tags.some((t: string) => t.includes(q));
+    });
+
+    const allResults = [
+        ...filteredFolders.map(f => ({ ...f, resultType: 'folder' })),
+        ...filteredItems.map(i => ({ ...i, resultType: 'item' }))
+    ];
+
+    const handleResultClick = (result: any) => {
+        // Center on item at target zoom level
         const targetScale = 1.105;
         setScale(targetScale);
 
         const viewportW = window.innerWidth;
         const viewportH = window.innerHeight;
 
-        const newX = (viewportW / 2) - (item.position_x * targetScale);
-        const newY = (viewportH / 2) - (item.position_y * targetScale);
+        // Width/Height offsets to center the card, not the top-left corner
+        let itemW = 200;
+        let itemH = 130;
+
+        if (result.resultType === 'folder') {
+            itemW = 200;
+            itemH = 148;
+        } else if (result.type === 'link' && result.metadata?.image) {
+            itemW = 300; // Capture Card width
+            itemH = 100; // Capture Card height
+        } else if (result.type === 'link') {
+            itemW = 200;
+            itemH = 40; // Link Card height
+        }
+
+        const newX = (viewportW / 2) - (result.position_x + itemW / 2) * targetScale;
+        const newY = (viewportH / 2) - (result.position_y + itemH / 2) * targetScale;
 
         setPosition(newX, newY);
 
-        // Focus mode: Select the item
-        setSelection([item.id]);
+        // Focus mode: Select the item/folder
+        setSelection([result.id]);
 
         setShowResults(false);
         setQuery('');
@@ -64,17 +104,40 @@ export default function Header() {
                 />
                 {showResults && query && (
                     <div className={styles.searchResults}>
-                        {filteredItems.length === 0 ? (
-                            <div className={styles.noResults}>No results found</div>
+                        {allResults.length === 0 ? (
+                            <div className={styles.noResults}>No matches found. Try searching for tags or text.</div>
                         ) : (
-                            filteredItems.map(item => (
-                                <div key={item.id} className={styles.searchResultItem} onClick={() => handleResultClick(item)}>
-                                    {item.type === 'link' && item.metadata?.image && (
-                                        <img src={item.metadata.image} alt="" className={styles.resultImg} />
+                            allResults.map((result: any) => (
+                                <div key={result.id} className={styles.searchResultItem} onClick={() => handleResultClick(result)}>
+                                    {result.resultType === 'folder' ? (
+                                        <div className={styles.resultIcon}>📁</div>
+                                    ) : (
+                                        result.type === 'link' && result.metadata?.image && (
+                                            <img src={result.metadata.image} alt="" className={styles.resultImg} />
+                                        )
                                     )}
                                     <div className={styles.resultText}>
-                                        <div className={styles.resultTitle}>{item.metadata?.title || 'Untitled'}</div>
-                                        <div className={styles.resultContent}>{item.content.substring(0, 30)}...</div>
+                                        <div className={styles.resultTitleRow}>
+                                            <div className={styles.resultTitle}>
+                                                {result.resultType === 'folder' ? result.name : (result.metadata?.title || 'Untitled')}
+                                            </div>
+                                            <div className={styles.resultDate}>
+                                                {new Date(result.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </div>
+                                        </div>
+                                        <div className={styles.resultDescription}>
+                                            {result.resultType === 'folder'
+                                                ? 'Folder'
+                                                : (result.metadata?.description || result.content?.substring(0, 60))}
+                                            {result.resultType === 'item' && result.content?.length > 60 && '...'}
+                                        </div>
+                                        {result.resultType === 'item' && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
+                                            <div className={styles.resultTags}>
+                                                {result.metadata.tags.map((tag: string, i: number) => (
+                                                    <span key={i} className={styles.resultTag}>#{tag}</span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))

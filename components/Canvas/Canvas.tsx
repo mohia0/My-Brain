@@ -257,7 +257,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const worldH = height / scale;
 
                 const selectedItems = items.filter(item => {
-                    const itemW = 200;
+                    const itemW = 280;
                     const itemH = 100;
                     // Only select root items (not in inbox, not in folder)
                     if (item.status === 'inbox' || item.folder_id) return false;

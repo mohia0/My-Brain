@@ -7,6 +7,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
+import clsx from 'clsx';
 
 const BlockEditor = dynamic(() => import('@/components/BlockEditor/BlockEditor'), { ssr: false });
 
@@ -116,6 +117,15 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         setTags(tags.filter(t => t.id !== tagId));
     };
 
+    const handleConvertToNote = () => {
+        updateItemContent(item.id, {
+            type: 'text',
+            // Default content for note can be empty or the URL
+            content: `Origin: ${item.content}\n\n${item.metadata?.description || ''}`
+        });
+        onClose();
+    };
+
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!isDeleting) {
@@ -132,8 +142,8 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     return (
         <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <div className={styles.modalContent}>
+            <div className={clsx(styles.modal, isLink && styles.compactModal)} onClick={e => e.stopPropagation()}>
+                <div className={clsx(styles.modalContent, isLink && styles.compactContent)}>
 
                     {/* LEFT COLUMN: PREVIEW */}
                     <div className={styles.leftColumn}>
@@ -230,13 +240,20 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
                         {/* Footer */}
                         <div className={styles.footer}>
-                            <button
-                                className={styles.deleteBtn}
-                                onClick={handleDelete}
-                                onMouseLeave={() => setIsDeleting(false)}
-                            >
-                                {isDeleting ? "Confirm Delete?" : <Trash2 size={16} />}
-                            </button>
+                            <div className={styles.footerLeft}>
+                                <button
+                                    className={styles.deleteBtn}
+                                    onClick={handleDelete}
+                                    onMouseLeave={() => setIsDeleting(false)}
+                                >
+                                    {isDeleting ? "Confirm Delete?" : <Trash2 size={16} />}
+                                </button>
+                                {isLink && (
+                                    <button className={styles.convertBtn} onClick={handleConvertToNote}>
+                                        Turn to Note
+                                    </button>
+                                )}
+                            </div>
                             <button className={styles.saveBtn} onClick={handleSave}>
                                 <Save size={16} /> Save Changes
                             </button>

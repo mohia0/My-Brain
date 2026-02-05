@@ -97,6 +97,8 @@ interface ItemsState {
     setSelection: (ids: string[]) => void;
     layoutSelectedItems: () => void;
     layoutAllItems: () => void;
+    loading: boolean;
+    setLoading: (loading: boolean) => void;
     subscribeToChanges: () => () => void;
 }
 
@@ -104,18 +106,29 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     items: [],
     folders: [],
     history: { past: [], future: [] },
+    loading: false,
+
+    setLoading: (loading) => set({ loading }),
 
     setItems: (items) => set({ items }),
 
     fetchData: async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        set({ loading: true });
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                set({ loading: false });
+                return;
+            }
 
-        const { data: items } = await supabase.from('items').select('*');
-        const { data: folders } = await supabase.from('folders').select('*');
+            const { data: items } = await supabase.from('items').select('*');
+            const { data: folders } = await supabase.from('folders').select('*');
 
-        if (items) set({ items: items as Item[] });
-        if (folders) set({ folders: folders as Folder[] });
+            if (items) set({ items: items as Item[] });
+            if (folders) set({ folders: folders as Folder[] });
+        } finally {
+            set({ loading: false });
+        }
     },
 
     addItem: async (item) => {

@@ -24,21 +24,29 @@ import ArchiveZone from "@/components/ArchiveZone/ArchiveZone";
 import ArchiveView from "@/components/ArchiveView/ArchiveView";
 
 
+import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
+
+
 export default function Home() {
-  const { items, folders, fetchData, subscribeToChanges, clearSelection } = useItemsStore();
+  const { items, folders, fetchData, subscribeToChanges, clearSelection, loading: dataLoading } = useItemsStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
 
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session) {
-        fetchData();
-        unsubscribe = subscribeToChanges();
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        if (session) {
+          await fetchData();
+          unsubscribe = subscribeToChanges();
+        }
+      } finally {
+        setInitializing(false);
       }
     };
 
@@ -67,9 +75,13 @@ export default function Home() {
   const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived');
   const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
 
+  if (initializing || (session && dataLoading)) {
+    return <LoadingScreen />;
+  }
+
   return (
     <DragWrapper>
-      <main>
+      <main className="fade-in">
         {!session && <AuthModal onLogin={() => fetchData()} />}
         <Header />
         <AccountMenu />

@@ -59,6 +59,19 @@
     gap: 32px;
     box-shadow: 0 25px 50px -12px var(--shadow-color);
     transition: transform 0.3s ease;
+    animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .header {

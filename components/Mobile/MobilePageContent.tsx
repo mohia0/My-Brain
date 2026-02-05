@@ -15,8 +15,9 @@ export default function MobilePageContent() {
         // Register Listener
         const initIntent = async () => {
             try {
-                // @ts-ignore - dynamic import to avoid build time crashes
-                const { SendIntent } = await import('capacitor-plugin-send-intent');
+                // Bypass Turbopack static analysis by using eval for the import
+                // This prevents the build from failing on Vercel due to the broken web version of the plugin
+                const { SendIntent } = await (0, eval)("import('capacitor-plugin-send-intent')");
 
                 const listener = SendIntent.addListener('appSendActionIntent', (data: any) => {
                     console.log("Intent Received:", data);

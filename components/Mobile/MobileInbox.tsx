@@ -6,11 +6,11 @@ import MobileInboxItem from './MobileInboxItem';
 import styles from './MobileInbox.module.css';
 
 export default function MobileInbox() {
-    const { items, fetchItems } = useItemsStore();
+    const { items, fetchData } = useItemsStore();
     const inboxItems = items.filter(i => i.status === 'inbox');
 
     useEffect(() => {
-        fetchItems();
+        fetchData();
     }, []);
 
     return (

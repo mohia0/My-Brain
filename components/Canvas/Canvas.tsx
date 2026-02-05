@@ -388,71 +388,74 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             {/* Undo/Redo Controls */}
             <div style={{
                 position: 'fixed',
-                bottom: 30,
-                left: 170, // Placed nicely near the MiniMap
+                bottom: 24,
+                right: 24,
                 display: 'flex',
-                gap: 10,
-                zIndex: 1000,
+                gap: 6,
+                padding: '4px',
+                background: 'rgba(0, 0, 0, 0.4)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '100px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                zIndex: 20000,
+                pointerEvents: 'auto',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
             }}>
                 <button
-                    onClick={undo}
+                    onClick={(e) => { e.stopPropagation(); undo(); }}
                     disabled={history?.past.length === 0}
                     style={{
                         width: 32,
                         height: 32,
                         borderRadius: '50%',
-                        background: '#000000', // Deep black
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        color: history?.past.length > 0 ? '#ffffff' : '#444',
+                        background: history?.past.length > 0 ? '#000' : 'transparent',
+                        border: 'none',
+                        color: history?.past.length > 0 ? '#fff' : '#444',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: history?.past.length > 0 ? 'pointer' : 'default',
                         transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                        pointerEvents: 'auto'
                     }}
                     onMouseEnter={(e) => {
                         if (history?.past.length > 0) {
                             e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.borderColor = 'var(--accent)';
+                            e.currentTarget.style.color = 'var(--accent)';
                         }
                     }}
                     onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                        e.currentTarget.style.color = '#fff';
                     }}
                     title="Undo (Ctrl+Z)"
                 >
                     <Undo size={14} />
                 </button>
                 <button
-                    onClick={redo}
+                    onClick={(e) => { e.stopPropagation(); redo(); }}
                     disabled={history?.future.length === 0}
                     style={{
                         width: 32,
                         height: 32,
                         borderRadius: '50%',
-                        background: '#000000', // Deep black
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        color: history?.future.length > 0 ? '#ffffff' : '#444',
+                        background: history?.future.length > 0 ? '#000' : 'transparent',
+                        border: 'none',
+                        color: history?.future.length > 0 ? '#fff' : '#444',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: history?.future.length > 0 ? 'pointer' : 'default',
                         transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                        pointerEvents: 'auto'
                     }}
                     onMouseEnter={(e) => {
                         if (history?.future.length > 0) {
                             e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.borderColor = 'var(--accent)';
+                            e.currentTarget.style.color = 'var(--accent)';
                         }
                     }}
                     onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                        e.currentTarget.style.color = '#fff';
                     }}
                     title="Redo (Ctrl+Y)"
                 >

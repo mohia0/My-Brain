@@ -5,56 +5,76 @@
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
     z-index: 20000;
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .modal {
-    width: 680px;
+    width: 720px;
     max-width: 90vw;
-    height: 600px;
-    max-height: 80vh;
+    height: 640px;
+    max-height: 85vh;
     background: var(--modal-bg);
     border: 1px solid var(--card-border);
-    box-shadow: 0 24px 48px var(--shadow-color);
-    border-radius: 20px;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
+    border-radius: 24px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    backdrop-filter: blur(20px);
+    animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+[data-theme='light'] .modal {
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1);
 }
 
 .header {
-    padding: 24px 28px;
+    padding: 24px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--card-border);
-    background: var(--card-bg);
+    background: transparent;
 }
 
 .titleInfo {
     display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.iconCircle {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: var(--accent-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+}
+
+.titleLayout {
+    display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .folderName {
     font-size: 1.25rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--foreground);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
 }
 
 .itemCount {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 400;
+    font-weight: 500;
 }
 
 .actions {
@@ -67,9 +87,9 @@
     background: transparent;
     border: none;
     color: var(--text-muted);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.8rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -86,34 +106,33 @@
 .confirmDelete {
     background: var(--accent) !important;
     color: white !important;
-    width: auto;
-    font-size: 0.8rem;
     font-weight: 600;
 }
 
 .closeBtn {
     background: var(--card-bg);
-    border: none;
+    border: 1px solid var(--card-border);
     color: var(--text-muted);
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .closeBtn:hover {
     background: var(--card-hover);
     color: var(--foreground);
+    transform: rotate(90deg);
 }
 
 .content {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 28px;
+    padding: 8px 32px 32px;
 }
 
 /* Custom Scrollbar */
@@ -127,49 +146,45 @@
 
 .content::-webkit-scrollbar-thumb {
     background: var(--card-border);
-    border-radius: 3px;
-}
-
-.content::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    border-radius: 10px;
 }
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
 }
 
 .itemWrapper {
     position: relative;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 12px;
-    padding: 10px;
+    border-radius: 16px;
+    padding: 12px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: all 0.2s ease;
-    height: 140px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .itemWrapper:hover {
     background: var(--card-hover);
-    border-color: var(--border-light);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px var(--shadow-color);
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
 .itemPreview {
     width: 100%;
-    height: 80px;
-    border-radius: 8px;
+    height: 110px;
+    border-radius: 10px;
     overflow: hidden;
-    background: var(--background);
+    background: rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid var(--card-border);
 }
 
 .previewImg {
@@ -179,21 +194,18 @@
 }
 
 .genericIcon {
-    font-size: 1.5rem;
-    opacity: 0.7;
-    color: var(--text-dim);
+    font-size: 1.75rem;
+    opacity: 0.8;
 }
 
 .itemInfo {
-    width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 2px;
+    gap: 4px;
 }
 
 .itemTitle {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: var(--foreground);
     white-space: nowrap;
@@ -202,40 +214,36 @@
 }
 
 .itemMeta {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
 }
 
 .itemDate {
-    font-size: 0.65rem;
-    opacity: 0.7;
     font-weight: 400;
+    opacity: 0.6;
 }
 
 .removeBtn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: var(--overlay-bg);
-    border: 1px solid var(--card-border);
-    color: var(--text-dim);
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
+    top: 6px;
+    right: 6px;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     opacity: 0;
-    backdrop-filter: blur(4px);
     transition: all 0.2s;
     transform: scale(0.9);
+    z-index: 10;
 }
 
 .itemWrapper:hover .removeBtn {
@@ -246,174 +254,18 @@
 .removeBtn:hover {
     background: var(--accent);
     border-color: var(--accent);
-    color: white;
+    transform: scale(1.1);
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes scaleIn {
-    from {
-        transform: scale(0.95);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.modal {
-    width: 600px;
-    max-width: 90vw;
-    height: 70vh;
-    background: #1a1a1a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+.emptyState {
+    height: 300px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    animation: scaleIn 0.2s ease-out;
-}
-
-.header {
-    padding: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.titleInfo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--accent);
-}
-
-.folderName {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: white;
-}
-
-.itemCount {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    color: #888;
-}
-
-.deleteBtn {
-    background: var(--accent-glow);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    margin-right: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
-}
-
-.deleteBtn:hover {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.itemWrapper {
-    position: relative;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 12px;
-    transition: all 0.2s;
-    cursor: pointer;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.itemWrapper:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-.itemPreview {
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: #222;
-}
-
-.previewImg {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.genericIcon {
-    width: 100%;
-    height: 100%;
-    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-}
-
-.itemInfo {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.itemTitle {
-    font-weight: 500;
-    color: #eee;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 0.95rem;
-}
-
-.itemMeta {
-    font-size: 0.75rem;
-    color: #666;
-}
-
-.itemWrapper:hover .removeBtn {
-    opacity: 1;
-}
-
-.removeBtn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }
 
 @keyframes fadeIn {
@@ -426,14 +278,14 @@
     }
 }
 
-@keyframes scaleIn {
+@keyframes modalIn {
     from {
-        transform: scale(0.95);
         opacity: 0;
+        transform: scale(0.95) translateY(20px);
     }
 
     to {
-        transform: scale(1);
         opacity: 1;
+        transform: scale(1) translateY(0);
     }
 }

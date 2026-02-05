@@ -51,18 +51,21 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
-                        <FolderOpen size={24} color="var(--accent)" />
-                        <span className={styles.folderName}>{folder.name}</span>
-                        <span className={styles.itemCount}>{folderItems.length} items</span>
+                        <div className={styles.iconCircle}>
+                            <FolderOpen size={22} />
+                        </div>
+                        <div className={styles.titleLayout}>
+                            <span className={styles.folderName}>{folder.name}</span>
+                            <span className={styles.itemCount}>{folderItems.length} items collected</span>
+                        </div>
                     </div>
                     <div className={styles.actions}>
                         <button
                             onClick={handleDeleteClick}
                             className={`${styles.deleteBtn} ${isDeleting ? styles.confirmDelete : ''}`}
-                            title="Delete Folder"
                             onMouseLeave={() => setIsDeleting(false)}
                         >
-                            {isDeleting ? "Sure?" : <LogOut size={16} />}
+                            {isDeleting ? "Confirm Delete?" : "Delete Folder"}
                         </button>
                         <button onClick={onClose} className={styles.closeBtn}><X size={20} /></button>
                     </div>
@@ -70,7 +73,10 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
 
                 <div className={styles.content}>
                     {folderItems.length === 0 ? (
-                        <div className={styles.emptyState}>Folder is empty</div>
+                        <div className={styles.emptyState}>
+                            <FolderOpen size={48} strokeWidth={1} style={{ opacity: 0.2 }} />
+                            <span>This folder is currently empty</span>
+                        </div>
                     ) : (
                         <div className={styles.grid}>
                             {folderItems.map(item => (
@@ -82,7 +88,14 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                                         onItemClick(item.id);
                                     }}
                                 >
-                                    {/* Preview Image/Icon */}
+                                    <button
+                                        className={styles.removeBtn}
+                                        onClick={(e) => handleRemoveFromFolder(item.id, e)}
+                                        title="Move to Canvas"
+                                    >
+                                        <LogOut size={14} />
+                                    </button>
+
                                     <div className={styles.itemPreview}>
                                         {item.type === 'image' || item.metadata?.image ? (
                                             <img src={item.type === 'image' ? item.content : item.metadata?.image} className={styles.previewImg} />
@@ -105,14 +118,6 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                                             </span>
                                         </div>
                                     </div>
-
-                                    <button
-                                        className={styles.removeBtn}
-                                        onClick={(e) => handleRemoveFromFolder(item.id, e)}
-                                        title="Move to Canvas"
-                                    >
-                                        <LogOut size={14} />
-                                    </button>
                                 </div>
                             ))}
                         </div>

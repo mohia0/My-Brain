@@ -79,12 +79,12 @@
 }
 
 .deleteBtn:hover {
-    color: #ff4444;
-    background: rgba(255, 68, 68, 0.1);
+    color: var(--accent);
+    background: var(--accent-glow);
 }
 
 .confirmDelete {
-    background: #ff4444 !important;
+    background: var(--accent) !important;
     color: white !important;
     width: auto;
     font-size: 0.8rem;
@@ -244,8 +244,8 @@
 }
 
 .removeBtn:hover {
-    background: #ff4444;
-    border-color: #ff4444;
+    background: var(--accent);
+    border-color: var(--accent);
     color: white;
 }
 
@@ -316,9 +316,9 @@
 }
 
 .deleteBtn {
-    background: rgba(255, 68, 68, 0.1);
-    border: 1px solid rgba(255, 68, 68, 0.2);
-    color: #ff4444;
+    background: var(--accent-glow);
+    border: 1px solid var(--accent);
+    color: var(--accent);
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -331,8 +331,9 @@
 }
 
 .deleteBtn:hover {
-    background: rgba(255, 68, 68, 0.2);
-    border-color: #ff4444;
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
 }
 
 .grid {

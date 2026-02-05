@@ -62,12 +62,12 @@
 }
 
 .delete:hover {
-    background: rgba(255, 68, 68, 0.1);
-    color: #ff4444;
+    background: var(--accent-glow);
+    color: var(--accent);
 }
 
 .confirmDelete {
-    background: #ff4444;
+    background: var(--accent);
     color: white;
     width: auto;
     padding: 8px 16px;
@@ -75,8 +75,9 @@
 }
 
 .confirmDelete:hover {
-    background: #cc0000;
+    background: var(--accent);
     color: white;
+    filter: brightness(1.1);
 }
 
 .closeBtn {

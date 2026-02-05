@@ -95,7 +95,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
                         // Link Icon Preview
                         if (item.type === 'link') {
                             return (
-                                <div key={item.id} className={styles.miniItem} style={{ background: '#6e56cf' }}>
+                                <div key={item.id} className={styles.miniItem} style={{ background: 'var(--accent)' }}>
                                     <div className={styles.miniIcon}>🔗</div>
                                 </div>
                             );

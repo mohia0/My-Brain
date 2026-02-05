@@ -32,9 +32,9 @@ export const Button = ({ children, variant = 'primary', style, ...props }: Butto
             border: '1px solid var(--card-border)',
         },
         destructive: {
-            background: 'rgba(255, 50, 50, 0.1)',
-            color: '#ff4d4d',
-            border: '1px solid rgba(255, 50, 50, 0.2)',
+            background: 'var(--accent-glow)',
+            color: 'var(--accent)',
+            border: '1px solid var(--accent)',
         }
     };
 

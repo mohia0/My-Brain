@@ -40,7 +40,7 @@
     position: absolute;
     top: -8px;
     right: -8px;
-    background: #FF4444;
+    background: var(--accent);
     /* Distinct Red Color for notification style */
     color: white;
     font-size: 10px;

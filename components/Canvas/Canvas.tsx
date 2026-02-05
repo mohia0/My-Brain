@@ -385,78 +385,78 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 />
             )}
 
-            {/* Minimalist Undo/Redo Controls */}
+            {/* Undo/Redo Controls */}
             <div style={{
                 position: 'fixed',
-                bottom: 24,
-                right: 24,
+                bottom: 30,
+                left: 170, // Placed nicely near the MiniMap
                 display: 'flex',
-                gap: 6,
+                gap: 10,
                 zIndex: 1000,
             }}>
                 <button
                     onClick={undo}
                     disabled={history?.past.length === 0}
                     style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        background: 'var(--card-bg)',
-                        backdropFilter: 'blur(4px)',
-                        border: '1px solid var(--card-border)',
-                        color: history?.past.length > 0 ? 'var(--foreground)' : 'var(--text-muted)',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        background: '#000000', // Deep black
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        color: history?.past.length > 0 ? '#ffffff' : '#444',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: history?.past.length > 0 ? 'pointer' : 'default',
-                        transition: 'all 0.2s',
-                        boxShadow: '0 4px 12px var(--shadow-color)'
+                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        pointerEvents: 'auto'
                     }}
                     onMouseEnter={(e) => {
                         if (history?.past.length > 0) {
-                            e.currentTarget.style.background = 'var(--card-hover)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.borderColor = 'var(--accent)';
                         }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'var(--card-bg)';
-                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
                     }}
                     title="Undo (Ctrl+Z)"
                 >
-                    <Undo size={16} />
+                    <Undo size={14} />
                 </button>
                 <button
                     onClick={redo}
                     disabled={history?.future.length === 0}
                     style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        background: 'var(--card-bg)',
-                        backdropFilter: 'blur(4px)',
-                        border: '1px solid var(--card-border)',
-                        color: history?.future.length > 0 ? 'var(--foreground)' : 'var(--text-muted)',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        background: '#000000', // Deep black
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        color: history?.future.length > 0 ? '#ffffff' : '#444',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: history?.future.length > 0 ? 'pointer' : 'default',
-                        transition: 'all 0.2s',
-                        boxShadow: '0 4px 12px var(--shadow-color)'
+                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        pointerEvents: 'auto'
                     }}
                     onMouseEnter={(e) => {
                         if (history?.future.length > 0) {
-                            e.currentTarget.style.background = 'var(--card-hover)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.borderColor = 'var(--accent)';
                         }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'var(--card-bg)';
-                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
                     }}
                     title="Redo (Ctrl+Y)"
                 >
-                    <Redo size={16} />
+                    <Redo size={14} />
                 </button>
             </div>
         </div>

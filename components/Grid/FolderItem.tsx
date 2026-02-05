@@ -74,9 +74,13 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
         >
             <div ref={droppableRef} className={styles.dropZone}>
                 <div className={styles.header}>
-                    <FolderIcon size={16} fill="rgba(255,255,255,0.2)" />
+                    <FolderIcon
+                        size={16}
+                        fill={folder.color ? `${folder.color}44` : "rgba(255,255,255,0.2)"}
+                        color={folder.color || "var(--accent)"}
+                    />
                     <span className={styles.title}>{folder.name}</span>
-                    <span className={styles.count}>{folderItems.length}</span>
+                    <span className={styles.count} style={{ color: folder.color }}>{folderItems.length}</span>
                 </div>
 
                 <div className={styles.previewGrid}>

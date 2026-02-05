@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Inbox as InboxIcon, ChevronRight, ChevronDown } from 'lucide-react';
+import { Inbox as InboxIcon, ChevronRight, ChevronLeft } from 'lucide-react';
 import styles from './Inbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useDroppable } from '@dnd-kit/core';
@@ -31,6 +31,15 @@ export default function Inbox({ onItemClick }: InboxProps) {
             )}
         >
             <div className={styles.header} onClick={() => setIsCollapsed(!isCollapsed)}>
+                <button
+                    className={styles.collapseBtn}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(!isCollapsed);
+                    }}
+                >
+                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                </button>
                 <div className={styles.headerTitle}>
                     <div style={{ position: 'relative', display: 'flex' }}>
                         <InboxIcon size={20} />
@@ -42,15 +51,6 @@ export default function Inbox({ onItemClick }: InboxProps) {
                     </div>
                     <span>Inbox ({inboxItems.length})</span>
                 </div>
-                <button
-                    className={styles.collapseBtn}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setIsCollapsed(!isCollapsed);
-                    }}
-                >
-                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                </button>
             </div>
             {!isCollapsed && (
                 <div className={styles.content}>

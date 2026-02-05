@@ -53,7 +53,12 @@ export default function FloatingBar() {
 
     const handleMoveToFolder = (folderId: string) => {
         selectedIds.forEach(id => {
-            updateItemContent(id, { folder_id: folderId });
+            const isItem = items.some(i => i.id === id);
+            if (isItem) {
+                updateItemContent(id, { folder_id: folderId });
+            } else {
+                useItemsStore.getState().updateFolderContent?.(id, { parent_id: folderId });
+            }
         });
         clearSelection();
         setIsMoveMenuOpen(false);
@@ -61,28 +66,43 @@ export default function FloatingBar() {
 
     const handleGroupSubmit = (name: string) => {
         const selectedItems = items.filter(i => selectedIds.includes(i.id));
-        if (selectedItems.length === 0) return;
+        const selectedFolders = folders.filter(f => selectedIds.includes(f.id));
 
-        const avgX = selectedItems.reduce((acc, i) => acc + i.position_x, 0) / selectedItems.length;
-        const avgY = selectedItems.reduce((acc, i) => acc + i.position_y, 0) / selectedItems.length;
+        if (selectedItems.length === 0 && selectedFolders.length === 0) return;
+
+        // Calculate center for new folder
+        let avgX = 0;
+        let avgY = 0;
+        const total = selectedItems.length + selectedFolders.length;
+
+        selectedItems.forEach(i => { avgX += i.position_x; avgY += i.position_y; });
+        selectedFolders.forEach(f => { avgX += f.position_x; avgY += f.position_y; });
+        avgX /= total;
+        avgY /= total;
 
         const folderId = crypto.randomUUID();
         addFolder({
             id: folderId,
             user_id: 'user-1',
             name,
-            position_x: avgX - 100,
+            position_x: avgX - 100, // Offset to center the folder icon
             position_y: avgY - 50,
             created_at: new Date().toISOString()
         });
 
-        // Use setTimeout to ensure folder is in store
+        // Batch update selected items and folders
         setTimeout(() => {
             selectedIds.forEach(id => {
-                updateItemContent(id, { folder_id: folderId });
+                const isItem = items.some(i => i.id === id);
+                if (isItem) {
+                    updateItemContent(id, { folder_id: folderId });
+                } else {
+                    // It's a folder (nesting support)
+                    useItemsStore.getState().updateFolderContent?.(id, { parent_id: folderId });
+                }
             });
             clearSelection();
-        }, 50);
+        }, 100);
 
         setIsGroupModalOpen(false);
     };

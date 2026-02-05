@@ -61,8 +61,9 @@ export default function Home() {
     };
   }, [fetchData, subscribeToChanges]);
 
-  // Only show items that are NOT in a folder AND NOT in inbox
+  // Only show items and folders that are NOT nested (root level)
   const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox');
+  const visibleFolders = folders.filter(folder => !folder.parent_id);
 
   return (
     <DragWrapper>
@@ -71,7 +72,7 @@ export default function Home() {
         <Header />
         <AccountMenu />
         <Canvas>
-          {folders.map(folder => (
+          {visibleFolders.map(folder => (
             <FolderItem
               key={folder.id}
               folder={folder}

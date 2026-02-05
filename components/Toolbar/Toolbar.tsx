@@ -11,16 +11,28 @@ export default function Toolbar() {
     const { addItem, addFolder, undo, redo, history } = useItemsStore();
 
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isRendered, setIsRendered] = useState(false);
     const [modalConfig, setModalConfig] = useState<{
         isOpen: boolean;
         type: 'text' | 'link' | 'image' | 'folder' | null;
-        placeholder: string;
         title: string;
-        mode: 'text' | 'file';
-    }>({ isOpen: false, type: null, placeholder: '', title: '', mode: 'text' });
+        placeholder: string;
+        mode?: 'text' | 'file';
+    }>({
+        isOpen: false,
+        type: null,
+        title: '',
+        placeholder: '',
+        mode: 'text'
+    });
+
+    const toggleAddMenu = () => {
+        setIsAddOpen(!isAddOpen);
+    };
 
     const handleAddItemClick = (type: 'text' | 'link' | 'image' | 'folder') => {
         setIsAddOpen(false);
+
         setModalConfig({
             isOpen: true,
             type,
@@ -31,6 +43,7 @@ export default function Toolbar() {
     };
 
     const handleModalSubmit = (value: string) => {
+        // ... previous logic remains unchanged ...
         const { type } = modalConfig;
         if (!type) return;
 
@@ -80,7 +93,7 @@ export default function Toolbar() {
                         onClick={() => setTool('mouse')}
                         title="Select (V)"
                     >
-                        <MousePointer2 size={20} />
+                        <MousePointer2 size={18} />
                     </button>
 
                     <button
@@ -88,7 +101,7 @@ export default function Toolbar() {
                         onClick={() => setTool('hand')}
                         title="Pan (H)"
                     >
-                        <Hand size={20} />
+                        <Hand size={18} />
                     </button>
                 </div>
 
@@ -101,7 +114,7 @@ export default function Toolbar() {
                         disabled={history?.past.length === 0}
                         title="Undo (Ctrl+Z)"
                     >
-                        <Undo size={18} />
+                        <Undo size={16} />
                     </button>
                     <button
                         className={styles.historyBtn}
@@ -109,35 +122,36 @@ export default function Toolbar() {
                         disabled={history?.future.length === 0}
                         title="Redo (Ctrl+Y)"
                     >
-                        <Redo size={18} />
+                        <Redo size={16} />
                     </button>
                 </div>
 
                 <div className={styles.divider} />
 
                 <div className={styles.addWrapper}>
-                    {isAddOpen && (
-                        <div className={styles.addMenu}>
-                            <button className={styles.addOption} onClick={() => handleAddItemClick('folder')} title="Folder">
-                                <FolderPlus size={18} />
-                            </button>
-                            <button className={styles.addOption} onClick={() => handleAddItemClick('image')} title="Image">
-                                <ImageIcon size={18} />
-                            </button>
-                            <button className={styles.addOption} onClick={() => handleAddItemClick('link')} title="Link">
-                                <Link size={18} />
-                            </button>
-                            <button className={styles.addOption} onClick={() => handleAddItemClick('text')} title="Text">
-                                <Type size={18} />
-                            </button>
-                        </div>
-                    )}
+                    <div className={clsx(styles.addMenu, isAddOpen && styles.addMenuOpen)}>
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('folder')} title="Folder">
+                            <FolderPlus size={16} />
+                        </button>
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('image')} title="Image">
+                            <ImageIcon size={16} />
+                        </button>
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('link')} title="Link">
+                            <Link size={16} />
+                        </button>
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('text')} title="Text">
+                            <Type size={16} />
+                        </button>
+                    </div>
                     <button
                         className={clsx(styles.toolBtn, isAddOpen && styles.active)}
-                        onClick={() => setIsAddOpen(!isAddOpen)}
+                        onClick={toggleAddMenu}
                         title="Add Item"
                     >
-                        <Plus size={20} style={{ transform: isAddOpen ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }} />
+                        <Plus size={18} style={{
+                            transform: isAddOpen ? 'rotate(135deg)' : 'none',
+                            transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+                        }} />
                     </button>
                 </div>
             </div>

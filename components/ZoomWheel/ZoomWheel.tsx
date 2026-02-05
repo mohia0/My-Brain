@@ -3,7 +3,7 @@
 import React from 'react';
 import styles from './ZoomWheel.module.css';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Target } from 'lucide-react';
 
 export default function ZoomWheel() {
     const { scale, zoomAt } = useCanvasStore();
@@ -69,7 +69,7 @@ export default function ZoomWheel() {
                 onClick={() => handleZoom(0.65)}
                 title="Reset to 100%"
             >
-                100%
+                <Target size={18} />
             </button>
         </div>
     );

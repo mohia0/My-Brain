@@ -66,7 +66,7 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                     <div className={styles.meta}>
                         <div className={styles.titleRow}>
                             <div className={styles.title}>{item.metadata?.title || 'Untitled Link'}</div>
-                            <div className={styles.titleFade} />
+
                             <div className={styles.itemDateSmall}>
                                 {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
@@ -83,7 +83,7 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                     </div>
                     <div className={styles.titleRow}>
                         <span className={styles.title}>{item.metadata?.title || item.content}</span>
-                        <div className={styles.titleFade} />
+
                         <div className={styles.itemDateSmall}>
                             {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>

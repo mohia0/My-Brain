@@ -159,38 +159,17 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     const renderOverlayItem = () => {
         if (!activeItem) return null;
 
+        // ONLY use overlay for items coming from the Inbox
+        // Canvas items should move their original elements to maintain look & group sync
         if (activeItem.origin === 'inbox') {
             return (
-                <div style={{ width: 280 }}>
+                <div style={{ width: 280, pointerEvents: 'none' }}>
                     <InboxItem item={activeItem} isOverlay />
                 </div>
             );
         }
 
-        if (activeItem.type === 'folder') {
-            const folderItems = items.filter(i => i.folder_id === activeItem.id);
-            return (
-                <FolderItemView
-                    folder={activeItem}
-                    folderItems={folderItems}
-                    isOverlay
-                    isSelected={selectedIds.includes(activeItem.id)}
-                    onClick={() => { }}
-                />
-            );
-        }
-
-        // Default to ItemCard
-        return (
-            <ItemCardView
-                item={activeItem}
-                isOverlay
-                isSelected={selectedIds.includes(activeItem.id)}
-                onDelete={() => { }}
-                onDuplicate={() => { }}
-                onClick={() => { }}
-            />
-        );
+        return null;
     };
 
     return (
@@ -203,7 +182,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         >
             {children}
             <DragOverlay dropAnimation={null}>
-                {null}
+                {activeId ? renderOverlayItem() : null}
             </DragOverlay>
         </DndContext>
     );

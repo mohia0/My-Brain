@@ -4,29 +4,30 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 20000;
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal {
-    width: 380px;
+    width: 420px;
     background: var(--modal-bg);
     border: 1px solid var(--card-border);
-    border-radius: 12px;
+    border-radius: 24px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 50px var(--shadow-color);
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
     overflow: hidden;
-    animation: scaleIn 0.2s ease-out;
+    animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .header {
-    padding: 16px 20px;
+    padding: 20px 24px;
     border-bottom: 1px solid var(--card-border);
     display: flex;
     justify-content: space-between;
@@ -35,8 +36,10 @@
 }
 
 .title {
-    font-weight: 500;
+    font-size: 1.1rem;
+    font-weight: 700;
     color: var(--foreground);
+    letter-spacing: -0.01em;
 }
 
 .closeBtn {

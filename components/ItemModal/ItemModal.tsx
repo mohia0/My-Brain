@@ -148,7 +148,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <img src={content} className={styles.previewImage} alt="Image" />
                         ) : (
                             // Text Editor for Notes
-                            <div style={{ width: '100%', height: '100%', padding: '0 0 20px 0', background: 'var(--bg-color)' }}>
+                            <div style={{ width: '100%', height: '100%', padding: '0 0 20px 0', background: 'transparent' }}>
                                 <BlockEditor initialContent={content} onChange={setContent} />
                             </div>
                         )}

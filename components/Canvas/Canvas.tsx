@@ -31,12 +31,14 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
 
     // Sync cursor with tool
     useEffect(() => {
-        if (currentTool === 'hand' || isSpacePressed) {
+        if (isDragging.current) {
+            setCursor('grabbing');
+        } else if (currentTool === 'hand' || isSpacePressed) {
             setCursor('grab');
         } else {
             setCursor('default');
         }
-    }, [currentTool, isSpacePressed]);
+    }, [currentTool, isSpacePressed, position]); // position change triggered by drag
 
     // Initial load - Center canvas
     useEffect(() => {
@@ -257,8 +259,8 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const selectedItems = items.filter(item => {
                     const itemW = 200;
                     const itemH = 100;
-                    // Filter out inbox items
-                    if (item.status === 'inbox') return false;
+                    // Only select root items (not in inbox, not in folder)
+                    if (item.status === 'inbox' || item.folder_id) return false;
 
                     return (
                         item.position_x < worldX + worldW &&
@@ -271,6 +273,9 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const selectedFolders = useItemsStore.getState().folders.filter(folder => {
                     const folderW = 240; // Folder width approx
                     const folderH = 180; // Folder height approx
+                    // Only select root folders (not nested)
+                    if (folder.parent_id) return false;
+
                     return (
                         folder.position_x < worldX + worldW &&
                         folder.position_x + folderW > worldX &&

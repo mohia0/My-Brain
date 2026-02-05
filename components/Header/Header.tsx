@@ -7,7 +7,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 
 export default function Header() {
-    const { items } = useItemsStore();
+    const { items, setSelection } = useItemsStore();
     const { setPosition, setScale } = useCanvasStore();
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
@@ -19,18 +19,8 @@ export default function Header() {
     });
 
     const handleResultClick = (item: any) => {
-        // Fly to item logic
-        // We want the item to be centered.
-        // screenCenter = (position + itemPos * scale)
-        // We need to setPosition such that itemPos ends up in center
-        // NewPosition = (ViewportCenter / Scale) - ItemPosition ?? 
-        // Actually simpler:
-        // Canvas transform is translate(x, y) scale(s)
-        // To center item at (ix, iy):
-        // x = (WindowWidth / 2) - (ix * s)
-        // y = (WindowHeight / 2) - (iy * s)
-        // Center on item at 150% zoom (0.65 * 1.5 = 0.975)
-        const targetScale = 0.975;
+        // Center on item at 170% zoom (0.65 * 1.7 = 1.105)
+        const targetScale = 1.105;
         setScale(targetScale);
 
         const viewportW = window.innerWidth;
@@ -40,6 +30,9 @@ export default function Header() {
         const newY = (viewportH / 2) - (item.position_y * targetScale);
 
         setPosition(newX, newY);
+
+        // Focus mode: Select the item
+        setSelection([item.id]);
 
         setShowResults(false);
         setQuery('');

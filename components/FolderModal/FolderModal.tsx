@@ -2,7 +2,8 @@
 
 import React from 'react';
 import styles from './FolderModal.module.css';
-import { X, FolderOpen, LogOut } from 'lucide-react';
+import { X, FolderOpen, LogOut, Check } from 'lucide-react';
+import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consistency? 
 // Actually ItemCard is Draggable, we might just want a static view or re-use logic.
@@ -10,7 +11,7 @@ import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consist
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
 export default function FolderModal({ folderId, onClose, onItemClick }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void }) {
-    const { items, folders, updateItemContent, removeFolder, updateFolderPosition } = useItemsStore();
+    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent } = useItemsStore();
     const folder = folders.find(f => f.id === folderId);
     const folderItems = items.filter(i => i.folder_id === folderId);
 
@@ -51,11 +52,23 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
-                        <div className={styles.iconCircle}>
+                        <div className={styles.iconCircle} style={{ backgroundColor: folder.color ? `${folder.color}22` : undefined, color: folder.color || 'var(--accent)' }}>
                             <FolderOpen size={22} />
                         </div>
                         <div className={styles.titleLayout}>
-                            <span className={styles.folderName}>{folder.name}</span>
+                            <div className={styles.nameRow}>
+                                <span className={styles.folderName}>{folder.name}</span>
+                                <div className={styles.colorDots}>
+                                    {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
+                                        <button
+                                            key={color}
+                                            className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}
+                                            style={{ backgroundColor: color }}
+                                            onClick={() => updateFolderContent(folderId, { color })}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
                             <span className={styles.itemCount}>{folderItems.length} items collected</span>
                         </div>
                     </div>

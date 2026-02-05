@@ -13,7 +13,7 @@
     align-items: center;
     gap: 12px;
     z-index: 1000;
-    box-shadow: 0 12px 40px var(--shadow-color);
+    box-shadow: 0 8px 24px var(--shadow-color);
 }
 
 .toolSection,
@@ -25,9 +25,9 @@
 
 .toolBtn,
 .historyBtn {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     border: none;
     background: transparent;
     color: var(--text-muted);
@@ -66,8 +66,27 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    margin-right: -10px;
+    background: var(--card-bg);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    opacity: 0;
+    transform: scale(0.8) translateX(20px);
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: right center;
+    max-width: 0;
+    overflow: hidden;
+}
+
+.addMenuOpen {
+    opacity: 1;
+    transform: scale(1) translateX(0);
     margin-right: 8px;
-    animation: slideRight 0.2s ease-out;
+    pointer-events: auto;
+    max-width: 200px;
 }
 
 .addOption {
@@ -89,16 +108,22 @@
     color: var(--accent);
 }
 
-@keyframes slideRight {
+@keyframes unroll {
     from {
         opacity: 0;
-        transform: translateX(10px);
+        transform: scaleX(0.5) translateX(20px);
     }
 
     to {
         opacity: 1;
-        transform: translateX(0);
+        transform: scaleX(1) translateX(0);
     }
+}
+
+.addMenu.closing {
+    opacity: 0;
+    transform: scale(0.8) translateX(20px);
+    max-width: 0;
 }
 
 .divider {

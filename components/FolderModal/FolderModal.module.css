@@ -71,6 +71,37 @@
     letter-spacing: -0.02em;
 }
 
+.nameRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.colorDots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.colorDot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.colorDot:hover {
+    transform: scale(1.2);
+}
+
+.activeColor {
+    border-color: var(--foreground);
+    transform: scale(1.2);
+}
+
 .itemCount {
     font-size: 0.75rem;
     color: var(--text-muted);

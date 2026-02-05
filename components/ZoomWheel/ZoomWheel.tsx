@@ -13,13 +13,13 @@ export default function ZoomWheel() {
     const BASE_SCALE = 0.65;
 
     // Slider range mapping:
-    // We'll map value 0 (scale 0.1) to 100 (scale 3.25, which is 5x base)
+    // We'll map value 0 (scale 0.1) to 100 (scale 1.3, which is 200% of base)
     const toSlider = (s: number) => {
-        return ((s - 0.1) / (3.25 - 0.1)) * 100;
+        return ((s - 0.1) / (1.3 - 0.1)) * 100;
     };
 
     const fromSlider = (v: number) => {
-        return 0.1 + (v / 100) * (3.25 - 0.1);
+        return 0.1 + (v / 100) * (1.3 - 0.1);
     };
 
     const handleZoom = (newScale: number) => {

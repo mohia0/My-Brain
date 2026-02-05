@@ -29,8 +29,8 @@ export default function Header() {
         // To center item at (ix, iy):
         // x = (WindowWidth / 2) - (ix * s)
         // y = (WindowHeight / 2) - (iy * s)
-        // For now let's just approximate center
-        const targetScale = 0.65;
+        // Center on item at 150% zoom (0.65 * 1.5 = 0.975)
+        const targetScale = 0.975;
         setScale(targetScale);
 
         const viewportW = window.innerWidth;

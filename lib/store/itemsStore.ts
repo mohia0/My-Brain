@@ -26,6 +26,7 @@ interface ItemsState {
     // Folders
     addFolder: (folder: Folder) => void;
     updateFolderPosition: (id: string, x: number, y: number) => void;
+    updateFolderContent: (id: string, updates: Partial<Folder>) => void;
     removeFolder: (id: string) => void;
 
     // Batch & History
@@ -312,6 +313,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
         }));
         await supabase.from('folders').update({ position_x: x, position_y: y }).eq('id', id);
+    },
+
+    updateFolderContent: async (id, updates) => {
+        set((state) => ({
+            folders: state.folders.map((f) =>
+                f.id === id ? { ...f, ...updates } : f
+            )
+        }));
+        await supabase.from('folders').update(updates).eq('id', id);
     },
 
     removeFolder: async (id) => {

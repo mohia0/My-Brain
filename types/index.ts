@@ -21,6 +21,7 @@ export interface Folder {
     position_x: number;
     position_y: number;
     created_at: string;
+    color?: string;
 }
 
 export interface Tag {

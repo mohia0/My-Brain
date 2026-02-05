@@ -17,10 +17,10 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     position: { x: 0, y: 0 },
     setScale: (scale) => set({ scale }),
     setPosition: (x, y) => set({ position: { x, y } }),
-    zoomIn: () => set((state) => ({ scale: Math.min(state.scale * 1.1, 5) })),
+    zoomIn: () => set((state) => ({ scale: Math.min(state.scale * 1.1, 1.3) })),
     zoomOut: () => set((state) => ({ scale: Math.max(state.scale * 0.9, 0.1) })),
     zoomAt: (newScale: number, point: { x: number, y: number }) => set((state) => {
-        const safeScale = Math.min(Math.max(newScale, 0.1), 5);
+        const safeScale = Math.min(Math.max(newScale, 0.1), 1.3);
         const scaleChange = safeScale / state.scale;
         const newX = point.x - (point.x - state.position.x) * scaleChange;
         const newY = point.y - (point.y - state.position.y) * scaleChange;

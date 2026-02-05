@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Inbox as InboxIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Inbox as InboxIcon, ChevronRight, ChevronDown } from 'lucide-react';
 import styles from './Inbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useDroppable } from '@dnd-kit/core';
@@ -49,7 +49,7 @@ export default function Inbox({ onItemClick }: InboxProps) {
                         setIsCollapsed(!isCollapsed);
                     }}
                 >
-                    {isCollapsed ? "Expand" : "Collapse"}
+                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                 </button>
             </div>
             {!isCollapsed && (

@@ -5,7 +5,8 @@
     right: 20px;
     display: flex;
     align-items: center;
-    gap: 32px;
+    justify-content: space-between;
+    /* Space out logo and account menu */
     z-index: 100;
     pointer-events: none;
 }
@@ -96,7 +97,16 @@
     display: flex;
     align-items: center;
     pointer-events: auto;
-    position: relative;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.searchWrapper:hover,
+.searchWrapper:focus-within {
+    width: 480px;
 }
 
 .searchIcon {

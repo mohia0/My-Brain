@@ -6,8 +6,9 @@ esbuild.build({
     bundle: true,
     outfile: 'popup.bundle.js',
     minify: true,
-    sourcemap: false,
+    sourcemap: true,
     target: ['chrome100'],
+    platform: 'browser',
     define: {
         'process.env.NODE_ENV': '"production"'
     }

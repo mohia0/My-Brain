@@ -112,9 +112,19 @@ function navigate(viewName) {
     mainView.classList.add('hidden');
     noteView.classList.add('hidden');
 
-    if (viewName === 'auth') authView.classList.remove('hidden');
-    if (viewName === 'main') mainView.classList.remove('hidden');
-    if (viewName === 'note') noteView.classList.remove('hidden');
+    if (viewName === 'auth') {
+        authView.classList.remove('hidden');
+        saveTabBtn.disabled = true;
+        addNoteBtn.disabled = true;
+    }
+    if (viewName === 'main') {
+        mainView.classList.remove('hidden');
+        saveTabBtn.disabled = false;
+        addNoteBtn.disabled = false;
+    }
+    if (viewName === 'note') {
+        noteView.classList.remove('hidden');
+    }
 }
 
 function renderTabInfo() {
@@ -134,10 +144,11 @@ function renderTabInfo() {
 }
 
 function showToast(msg, type = 'success') {
+    console.log(`[Toast] ${type}: ${msg}`);
     toast.textContent = msg;
     toast.classList.remove('hidden');
     toast.style.background = type === 'error' ? 'var(--danger)' : 'var(--success)';
-    setTimeout(() => toast.classList.add('hidden'), 2000);
+    setTimeout(() => toast.classList.add('hidden'), 3500); // Longer for errors
 }
 
 // --- ACTIONS ---
@@ -199,27 +210,32 @@ saveTabBtn.addEventListener('click', async () => {
         let publicUrl = state.currentTab.favIconUrl; // Default to favicon
 
         if (dataUrl) {
-            btnText.textContent = "Uploading...";
-            // 2. Upload to Supabase
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
-            const filename = `${state.user.id}/${Date.now()}.jpg`;
+            try {
+                btnText.textContent = "Uploading...";
+                // 2. Upload to Supabase
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+                const filename = `${state.user.id}/${Date.now()}.jpg`;
 
-            const { data, error: uploadError } = await supabase.storage
-                .from('screenshots')
-                .upload(filename, blob, {
-                    contentType: 'image/jpeg',
-                    upsert: false
-                });
+                const { data, error: uploadError } = await supabase.storage
+                    .from('screenshots')
+                    .upload(filename, blob, {
+                        contentType: 'image/jpeg',
+                        upsert: false
+                    });
 
-            if (uploadError) throw uploadError;
-
-            // 3. Get Public URL
-            const { data: { publicUrl: url } } = supabase.storage
-                .from('screenshots')
-                .getPublicUrl(filename);
-
-            publicUrl = url;
+                if (uploadError) {
+                    console.warn("Upload failed, falling back to favicon:", uploadError);
+                } else {
+                    // 3. Get Public URL
+                    const { data: { publicUrl: url } } = supabase.storage
+                        .from('screenshots')
+                        .getPublicUrl(filename);
+                    publicUrl = url;
+                }
+            } catch (uploadErr) {
+                console.warn("Upload error, falling back to favicon:", uploadErr);
+            }
         }
 
         btnText.textContent = "Saving Item...";

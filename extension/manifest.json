@@ -5,7 +5,8 @@
     "description": "Capture to your Second Brain",
     "permissions": [
         "activeTab",
-        "storage"
+        "storage",
+        "tabs"
     ],
     "host_permissions": [
         "https://*.supabase.co/*"

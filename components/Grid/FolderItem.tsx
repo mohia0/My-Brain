@@ -50,9 +50,9 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
     );
 
     // Style adjustments for overlay
-    const finalStyle: React.CSSProperties = isOverlay ? {
+    const finalStyle = isOverlay ? {
         ...style,
-        position: 'relative',
+        position: 'relative' as const,
         top: 0,
         left: 0,
         transform: 'none'
@@ -118,12 +118,13 @@ FolderItemView.displayName = 'FolderItemView';
 
 export default function FolderItem({ folder, onClick }: FolderItemProps) {
     const { items, selectedIds } = useItemsStore();
+    const { scale } = useCanvasStore(); // Need scale for transform
     const folderItems = items.filter(i => i.folder_id === folder.id);
 
     const isSelected = selectedIds.includes(folder.id);
     const isDimmed = selectedIds.length > 0 && !isSelected;
 
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
         id: folder.id,
         data: { ...folder, type: 'folder' }
     });
@@ -132,6 +133,14 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
         id: folder.id,
         data: { type: 'folder', id: folder.id }
     });
+
+    const dragStyle: React.CSSProperties = {
+        left: folder.position_x,
+        top: folder.position_y,
+        opacity: 1, // Always visible
+        zIndex: isDragging ? 1000 : undefined,
+        transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined
+    };
 
     return (
         <FolderItemView
@@ -145,11 +154,7 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
             onClick={onClick}
             attributes={attributes}
             listeners={listeners}
-            style={{
-                left: folder.position_x,
-                top: folder.position_y,
-                opacity: isDragging ? 0 : 1
-            }}
+            style={dragStyle}
         />
     );
 }

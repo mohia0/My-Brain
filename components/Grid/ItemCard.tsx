@@ -87,13 +87,13 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         isSelected && styles.selected,
         isDimmed && styles.dimmed
     );
-    
+
     // For overlay, we override position to relative so it fits in the dnd-kit portal correctly
     // But we still need width/height.
-    const finalStyle: React.CSSProperties = isOverlay ? { 
-        ...style, 
-        position: 'relative', 
-        top: 0, 
+    const finalStyle = isOverlay ? {
+        ...style,
+        position: 'relative' as const,
+        top: 0,
         left: 0,
         transform: 'none' // Ensure no transform doubles up
     } : style;
@@ -102,6 +102,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     if (item.type === 'link' && !item.metadata?.image) {
         return (
             <div
+                id={`draggable-item-${item.id}`}
                 ref={ref}
                 className={clsx(baseClassName, styles.linkCard)}
                 style={finalStyle}
@@ -128,6 +129,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     if (item.type === 'link' && item.metadata?.image) {
         return (
             <div
+                id={`draggable-item-${item.id}`}
                 ref={ref}
                 className={clsx(baseClassName, styles.captureCard)}
                 style={finalStyle}
@@ -203,20 +205,20 @@ ItemCardView.displayName = 'ItemCardView';
 
 export default function ItemCard({ item, onClick }: ItemCardProps) {
     const { duplicateItem, removeItem, selectedIds } = useItemsStore();
-    
-    // We don't need scale here anymore because transform is handled by DragOverlay 
-    // or by direct DOM manipulation in DragWrapper for other items.
-    // Wait, if we use direct DOM manipulation for OTHER items, 
-    // DragWrapper sets their transform.
-    // If we are the active item, we just hide.
-    // So we don't need to apply `transform` manually here at all!
+
+    const { scale } = useCanvasStore();
+
+    // Figma-like behavior: 
+    // 1. We don't hide the item (opacity 1).
+    // 2. We apply the transform directly to the item.
+    // 3. We lift it up (z-index).
 
     const isSelected = selectedIds.includes(item.id);
     const isDimmed = selectedIds.length > 0 && !isSelected;
 
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
         id: item.id,
-        data: { ...item, type: 'item' } // Ensure type is set for DragWrapper check
+        data: { ...item, type: 'item' }
     });
 
     const handleDuplicate = (e: React.MouseEvent) => {
@@ -225,12 +227,20 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
     };
 
     const handleDelete = (e: React.MouseEvent) => {
-        // e.stopPropagation() is handled in View
         removeItem(item.id);
     };
 
+    // Calculate dynamic style for drag
+    const dragStyle: React.CSSProperties = {
+        left: item.position_x,
+        top: item.position_y,
+        opacity: 1, // Always visible
+        zIndex: isDragging ? 1000 : undefined, // Lift when dragging
+        transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined
+    };
+
     return (
-        <ItemCardView 
+        <ItemCardView
             ref={setNodeRef}
             item={item}
             isSelected={isSelected}
@@ -241,11 +251,7 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
             onDelete={handleDelete}
             attributes={attributes}
             listeners={listeners}
-            style={{
-                left: item.position_x,
-                top: item.position_y,
-                opacity: isDragging ? 0 : 1
-            }}
+            style={dragStyle}
         />
     );
 }

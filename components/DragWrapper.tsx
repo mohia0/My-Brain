@@ -47,16 +47,19 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
     const handleDragMove = (event: DragMoveEvent) => {
         const { active, delta } = event;
+        const currentScale = useCanvasStore.getState().scale;
+        const currentSelectedIds = useItemsStore.getState().selectedIds;
 
         // If dragging an item that is part of selection, move others too
-        if (selectedIds.includes(active.id as string)) {
-            selectedIds.forEach(id => {
+        if (currentSelectedIds.includes(active.id as string)) {
+            currentSelectedIds.forEach(id => {
                 if (id === active.id) return; // dnd-kit handles this one via Overlay (visually)
 
                 // Try finding item or folder
                 const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
                 if (el) {
-                    el.style.transform = `translate3d(${delta.x / scale}px, ${delta.y / scale}px, 0)`;
+                    el.style.transform = `translate3d(${delta.x / currentScale}px, ${delta.y / currentScale}px, 0)`;
+                    el.style.zIndex = '1000'; // Lift up while dragging
                 }
             });
         }
@@ -64,14 +67,17 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, delta, over } = event;
+        const currentScale = useCanvasStore.getState().scale;
+        const currentSelectedIds = useItemsStore.getState().selectedIds;
 
         // Clear manual transforms
-        if (selectedIds.includes(active.id as string)) {
-            selectedIds.forEach(id => {
+        if (currentSelectedIds.includes(active.id as string)) {
+            currentSelectedIds.forEach(id => {
                 if (id === active.id) return;
                 const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
                 if (el) {
                     el.style.transform = '';
+                    el.style.zIndex = '';
                 }
             });
         }
@@ -96,12 +102,12 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
             const viewportW = window.innerWidth;
             const viewportH = window.innerHeight;
-            const cx = (viewportW / 2 - useCanvasStore.getState().position.x) / scale;
-            const cy = (viewportH / 2 - useCanvasStore.getState().position.y) / scale;
+            const cx = (viewportW / 2 - useCanvasStore.getState().position.x) / currentScale;
+            const cy = (viewportH / 2 - useCanvasStore.getState().position.y) / currentScale;
 
             updateItemContent(active.id as string, {
-                position_x: cx + (delta.x / scale),
-                position_y: cy + (delta.y / scale),
+                position_x: cx + (delta.x / currentScale),
+                position_y: cy + (delta.y / currentScale),
                 status: 'active'
             });
             return;
@@ -114,14 +120,14 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         }
 
         // 4. Handle Normal Canvas Drag
-        const dx = delta.x / scale;
-        const dy = delta.y / scale;
+        const dx = delta.x / currentScale;
+        const dy = delta.y / currentScale;
 
         const updates: { id: string, type: 'item' | 'folder', x: number, y: number }[] = [];
 
         // Check if the dragged item is part of the current selection
-        if (selectedIds.includes(active.id as string)) {
-            selectedIds.forEach(id => {
+        if (currentSelectedIds.includes(active.id as string)) {
+            currentSelectedIds.forEach(id => {
                 const item = items.find(i => i.id === id);
                 if (item) {
                     updates.push({ id, type: 'item', x: item.position_x + dx, y: item.position_y + dy });
@@ -196,7 +202,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         >
             {children}
             <DragOverlay dropAnimation={null}>
-                {activeId ? renderOverlayItem() : null}
+                {null}
             </DragOverlay>
         </DndContext>
     );

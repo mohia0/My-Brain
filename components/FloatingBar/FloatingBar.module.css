@@ -1,6 +1,6 @@
 .bar {
     position: fixed;
-    bottom: 30px;
+    bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--card-bg);
@@ -12,7 +12,7 @@
     align-items: center;
     gap: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    z-index: 100;
+    z-index: 1200;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

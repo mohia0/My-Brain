@@ -2,6 +2,15 @@ import { create } from 'zustand';
 import { Item, Folder } from '@/types';
 import { supabase } from '@/lib/supabase';
 
+type PositionUpdate = { id: string, type: 'item' | 'folder', x: number, y: number, prevX: number, prevY: number };
+
+type HistoryAction =
+    | { type: 'MOVE', updates: PositionUpdate[] }
+    | { type: 'ADD_ITEM', item: Item }
+    | { type: 'DELETE_ITEM', item: Item }
+    | { type: 'ADD_FOLDER', folder: Folder }
+    | { type: 'DELETE_FOLDER', folder: Folder };
+
 interface ItemsState {
     items: Item[];
     folders: Folder[];
@@ -19,6 +28,12 @@ interface ItemsState {
     updateFolderPosition: (id: string, x: number, y: number) => void;
     removeFolder: (id: string) => void;
 
+    // Batch & History
+    updatePositions: (updates: { id: string, type: 'item' | 'folder', x: number, y: number }[]) => void;
+    history: { past: HistoryAction[], future: HistoryAction[] };
+    undo: () => void;
+    redo: () => void;
+
     // Selection
     selectedIds: string[];
     selectItem: (id: string) => void;
@@ -33,6 +48,7 @@ interface ItemsState {
 export const useItemsStore = create<ItemsState>((set, get) => ({
     items: [],
     folders: [],
+    history: { past: [], future: [] },
 
     setItems: (items) => set({ items }),
 
@@ -48,7 +64,13 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     addItem: async (item) => {
-        set((state) => ({ items: [...state.items, item] }));
+        set((state) => ({
+            items: [...state.items, item],
+            history: {
+                past: [...state.history.past, { type: 'ADD_ITEM', item }],
+                future: []
+            }
+        }));
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
             await supabase.from('items').insert([{ ...item, user_id: user.id }]);
@@ -56,13 +78,152 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     updateItemPosition: async (id, x, y) => {
+        // Legacy single update - wrapping it in batch logic for consistency if needed, 
+        // but for now keeping it simple. Ideally drag uses updatePositions.
+        const state = get();
+        const item = state.items.find(i => i.id === id);
+        if (!item) return;
+
+        const update: PositionUpdate = {
+            id, type: 'item', x, y, prevX: item.position_x, prevY: item.position_y
+        };
+
         set((state) => ({
-            items: state.items.map((item) =>
-                item.id === id ? { ...item, position_x: x, position_y: y } : item
-            ),
+            items: state.items.map((i) => i.id === id ? { ...i, position_x: x, position_y: y } : i),
+            history: {
+                past: [...state.history.past, { type: 'MOVE', updates: [update] }],
+                future: []
+            }
         }));
-        // Debounce or fire-and-forget
         await supabase.from('items').update({ position_x: x, position_y: y }).eq('id', id);
+    },
+
+    updatePositions: async (updates) => {
+        const state = get();
+        const historyUpdates: PositionUpdate[] = [];
+
+        updates.forEach(u => {
+            if (u.type === 'item') {
+                const item = state.items.find(i => i.id === u.id);
+                if (item) historyUpdates.push({ ...u, prevX: item.position_x, prevY: item.position_y });
+            } else {
+                const folder = state.folders.find(f => f.id === u.id);
+                if (folder) historyUpdates.push({ ...u, prevX: folder.position_x, prevY: folder.position_y });
+            }
+        });
+
+        if (historyUpdates.length === 0) return;
+
+        set((state) => ({
+            items: state.items.map(item => {
+                const u = updates.find(up => up.id === item.id && up.type === 'item');
+                return u ? { ...item, position_x: u.x, position_y: u.y } : item;
+            }),
+            folders: state.folders.map(folder => {
+                const u = updates.find(up => up.id === folder.id && up.type === 'folder');
+                return u ? { ...folder, position_x: u.x, position_y: u.y } : folder;
+            }),
+            history: {
+                past: [...state.history.past, { type: 'MOVE', updates: historyUpdates }],
+                future: []
+            }
+        }));
+
+        // Batch Supabase Update
+        // Note: Supabase doesn't have a simple batch update for different IDs in one go easily via JS client 
+        // without RPC or upsert loop. We will loop for now as it's fire-and-forget.
+        updates.forEach(u => {
+            if (u.type === 'item') {
+                supabase.from('items').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then();
+            } else {
+                supabase.from('folders').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then();
+            }
+        });
+    },
+
+    undo: async () => {
+        const state = get();
+        if (state.history.past.length === 0) return;
+
+        const action = state.history.past[state.history.past.length - 1];
+        const newPast = state.history.past.slice(0, -1);
+
+        switch (action.type) {
+            case 'MOVE':
+                set(s => ({
+                    items: s.items.map(i => {
+                        const u = action.updates.find(up => up.id === i.id && up.type === 'item');
+                        return u ? { ...i, position_x: u.prevX, position_y: u.prevY } : i;
+                    }),
+                    folders: s.folders.map(f => {
+                        const u = action.updates.find(up => up.id === f.id && up.type === 'folder');
+                        return u ? { ...f, position_x: u.prevX, position_y: u.prevY } : f;
+                    }),
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                action.updates.forEach(u => {
+                    if (u.type === 'item') supabase.from('items').update({ position_x: u.prevX, position_y: u.prevY }).eq('id', u.id).then();
+                    else supabase.from('folders').update({ position_x: u.prevX, position_y: u.prevY }).eq('id', u.id).then();
+                });
+                break;
+            case 'ADD_ITEM':
+                set(s => ({
+                    items: s.items.filter(i => i.id !== action.item.id),
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                supabase.from('items').delete().eq('id', action.item.id).then();
+                break;
+            case 'DELETE_ITEM':
+                set(s => ({
+                    items: [...s.items, action.item],
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                supabase.from('items').insert([action.item]).then();
+                break;
+            // Folders cases would be similar
+        }
+    },
+
+    redo: async () => {
+        const state = get();
+        if (state.history.future.length === 0) return;
+
+        const action = state.history.future[0];
+        const newFuture = state.history.future.slice(1);
+
+        switch (action.type) {
+            case 'MOVE':
+                set(s => ({
+                    items: s.items.map(i => {
+                        const u = action.updates.find(up => up.id === i.id && up.type === 'item');
+                        return u ? { ...i, position_x: u.x, position_y: u.y } : i;
+                    }),
+                    folders: s.folders.map(f => {
+                        const u = action.updates.find(up => up.id === f.id && up.type === 'folder');
+                        return u ? { ...f, position_x: u.x, position_y: u.y } : f;
+                    }),
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                action.updates.forEach(u => {
+                    if (u.type === 'item') supabase.from('items').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then();
+                    else supabase.from('folders').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then();
+                });
+                break;
+            case 'ADD_ITEM':
+                set(s => ({
+                    items: [...s.items, action.item],
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                supabase.from('items').insert([action.item]).then();
+                break;
+            case 'DELETE_ITEM':
+                set(s => ({
+                    items: s.items.filter(i => i.id !== action.item.id),
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                supabase.from('items').delete().eq('id', action.item.id).then();
+                break;
+        }
     },
 
     updateItemContent: async (id, updates) => {
@@ -92,20 +253,40 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             created_at: new Date().toISOString()
         };
 
-        set({ items: [...state.items, newItem] });
+        set({
+            items: [...state.items, newItem],
+            history: {
+                past: [...state.history.past, { type: 'ADD_ITEM', item: newItem }],
+                future: []
+            }
+        });
         await supabase.from('items').insert([newItem]);
     },
 
     removeItem: async (id) => {
+        const state = get();
+        const item = state.items.find(i => i.id === id);
+        if (!item) return;
+
         set((state) => ({
-            items: state.items.filter(i => i.id !== id)
+            items: state.items.filter(i => i.id !== id),
+            history: {
+                past: [...state.history.past, { type: 'DELETE_ITEM', item }],
+                future: []
+            }
         }));
         await supabase.from('items').delete().eq('id', id);
     },
 
     // Folders
     addFolder: async (folder) => {
-        set((state) => ({ folders: [...state.folders, folder] }));
+        set((state) => ({
+            folders: [...state.folders, folder],
+            history: {
+                past: [...state.history.past, { type: 'ADD_FOLDER', folder }],
+                future: []
+            }
+        }));
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
             await supabase.from('folders').insert([{ ...folder, user_id: user.id }]);
@@ -113,17 +294,37 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     updateFolderPosition: async (id, x, y) => {
+        const state = get();
+        const folder = state.folders.find(f => f.id === id);
+        if (!folder) return;
+
+        const update: PositionUpdate = {
+            id, type: 'folder', x, y, prevX: folder.position_x, prevY: folder.position_y
+        };
+
         set((state) => ({
             folders: state.folders.map((f) =>
                 f.id === id ? { ...f, position_x: x, position_y: y } : f
             ),
+            history: {
+                past: [...state.history.past, { type: 'MOVE', updates: [update] }],
+                future: []
+            }
         }));
         await supabase.from('folders').update({ position_x: x, position_y: y }).eq('id', id);
     },
 
     removeFolder: async (id) => {
+        const state = get();
+        const folder = state.folders.find(f => f.id === id);
+        if (!folder) return;
+
         set((state) => ({
-            folders: state.folders.filter(f => f.id !== id)
+            folders: state.folders.filter(f => f.id !== id),
+            history: {
+                past: [...state.history.past, { type: 'DELETE_FOLDER', folder }],
+                future: []
+            }
         }));
         await supabase.from('folders').delete().eq('id', id);
     },
@@ -164,6 +365,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         const newPositions = new Map();
         const updates: any[] = [];
+        const historyUpdates: PositionUpdate[] = [];
 
         selectedItems.forEach(item => {
             // Find shortest column (Masonry)
@@ -182,8 +384,6 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 if (item.metadata?.image) height = 100; // Capture Card
                 else height = 40; // Link Card
             } else {
-                // For text/images, we approximate. 
-                // Ideally this would be dynamic, but 160-200 is a safe average for notes.
                 height = 160;
             }
 
@@ -194,6 +394,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             colHeights[colIndex] = y + height + gap;
 
             updates.push({ id: item.id, position_x: x, position_y: y });
+            historyUpdates.push({ id: item.id, type: 'item', x, y, prevX: item.position_x, prevY: item.position_y });
         });
 
         // Batch update in BG
@@ -206,7 +407,13 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             return pos ? { ...item, position_x: pos.x, position_y: pos.y } : item;
         });
 
-        return { items: newItems };
+        return {
+            items: newItems,
+            history: {
+                past: [...state.history.past, { type: 'MOVE', updates: historyUpdates }],
+                future: []
+            }
+        };
     }),
     layoutAllItems: () => set((state) => {
         // ... (keep existing layout logic)
@@ -230,6 +437,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         const itemsToUpdate: any[] = [];
         const foldersToUpdate: any[] = [];
+        const historyUpdates: PositionUpdate[] = [];
 
         const newItemPositions = new Map();
         const newFolderPositions = new Map();
@@ -243,11 +451,23 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             if (el.type === 'item') {
                 newItemPositions.set(el.id, { x, y });
                 itemsToUpdate.push({ id: el.id, x, y });
+                // We need original item to get prev pos... simplified here as we iterate below
             } else {
                 newFolderPositions.set(el.id, { x, y });
                 foldersToUpdate.push({ id: el.id, x, y });
             }
         });
+
+        // construct history
+        canvasItems.forEach(i => {
+            const n = newItemPositions.get(i.id);
+            if (n) historyUpdates.push({ id: i.id, type: 'item', x: n.x, y: n.y, prevX: i.position_x, prevY: i.position_y });
+        });
+        canvasFolders.forEach(f => {
+            const n = newFolderPositions.get(f.id);
+            if (n) historyUpdates.push({ id: f.id, type: 'folder', x: n.x, y: n.y, prevX: f.position_x, prevY: f.position_y });
+        });
+
 
         // Batch Update
         itemsToUpdate.forEach(u => supabase.from('items').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then());
@@ -261,7 +481,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             folders: state.folders.map(f => {
                 const pos = newFolderPositions.get(f.id);
                 return pos ? { ...f, position_x: pos.x, position_y: pos.y } : f;
-            })
+            }),
+            history: {
+                past: [...state.history.past, { type: 'MOVE', updates: historyUpdates }],
+                future: []
+            }
         };
     }),
 

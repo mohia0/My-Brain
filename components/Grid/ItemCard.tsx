@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 import styles from './ItemCard.module.css';
 import { Item } from '@/types';
 import { FileText, Link, Image as ImageIcon, Copy, Trash2 } from 'lucide-react';
@@ -14,37 +14,42 @@ interface ItemCardProps {
     onClick?: () => void;
 }
 
-export default function ItemCard({ item, onClick }: ItemCardProps) {
-    const { duplicateItem, removeItem, selectedIds } = useItemsStore();
-    const { scale } = useCanvasStore();
+interface ItemCardViewProps {
+    item: Item;
+    isSelected?: boolean;
+    isDimmed?: boolean;
+    isDragging?: boolean;
+    isOverlay?: boolean;
+    onClick?: () => void;
+    onDuplicate: (e: React.MouseEvent) => void;
+    onDelete: (e: React.MouseEvent) => void;
+    style?: React.CSSProperties;
+    attributes?: any;
+    listeners?: any;
+}
 
-    const isSelected = selectedIds.includes(item.id);
-    const isDimmed = selectedIds.length > 0 && !isSelected;
-
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-        id: item.id,
-        data: { ...item }
-    });
-
-    // Compensate for canvas scale to prevent drag lag
-    const style = transform ? {
-        transform: `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)`,
-    } : undefined;
-
+export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
+    item,
+    isSelected,
+    isDimmed,
+    isDragging,
+    isOverlay,
+    onClick,
+    onDuplicate,
+    onDelete,
+    style,
+    attributes,
+    listeners
+}, ref) => {
     const [isDeleting, setIsDeleting] = React.useState(false);
 
-    const handleDuplicate = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        duplicateItem(item.id);
-    };
-
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDeleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!isDeleting) {
             setIsDeleting(true);
             return;
         }
-        removeItem(item.id);
+        onDelete(e);
     };
 
     const getIcon = () => {
@@ -57,9 +62,9 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
 
     const renderActions = () => (
         <div className={styles.actions}>
-            <button onClick={handleDuplicate} title="Duplicate"><Copy size={12} /></button>
+            <button onClick={onDuplicate} title="Duplicate"><Copy size={12} /></button>
             <button
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 title="Delete"
                 className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
                 onMouseLeave={() => setIsDeleting(false)}
@@ -77,13 +82,29 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
         }
     };
 
+    const baseClassName = clsx(
+        styles.card,
+        isSelected && styles.selected,
+        isDimmed && styles.dimmed
+    );
+    
+    // For overlay, we override position to relative so it fits in the dnd-kit portal correctly
+    // But we still need width/height.
+    const finalStyle: React.CSSProperties = isOverlay ? { 
+        ...style, 
+        position: 'relative', 
+        top: 0, 
+        left: 0,
+        transform: 'none' // Ensure no transform doubles up
+    } : style;
+
     // Render Link Card (Compact)
     if (item.type === 'link' && !item.metadata?.image) {
         return (
             <div
-                ref={setNodeRef}
-                className={clsx(styles.card, styles.linkCard, isSelected && styles.selected, isDimmed && styles.dimmed)}
-                style={{ left: item.position_x, top: item.position_y, ...style }}
+                ref={ref}
+                className={clsx(baseClassName, styles.linkCard)}
+                style={finalStyle}
                 {...listeners} {...attributes}
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
@@ -107,9 +128,9 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
     if (item.type === 'link' && item.metadata?.image) {
         return (
             <div
-                ref={setNodeRef}
-                className={clsx(styles.card, styles.captureCard, isSelected && styles.selected, isDimmed && styles.dimmed)}
-                style={{ left: item.position_x, top: item.position_y, ...style }}
+                ref={ref}
+                className={clsx(baseClassName, styles.captureCard)}
+                style={finalStyle}
                 {...listeners} {...attributes}
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
@@ -127,14 +148,10 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
 
     return (
         <div
-            id={`draggable-item-${item.id}`}
-            ref={setNodeRef}
-            className={styles.card}
-            style={{
-                left: item.position_x,
-                top: item.position_y,
-                ...style
-            }}
+            id={`draggable-item-${item.id}`} // Important for multi-select drag in DragWrapper
+            ref={ref}
+            className={baseClassName}
+            style={finalStyle}
             {...listeners}
             {...attributes}
             onPointerDown={(e) => {
@@ -179,5 +196,56 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
             </div>
             {renderActions()}
         </div>
+    );
+});
+
+ItemCardView.displayName = 'ItemCardView';
+
+export default function ItemCard({ item, onClick }: ItemCardProps) {
+    const { duplicateItem, removeItem, selectedIds } = useItemsStore();
+    
+    // We don't need scale here anymore because transform is handled by DragOverlay 
+    // or by direct DOM manipulation in DragWrapper for other items.
+    // Wait, if we use direct DOM manipulation for OTHER items, 
+    // DragWrapper sets their transform.
+    // If we are the active item, we just hide.
+    // So we don't need to apply `transform` manually here at all!
+
+    const isSelected = selectedIds.includes(item.id);
+    const isDimmed = selectedIds.length > 0 && !isSelected;
+
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id: item.id,
+        data: { ...item, type: 'item' } // Ensure type is set for DragWrapper check
+    });
+
+    const handleDuplicate = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        duplicateItem(item.id);
+    };
+
+    const handleDelete = (e: React.MouseEvent) => {
+        // e.stopPropagation() is handled in View
+        removeItem(item.id);
+    };
+
+    return (
+        <ItemCardView 
+            ref={setNodeRef}
+            item={item}
+            isSelected={isSelected}
+            isDimmed={isDimmed}
+            isDragging={isDragging}
+            onClick={onClick}
+            onDuplicate={handleDuplicate}
+            onDelete={handleDelete}
+            attributes={attributes}
+            listeners={listeners}
+            style={{
+                left: item.position_x,
+                top: item.position_y,
+                opacity: isDragging ? 0 : 1
+            }}
+        />
     );
 }

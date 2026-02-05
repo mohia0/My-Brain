@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './Canvas.module.css';
+import { Undo, Redo } from 'lucide-react';
 
 // Fixed Canvas Size (Figma-like artboard)
 const CANVAS_SIZE = 5000;
@@ -11,7 +12,7 @@ const HALF_SIZE = CANVAS_SIZE / 2;
 
 export default function Canvas({ children }: { children: React.ReactNode }) {
     const { scale, position, setPosition, setScale, currentTool } = useCanvasStore();
-    const { items, setSelection, clearSelection, addItem } = useItemsStore();
+    const { items, setSelection, clearSelection, addItem, undo, redo, history } = useItemsStore();
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
@@ -22,6 +23,18 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
     // State
     const [selectionBox, setSelectionBox] = useState<{ startX: number, startY: number, x: number, y: number, width: number, height: number } | null>(null);
     const [isSpacePressed, setIsSpacePressed] = useState(false);
+
+    // Cursor State
+    const [cursor, setCursor] = useState('default');
+
+    // Sync cursor with tool
+    useEffect(() => {
+        if (currentTool === 'hand' || isSpacePressed) {
+            setCursor('grab');
+        } else {
+            setCursor('default');
+        }
+    }, [currentTool, isSpacePressed]);
 
     // Initial load - Center canvas
     useEffect(() => {
@@ -39,11 +52,21 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 e.preventDefault(); // Prevent scrolling
                 setIsSpacePressed(true);
             }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) redo();
+                else undo();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
         };
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.code === 'Space') {
                 setIsSpacePressed(false);
                 isDragging.current = false; // Stop dragging if space is released
+                if (currentTool !== 'hand') setCursor('default');
             }
         };
 
@@ -54,7 +77,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             window.removeEventListener('keydown', handleKeyDown, { capture: true });
             window.removeEventListener('keyup', handleKeyUp, { capture: true });
         };
-    }, []);
+    }, [currentTool, undo, redo]);
 
     // Native Wheel Event Listener (Non-passive for preventing browser zoom)
     useEffect(() => {
@@ -80,10 +103,10 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 let newX = currentPos.x - e.deltaX;
                 let newY = currentPos.y - e.deltaY;
 
-                // Strict limits logic (copied from store/previous logic if simpler or just reuse limit logic)
+                // Strict limits logic
                 const viewportW = window.innerWidth;
                 const viewportH = window.innerHeight;
-                const HALF_SIZE = 2500; // Hardcoded from constant above
+                const HALF_SIZE = 2500;
 
                 const minX = viewportW - (HALF_SIZE * currentScale);
                 const maxX = HALF_SIZE * currentScale;
@@ -91,11 +114,10 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const minY = viewportH - (HALF_SIZE * currentScale);
                 const maxY = HALF_SIZE * currentScale;
 
-                // Simple clamp
                 if (minX <= maxX) {
                     newX = Math.max(minX, Math.min(maxX, newX));
                 } else {
-                    newX = viewportW / 2; // Center if worldview smaller than viewport (rare with 5000px)
+                    newX = viewportW / 2;
                 }
 
                 if (minY <= maxY) {
@@ -131,7 +153,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             e.preventDefault();
             isDragging.current = true;
             lastMousePos.current = { x: e.clientX, y: e.clientY };
-            if (containerRef.current) containerRef.current.style.cursor = 'grabbing';
+            setCursor('grabbing');
             return;
         }
 
@@ -145,7 +167,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 }
                 isDragging.current = true;
                 lastMousePos.current = { x: e.clientX, y: e.clientY };
-                if (containerRef.current) containerRef.current.style.cursor = 'grabbing';
+                setCursor('grabbing');
                 return;
             }
 
@@ -246,12 +268,10 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
     const handleMouseUp = () => {
         isDragging.current = false;
         setSelectionBox(null);
-        if (containerRef.current) {
-            if (currentTool === 'hand' || isSpacePressed) {
-                containerRef.current.style.cursor = 'grab';
-            } else {
-                containerRef.current.style.cursor = 'default';
-            }
+        if (currentTool === 'hand' || isSpacePressed) {
+            setCursor('grab');
+        } else {
+            setCursor('default');
         }
     };
 
@@ -289,16 +309,6 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const getCursor = () => {
-        if (isDragging.current) return 'grabbing';
-        if (isSpacePressed) return 'grab';
-        if (currentTool === 'hand') return 'grab';
-        if (selectionBox) return 'crosshair';
-        return 'default';
-    };
-
-    const gridSize = 40; // Fixed grid size inside world
-
     return (
         <div
             className={styles.container}
@@ -311,7 +321,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             style={{
-                cursor: getCursor()
+                cursor: selectionBox ? 'crosshair' : cursor
             }}
         >
             <div
@@ -355,6 +365,79 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     }}
                 />
             )}
+
+            {/* Minimalist Undo/Redo Controls */}
+            <div style={{
+                position: 'fixed',
+                bottom: 24,
+                right: 24,
+                display: 'flex',
+                gap: 6,
+                zIndex: 1000,
+            }}>
+                <button
+                    onClick={undo}
+                    disabled={history?.past.length === 0}
+                    style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        background: 'rgba(20, 20, 20, 0.6)',
+                        backdropFilter: 'blur(4px)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        color: history?.past.length > 0 ? '#eee' : '#444',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: history?.past.length > 0 ? 'pointer' : 'default',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (history?.past.length > 0) {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(20, 20, 20, 0.6)';
+                        e.currentTarget.style.transform = 'none';
+                    }}
+                    title="Undo (Ctrl+Z)"
+                >
+                    <Undo size={16} />
+                </button>
+                <button
+                    onClick={redo}
+                    disabled={history?.future.length === 0}
+                    style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        background: 'rgba(20, 20, 20, 0.6)',
+                        backdropFilter: 'blur(4px)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        color: history?.future.length > 0 ? '#eee' : '#444',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: history?.future.length > 0 ? 'pointer' : 'default',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (history?.future.length > 0) {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(20, 20, 20, 0.6)';
+                        e.currentTarget.style.transform = 'none';
+                    }}
+                    title="Redo (Ctrl+Y)"
+                >
+                    <Redo size={16} />
+                </button>
+            </div>
         </div>
     );
 }

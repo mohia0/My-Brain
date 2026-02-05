@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Folder as FolderIcon } from 'lucide-react';
 import { Folder } from '@/types';
@@ -14,38 +14,56 @@ interface FolderItemProps {
     onClick?: () => void;
 }
 
-export default function FolderItem({ folder, onClick }: FolderItemProps) {
-    const { items, selectedIds } = useItemsStore();
-    const { scale } = useCanvasStore();
-    const folderItems = items.filter(i => i.folder_id === folder.id);
+interface FolderItemViewProps {
+    folder: Folder;
+    folderItems: any[];
+    isSelected?: boolean;
+    isDimmed?: boolean;
+    isDragging?: boolean;
+    isOverlay?: boolean;
+    onClick?: () => void;
+    style?: React.CSSProperties;
+    attributes?: any;
+    listeners?: any;
+    droppableRef?: (node: HTMLElement | null) => void;
+}
 
-    const isSelected = selectedIds.includes(folder.id);
-    const isDimmed = selectedIds.length > 0 && !isSelected;
+export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
+    folder,
+    folderItems,
+    isSelected,
+    isDimmed,
+    isDragging,
+    isOverlay,
+    onClick,
+    style,
+    attributes,
+    listeners,
+    droppableRef
+}, ref) => {
 
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-        id: folder.id,
-        data: { ...folder, type: 'folder' }
-    });
+    // Base class name
+    const baseClassName = clsx(
+        styles.folder,
+        isSelected && styles.selected,
+        isDimmed && styles.dimmed
+    );
 
-    const { setNodeRef: setDroppableRef } = useDroppable({
-        id: folder.id,
-        data: { type: 'folder', id: folder.id }
-    });
-
-    const style = transform ? {
-        transform: `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)`,
-    } : undefined;
+    // Style adjustments for overlay
+    const finalStyle: React.CSSProperties = isOverlay ? {
+        ...style,
+        position: 'relative',
+        top: 0,
+        left: 0,
+        transform: 'none'
+    } : style;
 
     return (
         <div
             id={`draggable-folder-${folder.id}`}
-            ref={setNodeRef}
-            className={clsx(styles.folder, isSelected && styles.selected, isDimmed && styles.dimmed)}
-            style={{
-                left: folder.position_x,
-                top: folder.position_y,
-                ...style
-            }}
+            ref={ref}
+            className={baseClassName}
+            style={finalStyle}
             {...listeners}
             {...attributes}
             onPointerDown={(e) => {
@@ -54,7 +72,7 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
             }}
             onClick={onClick}
         >
-            <div ref={setDroppableRef} className={styles.dropZone}>
+            <div ref={droppableRef} className={styles.dropZone}>
                 <div className={styles.header}>
                     <FolderIcon size={16} fill="rgba(255,255,255,0.2)" />
                     <span className={styles.title}>{folder.name}</span>
@@ -93,5 +111,45 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
                 </div>
             </div>
         </div>
+    );
+});
+
+FolderItemView.displayName = 'FolderItemView';
+
+export default function FolderItem({ folder, onClick }: FolderItemProps) {
+    const { items, selectedIds } = useItemsStore();
+    const folderItems = items.filter(i => i.folder_id === folder.id);
+
+    const isSelected = selectedIds.includes(folder.id);
+    const isDimmed = selectedIds.length > 0 && !isSelected;
+
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id: folder.id,
+        data: { ...folder, type: 'folder' }
+    });
+
+    const { setNodeRef: setDroppableRef } = useDroppable({
+        id: folder.id,
+        data: { type: 'folder', id: folder.id }
+    });
+
+    return (
+        <FolderItemView
+            ref={setNodeRef}
+            droppableRef={setDroppableRef}
+            folder={folder}
+            folderItems={folderItems}
+            isSelected={isSelected}
+            isDimmed={isDimmed}
+            isDragging={isDragging}
+            onClick={onClick}
+            attributes={attributes}
+            listeners={listeners}
+            style={{
+                left: folder.position_x,
+                top: folder.position_y,
+                opacity: isDragging ? 0 : 1
+            }}
+        />
     );
 }

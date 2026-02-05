@@ -32,7 +32,14 @@ export default function Inbox({ onItemClick }: InboxProps) {
         >
             <div className={styles.header} onClick={() => setIsCollapsed(!isCollapsed)}>
                 <div className={styles.headerTitle}>
-                    <InboxIcon size={20} />
+                    <div style={{ position: 'relative', display: 'flex' }}>
+                        <InboxIcon size={20} />
+                        {isCollapsed && inboxItems.length > 0 && (
+                            <div className={styles.collapsedCounter}>
+                                {inboxItems.length}
+                            </div>
+                        )}
+                    </div>
                     <span>Inbox ({inboxItems.length})</span>
                 </div>
                 <button

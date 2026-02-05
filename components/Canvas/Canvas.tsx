@@ -253,6 +253,9 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const selectedItems = items.filter(item => {
                     const itemW = 200;
                     const itemH = 100;
+                    // Filter out inbox items
+                    if (item.status === 'inbox') return false;
+
                     return (
                         item.position_x < worldX + worldW &&
                         item.position_x + itemW > worldX &&

@@ -36,6 +36,28 @@
     display: none;
 }
 
+.collapsedCounter {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #FF4444;
+    /* Distinct Red Color for notification style */
+    color: white;
+    font-size: 10px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 2px solid var(--card-bg);
+    /* Cutout effect */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
 .isOver {
     background: rgba(96, 165, 250, 0.1);
     border-color: #60A5FA;

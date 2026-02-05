@@ -54,7 +54,7 @@ export default function MiniMap() {
                     {/* Center Crosshair (Optional visual guide) */}
                     <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
 
-                    {items.map(item => (
+                    {items.filter(i => i.status !== 'inbox').map(item => (
                         <div
                             key={item.id}
                             className={styles.dot}

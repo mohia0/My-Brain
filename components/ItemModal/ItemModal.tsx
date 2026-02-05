@@ -87,7 +87,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             const { data, error } = await supabase.from('tags').insert({
                 user_id: user.id,
                 name: tagName,
-                color: '#60A5FA' // Default blue
+                color: 'var(--accent)' // Default purple
             }).select().single();
 
             if (data) {
@@ -148,7 +148,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <img src={content} className={styles.previewImage} alt="Image" />
                         ) : (
                             // Text Editor for Notes
-                            <div style={{ width: '100%', height: '100%', padding: 20, background: 'var(--bg-color)' }}>
+                            <div style={{ width: '100%', height: '100%', padding: '0 0 20px 0', background: 'var(--bg-color)' }}>
                                 <BlockEditor initialContent={content} onChange={setContent} />
                             </div>
                         )}
@@ -158,12 +158,17 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     <div className={styles.rightColumn}>
                         {/* Header */}
                         <div className={styles.header}>
-                            <input
-                                className={styles.titleInput}
-                                value={title}
-                                onChange={e => setTitle(e.target.value)}
-                                placeholder={isLink ? "Page Title" : "Note Title"}
-                            />
+                            <div style={{ flex: 1 }}>
+                                <input
+                                    className={styles.titleInput}
+                                    value={title}
+                                    onChange={e => setTitle(e.target.value)}
+                                    placeholder={isLink ? "Page Title" : "Note Title"}
+                                />
+                                <div className={styles.timestamp}>
+                                    {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                            </div>
                             <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
                         </div>
 

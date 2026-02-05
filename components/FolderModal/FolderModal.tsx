@@ -51,7 +51,7 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
-                        <FolderOpen size={24} color="#6e56cf" />
+                        <FolderOpen size={24} color="var(--accent)" />
                         <span className={styles.folderName}>{folder.name}</span>
                         <span className={styles.itemCount}>{folderItems.length} items</span>
                     </div>
@@ -95,10 +95,15 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
 
                                     <div className={styles.itemInfo}>
                                         <span className={styles.itemTitle}>{item.metadata?.title || 'Untitled'}</span>
-                                        <span className={styles.itemMeta}>
-                                            {item.type === 'link' ? new URL(item.content).hostname :
-                                                item.type === 'text' ? 'Note' : 'Image'}
-                                        </span>
+                                        <div className={styles.itemMeta}>
+                                            <span>
+                                                {item.type === 'link' ? new URL(item.content).hostname :
+                                                    item.type === 'text' ? 'Note' : 'Image'}
+                                            </span>
+                                            <span className={styles.itemDate}>
+                                                {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <button

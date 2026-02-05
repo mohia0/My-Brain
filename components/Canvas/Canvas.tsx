@@ -54,14 +54,18 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 e.preventDefault(); // Prevent scrolling
                 setIsSpacePressed(true);
             }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) {
+                const target = e.target as HTMLElement;
+                if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable || target.closest('[contenteditable="true"]')) {
+                    return;
+                }
+
                 e.preventDefault();
-                if (e.shiftKey) redo();
-                else undo();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-                e.preventDefault();
-                redo();
+                if (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)) {
+                    redo();
+                } else {
+                    undo();
+                }
             }
         };
         const handleKeyUp = (e: KeyboardEvent) => {

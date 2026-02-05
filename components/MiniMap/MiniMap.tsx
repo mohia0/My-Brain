@@ -62,7 +62,7 @@ export default function MiniMap() {
                                 // Map World (0,0) to MiniMap Center
                                 left: (item.position_x + (WORLD_WIDTH / 2)) * RATIO,
                                 top: (item.position_y + (WORLD_HEIGHT / 2)) * RATIO,
-                                backgroundColor: item.type === 'link' ? '#6e56cf' : 'var(--accent)'
+                                backgroundColor: 'var(--accent)'
                             }}
                         />
                     ))}

@@ -207,6 +207,15 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.itemDate {
+    font-size: 0.65rem;
+    opacity: 0.7;
+    font-weight: 400;
 }
 
 .removeBtn {

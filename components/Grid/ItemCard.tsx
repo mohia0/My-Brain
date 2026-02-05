@@ -191,6 +191,9 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 )}
             </div>
             {renderActions()}
+            <div className={styles.outerDate}>
+                {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            </div>
         </div>
     );
 });

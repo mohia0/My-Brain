@@ -356,11 +356,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         // Determine layout based on content types
         const hasWideItems = selectedItems.some(i => i.type === 'link' && i.metadata?.image);
         const colWidth = hasWideItems ? 300 : 200;
-        const gap = 40;
+        const gap = 32;
         const effectiveColWidth = colWidth + gap;
 
         // Calculate optimal columns
-        const cols = Math.ceil(Math.sqrt(selectedItems.length));
+        const cols = Math.max(2, Math.ceil(Math.sqrt(selectedItems.length)));
         const colHeights = new Array(cols).fill(startY);
 
         const newPositions = new Map();
@@ -379,13 +379,18 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
 
             // Determine height based on item type
-            let height = 200; // Default approximation
+            let height = 160;
             if (item.type === 'link') {
                 if (item.metadata?.image) height = 100; // Capture Card
                 else height = 40; // Link Card
+            } else if (item.type === 'image') {
+                height = 200;
             } else {
-                height = 160;
+                height = 130;
             }
+
+            // Space for date
+            height += 20;
 
             const x = startX + (colIndex * effectiveColWidth);
             const y = minY;
@@ -442,11 +447,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         // Check for wide items (Capture Cards)
         const hasWideItems = allElements.some(e => e.entityType === 'item' && (e as any).type === 'link' && (e as any).metadata?.image);
         const colWidth = hasWideItems ? 300 : 200;
-        const gap = 40;
+        const gap = 32; // Consistent gap
         const effectiveColWidth = colWidth + gap;
 
         // Calculate optimal columns
-        const cols = Math.ceil(Math.sqrt(allElements.length));
+        const cols = Math.max(2, Math.ceil(Math.sqrt(allElements.length)));
         const colHeights = new Array(cols).fill(startY);
 
         const newItemPositions = new Map();
@@ -469,18 +474,21 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             // Determine height
             let height = 160;
             if (el.entityType === 'folder') {
-                height = 148; // Folder fixed height
+                height = 148; // Folder fixed height in CSS
             } else {
                 const item = el as any;
                 if (item.type === 'link') {
                     if (item.metadata?.image) height = 100; // Capture Card
                     else height = 40; // Link Card
                 } else if (item.type === 'image') {
-                    height = 200; // Standard image card height approx
+                    height = 200;
                 } else {
-                    height = 120; // Text/Note min-height
+                    height = 130;
                 }
             }
+
+            // Space for date
+            height += 20;
 
             const x = startX + (colIndex * effectiveColWidth);
             const y = minY;

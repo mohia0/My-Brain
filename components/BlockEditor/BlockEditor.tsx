@@ -6,6 +6,7 @@ import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { Block } from "@blocknote/core";
 import { useEffect, useState } from "react";
+import { Undo, Redo } from "lucide-react";
 
 interface BlockEditorProps {
     initialContent?: string; // JSON string or plain text
@@ -65,13 +66,68 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
     };
 
     return (
-        <div style={{ height: '100%', overflowY: 'auto', paddingBottom: 20 }}>
-            <BlockNoteView
-                editor={editor}
-                onChange={handleChange}
-                theme={theme}
-                editable={editable}
-            />
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {editable && (
+                <div style={{
+                    display: 'flex',
+                    gap: '4px',
+                    padding: '8px 12px',
+                    borderBottom: '1px solid var(--card-border)',
+                    background: 'var(--card-bg)',
+                    alignItems: 'center'
+                }}>
+                    <button
+                        onClick={() => editor.undo()}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--foreground)',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--card-hover)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        title="Undo (Ctrl+Z)"
+                    >
+                        <Undo size={16} />
+                    </button>
+                    <button
+                        onClick={() => editor.redo()}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--foreground)',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--card-hover)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        title="Redo (Ctrl+Shift+Z)"
+                    >
+                        <Redo size={16} />
+                    </button>
+                    <div style={{ width: '1px', height: '16px', background: 'var(--card-border)', margin: '0 4px' }} />
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>Editor Controls</span>
+                </div>
+            )}
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 20 }}>
+                <BlockNoteView
+                    editor={editor}
+                    onChange={handleChange}
+                    theme={theme}
+                    editable={editable}
+                />
+            </div>
         </div>
     );
 }

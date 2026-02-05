@@ -110,6 +110,9 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
                     })}
                 </div>
             </div>
+            <div className={styles.outerDate}>
+                {new Date(folder.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            </div>
         </div>
     );
 });

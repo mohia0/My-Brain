@@ -59,10 +59,10 @@
 }
 
 .isOver {
-    background: rgba(96, 165, 250, 0.1);
-    border-color: #60A5FA;
+    background: var(--accent-glow);
+    border-color: var(--accent);
     transform: scale(1.02);
-    box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+    box-shadow: 0 0 20px var(--accent-glow);
 }
 
 .header {
@@ -175,7 +175,46 @@
     color: var(--foreground);
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
+    /* Clip for the fade effect to work */
+    flex: 1;
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+    gap: 4px;
+}
+
+.titleFade {
+    position: absolute;
+    right: 40px;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to right, transparent, var(--modal-bg));
+    pointer-events: none;
+    z-index: 1;
+    transition: background 0.2s;
+}
+
+.inboxItem:hover .titleFade {
+    background: linear-gradient(to right, transparent, var(--card-hover));
+}
+
+.itemDateSmall {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    padding-left: 10px;
+    z-index: 2;
+    background: inherit;
+    /* Keep background to overlap the fade if needed */
 }
 
 .domain {

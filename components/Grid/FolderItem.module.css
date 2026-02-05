@@ -1,6 +1,6 @@
 .folder {
     position: absolute;
-    width: 160px;
+    width: 200px;
     height: 148px;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -12,6 +12,18 @@
     transition: box-shadow 0.2s;
     display: flex;
     flex-direction: column;
+}
+
+.outerDate {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 8px;
+    font-size: 9px;
+    color: var(--text-muted);
+    opacity: 0.7;
+    font-weight: 500;
+    pointer-events: none;
+    letter-spacing: 0.02em;
 }
 
 .folder:hover {

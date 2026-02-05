@@ -64,7 +64,13 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                         draggable={false}
                     />
                     <div className={styles.meta}>
-                        <div className={styles.title}>{item.metadata?.title || 'Untitled Link'}</div>
+                        <div className={styles.titleRow}>
+                            <div className={styles.title}>{item.metadata?.title || 'Untitled Link'}</div>
+                            <div className={styles.titleFade} />
+                            <div className={styles.itemDateSmall}>
+                                {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </div>
+                        </div>
                         <div className={styles.domain}>{new URL(item.content).hostname}</div>
                     </div>
                 </div>
@@ -75,7 +81,13 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                         {item.type === 'link' && <Link size={14} />}
                         {item.type === 'image' && <ImageIcon size={14} />}
                     </div>
-                    <span>{item.metadata?.title || item.content}</span>
+                    <div className={styles.titleRow}>
+                        <span className={styles.title}>{item.metadata?.title || item.content}</span>
+                        <div className={styles.titleFade} />
+                        <div className={styles.itemDateSmall}>
+                            {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </div>
+                    </div>
                 </div>
             )}
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './FloatingBar.module.css';
-import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder } from 'lucide-react';
+import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder, Archive } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import InputModal from '@/components/InputModal/InputModal';
 import clsx from 'clsx';
@@ -17,7 +17,8 @@ export default function FloatingBar() {
         items,
         folders,
         updateItemContent,
-        layoutSelectedItems
+        layoutSelectedItems,
+        archiveSelected
     } = useItemsStore();
 
     const [isDeleting, setIsDeleting] = useState(false);
@@ -157,6 +158,10 @@ export default function FloatingBar() {
             </button>
 
             <div className={styles.divider} />
+
+            <button className={`${styles.actionBtn} ${styles.archiveBtn}`} onClick={archiveSelected} title="Archive Selection">
+                <Archive size={18} />
+            </button>
 
             <button
                 className={`${styles.actionBtn} ${styles.delete} ${isDeleting ? styles.confirmDelete : ''}`}

@@ -22,6 +22,7 @@ export interface Folder {
     position_y: number;
     created_at: string;
     color?: string;
+    status?: 'active' | 'archived';
 }
 
 export interface Tag {

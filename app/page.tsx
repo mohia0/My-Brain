@@ -20,10 +20,12 @@ import { supabase } from "@/lib/supabase";
 
 import Toolbar from "@/components/Toolbar/Toolbar";
 import ZoomWheel from "@/components/ZoomWheel/ZoomWheel";
+import ArchiveZone from "@/components/ArchiveZone/ArchiveZone";
+import ArchiveView from "@/components/ArchiveView/ArchiveView";
 
 
 export default function Home() {
-  const { items, folders, fetchData, subscribeToChanges } = useItemsStore();
+  const { items, folders, fetchData, subscribeToChanges, clearSelection } = useItemsStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
@@ -61,9 +63,9 @@ export default function Home() {
     };
   }, [fetchData, subscribeToChanges]);
 
-  // Only show items and folders that are NOT nested (root level)
-  const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox');
-  const visibleFolders = folders.filter(folder => !folder.parent_id);
+  // Only show items and folders that are NOT nested (root level) and NOT archived
+  const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived');
+  const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
 
   return (
     <DragWrapper>
@@ -92,17 +94,25 @@ export default function Home() {
         <ZoomWheel />
         <Inbox onItemClick={setSelectedItemId} />
         <FloatingBar />
+        <ArchiveZone />
+        <ArchiveView />
 
         {selectedItemId && (
           <ItemModal
             itemId={selectedItemId}
-            onClose={() => setSelectedItemId(null)}
+            onClose={() => {
+              setSelectedItemId(null);
+              clearSelection();
+            }}
           />
         )}
         {selectedFolderId && (
           <FolderModal
             folderId={selectedFolderId}
-            onClose={() => setSelectedFolderId(null)}
+            onClose={() => {
+              setSelectedFolderId(null);
+              clearSelection();
+            }}
             onItemClick={(id) => setSelectedItemId(id)}
           />
         )}

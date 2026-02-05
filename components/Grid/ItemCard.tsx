@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import styles from './ItemCard.module.css';
 import { Item } from '@/types';
-import { FileText, Link, Image as ImageIcon, Copy, Trash2 } from 'lucide-react';
+import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
@@ -23,6 +23,7 @@ interface ItemCardViewProps {
     onClick?: (e: React.MouseEvent) => void;
     onDuplicate: (e: React.MouseEvent) => void;
     onDelete: (e: React.MouseEvent) => void;
+    onArchive: (e: React.MouseEvent) => void;
     style?: React.CSSProperties;
     attributes?: any;
     listeners?: any;
@@ -37,6 +38,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     onClick,
     onDuplicate,
     onDelete,
+    onArchive,
     style,
     attributes,
     listeners
@@ -62,6 +64,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
     const renderActions = () => (
         <div className={styles.actions}>
+            <button onClick={onArchive} title="Archive"><Archive size={12} /></button>
             <button onClick={onDuplicate} title="Duplicate"><Copy size={12} /></button>
             <button
                 onClick={handleDeleteClick}
@@ -201,11 +204,11 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 ItemCardView.displayName = 'ItemCardView';
 
 export default function ItemCard({ item, onClick }: ItemCardProps) {
-    const { duplicateItem, removeItem, selectedIds } = useItemsStore();
+    const { duplicateItem, removeItem, archiveItem, selectedIds } = useItemsStore();
     const { scale } = useCanvasStore();
 
     const isSelected = selectedIds.includes(item.id);
-    const isDimmed = selectedIds.length > 0 && !isSelected;
+    const isDimmed = selectedIds.length > 1 && !isSelected;
 
     const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
         id: item.id,
@@ -219,6 +222,10 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
 
     const handleDelete = (e: React.MouseEvent) => {
         removeItem(item.id);
+    };
+
+    const handleArchive = (e: React.MouseEvent) => {
+        archiveItem(item.id);
     };
 
     const dragStyle: React.CSSProperties = {
@@ -249,6 +256,7 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
             onClick={handleClick}
             onDuplicate={handleDuplicate}
             onDelete={handleDelete}
+            onArchive={handleArchive}
             attributes={attributes}
             listeners={listeners}
             style={dragStyle}

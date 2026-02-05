@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { Folder as FolderIcon } from 'lucide-react';
+import { Folder as FolderIcon, Archive, Copy, Trash2 } from 'lucide-react';
 import { Folder } from '@/types';
 import styles from './FolderItem.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
@@ -22,6 +22,8 @@ interface FolderItemViewProps {
     isDragging?: boolean;
     isOverlay?: boolean;
     onClick?: (e: React.MouseEvent) => void;
+    onDelete: (e: React.MouseEvent) => void;
+    onArchive: (e: React.MouseEvent) => void;
     style?: React.CSSProperties;
     attributes?: any;
     listeners?: any;
@@ -36,11 +38,37 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
     isDragging,
     isOverlay,
     onClick,
+    onDelete,
+    onArchive,
     style,
     attributes,
     listeners,
     droppableRef
 }, ref) => {
+    const [isDeleting, setIsDeleting] = React.useState(false);
+
+    const handleDeleteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isDeleting) {
+            setIsDeleting(true);
+            return;
+        }
+        onDelete(e);
+    };
+
+    const renderActions = () => (
+        <div className={styles.actions}>
+            <button onClick={onArchive} title="Archive"><Archive size={12} /></button>
+            <button
+                onClick={handleDeleteClick}
+                title="Delete"
+                className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
+                onMouseLeave={() => setIsDeleting(false)}
+            >
+                {isDeleting ? "Sure?" : <Trash2 size={12} />}
+            </button>
+        </div>
+    );
 
     // Base class name
     const baseClassName = clsx(
@@ -65,6 +93,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
             className={baseClassName}
             style={finalStyle}
         >
+            {renderActions()}
             {isSelected && (
                 <div className={styles.selectionSilhouette}>
                     <div className={styles.silhouetteTab} style={{ background: folder.color || 'var(--card-bg)' }} />
@@ -142,12 +171,12 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
 FolderItemView.displayName = 'FolderItemView';
 
 export default function FolderItem({ folder, onClick }: FolderItemProps) {
-    const { items, selectedIds } = useItemsStore();
+    const { items, selectedIds, archiveFolder, removeFolder } = useItemsStore();
     const { scale } = useCanvasStore(); // Need scale for transform
     const folderItems = items.filter(i => i.folder_id === folder.id);
 
     const isSelected = selectedIds.includes(folder.id);
-    const isDimmed = selectedIds.length > 0 && !isSelected;
+    const isDimmed = selectedIds.length > 1 && !isSelected;
 
     const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
         id: folder.id,
@@ -177,6 +206,16 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
         }
     };
 
+    const handleArchive = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        archiveFolder(folder.id);
+    };
+
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        removeFolder(folder.id);
+    };
+
     return (
         <FolderItemView
             ref={setNodeRef}
@@ -187,6 +226,8 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
             isDimmed={isDimmed}
             isDragging={isDragging}
             onClick={handleClick}
+            onArchive={handleArchive}
+            onDelete={handleDelete}
             attributes={attributes}
             listeners={listeners}
             style={dragStyle}

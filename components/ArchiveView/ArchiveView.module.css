@@ -1,0 +1,319 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2100;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal {
+    background: var(--modal-bg);
+    width: 900px;
+    height: 85vh;
+    max-height: 800px;
+    border-radius: 24px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.header {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.titleIcon {
+    color: var(--accent);
+}
+
+.titleRow h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.badge {
+    background: var(--accent-glow);
+    color: var(--accent);
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.searchWrapper {
+    flex: 1;
+    position: relative;
+    max-width: 400px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.searchInput {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    padding: 10px 12px 10px 40px;
+    border-radius: 12px;
+    color: var(--foreground);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.searchInput:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    color: var(--foreground);
+    transform: rotate(90deg);
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+}
+
+.emptyState {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: var(--text-muted);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.archiveCard {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.archiveCard:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--accent);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.cardPreview {
+    width: 100%;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.previewImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+    transition: all 0.5s ease;
+}
+
+.archiveCard:hover .previewImg {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.previewPlaceholder {
+    color: var(--text-muted);
+    opacity: 0.3;
+}
+
+.cardBody {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.cardInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.cardType {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.cardTitle {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.cardDesc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+.cardFooter {
+    margin-top: auto;
+    padding-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cardDate {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.cardActions {
+    display: flex;
+    gap: 10px;
+}
+
+.actionBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.restoreBtn:hover {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-color: var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+.deleteBtn:hover {
+    background: var(--danger-glow);
+    color: var(--danger);
+    border-color: var(--danger-glow);
+    transform: translateY(-2px);
+}
+
+.confirmDelete {
+    background: var(--danger) !important;
+    color: white !important;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.folderBadge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10;
+}

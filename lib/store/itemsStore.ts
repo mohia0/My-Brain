@@ -74,6 +74,15 @@ interface ItemsState {
     updateFolderContent: (id: string, updates: Partial<Folder>) => void;
     removeFolder: (id: string) => void;
 
+    // Archive
+    archiveItem: (id: string) => void;
+    unarchiveItem: (id: string) => void;
+    archiveFolder: (id: string) => void;
+    unarchiveFolder: (id: string) => void;
+    archiveSelected: () => void;
+    isArchiveOpen: boolean;
+    setArchiveOpen: (open: boolean) => void;
+
     // Batch & History
     updatePositions: (updates: { id: string, type: 'item' | 'folder', x: number, y: number }[]) => void;
     history: { past: HistoryAction[], future: HistoryAction[] };
@@ -409,6 +418,51 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
         }));
         await supabase.from('folders').delete().eq('id', id);
+    },
+
+    // Archive Logic
+    isArchiveOpen: false,
+    setArchiveOpen: (open) => set({ isArchiveOpen: open }),
+
+    archiveItem: async (id) => {
+        await get().updateItemContent(id, { status: 'archived' });
+    },
+
+    unarchiveItem: async (id) => {
+        await get().updateItemContent(id, { status: 'active' });
+    },
+
+    archiveFolder: async (id) => {
+        // When archiving a folder, we might want to archive its contents too?
+        // For now, just archive the folder itself.
+        await get().updateFolderContent(id, { status: 'archived' });
+    },
+
+    unarchiveFolder: async (id) => {
+        await get().updateFolderContent(id, { status: 'active' });
+    },
+
+    archiveSelected: async () => {
+        const { selectedIds, items, folders, updateItemContent, updateFolderContent, clearSelection } = get();
+
+        const itemIds = items.filter(i => selectedIds.includes(i.id)).map(i => i.id);
+        const folderIds = folders.filter(f => selectedIds.includes(f.id)).map(f => f.id);
+
+        // Batch update in store
+        set(state => ({
+            items: state.items.map(i => itemIds.includes(i.id) ? { ...i, status: 'archived' } : i),
+            folders: state.folders.map(f => folderIds.includes(f.id) ? { ...f, status: 'archived' } : f)
+        }));
+
+        // DB updates
+        if (itemIds.length > 0) {
+            await supabase.from('items').update({ status: 'archived' }).in('id', itemIds);
+        }
+        if (folderIds.length > 0) {
+            await supabase.from('folders').update({ status: 'archived' }).in('id', folderIds);
+        }
+
+        clearSelection();
     },
 
     // Selection (Local Only)

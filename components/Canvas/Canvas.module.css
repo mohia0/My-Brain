@@ -25,6 +25,16 @@
     cursor: grab !important;
 }
 
+/* Global override to disable item interactions when hand tool is active */
+.handActive [id^="draggable-item-"],
+.handActive [id^="draggable-folder-"] {
+    pointer-events: none !important;
+}
+
+.handActive .actions {
+    display: none !important;
+}
+
 .handDragging,
 .handDragging * {
     cursor: grabbing !important;

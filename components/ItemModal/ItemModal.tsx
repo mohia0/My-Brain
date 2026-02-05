@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -17,7 +17,7 @@ interface ItemModalProps {
 }
 
 export default function ItemModal({ itemId, onClose }: ItemModalProps) {
-    const { items, updateItemContent, removeItem } = useItemsStore();
+    const { items, fetchData, updateItemContent, removeItem, archiveItem } = useItemsStore();
     const item = items.find(i => i.id === itemId);
     const isLink = item?.type === 'link';
     const screenshotUrl = item?.metadata?.image;
@@ -160,18 +160,22 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         updateItemContent(item.id, {
             type: 'text',
             // Default content for note can be empty or the URL
-            content: `Origin: ${item.content}\n\n${item.metadata?.description || ''}`
+            content: `Origin: ${item.content} \n\n${item.metadata?.description || ''} `
         });
         onClose();
     };
 
-    const handleDelete = (e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleDelete = async () => {
         if (!isDeleting) {
             setIsDeleting(true);
             return;
         }
-        removeItem(item.id);
+        await removeItem(item!.id);
+        onClose();
+    };
+
+    const handleArchive = async () => {
+        await archiveItem(item!.id);
         onClose();
     };
 
@@ -239,7 +243,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <img src={content || undefined} className={styles.previewImage} alt="Image" />
                         ) : (
                             // Text Editor for Notes
-                            <div style={{ width: '100%', height: '100%', padding: '0 0 20px 0', background: 'transparent' }}>
+                            <div style={{ width: '100%', height: '100%', background: 'transparent', display: 'flex', flexDirection: 'column' }}>
                                 <BlockEditor initialContent={content} onChange={setContent} />
                             </div>
                         )}
@@ -258,15 +262,15 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 <div className={styles.overlayDomain}>
                                     {url && <img src={`https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`} className={styles.favicon} alt="" />}
                                     {url ? new URL(url).hostname : 'No Source'}
-                                </div>
-                            </div>
+                                </div >
+                            </div >
                         )}
-                    </div>
+                    </div >
 
                     {/* RIGHT COLUMN: METADATA */}
-                    <div className={styles.rightColumn}>
+                    < div className={styles.rightColumn} >
                         {/* Header */}
-                        <div className={styles.header}>
+                        < div className={styles.header} >
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 {isEditingTitle ? (
                                     <input
@@ -296,38 +300,40 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 </div>
                             </div>
                             <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
-                        </div>
+                        </div >
 
                         {/* Body */}
-                        <div className={styles.scrollBody}>
+                        < div className={styles.scrollBody} >
 
 
 
                             {/* URL Link Section */}
-                            {isLink && (
-                                <div className={styles.section}>
-                                    <div className={styles.labelRow}>
-                                        <span className={styles.label}>Source Link</span>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            <button className={styles.copyBtn} onClick={handleCopy} title="Copy Link">
-                                                {copied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}
-                                            </button>
-                                            <a href={url} target="_blank" className={styles.externalLinkIcon} title="Open in New Tab">
-                                                <ExternalLink size={14} />
-                                            </a>
+                            {
+                                isLink && (
+                                    <div className={styles.section}>
+                                        <div className={styles.labelRow}>
+                                            <span className={styles.label}>Source Link</span>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <button className={styles.copyBtn} onClick={handleCopy} title="Copy Link">
+                                                    {copied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}
+                                                </button>
+                                                <a href={url} target="_blank" className={styles.externalLinkIcon} title="Open in New Tab">
+                                                    <ExternalLink size={14} />
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className={styles.linkInputWrapper}>
+                                            <Link size={16} className={styles.inputIcon} />
+                                            <input
+                                                className={styles.linkInput}
+                                                value={url}
+                                                onChange={e => setUrl(e.target.value)}
+                                                placeholder="https://..."
+                                            />
                                         </div>
                                     </div>
-                                    <div className={styles.linkInputWrapper}>
-                                        <Link size={16} className={styles.inputIcon} />
-                                        <input
-                                            className={styles.linkInput}
-                                            value={url}
-                                            onChange={e => setUrl(e.target.value)}
-                                            placeholder="https://..."
-                                        />
-                                    </div>
-                                </div>
-                            )}
+                                )
+                            }
                             <div className={styles.section}>
                                 <span className={styles.label}>Tags</span>
                                 <div className={styles.tagsWrapper}>
@@ -368,10 +374,10 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 />
                             </div>
 
-                        </div>
+                        </div >
 
                         {/* Footer */}
-                        <div className={styles.footer}>
+                        < div className={styles.footer} >
                             <div className={styles.footerLeft}>
                                 <button
                                     className={styles.deleteBtn}
@@ -379,6 +385,13 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     onMouseLeave={() => setIsDeleting(false)}
                                 >
                                     {isDeleting ? "Confirm Delete?" : <Trash2 size={16} />}
+                                </button>
+                                <button
+                                    className={styles.archiveBtn}
+                                    onClick={handleArchive}
+                                    title="Archive"
+                                >
+                                    <Archive size={16} />
                                 </button>
                                 {isLink && (
                                     <button className={styles.convertBtn} onClick={handleConvertToNote}>
@@ -389,11 +402,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <button className={styles.saveBtn} onClick={handleSave}>
                                 <Save size={16} /> Save Changes
                             </button>
-                        </div>
-                    </div>
+                        </div >
+                    </div >
 
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 }

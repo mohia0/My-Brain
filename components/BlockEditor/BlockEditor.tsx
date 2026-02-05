@@ -109,63 +109,11 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            background: theme === 'light' ? '#ffffff' : 'transparent',
-            borderRadius: 'inherit'
+            background: theme === 'light' ? '#ffffff' : '#1e1e1e',
+            borderRadius: 'inherit',
+            position: 'relative'
         }}>
-            {editable && (
-                <div style={{
-                    display: 'flex',
-                    gap: '4px',
-                    padding: '8px 12px',
-                    borderBottom: '1px solid var(--card-border)',
-                    background: theme === 'light' ? '#f8f9fa' : 'var(--card-bg)',
-                    alignItems: 'center'
-                }}>
-                    <button
-                        onClick={() => editor.undo()}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
-                            padding: '4px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--card-hover)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                        title="Undo (Ctrl+Z)"
-                    >
-                        <Undo size={16} />
-                    </button>
-                    <button
-                        onClick={() => editor.redo()}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
-                            padding: '4px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--card-hover)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                        title="Redo (Ctrl+Shift+Z)"
-                    >
-                        <Redo size={16} />
-                    </button>
-                    <div style={{ width: '1px', height: '16px', background: 'var(--card-border)', margin: '0 4px' }} />
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>Editor Controls</span>
-                </div>
-            )}
-            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 20 }}>
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80 }}>
                 <BlockNoteView
                     editor={editor}
                     onChange={handleChange}
@@ -184,6 +132,67 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                     />
                 </BlockNoteView>
             </div>
+
+            {editable && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: '40px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    gap: '4px',
+                    padding: '6px',
+                    background: theme === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 30, 30, 0.8)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid var(--card-border)',
+                    borderRadius: '12px',
+                    alignItems: 'center',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                    zIndex: 100
+                }}>
+                    <button
+                        onClick={() => editor.undo()}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
+                            padding: '8px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        title="Undo (Ctrl+Z)"
+                    >
+                        <Undo size={18} />
+                    </button>
+                    <div style={{ width: '1px', height: '16px', background: 'var(--card-border)', margin: '0 4px' }} />
+                    <button
+                        onClick={() => editor.redo()}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
+                            padding: '8px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        title="Redo (Ctrl+Shift+Z)"
+                    >
+                        <Redo size={18} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

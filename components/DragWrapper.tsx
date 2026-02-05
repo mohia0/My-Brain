@@ -26,18 +26,22 @@ import { FolderItemView } from './Grid/FolderItem';
 
 
 export default function DragWrapper({ children }: { children: React.ReactNode }) {
-    const { scale } = useCanvasStore();
+    const { scale, currentTool } = useCanvasStore();
     const { updateItemContent, updatePositions, items, folders, selectedIds } = useItemsStore();
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
     const [activeItem, setActiveItem] = useState<any>(null);
 
+    const isHandTool = currentTool === 'hand';
+
     const sensors = useSensors(
         useSensor(MouseSensor, {
-            activationConstraint: {
+            activationConstraint: isHandTool ? { distance: 999999 } : {
                 distance: 3,
             },
         }),
-        useSensor(TouchSensor)
+        useSensor(TouchSensor, {
+            activationConstraint: isHandTool ? { distance: 999999 } : undefined
+        })
     );
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -119,7 +123,20 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             return;
         }
 
-        // 4. Handle Normal Canvas Drag
+        // 4. Handle Dropping ONTO Archive Zone
+        if (over && over.id === 'archive-zone') {
+            const currentSelectedIds = useItemsStore.getState().selectedIds;
+            if (currentSelectedIds.includes(active.id as string)) {
+                useItemsStore.getState().archiveSelected();
+            } else if (activeData.type === 'folder') {
+                useItemsStore.getState().archiveFolder(active.id as string);
+            } else {
+                useItemsStore.getState().archiveItem(active.id as string);
+            }
+            return;
+        }
+
+        // 5. Handle Normal Canvas Drag
         const dx = delta.x / currentScale;
         const dy = delta.y / currentScale;
 

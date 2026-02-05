@@ -192,6 +192,11 @@
     color: var(--danger);
 }
 
+.archiveBtn:hover {
+    background: var(--accent-glow);
+    color: var(--accent);
+}
+
 .confirmDelete {
     background: var(--danger) !important;
     color: white !important;

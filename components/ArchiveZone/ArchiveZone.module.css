@@ -1,0 +1,65 @@
+.archiveZone {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 60px;
+    height: 60px;
+    background: var(--modal-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 25px var(--shadow-color);
+    backdrop-filter: blur(12px);
+    z-index: 1500;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.archiveZone:hover {
+    transform: scale(1.1) translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 15px 35px var(--accent-glow);
+}
+
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.isOver {
+    background: var(--accent);
+    border-color: white;
+    transform: scale(1.2) translateY(-8px);
+    box-shadow: 0 20px 45px var(--accent-glow);
+}
+
+.dropText {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    right: 0;
+    background: var(--accent);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

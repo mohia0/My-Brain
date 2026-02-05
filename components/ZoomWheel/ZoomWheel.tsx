@@ -8,14 +8,18 @@ import { Plus, Minus } from 'lucide-react';
 export default function ZoomWheel() {
     const { scale, zoomAt } = useCanvasStore();
 
-    // Mapping log scale for natural feel
-    // Slider 0-100 represents scale 0.1 to 3
+    // Use 0.65 as the base (1:1 visual feels like scale 0.65)
+    // Display should be relative to 0.65
+    const BASE_SCALE = 0.65;
+
+    // Slider range mapping:
+    // We'll map value 0 (scale 0.1) to 100 (scale 3.25, which is 5x base)
     const toSlider = (s: number) => {
-        return ((s - 0.1) / (3 - 0.1)) * 100;
+        return ((s - 0.1) / (3.25 - 0.1)) * 100;
     };
 
     const fromSlider = (v: number) => {
-        return 0.1 + (v / 100) * (3 - 0.1);
+        return 0.1 + (v / 100) * (3.25 - 0.1);
     };
 
     const handleZoom = (newScale: number) => {
@@ -24,7 +28,7 @@ export default function ZoomWheel() {
     };
 
     const handleRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = parseFloat(e.target.value); // 0-100
+        const val = parseFloat(e.target.value);
         handleZoom(fromSlider(val));
     };
 
@@ -52,12 +56,20 @@ export default function ZoomWheel() {
                 </div>
 
                 <div className={styles.label}>
-                    {Math.round(scale * 100)}%
+                    {Math.round((scale / BASE_SCALE) * 100)}%
                 </div>
             </div>
 
             <button className={styles.btn} onClick={() => handleZoom(scale * 0.9)}>
                 <Minus size={18} />
+            </button>
+
+            <button
+                className={styles.resetBtn}
+                onClick={() => handleZoom(0.65)}
+                title="Reset to 100%"
+            >
+                100%
             </button>
         </div>
     );

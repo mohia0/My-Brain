@@ -341,99 +341,17 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     setSelection: (ids) => set({ selectedIds: ids }),
     layoutSelectedItems: () => set((state) => {
         const selectedItems = state.items.filter(i => state.selectedIds.includes(i.id));
-        if (selectedItems.length === 0) return state;
+        const selectedFolders = state.folders.filter(f => state.selectedIds.includes(f.id));
 
-        // Sort by position to maintain relative order (Top-Left to Bottom-Right)
-        selectedItems.sort((a, b) => {
-            const rowDiff = Math.abs(a.position_y - b.position_y);
-            if (rowDiff > 50) return a.position_y - b.position_y;
-            return a.position_x - b.position_x;
-        });
-
-        const startX = Math.min(...selectedItems.map(i => i.position_x));
-        const startY = Math.min(...selectedItems.map(i => i.position_y));
-
-        // Determine layout based on content types
-        const hasWideItems = selectedItems.some(i => i.type === 'link' && i.metadata?.image);
-        const colWidth = hasWideItems ? 300 : 200;
-        const gap = 32;
-        const effectiveColWidth = colWidth + gap;
-
-        // Calculate optimal columns
-        const cols = Math.max(2, Math.ceil(Math.sqrt(selectedItems.length)));
-        const colHeights = new Array(cols).fill(startY);
-
-        const newPositions = new Map();
-        const updates: any[] = [];
-        const historyUpdates: PositionUpdate[] = [];
-
-        selectedItems.forEach(item => {
-            // Find shortest column (Masonry)
-            let colIndex = 0;
-            let minY = colHeights[0];
-            for (let i = 1; i < cols; i++) {
-                if (colHeights[i] < minY) {
-                    minY = colHeights[i];
-                    colIndex = i;
-                }
-            }
-
-            // Determine height based on item type
-            let height = 160;
-            if (item.type === 'link') {
-                if (item.metadata?.image) height = 100; // Capture Card
-                else height = 40; // Link Card
-            } else if (item.type === 'image') {
-                height = 200;
-            } else {
-                height = 130;
-            }
-
-            // Space for date
-            height += 20;
-
-            const x = startX + (colIndex * effectiveColWidth);
-            const y = minY;
-
-            newPositions.set(item.id, { x, y });
-            colHeights[colIndex] = y + height + gap;
-
-            updates.push({ id: item.id, position_x: x, position_y: y });
-            historyUpdates.push({ id: item.id, type: 'item', x, y, prevX: item.position_x, prevY: item.position_y });
-        });
-
-        // Batch update in BG
-        updates.forEach(u => {
-            supabase.from('items').update({ position_x: u.position_x, position_y: u.position_y }).eq('id', u.id).then();
-        });
-
-        const newItems = state.items.map(item => {
-            const pos = newPositions.get(item.id);
-            return pos ? { ...item, position_x: pos.x, position_y: pos.y } : item;
-        });
-
-        return {
-            items: newItems,
-            history: {
-                past: [...state.history.past, { type: 'MOVE', updates: historyUpdates }],
-                future: []
-            }
-        };
-    }),
-    layoutAllItems: () => set((state) => {
-        // Find items and folders that are on the canvas (root level)
-        const canvasItems = state.items.filter(i => !i.folder_id && i.status !== 'inbox');
-        const canvasFolders = state.folders;
-
-        if (canvasItems.length === 0 && canvasFolders.length === 0) return state;
+        if (selectedItems.length === 0 && selectedFolders.length === 0) return state;
 
         // Combine and add temporary type identifier
         const allElements = [
-            ...canvasItems.map(i => ({ ...i, entityType: 'item' })),
-            ...canvasFolders.map(f => ({ ...f, entityType: 'folder' }))
+            ...selectedItems.map(i => ({ ...i, entityType: 'item' })),
+            ...selectedFolders.map(f => ({ ...f, entityType: 'folder' }))
         ];
 
-        // Sort by position (Top-Left to Bottom-Right)
+        // Sort by position to maintain relative order (Top-Left to Bottom-Right)
         allElements.sort((a, b) => {
             const rowDiff = Math.abs(a.position_y - b.position_y);
             if (rowDiff > 50) return a.position_y - b.position_y;
@@ -443,11 +361,10 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const startX = Math.min(...allElements.map(e => e.position_x));
         const startY = Math.min(...allElements.map(e => e.position_y));
 
-        // Determine layout settings
-        // Check for wide items (Capture Cards)
+        // Determine layout based on content types
         const hasWideItems = allElements.some(e => e.entityType === 'item' && (e as any).type === 'link' && (e as any).metadata?.image);
         const colWidth = hasWideItems ? 300 : 200;
-        const gap = 32; // Consistent gap
+        const gap = 32;
         const effectiveColWidth = colWidth + gap;
 
         // Calculate optimal columns
@@ -474,7 +391,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             // Determine height
             let height = 160;
             if (el.entityType === 'folder') {
-                height = 148; // Folder fixed height in CSS
+                height = 148; // Folder fixed height
             } else {
                 const item = el as any;
                 if (item.type === 'link') {
@@ -488,7 +405,115 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
 
             // Space for date
-            height += 20;
+            height += 24;
+
+            const x = startX + (colIndex * effectiveColWidth);
+            const y = minY;
+
+            colHeights[colIndex] = y + height + gap;
+
+            if (el.entityType === 'item') {
+                newItemPositions.set(el.id, { x, y });
+                itemsToUpdate.push({ id: el.id, position_x: x, position_y: y });
+                historyUpdates.push({ id: el.id, type: 'item', x, y, prevX: el.position_x, prevY: el.position_y });
+            } else {
+                newFolderPositions.set(el.id, { x, y });
+                foldersToUpdate.push({ id: el.id, position_x: x, position_y: y });
+                historyUpdates.push({ id: el.id, type: 'folder', x, y, prevX: el.position_x, prevY: el.position_y });
+            }
+        });
+
+        // Batch update in BG
+        itemsToUpdate.forEach(u => supabase.from('items').update({ position_x: u.position_x, position_y: u.position_y }).eq('id', u.id).then());
+        foldersToUpdate.forEach(u => supabase.from('folders').update({ position_x: u.position_x, position_y: u.position_y }).eq('id', u.id).then());
+
+        const newItems = state.items.map(item => {
+            const pos = newItemPositions.get(item.id);
+            return pos ? { ...item, position_x: pos.x, position_y: pos.y } : item;
+        });
+
+        const newFolders = state.folders.map(folder => {
+            const pos = newFolderPositions.get(folder.id);
+            return pos ? { ...folder, position_x: pos.x, position_y: pos.y } : folder;
+        });
+
+        return {
+            items: newItems,
+            folders: newFolders,
+            history: {
+                past: [...state.history.past, { type: 'MOVE', updates: historyUpdates }],
+                future: []
+            }
+        };
+    }),
+    layoutAllItems: () => set((state) => {
+        // Find items and folders that are on the canvas (root level)
+        const canvasItems = state.items.filter(i => !i.folder_id && i.status !== 'inbox');
+        const canvasFolders = state.folders.filter(f => !f.parent_id);
+
+        if (canvasItems.length === 0 && canvasFolders.length === 0) return state;
+
+        // Combine and add temporary type identifier
+        const allElements = [
+            ...canvasItems.map(i => ({ ...i, entityType: 'item' })),
+            ...canvasFolders.map(f => ({ ...f, entityType: 'folder' }))
+        ];
+
+        // Sort by position (Top-Left to Bottom-Right)
+        allElements.sort((a, b) => {
+            const rowDiff = Math.abs(a.position_y - b.position_y);
+            if (rowDiff > 50) return a.position_y - b.position_y;
+            return a.position_x - b.position_x;
+        });
+
+        const startX = Math.min(...allElements.map(e => e.position_x));
+        const startY = Math.min(...allElements.map(e => e.position_y));
+
+        // Determine layout settings
+        const hasWideItems = allElements.some(e => e.entityType === 'item' && (e as any).type === 'link' && (e as any).metadata?.image);
+        const colWidth = hasWideItems ? 300 : 200;
+        const gap = 32;
+        const effectiveColWidth = colWidth + gap;
+
+        // Calculate optimal columns
+        const cols = Math.max(2, Math.ceil(Math.sqrt(allElements.length)));
+        const colHeights = new Array(cols).fill(startY);
+
+        const newItemPositions = new Map();
+        const newFolderPositions = new Map();
+        const itemsToUpdate: any[] = [];
+        const foldersToUpdate: any[] = [];
+        const historyUpdates: PositionUpdate[] = [];
+
+        allElements.forEach(el => {
+            // Find shortest column (Masonry)
+            let colIndex = 0;
+            let minY = colHeights[0];
+            for (let i = 1; i < cols; i++) {
+                if (colHeights[i] < minY) {
+                    minY = colHeights[i];
+                    colIndex = i;
+                }
+            }
+
+            // Determine height
+            let height = 160;
+            if (el.entityType === 'folder') {
+                height = 148; // Folder fixed height
+            } else {
+                const item = el as any;
+                if (item.type === 'link') {
+                    if (item.metadata?.image) height = 100; // Capture Card
+                    else height = 40; // Link Card
+                } else if (item.type === 'image') {
+                    height = 200;
+                } else {
+                    height = 130;
+                }
+            }
+
+            // Space for date
+            height += 24;
 
             const x = startX + (colIndex * effectiveColWidth);
             const y = minY;

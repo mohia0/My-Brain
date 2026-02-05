@@ -13,7 +13,7 @@ interface CanvasState {
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
-    scale: 1,
+    scale: 0.65,
     position: { x: 0, y: 0 },
     setScale: (scale) => set({ scale }),
     setPosition: (x, y) => set({ position: { x, y } }),

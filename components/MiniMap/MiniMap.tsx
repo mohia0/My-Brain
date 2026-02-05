@@ -28,30 +28,40 @@ export default function MiniMap() {
     const viewportW = (mount && typeof window !== 'undefined' ? window.innerWidth : 1920) / scale;
     const viewportH = (mount && typeof window !== 'undefined' ? window.innerHeight : 1080) / scale;
 
+    const isDragging = React.useRef(false);
+
+    const handleMapMove = (clientX: number, clientY: number, currentTarget: HTMLElement) => {
+        const rect = currentTarget.getBoundingClientRect();
+        const clickX = clientX - rect.left;
+        const clickY = clientY - rect.top;
+
+        const worldX = (clickX / RATIO) - (WORLD_WIDTH / 2);
+        const worldY = (clickY / RATIO) - (WORLD_HEIGHT / 2);
+
+        const newX = (window.innerWidth / 2) - (worldX * scale);
+        const newY = (window.innerHeight / 2) - (worldY * scale);
+
+        useCanvasStore.getState().setPosition(newX, newY);
+    };
+
     return (
         <div className={styles.wrapper}>
             <div className={styles.mapContainer}>
                 <div
                     className={styles.container}
-                    style={{ width: MAP_WIDTH, height: MAP_HEIGHT }}
-                    onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const clickX = e.clientX - rect.left;
-                        const clickY = e.clientY - rect.top;
-
-                        // Inverse Mapping: Click -> World
-                        // Map Center (MAP_WIDTH/2, MAP_HEIGHT/2) is World (0,0)
-                        const worldX = (clickX / RATIO) - (WORLD_WIDTH / 2);
-                        const worldY = (clickY / RATIO) - (WORLD_HEIGHT / 2);
-
-                        // Center the Canvas on this World Point
-                        const newX = (window.innerWidth / 2) - (worldX * scale);
-                        const newY = (window.innerHeight / 2) - (worldY * scale);
-
-                        useCanvasStore.getState().setPosition(newX, newY);
+                    style={{ width: MAP_WIDTH, height: MAP_HEIGHT, cursor: 'crosshair' }}
+                    onMouseDown={(e) => {
+                        isDragging.current = true;
+                        handleMapMove(e.clientX, e.clientY, e.currentTarget);
                     }}
+                    onMouseMove={(e) => {
+                        if (isDragging.current) {
+                            handleMapMove(e.clientX, e.clientY, e.currentTarget);
+                        }
+                    }}
+                    onMouseUp={() => isDragging.current = false}
+                    onMouseLeave={() => isDragging.current = false}
                 >
-                    {/* Center Crosshair (Optional visual guide) */}
                     <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
 
                     {items.filter(i => i.status !== 'inbox').map(item => (
@@ -59,7 +69,6 @@ export default function MiniMap() {
                             key={item.id}
                             className={styles.dot}
                             style={{
-                                // Map World (0,0) to MiniMap Center
                                 left: (item.position_x + (WORLD_WIDTH / 2)) * RATIO,
                                 top: (item.position_y + (WORLD_HEIGHT / 2)) * RATIO,
                                 backgroundColor: 'var(--accent)'
@@ -67,10 +76,25 @@ export default function MiniMap() {
                         />
                     ))}
 
+                    {/* Folders as small white dots */}
+                    {useItemsStore.getState().folders.map(folder => (
+                        <div
+                            key={folder.id}
+                            className={styles.dot}
+                            style={{
+                                left: (folder.position_x + (WORLD_WIDTH / 2)) * RATIO,
+                                top: (folder.position_y + (WORLD_HEIGHT / 2)) * RATIO,
+                                backgroundColor: 'white',
+                                opacity: 0.6,
+                                width: 3,
+                                height: 3
+                            }}
+                        />
+                    ))}
+
                     <div
                         className={styles.viewport}
                         style={{
-                            // Viewport TopLeft in World = -position / scale
                             left: ((-position.x / scale) + (WORLD_WIDTH / 2)) * RATIO,
                             top: ((-position.y / scale) + (WORLD_HEIGHT / 2)) * RATIO,
                             width: viewportW * RATIO,
@@ -78,9 +102,7 @@ export default function MiniMap() {
                         }}
                     />
                 </div>
-
             </div>
         </div>
-
     );
 }

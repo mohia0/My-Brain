@@ -109,3 +109,27 @@
 .wheelContainer:hover .label {
     opacity: 1;
 }
+
+.resetBtn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 4px;
+}
+
+.resetBtn:hover {
+    background: var(--card-hover);
+    color: var(--accent);
+    border-color: var(--accent-glow);
+    transform: translateY(-2px);
+}

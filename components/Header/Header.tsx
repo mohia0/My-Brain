@@ -30,9 +30,7 @@ export default function Header() {
         // x = (WindowWidth / 2) - (ix * s)
         // y = (WindowHeight / 2) - (iy * s)
         // For now let's just approximate center
-
-        // reset scale for simplicity or keep it? Let's keep it but maybe zoom in a bit if too far out
-        const targetScale = 1;
+        const targetScale = 0.65;
         setScale(targetScale);
 
         const viewportW = window.innerWidth;
@@ -51,7 +49,7 @@ export default function Header() {
         <header className={styles.header}>
             <div className={styles.logo} onClick={() => {
                 setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                setScale(1);
+                setScale(0.65);
             }}>
                 <div className={styles.logoDot} />
                 <h1>My Brain</h1>

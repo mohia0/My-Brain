@@ -180,6 +180,11 @@
     text-overflow: clip;
     /* Clip for the fade effect to work */
     flex: 1;
+    transition: transform 1.5s ease-in-out;
+}
+
+.inboxItem:hover .title {
+    transform: translateX(-30%);
 }
 
 .titleRow {

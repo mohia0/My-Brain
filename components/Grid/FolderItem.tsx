@@ -49,7 +49,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
         isDimmed && styles.dimmed
     );
 
-    // Style adjustments for overlay
+    // Style adjustments for overlay (fixed type error)
     const finalStyle = isOverlay ? {
         ...style,
         position: 'relative' as const,

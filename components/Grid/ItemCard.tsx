@@ -88,7 +88,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         isDimmed && styles.dimmed
     );
 
-    // For overlay, we override position to relative so it fits in the dnd-kit portal correctly
+    // For overlay, we override position to relative so it fits in the dnd-kit portal correctly (fixed type error)
     // But we still need width/height.
     const finalStyle = isOverlay ? {
         ...style,

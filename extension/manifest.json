@@ -1,4 +1,5 @@
 {
+    "_forced": "sync",
     "manifest_version": 3,
     "name": "My Brain",
     "version": "1.0",

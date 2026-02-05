@@ -1,4 +1,5 @@
 
+// Force sync
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIG ---
@@ -32,6 +33,7 @@ const chromeStorageAdapter = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
+        // Updated
         storage: chromeStorageAdapter,
         autoRefreshToken: true,
         persistSession: true,

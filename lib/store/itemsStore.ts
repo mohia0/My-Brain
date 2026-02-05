@@ -11,6 +11,51 @@ type HistoryAction =
     | { type: 'ADD_FOLDER', folder: Folder }
     | { type: 'DELETE_FOLDER', folder: Folder };
 
+// Helper to check for collision between two rects
+const isOverlapping = (r1: { x: number, y: number, w: number, h: number }, r2: { x: number, y: number, w: number, h: number }) => {
+    return !(r1.x + r1.w <= r2.x ||
+        r1.x >= r2.x + r2.w ||
+        r1.y + r1.h <= r2.y ||
+        r1.y >= r2.y + r2.h);
+};
+
+// Internal helper for non-overlapping placement
+const getSafePosition = (
+    id: string,
+    targetX: number,
+    targetY: number,
+    width: number,
+    height: number,
+    items: Item[],
+    folders: Folder[]
+) => {
+    let x = targetX;
+    let y = targetY;
+    let attempts = 0;
+    const maxAttempts = 50; // Safety break
+
+    const obstacles = [
+        ...items.filter(i => i.id !== id && i.status !== 'inbox' && !i.folder_id).map(i => ({ x: i.position_x, y: i.position_y, w: 280, h: 120 })),
+        ...folders.filter(f => f.id !== id && !f.parent_id).map(f => ({ x: f.position_x, y: f.position_y, w: 280, h: 120 }))
+    ];
+
+    while (attempts < maxAttempts) {
+        const collision = obstacles.find(obs => isOverlapping({ x, y, w: width, h: height }, obs));
+        if (!collision) return { x, y };
+
+        // If collision, move slightly down and to the right, or to the next grid slot
+        // Let's try moving down by height + gap for a clean "push"
+        y += 20; // Small increment for natural feel
+        if (attempts > 0 && attempts % 5 === 0) {
+            x += 20;
+            y = targetY; // Reset Y slightly to explore horizontally
+        }
+        attempts++;
+    }
+
+    return { x, y };
+};
+
 interface ItemsState {
     items: Item[];
     folders: Folder[];
@@ -65,16 +110,20 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     addItem: async (item) => {
+        const state = get();
+        const safePos = getSafePosition(item.id, item.position_x, item.position_y, 280, 120, state.items, state.folders);
+        const safeItem = { ...item, position_x: safePos.x, position_y: safePos.y };
+
         set((state) => ({
-            items: [...state.items, item],
+            items: [...state.items, safeItem],
             history: {
-                past: [...state.history.past, { type: 'ADD_ITEM', item }],
+                past: [...state.history.past, { type: 'ADD_ITEM', item: safeItem }],
                 future: []
             }
         }));
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            await supabase.from('items').insert([{ ...item, user_id: user.id }]);
+            await supabase.from('items').insert([{ ...safeItem, user_id: user.id }]);
         }
     },
 
@@ -103,7 +152,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const state = get();
         const historyUpdates: PositionUpdate[] = [];
 
-        updates.forEach(u => {
+        // Apply non-overlap to each update sequentially
+        const processedUpdates = updates.map(u => {
+            const width = 280;
+            const height = 120;
+            const safe = getSafePosition(u.id, u.x, u.y, width, height, state.items, state.folders);
+            return { ...u, x: safe.x, y: safe.y };
+        });
+
+        processedUpdates.forEach(u => {
             if (u.type === 'item') {
                 const item = state.items.find(i => i.id === u.id);
                 if (item) historyUpdates.push({ ...u, prevX: item.position_x, prevY: item.position_y });
@@ -117,11 +174,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         set((state) => ({
             items: state.items.map(item => {
-                const u = updates.find(up => up.id === item.id && up.type === 'item');
+                const u = processedUpdates.find(up => up.id === item.id && up.type === 'item');
                 return u ? { ...item, position_x: u.x, position_y: u.y } : item;
             }),
             folders: state.folders.map(folder => {
-                const u = updates.find(up => up.id === folder.id && up.type === 'folder');
+                const u = processedUpdates.find(up => up.id === folder.id && up.type === 'folder');
                 return u ? { ...folder, position_x: u.x, position_y: u.y } : folder;
             }),
             history: {
@@ -130,10 +187,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
         }));
 
-        // Batch Supabase Update
-        // Note: Supabase doesn't have a simple batch update for different IDs in one go easily via JS client 
-        // without RPC or upsert loop. We will loop for now as it's fire-and-forget.
-        updates.forEach(u => {
+        processedUpdates.forEach(u => {
             if (u.type === 'item') {
                 supabase.from('items').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then();
             } else {
@@ -228,12 +282,27 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     updateItemContent: async (id, updates) => {
+        const state = get();
+        let finalUpdates = { ...updates };
+
+        // If movement is involved (e.g. from Inbox), resolve collisions
+        if (updates.position_x !== undefined || updates.position_y !== undefined) {
+            const item = state.items.find(i => i.id === id);
+            if (item) {
+                const targetX = updates.position_x ?? item.position_x;
+                const targetY = updates.position_y ?? item.position_y;
+                const safe = getSafePosition(id, targetX, targetY, 280, 120, state.items, state.folders);
+                finalUpdates.position_x = safe.x;
+                finalUpdates.position_y = safe.y;
+            }
+        }
+
         set((state) => ({
             items: state.items.map((item) =>
-                item.id === id ? { ...item, ...updates } : item
+                item.id === id ? { ...item, ...finalUpdates } : item
             )
         }));
-        await supabase.from('items').update(updates).eq('id', id);
+        await supabase.from('items').update(finalUpdates).eq('id', id);
     },
 
     duplicateItem: async (id) => {
@@ -244,12 +313,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        const newItemId = crypto.randomUUID();
+        const safePos = getSafePosition(newItemId, item.position_x + 30, item.position_y + 30, 280, 120, state.items, state.folders);
+
         const newItem = {
             ...item,
-            id: crypto.randomUUID(),
+            id: newItemId,
             user_id: user.id,
-            position_x: item.position_x + 20,
-            position_y: item.position_y + 20,
+            position_x: safePos.x,
+            position_y: safePos.y,
             metadata: { ...item.metadata, title: `${item.metadata?.title || 'Untitled'} (Copy)` },
             created_at: new Date().toISOString()
         };
@@ -372,8 +444,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const startY = Math.min(...allElements.map(e => e.position_y));
 
         // Determine layout based on content types
-        const hasWideItems = allElements.some(e => e.entityType === 'item' && (e as any).type === 'link' && (e as any).metadata?.image);
-        const colWidth = hasWideItems ? 300 : 200;
+        const colWidth = 280;
         const gap = 32;
         const effectiveColWidth = colWidth + gap;
 
@@ -401,7 +472,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             // Determine height
             let height = 130; // Default card height
             if (el.entityType === 'folder') {
-                height = 148; // Folder fixed height from CSS
+                height = 120; // Folder fixed height from CSS (matches cards)
             } else {
                 const item = el as any;
                 if (item.type === 'link') {
@@ -480,8 +551,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const startY = Math.min(...allElements.map(e => e.position_y));
 
         // Determine layout settings
-        const hasWideItems = allElements.some(e => e.entityType === 'item' && (e as any).type === 'link' && (e as any).metadata?.image);
-        const colWidth = hasWideItems ? 300 : 200;
+        const colWidth = 280;
         const gap = 32;
         const effectiveColWidth = colWidth + gap;
 
@@ -509,7 +579,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             // Determine height
             let height = 130;
             if (el.entityType === 'folder') {
-                height = 148;
+                height = 120;
             } else {
                 const item = el as any;
                 if (item.type === 'link') {

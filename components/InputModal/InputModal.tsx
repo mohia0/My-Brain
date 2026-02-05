@@ -26,6 +26,16 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
         }
     }, [isOpen, defaultValue]);
 
+    // Handle ESC key
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +69,18 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                 <form onSubmit={handleSubmit} className={styles.body}>
                     {mode === 'file' ? (
                         <div className={styles.fileInputWrapper}>
+                            {value && (value.startsWith('data:') || value.startsWith('http')) && (
+                                <div className={styles.imagePreviewWrapper}>
+                                    <img src={value} alt="Preview" className={styles.imagePreview} />
+                                    <button
+                                        type="button"
+                                        className={styles.removeImageBtn}
+                                        onClick={() => setValue('')}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            )}
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -67,13 +89,15 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                                 className={styles.fileInput}
                                 id="file-upload"
                             />
-                            <label htmlFor="file-upload" className={styles.fileLabel}>
-                                {value ? "Image Selected (Ready)" : "Click to Upload Image"}
-                            </label>
+                            {!value && (
+                                <label htmlFor="file-upload" className={styles.fileLabel}>
+                                    Click to Upload Image
+                                </label>
+                            )}
                             {/* Or paste URL fallback */}
                             <input
                                 className={styles.input}
-                                value={value.startsWith('data:') ? '' : value}
+                                value={(value && value.startsWith('data:')) ? '' : value}
                                 onChange={e => setValue(e.target.value)}
                                 placeholder="Or paste image URL..."
                                 style={{ marginTop: 8 }}

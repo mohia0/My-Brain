@@ -104,14 +104,21 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
     };
 
     return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            background: theme === 'light' ? '#ffffff' : 'transparent',
+            borderRadius: 'inherit'
+        }}>
             {editable && (
                 <div style={{
                     display: 'flex',
                     gap: '4px',
                     padding: '8px 12px',
                     borderBottom: '1px solid var(--card-border)',
-                    background: 'var(--card-bg)',
+                    background: theme === 'light' ? '#f8f9fa' : 'var(--card-bg)',
                     alignItems: 'center'
                 }}>
                     <button
@@ -119,7 +126,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                         style={{
                             background: 'transparent',
                             border: 'none',
-                            color: 'var(--foreground)',
+                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
                             padding: '4px',
                             borderRadius: '4px',
                             cursor: 'pointer',
@@ -139,7 +146,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                         style={{
                             background: 'transparent',
                             border: 'none',
-                            color: 'var(--foreground)',
+                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
                             padding: '4px',
                             borderRadius: '4px',
                             cursor: 'pointer',

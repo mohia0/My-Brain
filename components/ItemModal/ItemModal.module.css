@@ -13,25 +13,25 @@
 }
 
 .modal {
-    background: var(--modal-bg);
+    background: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(24px);
     width: 900px;
     height: 85vh;
     max-height: 800px;
-    border-radius: 16px;
-    border: 1px solid var(--card-border);
-    box-shadow: 0 20px 50px var(--shadow-color);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: text;
-    /* Allow copying from modal */
 }
 
 .compactModal {
     height: auto;
-    max-height: 520px;
-    width: 800px;
+    max-height: 700px;
+    width: 1000px;
 }
 
 @keyframes slideUp {
@@ -56,17 +56,17 @@
 }
 
 .compactContent {
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1.4fr 1fr;
 }
 
 .leftColumn {
-    background: var(--background);
+    background: rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     position: relative;
-    border-right: 1px solid var(--card-border);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .previewImage {
@@ -81,6 +81,89 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
+}
+
+.imageOverlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px 24px 20px 24px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+    backdrop-filter: blur(4px);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+}
+
+.titleWrapper {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.overlayTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
+    mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.modal:hover .overlayTitle.canAnimate {
+    transform: translateX(-25%);
+}
+
+.overlayDomain {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: white;
+    padding: 1px;
+}
+
+.replaceImageBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0.6;
+}
+
+.replaceImageBtn:hover {
+    opacity: 1;
+    background: var(--accent);
+    transform: scale(1.1);
+    box-shadow: 0 0 12px var(--accent-glow);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .rightColumn {
@@ -100,7 +183,32 @@
     gap: 16px;
 }
 
-.titleInput {
+.titleDisplayWrapper {
+    width: 100%;
+    overflow: hidden;
+    cursor: text;
+    padding: 2px 0;
+}
+
+.titleDisplayText {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-mask-image: linear-gradient(to right, black 0%, black 92%, transparent 100%);
+    mask-image: linear-gradient(to right, black 0%, black 92%, transparent 100%);
+    width: fit-content;
+    min-width: 100%;
+}
+
+.header:hover .titleDisplayText.canAnimate {
+    transform: translateX(-15%);
+}
+
+.titleInputEdit {
     background: transparent;
     border: none;
     font-size: 1.25rem;
@@ -108,6 +216,9 @@
     color: var(--foreground);
     width: 100%;
     outline: none;
+    padding: 2px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
 }
 
 .timestamp {
@@ -154,18 +265,77 @@
     font-weight: 600;
 }
 
-.urlLink {
-    color: var(--accent);
-    text-decoration: none;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
+.labelRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
-.urlLink:hover {
-    text-decoration: underline;
+.copyBtn,
+.externalLinkIcon {
+    color: var(--text-muted);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(255, 255, 255, 0.05);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+}
+
+.copyBtn:hover,
+.externalLinkIcon:hover {
+    color: var(--foreground);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.copyBtn:active {
+    transform: translateY(0);
+}
+
+.linkInputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2px 14px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.linkInputWrapper:focus-within {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.inputIcon {
+    color: var(--accent);
+    opacity: 0.8;
+    margin-right: 12px;
+}
+
+.linkInput {
+    background: transparent;
+    border: none;
+    padding: 12px 0;
+    color: var(--foreground);
+    font-size: 0.95rem;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+}
+
+.urlLink {
+    display: none;
 }
 
 .descriptionInput {

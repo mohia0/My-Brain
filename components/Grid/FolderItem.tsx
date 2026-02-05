@@ -64,55 +64,73 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
             ref={ref}
             className={baseClassName}
             style={finalStyle}
-            {...listeners}
-            {...attributes}
-            onPointerDown={(e) => {
-                e.stopPropagation();
-                listeners?.onPointerDown?.(e);
-            }}
-            onClick={onClick}
         >
-            <div ref={droppableRef} className={styles.dropZone}>
-                <div className={styles.header}>
-                    <FolderIcon
-                        size={16}
-                        fill={folder.color ? `${folder.color}44` : "rgba(255,255,255,0.2)"}
-                        color={folder.color || "var(--accent)"}
-                    />
-                    <span className={styles.title}>{folder.name}</span>
-                    <span className={styles.count} style={{ color: folder.color }}>{folderItems.length}</span>
+            {isSelected && (
+                <div className={styles.selectionSilhouette}>
+                    <div className={styles.silhouetteTab} style={{ background: folder.color || 'var(--card-bg)' }} />
+                    <div className={styles.silhouetteBody} />
                 </div>
+            )}
+            <div className={styles.tab} style={{ background: folder.color || 'var(--card-bg)' }} />
+            <div
+                className={styles.mainBody}
+                {...listeners}
+                {...attributes}
+                onPointerDown={(e) => {
+                    e.stopPropagation();
+                    listeners?.onPointerDown?.(e);
+                }}
+                onClick={onClick}
+            >
+                <div ref={droppableRef} className={styles.dropZone}>
+                    <div className={styles.header}>
+                        <FolderIcon
+                            size={16}
+                            fill={folder.color ? `${folder.color}44` : "rgba(255,255,255,0.2)"}
+                            color={folder.color || "var(--accent)"}
+                        />
+                        <span className={styles.title}>{folder.name}</span>
+                        <span className={styles.count} style={{ color: folder.color }}>{folderItems.length}</span>
+                    </div>
 
-                <div className={styles.previewGrid}>
-                    {folderItems.slice(0, 4).map(item => {
-                        // Image / Capture Preview
-                        if (item.type === 'image' || (item.type === 'link' && item.metadata?.image)) {
+                    <div className={clsx(
+                        styles.previewGrid,
+                        folderItems.length === 1 && styles.grid1,
+                        folderItems.length === 2 && styles.grid2,
+                        folderItems.length === 3 && styles.grid3,
+                        folderItems.length >= 4 && styles.grid4
+                    )}>
+                        {folderItems.slice(0, 4).map(item => {
+                            // Image / Capture Preview
+                            if (item.type === 'image' || (item.type === 'link' && item.metadata?.image)) {
+                                return (
+                                    <img
+                                        key={item.id}
+                                        src={item.type === 'image' ? item.content : item.metadata?.image}
+                                        className={styles.miniImage}
+                                        alt=""
+                                    />
+                                );
+                            }
+                            // Link Icon Preview
+                            if (item.type === 'link') {
+                                return (
+                                    <div key={item.id} className={styles.miniItem} style={{ background: item.metadata?.color || folder.color || 'var(--accent)' }}>
+                                        <div className={styles.miniIcon}>🔗</div>
+                                    </div>
+                                );
+                            }
+                            // Text Preview
                             return (
-                                <img
-                                    key={item.id}
-                                    src={item.type === 'image' ? item.content : item.metadata?.image}
-                                    className={styles.miniImage}
-                                    alt=""
-                                />
-                            );
-                        }
-                        // Link Icon Preview
-                        if (item.type === 'link') {
-                            return (
-                                <div key={item.id} className={styles.miniItem} style={{ background: 'var(--accent)' }}>
-                                    <div className={styles.miniIcon}>🔗</div>
+                                <div key={item.id} className={styles.miniItem} style={{ borderLeft: `3px solid ${item.metadata?.color || folder.color || 'var(--accent)'}` }}>
+                                    <div className={styles.textLine} />
+                                    <div className={styles.textLine} style={{ width: '60%' }} />
                                 </div>
                             );
-                        }
-                        // Text Preview
-                        return (
-                            <div key={item.id} className={styles.miniItem}>
-                                <div className={styles.textLine} />
-                                <div className={styles.textLine} style={{ width: '60%' }} />
-                            </div>
-                        );
-                    })}
+                        })}
+                    </div>
                 </div>
+                <div className={styles.bottomAccent} style={{ background: folder.color || 'var(--accent)' }} />
             </div>
             <div className={styles.outerDate}>
                 {new Date(folder.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}

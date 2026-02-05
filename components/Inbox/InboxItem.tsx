@@ -13,7 +13,7 @@ interface InboxItemProps {
 }
 
 export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) {
-    const { updateItemContent } = useItemsStore();
+    const { updateItemContent, selectedIds, selectItem, toggleSelection } = useItemsStore();
     const { scale, position } = useCanvasStore();
     const titleRef = React.useRef<HTMLDivElement>(null);
     const [isOverflowing, setIsOverflowing] = React.useState(false);
@@ -62,14 +62,31 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
         });
     };
 
+    const isSelected = selectedIds.includes(item.id);
+
+    const handleClick = (e: React.MouseEvent) => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            e.stopPropagation();
+            toggleSelection(item.id);
+        } else {
+            // Normal click opens the modal via the parent trigger, but let's also select
+            selectItem(item.id);
+            onClick?.();
+        }
+    };
+
     return (
         <div
             ref={isOverlay ? undefined : setNodeRef}
             {...listeners}
             {...attributes}
-            className={clsx(styles.inboxItem, isOverlay && styles.isOverlay)}
+            className={clsx(
+                styles.inboxItem,
+                isOverlay && styles.isOverlay,
+                isSelected && styles.selected
+            )}
             style={{ opacity }}
-            onClick={onClick}
+            onClick={handleClick}
         >
             {hasImage ? (
                 <div className={styles.richItem}>
@@ -87,12 +104,13 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                             >
                                 {item.metadata?.title || 'Untitled Link'}
                             </div>
-
+                        </div>
+                        <div className={styles.domainRow}>
+                            <div className={styles.domain}>{new URL(item.content).hostname}</div>
                             <div className={styles.itemDateSmall}>
                                 {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
                         </div>
-                        <div className={styles.domain}>{new URL(item.content).hostname}</div>
                     </div>
                 </div>
             ) : (

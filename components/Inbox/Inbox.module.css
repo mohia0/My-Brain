@@ -134,11 +134,26 @@
     border: 1px solid var(--card-border);
     border-radius: 10px;
     cursor: grab;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
     position: relative;
     overflow: hidden;
     /* Hide sliding elements */
+}
+
+.selected {
+    border-color: var(--accent) !important;
+    background: var(--accent-glow) !important;
+}
+
+.selected::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
 }
 
 .inboxItem:hover {
@@ -162,12 +177,13 @@
 }
 
 .thumbnail {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px;
     flex-shrink: 0;
     background: var(--background);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .meta {
@@ -212,24 +228,27 @@
     padding-right: 28px;
 }
 
+.domainRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1px;
+}
+
+.domain {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 500;
+    opacity: 0.8;
+}
+
 .itemDateSmall {
     font-size: 0.65rem;
     color: var(--text-muted);
     flex-shrink: 0;
     font-weight: 500;
     letter-spacing: -0.01em;
-    padding-left: 4px;
-    z-index: 2;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.inboxItem:hover .itemDateSmall {
-    opacity: 0.4;
-}
-
-.domain {
-    font-size: 0.75rem;
-    color: var(--text-muted);
 }
 
 /* Simple Item */

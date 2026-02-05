@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './Header.module.css';
-import { Search } from 'lucide-react';
+import { Search, Folder as FolderIcon } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 
@@ -110,10 +110,24 @@ export default function Header() {
                             allResults.map((result: any) => (
                                 <div key={result.id} className={styles.searchResultItem} onClick={() => handleResultClick(result)}>
                                     {result.resultType === 'folder' ? (
-                                        <div className={styles.resultIcon}>📁</div>
+                                        <div className={styles.resultIcon}>
+                                            <FolderIcon
+                                                size={16}
+                                                fill={result.color ? `${result.color}22` : undefined}
+                                                color={result.color || "var(--accent)"}
+                                            />
+                                        </div>
                                     ) : (
-                                        result.type === 'link' && result.metadata?.image && (
-                                            <img src={result.metadata.image} alt="" className={styles.resultImg} />
+                                        (result.type === 'image' || (result.type === 'link' && result.metadata?.image)) ? (
+                                            <img
+                                                src={result.type === 'image' ? result.content : result.metadata?.image}
+                                                alt=""
+                                                className={styles.resultImg}
+                                            />
+                                        ) : (
+                                            <div className={styles.resultIcon}>
+                                                {result.type === 'link' ? '🔗' : '📄'}
+                                            </div>
                                         )
                                     )}
                                     <div className={styles.resultText}>
@@ -128,8 +142,8 @@ export default function Header() {
                                         <div className={styles.resultDescription}>
                                             {result.resultType === 'folder'
                                                 ? 'Folder'
-                                                : (result.metadata?.description || result.content?.substring(0, 60))}
-                                            {result.resultType === 'item' && result.content?.length > 60 && '...'}
+                                                : (result.metadata?.description || (result.type === 'image' ? 'Image File' : result.content?.substring(0, 60)))}
+                                            {result.resultType === 'item' && result.type !== 'image' && result.content?.length > 60 && '...'}
                                         </div>
                                         {result.resultType === 'item' && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
                                             <div className={styles.resultTags}>

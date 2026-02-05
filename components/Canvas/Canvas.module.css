@@ -19,3 +19,13 @@
     pointer-events: auto;
     will-change: transform;
 }
+
+.handActive,
+.handActive * {
+    cursor: grab !important;
+}
+
+.handDragging,
+.handDragging * {
+    cursor: grabbing !important;
+}

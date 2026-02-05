@@ -101,14 +101,13 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                 return;
             }
 
-            const viewportW = window.innerWidth;
-            const viewportH = window.innerHeight;
-            const cx = (viewportW / 2 - useCanvasStore.getState().position.x) / currentScale;
-            const cy = (viewportH / 2 - useCanvasStore.getState().position.y) / currentScale;
+            const canvasPos = useCanvasStore.getState().position;
+            const dropX = (active.rect.current!.translated!.left - canvasPos.x) / currentScale;
+            const dropY = (active.rect.current!.translated!.top - canvasPos.y) / currentScale;
 
             updateItemContent(active.id as string, {
-                position_x: cx + (delta.x / currentScale),
-                position_y: cy + (delta.y / currentScale),
+                position_x: dropX,
+                position_y: dropY,
                 status: 'active'
             });
             return;

@@ -14,6 +14,31 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
     const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent } = useItemsStore();
     const folder = folders.find(f => f.id === folderId);
     const folderItems = items.filter(i => i.folder_id === folderId);
+    const [isOverflowing, setIsOverflowing] = React.useState(false);
+    const titleRef = React.useRef<HTMLDivElement>(null);
+
+    // Check for title overflow
+    React.useEffect(() => {
+        const checkOverflow = () => {
+            if (titleRef.current) {
+                const isOver = titleRef.current.scrollWidth > titleRef.current.clientWidth;
+                setIsOverflowing(isOver);
+            }
+        };
+
+        checkOverflow();
+        window.addEventListener('resize', checkOverflow);
+        return () => window.removeEventListener('resize', checkOverflow);
+    }, [folder?.name]);
+
+    // Handle ESC key
+    React.useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
 
     if (!folder) return null;
 
@@ -57,7 +82,14 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                         </div>
                         <div className={styles.titleLayout}>
                             <div className={styles.nameRow}>
-                                <span className={styles.folderName}>{folder.name}</span>
+                                <div className={styles.folderNameWrapper}>
+                                    <span
+                                        ref={titleRef}
+                                        className={clsx(styles.folderName, isOverflowing && styles.canAnimate)}
+                                    >
+                                        {folder.name}
+                                    </span>
+                                </div>
                                 <div className={styles.colorDots}>
                                     {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
                                         <button

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -19,15 +19,25 @@ interface ItemModalProps {
 export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const { items, updateItemContent, removeItem } = useItemsStore();
     const item = items.find(i => i.id === itemId);
+    const isLink = item?.type === 'link';
+    const screenshotUrl = item?.metadata?.image;
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const [content, setContent] = useState('');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [url, setUrl] = useState(''); // New state for link editing
     const [tags, setTags] = useState<Tag[]>([]);
     const [existingTags, setExistingTags] = useState<Tag[]>([]); // User's available tags
     const [isTypingTag, setIsTypingTag] = useState(false);
     const [newTagName, setNewTagName] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const [isOverflowingHeader, setIsOverflowingHeader] = useState(false);
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const titleRef = React.useRef<HTMLDivElement>(null);
+    const headerTitleRef = React.useRef<HTMLDivElement>(null);
 
     // Initial Load
     useEffect(() => {
@@ -35,9 +45,37 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             setContent(item.content);
             setTitle(item.metadata?.title || '');
             setDescription(item.metadata?.description || '');
+            if (item.type === 'link') setUrl(item.content); // Link URL
             fetchItemTags();
         }
     }, [item]);
+
+    // Check for title overflow
+    useEffect(() => {
+        const checkOverflow = () => {
+            if (titleRef.current) {
+                const isOver = titleRef.current.scrollWidth > titleRef.current.clientWidth;
+                setIsOverflowing(isOver);
+            }
+            if (headerTitleRef.current) {
+                const isOver = headerTitleRef.current.scrollWidth > headerTitleRef.current.clientWidth;
+                setIsOverflowingHeader(isOver);
+            }
+        };
+
+        checkOverflow();
+        window.addEventListener('resize', checkOverflow);
+        return () => window.removeEventListener('resize', checkOverflow);
+    }, [title, isLink, isEditingTitle]);
+
+    // Handle ESC key
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
 
     // Fetch User Tags (Taxonomy)
     useEffect(() => {
@@ -64,8 +102,9 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     if (!item) return null;
 
     const handleSave = () => {
+        const finalContent = isLink ? url : content;
         updateItemContent(item.id, {
-            content,
+            content: finalContent,
             metadata: { ...item.metadata, title, description }
         });
         onClose();
@@ -136,9 +175,33 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         onClose();
     };
 
+    const handleCopy = () => {
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleImageReplace = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const result = e.target?.result as string;
+                if (isLink) {
+                    updateItemContent(item.id, {
+                        metadata: { ...item.metadata, image: result }
+                    });
+                } else {
+                    updateItemContent(item.id, { content: result });
+                    setContent(result);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     // Render Logic
-    const isLink = item.type === 'link';
-    const screenshotUrl = item.metadata?.image;
+    // isLink moved up
 
     return (
         <div className={styles.overlay} onClick={onClose}>
@@ -147,19 +210,55 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
                     {/* LEFT COLUMN: PREVIEW */}
                     <div className={styles.leftColumn}>
+                        {(isLink || item.type === 'image') && (
+                            <>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    accept="image/*"
+                                    onChange={handleImageReplace}
+                                />
+                                <button
+                                    className={styles.replaceImageBtn}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    title="Replace Image"
+                                >
+                                    <ImageIcon size={10} />
+                                </button>
+                            </>
+                        )}
                         {isLink && screenshotUrl ? (
-                            <img src={screenshotUrl} className={styles.previewImage} alt="Preview" />
+                            <img src={screenshotUrl || undefined} className={styles.previewImage} alt="Preview" />
                         ) : isLink ? (
                             <div className={styles.previewPlaceholder}>
                                 <ExternalLink size={48} />
                                 <span>No Screenshot</span>
                             </div>
-                        ) : item.type === 'image' ? (
-                            <img src={content} className={styles.previewImage} alt="Image" />
+                        ) : (item.type === 'image' && content) ? (
+                            <img src={content || undefined} className={styles.previewImage} alt="Image" />
                         ) : (
                             // Text Editor for Notes
                             <div style={{ width: '100%', height: '100%', padding: '0 0 20px 0', background: 'transparent' }}>
                                 <BlockEditor initialContent={content} onChange={setContent} />
+                            </div>
+                        )}
+
+                        {/* Metadata Overlay for Links */}
+                        {isLink && (
+                            <div className={styles.imageOverlay}>
+                                <div className={styles.titleWrapper}>
+                                    <div
+                                        ref={titleRef}
+                                        className={clsx(styles.overlayTitle, isOverflowing && styles.canAnimate)}
+                                    >
+                                        {title || 'Untitled Link'}
+                                    </div>
+                                </div>
+                                <div className={styles.overlayDomain}>
+                                    {url && <img src={`https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`} className={styles.favicon} alt="" />}
+                                    {url ? new URL(url).hostname : 'No Source'}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -168,13 +267,30 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     <div className={styles.rightColumn}>
                         {/* Header */}
                         <div className={styles.header}>
-                            <div style={{ flex: 1 }}>
-                                <input
-                                    className={styles.titleInput}
-                                    value={title}
-                                    onChange={e => setTitle(e.target.value)}
-                                    placeholder={isLink ? "Page Title" : "Note Title"}
-                                />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                {isEditingTitle ? (
+                                    <input
+                                        autoFocus
+                                        className={styles.titleInputEdit}
+                                        value={title}
+                                        onChange={e => setTitle(e.target.value)}
+                                        onBlur={() => setIsEditingTitle(false)}
+                                        onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
+                                        placeholder={isLink ? "Page Title" : "Note Title"}
+                                    />
+                                ) : (
+                                    <div
+                                        className={styles.titleDisplayWrapper}
+                                        onClick={() => setIsEditingTitle(true)}
+                                    >
+                                        <div
+                                            ref={headerTitleRef}
+                                            className={clsx(styles.titleDisplayText, isOverflowingHeader && styles.canAnimate)}
+                                        >
+                                            {title || (isLink ? "Page Title" : "Note Title")}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className={styles.timestamp}>
                                     {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
@@ -185,17 +301,33 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                         {/* Body */}
                         <div className={styles.scrollBody}>
 
-                            {/* URL Link */}
+
+
+                            {/* URL Link Section */}
                             {isLink && (
                                 <div className={styles.section}>
-                                    <span className={styles.label}>Source</span>
-                                    <a href={item.content} target="_blank" className={styles.urlLink}>
-                                        {item.content} <ExternalLink size={12} style={{ display: 'inline' }} />
-                                    </a>
+                                    <div className={styles.labelRow}>
+                                        <span className={styles.label}>Source Link</span>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            <button className={styles.copyBtn} onClick={handleCopy} title="Copy Link">
+                                                {copied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}
+                                            </button>
+                                            <a href={url} target="_blank" className={styles.externalLinkIcon} title="Open in New Tab">
+                                                <ExternalLink size={14} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div className={styles.linkInputWrapper}>
+                                        <Link size={16} className={styles.inputIcon} />
+                                        <input
+                                            className={styles.linkInput}
+                                            value={url}
+                                            onChange={e => setUrl(e.target.value)}
+                                            placeholder="https://..."
+                                        />
+                                    </div>
                                 </div>
                             )}
-
-                            {/* Tags */}
                             <div className={styles.section}>
                                 <span className={styles.label}>Tags</span>
                                 <div className={styles.tagsWrapper}>

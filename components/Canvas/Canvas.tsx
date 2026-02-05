@@ -5,6 +5,7 @@ import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './Canvas.module.css';
 import { Undo, Redo } from 'lucide-react';
+import clsx from 'clsx';
 
 // Fixed Canvas Size (Figma-like artboard)
 const CANVAS_WIDTH = 10000;
@@ -19,7 +20,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
     const worldRef = useRef<HTMLDivElement>(null);
-    const isDragging = useRef(false);
+    const [isPanning, setIsPanning] = useState(false);
     const lastMousePos = useRef({ x: 0, y: 0 });
 
     // State
@@ -31,14 +32,18 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
 
     // Sync cursor with tool
     useEffect(() => {
-        if (isDragging.current) {
-            setCursor('grabbing');
-        } else if (currentTool === 'hand' || isSpacePressed) {
-            setCursor('grab');
-        } else {
-            setCursor('default');
-        }
-    }, [currentTool, isSpacePressed, position]); // position change triggered by drag
+        const updateCursor = () => {
+            if (isPanning) {
+                setCursor('grabbing');
+            } else if (currentTool === 'hand' || isSpacePressed) {
+                setCursor('grab');
+            } else {
+                setCursor('default');
+            }
+        };
+
+        updateCursor();
+    }, [currentTool, isSpacePressed, isPanning]);
 
     // Initial load - Center canvas
     useEffect(() => {
@@ -73,7 +78,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.code === 'Space') {
                 setIsSpacePressed(false);
-                isDragging.current = false; // Stop dragging if space is released
+                setIsPanning(false); // Stop dragging if space is released
                 if (currentTool !== 'hand') setCursor('default');
             }
         };
@@ -158,7 +163,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         // Middle Mouse or Spacebar always Pans
         if (e.button === 1 || isSpacePressed) {
             e.preventDefault();
-            isDragging.current = true;
+            setIsPanning(true);
             lastMousePos.current = { x: e.clientX, y: e.clientY };
             setCursor('grabbing');
             return;
@@ -172,7 +177,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
                     clearSelection();
                 }
-                isDragging.current = true;
+                setIsPanning(true);
                 lastMousePos.current = { x: e.clientX, y: e.clientY };
                 setCursor('grabbing');
                 return;
@@ -200,7 +205,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
 
     const handleMouseMove = (e: React.MouseEvent) => {
         // Panning Logic
-        if (isDragging.current) {
+        if (isPanning) {
             const dx = e.clientX - lastMousePos.current.x;
             const dy = e.clientY - lastMousePos.current.y;
 
@@ -284,13 +289,22 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     );
                 }).map(f => f.id);
 
-                setSelection([...selectedItems, ...selectedFolders]);
+                const isCtrlPressed = e.ctrlKey || e.metaKey;
+                const currentSelectedIds = useItemsStore.getState().selectedIds;
+
+                if (isCtrlPressed) {
+                    // Combine old selection with newly box-selected ones
+                    const uniqueSelection = Array.from(new Set([...currentSelectedIds, ...selectedItems, ...selectedFolders]));
+                    setSelection(uniqueSelection);
+                } else {
+                    setSelection([...selectedItems, ...selectedFolders]);
+                }
             }
         }
     };
 
     const handleMouseUp = () => {
-        isDragging.current = false;
+        setIsPanning(false);
         setSelectionBox(null);
         if (currentTool === 'hand' || isSpacePressed) {
             setCursor('grab');
@@ -335,7 +349,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
 
     return (
         <div
-            className={styles.container}
+            className={clsx(
+                styles.container,
+                (currentTool === 'hand' || isSpacePressed) && styles.handActive,
+                isPanning && styles.handDragging
+            )}
             ref={containerRef}
             onContextMenu={handleContextMenu}
             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}

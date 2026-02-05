@@ -1,49 +1,76 @@
 import React, { useState } from 'react';
 import styles from './ArchiveView.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { Archive, X, RotateCcw, Trash2, Search } from 'lucide-react';
+import { Archive, X, RotateCcw, Trash2, Search, FileText, Link, Image as ImageIcon, Folder } from 'lucide-react';
 import clsx from 'clsx';
 
 interface ArchiveCardProps {
     id: string;
     type: string;
     title: string;
+    description?: string;
+    image?: string;
     color?: string;
+    date: string;
     onUnarchive: () => void;
     onDelete: () => void;
 }
 
-function ArchiveCard({ id, type, title, color, onUnarchive, onDelete }: ArchiveCardProps) {
+function ArchiveCard({ id, type, title, description, image, color, date, onUnarchive, onDelete }: ArchiveCardProps) {
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const getIcon = () => {
+        switch (type.toLowerCase()) {
+            case 'folder': return <Folder size={40} className={styles.previewPlaceholder} />;
+            case 'image': return <ImageIcon size={40} className={styles.previewPlaceholder} />;
+            case 'link': return <Link size={40} className={styles.previewPlaceholder} />;
+            default: return <FileText size={40} className={styles.previewPlaceholder} />;
+        }
+    };
+
     return (
-        <div
-            className={styles.archiveCard}
-            style={color ? { borderLeft: `4px solid ${color}` } : undefined}
-        >
-            <div className={styles.cardInfo}>
-                <div className={styles.cardType}>{type}</div>
-                <div className={styles.cardTitle}>{title}</div>
+        <div className={styles.archiveCard}>
+            {color && <div className={styles.folderBadge} style={{ backgroundColor: color }}>Folder</div>}
+
+            <div className={styles.cardPreview}>
+                {image ? (
+                    <img src={image} alt={title} className={styles.previewImg} />
+                ) : (
+                    getIcon()
+                )}
             </div>
-            <div className={styles.cardActions}>
-                <button
-                    className={styles.actionBtn}
-                    title="Unarchive"
-                    onClick={onUnarchive}
-                >
-                    <RotateCcw size={18} />
-                </button>
-                <button
-                    className={clsx(styles.actionBtn, styles.deleteBtn, isDeleting && styles.confirmDelete)}
-                    title="Delete Permanently"
-                    onClick={() => {
-                        if (isDeleting) onDelete();
-                        else setIsDeleting(true);
-                    }}
-                    onMouseLeave={() => setIsDeleting(false)}
-                >
-                    {isDeleting ? "Sure?" : <Trash2 size={18} />}
-                </button>
+
+            <div className={styles.cardBody}>
+                <div className={styles.cardInfo}>
+                    <div className={styles.cardType}>{type}</div>
+                    <div className={styles.cardTitle} title={title}>{title}</div>
+                    {description && <div className={styles.cardDesc}>{description}</div>}
+                </div>
+
+                <div className={styles.cardFooter}>
+                    <div className={styles.cardDate}>Archived {new Date(date).toLocaleDateString()}</div>
+                    <div className={styles.cardActions}>
+                        <button
+                            className={clsx(styles.actionBtn, styles.restoreBtn)}
+                            title="Restore to Workspace"
+                            onClick={onUnarchive}
+                        >
+                            <RotateCcw size={16} />
+                        </button>
+                        <button
+                            className={clsx(styles.actionBtn, styles.deleteBtn, isDeleting && styles.confirmDelete)}
+                            title="Delete Permanently"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isDeleting) onDelete();
+                                else setIsDeleting(true);
+                            }}
+                            onMouseLeave={() => setIsDeleting(false)}
+                        >
+                            {isDeleting ? "Sure?" : <Trash2 size={16} />}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -113,6 +140,7 @@ export default function ArchiveView() {
                                     type="Folder"
                                     title={folder.name}
                                     color={folder.color}
+                                    date={folder.created_at}
                                     onUnarchive={() => unarchiveFolder(folder.id)}
                                     onDelete={() => removeFolder(folder.id)}
                                 />
@@ -124,6 +152,9 @@ export default function ArchiveView() {
                                     id={item.id}
                                     type={item.type.toUpperCase()}
                                     title={item.metadata?.title || (item.type === 'text' ? item.content.substring(0, 50) : item.type)}
+                                    description={item.metadata?.description || (item.type === 'text' ? item.content.substring(0, 100) : undefined)}
+                                    image={item.type === 'image' ? item.content : item.metadata?.image}
+                                    date={item.created_at}
                                     onUnarchive={() => unarchiveItem(item.id)}
                                     onDelete={() => removeItem(item.id)}
                                 />

@@ -188,12 +188,12 @@
 }
 
 .delete:hover {
-    background: var(--accent-glow);
-    color: var(--accent);
+    background: var(--danger-glow);
+    color: var(--danger);
 }
 
 .confirmDelete {
-    background: var(--accent) !important;
+    background: var(--danger) !important;
     color: white !important;
     width: auto;
     padding: 8px 16px;

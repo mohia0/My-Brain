@@ -11,6 +11,9 @@
   /* Premium Purple */
   --accent-glow: rgba(110, 86, 207, 0.4);
 
+  --danger: #e11d48;
+  --danger-glow: rgba(225, 29, 72, 0.2);
+
   --grid-color: rgba(255, 255, 255, 0.03);
   --grid-size: 40px;
 
@@ -43,6 +46,9 @@
 
   --accent: #6e56cf;
   --accent-glow: rgba(110, 86, 207, 0.2);
+
+  --danger: #e11d48;
+  --danger-glow: rgba(225, 29, 72, 0.15);
 
   --grid-color: rgba(0, 0, 0, 0.04);
 

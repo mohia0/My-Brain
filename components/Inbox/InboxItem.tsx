@@ -15,11 +15,27 @@ interface InboxItemProps {
 export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) {
     const { updateItemContent } = useItemsStore();
     const { scale, position } = useCanvasStore();
+    const titleRef = React.useRef<HTMLDivElement>(null);
+    const [isOverflowing, setIsOverflowing] = React.useState(false);
 
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: item.id,
         data: { ...item, origin: 'inbox' }
     });
+
+    React.useEffect(() => {
+        const checkOverflow = () => {
+            if (titleRef.current) {
+                const isOver = titleRef.current.scrollWidth > titleRef.current.clientWidth;
+                setIsOverflowing(isOver);
+            }
+        };
+
+        checkOverflow();
+        // Recalculate if window resizes (since sidebar width might change or be fixed)
+        window.addEventListener('resize', checkOverflow);
+        return () => window.removeEventListener('resize', checkOverflow);
+    }, [item.metadata?.title, item.content]);
 
     // If it's being dragged in the Inbox list, we hide it (visuals move to Overlay)
     // If it's the Overlay itself, we show it fully opaque
@@ -65,7 +81,12 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                     />
                     <div className={styles.meta}>
                         <div className={styles.titleRow}>
-                            <div className={styles.title}>{item.metadata?.title || 'Untitled Link'}</div>
+                            <div
+                                ref={titleRef}
+                                className={clsx(styles.title, isOverflowing && styles.canAnimate)}
+                            >
+                                {item.metadata?.title || 'Untitled Link'}
+                            </div>
 
                             <div className={styles.itemDateSmall}>
                                 {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -82,7 +103,12 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                         {item.type === 'image' && <ImageIcon size={14} />}
                     </div>
                     <div className={styles.titleRow}>
-                        <span className={styles.title}>{item.metadata?.title || item.content}</span>
+                        <span
+                            ref={titleRef}
+                            className={clsx(styles.title, isOverflowing && styles.canAnimate)}
+                        >
+                            {item.metadata?.title || item.content}
+                        </span>
 
                         <div className={styles.itemDateSmall}>
                             {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}

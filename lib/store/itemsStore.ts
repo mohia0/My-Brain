@@ -399,9 +399,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
 
             // Determine height
-            let height = 160;
+            let height = 130; // Default card height
             if (el.entityType === 'folder') {
-                height = 148; // Folder fixed height
+                height = 148; // Folder fixed height from CSS
             } else {
                 const item = el as any;
                 if (item.type === 'link') {
@@ -410,12 +410,12 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 } else if (item.type === 'image') {
                     height = 200;
                 } else {
-                    height = 130;
+                    height = 120; // Text Card min-height from CSS
                 }
             }
 
-            // Space for date
-            height += 24;
+            // Space for date + small extra buffer
+            height += 28;
 
             const x = startX + (colIndex * effectiveColWidth);
             const y = minY;
@@ -507,23 +507,22 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
 
             // Determine height
-            let height = 160;
+            let height = 130;
             if (el.entityType === 'folder') {
-                height = 148; // Folder fixed height
+                height = 148;
             } else {
                 const item = el as any;
                 if (item.type === 'link') {
-                    if (item.metadata?.image) height = 100; // Capture Card
-                    else height = 40; // Link Card
+                    if (item.metadata?.image) height = 100;
+                    else height = 40;
                 } else if (item.type === 'image') {
                     height = 200;
                 } else {
-                    height = 130;
+                    height = 120;
                 }
             }
 
-            // Space for date
-            height += 24;
+            height += 28;
 
             const x = startX + (colIndex * effectiveColWidth);
             const y = minY;

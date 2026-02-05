@@ -184,9 +184,17 @@
     color: var(--foreground);
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
     flex: 1;
     min-width: 0;
+    transition: transform 3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Right-only mask for smooth sliding clip */
+    mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
+}
+
+.inboxItem:hover .title.canAnimate {
+    transform: translateX(-15%);
 }
 
 .titleRow {
@@ -196,6 +204,8 @@
     width: 100%;
     min-width: 0;
     gap: 8px;
+    overflow: hidden;
+    /* Prevents sliding text from hitting the thumbnail */
 }
 
 .inboxItem:hover .titleRow {

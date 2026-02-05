@@ -130,12 +130,12 @@
 }
 
 .deleteBtn:hover {
-    color: var(--accent);
-    background: var(--accent-glow);
+    color: var(--danger);
+    background: var(--danger-glow);
 }
 
 .confirmDelete {
-    background: var(--accent) !important;
+    background: var(--danger) !important;
     color: white !important;
     font-weight: 600;
 }

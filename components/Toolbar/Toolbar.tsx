@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './Toolbar.module.css';
-import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, Type } from 'lucide-react';
+import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, Type, Undo, Redo } from 'lucide-react';
 import clsx from 'clsx';
 import InputModal from '@/components/InputModal/InputModal';
 
 export default function Toolbar() {
     const { currentTool, setTool, position, scale } = useCanvasStore();
-    const { addItem, addFolder } = useItemsStore();
+    const { addItem, addFolder, undo, redo, history } = useItemsStore();
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [modalConfig, setModalConfig] = useState<{
@@ -74,23 +74,44 @@ export default function Toolbar() {
     return (
         <>
             <div className={styles.toolbar}>
-                <button
-                    className={clsx(styles.toolBtn, currentTool === 'mouse' && styles.active)}
-                    onClick={() => setTool('mouse')}
-                    title="Select (V)"
-                >
-                    <MousePointer2 size={20} />
-                </button>
+                <div className={styles.toolSection}>
+                    <button
+                        className={clsx(styles.toolBtn, currentTool === 'mouse' && styles.active)}
+                        onClick={() => setTool('mouse')}
+                        title="Select (V)"
+                    >
+                        <MousePointer2 size={20} />
+                    </button>
+
+                    <button
+                        className={clsx(styles.toolBtn, currentTool === 'hand' && styles.active)}
+                        onClick={() => setTool('hand')}
+                        title="Pan (H)"
+                    >
+                        <Hand size={20} />
+                    </button>
+                </div>
 
                 <div className={styles.divider} />
 
-                <button
-                    className={clsx(styles.toolBtn, currentTool === 'hand' && styles.active)}
-                    onClick={() => setTool('hand')}
-                    title="Pan (H)"
-                >
-                    <Hand size={20} />
-                </button>
+                <div className={styles.historySection}>
+                    <button
+                        className={styles.historyBtn}
+                        onClick={undo}
+                        disabled={history?.past.length === 0}
+                        title="Undo (Ctrl+Z)"
+                    >
+                        <Undo size={18} />
+                    </button>
+                    <button
+                        className={styles.historyBtn}
+                        onClick={redo}
+                        disabled={history?.future.length === 0}
+                        title="Redo (Ctrl+Y)"
+                    >
+                        <Redo size={18} />
+                    </button>
+                </div>
 
                 <div className={styles.divider} />
 
@@ -109,7 +130,6 @@ export default function Toolbar() {
                             <button className={styles.addOption} onClick={() => handleAddItemClick('text')} title="Text">
                                 <Type size={18} />
                             </button>
-                            <div className={styles.divider} />
                         </div>
                     )}
                     <button

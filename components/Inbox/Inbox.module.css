@@ -130,6 +130,8 @@
     transition: all 0.2s ease;
     user-select: none;
     position: relative;
+    overflow: hidden;
+    /* Hide sliding elements */
 }
 
 .inboxItem:hover {
@@ -215,6 +217,12 @@
     z-index: 2;
     background: inherit;
     /* Keep background to overlap the fade if needed */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inboxItem:hover .itemDateSmall {
+    opacity: 0;
+    transform: translateX(10px);
 }
 
 .domain {
@@ -276,12 +284,16 @@
     justify-content: center;
     cursor: pointer;
     opacity: 0;
-    transition: all 0.2s;
+    right: -40px;
+    /* Start off-screen */
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .inboxItem:hover .moveBtn {
     opacity: 1;
+    right: 8px;
+    /* Slide in */
 }
 
 .moveBtn:hover {

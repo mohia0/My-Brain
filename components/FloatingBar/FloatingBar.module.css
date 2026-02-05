@@ -1,6 +1,6 @@
 .bar {
     position: fixed;
-    bottom: 100px;
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--overlay-bg);
@@ -12,14 +12,15 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    box-shadow: 0 10px 40px var(--shadow-color);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
     z-index: 1200;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slideUp {
     from {
-        transform: translate(-50%, 20px);
+        transform: translate(-50%, 40px);
         opacity: 0;
     }
 
@@ -30,35 +31,160 @@
 }
 
 .count {
-    color: var(--text-dim);
+    color: var(--foreground);
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
+    opacity: 0.9;
 }
 
 .divider {
     width: 1px;
     height: 20px;
     background: var(--card-border);
+    opacity: 0.5;
 }
 
 .actionBtn {
     background: transparent;
     border: none;
-    color: var(--foreground);
-    padding: 8px;
+    color: var(--text-muted);
+    padding: 10px;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid transparent;
+    gap: 4px;
 }
 
 .actionBtn:hover {
     background: var(--card-hover);
+    color: var(--foreground);
     transform: translateY(-2px);
+}
+
+.activeBtn {
+    background: var(--accent-glow) !important;
+    color: var(--accent) !important;
+}
+
+.chevron {
+    transition: transform 0.2s;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.relativeWrapper {
+    position: relative;
+}
+
+.moveMenu {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: menuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes menuFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+.menuHeader {
+    padding: 8px 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.menuOption {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--foreground);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.85rem;
+    text-align: left;
+}
+
+.menuOption:hover {
+    background: var(--card-hover);
+}
+
+.menuDivider {
+    height: 1px;
+    background: var(--card-border);
+    margin: 4px 0;
+    opacity: 0.5;
+}
+
+.folderList {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.folderList::-webkit-scrollbar {
+    width: 4px;
+}
+
+.folderList::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 10px;
+}
+
+/* Organize Button Animation */
+.organizeBtn {
+    overflow: hidden;
+    gap: 0;
+    padding: 8px 14px;
+    border-radius: 100px;
+    width: auto;
+}
+
+.btnText {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.organizeBtn:hover .btnText {
+    max-width: 100px;
+    opacity: 1;
+    margin-left: 8px;
 }
 
 .delete:hover {
@@ -67,25 +193,24 @@
 }
 
 .confirmDelete {
-    background: var(--accent);
-    color: white;
+    background: var(--accent) !important;
+    color: white !important;
     width: auto;
     padding: 8px 16px;
     border-radius: 100px;
 }
 
-.confirmDelete:hover {
-    background: var(--accent);
-    color: white;
-    filter: brightness(1.1);
+.sureText {
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .closeBtn {
     background: var(--card-bg);
-    border: none;
+    border: 1px solid var(--card-border);
     color: var(--text-muted);
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -98,39 +223,5 @@
 .closeBtn:hover {
     background: var(--card-hover);
     color: var(--foreground);
-}
-
-/* Organize Button Animation */
-.organizeBtn {
-    overflow: hidden;
-    gap: 0;
-    padding: 8px 10px;
-    /* Adjust padding for pill shape */
-    border-radius: 100px;
-    /* Pill shape */
-    width: auto;
-}
-
-.btnText {
-    max-width: 0;
-    opacity: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.organizeBtn:hover {
-    background: var(--accent);
-    color: white;
-    box-shadow: 0 0 12px var(--accent-glow);
-    padding-right: 16px;
-}
-
-.organizeBtn:hover .btnText {
-    max-width: 100px;
-    /* adjust based on text length */
-    opacity: 1;
-    margin-left: 8px;
+    transform: rotate(90deg);
 }

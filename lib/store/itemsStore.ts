@@ -416,62 +416,91 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         };
     }),
     layoutAllItems: () => set((state) => {
-        // ... (keep existing layout logic)
         // Find items and folders that are on the canvas (root level)
         const canvasItems = state.items.filter(i => !i.folder_id && i.status !== 'inbox');
         const canvasFolders = state.folders;
 
         if (canvasItems.length === 0 && canvasFolders.length === 0) return state;
 
+        // Combine and add temporary type identifier
         const allElements = [
-            ...canvasItems.map(i => ({ type: 'item', id: i.id, x: i.position_x, y: i.position_y })),
-            ...canvasFolders.map(f => ({ type: 'folder', id: f.id, x: f.position_x, y: f.position_y }))
+            ...canvasItems.map(i => ({ ...i, entityType: 'item' })),
+            ...canvasFolders.map(f => ({ ...f, entityType: 'folder' }))
         ];
 
-        // Start grid at top-left of current bounds
-        const startX = Math.min(...allElements.map(e => e.x));
-        const startY = Math.min(...allElements.map(e => e.y));
-        const cols = Math.ceil(Math.sqrt(allElements.length));
-        const itemWidth = 280;
-        const itemHeight = 200;
+        // Sort by position (Top-Left to Bottom-Right)
+        allElements.sort((a, b) => {
+            const rowDiff = Math.abs(a.position_y - b.position_y);
+            if (rowDiff > 50) return a.position_y - b.position_y;
+            return a.position_x - b.position_x;
+        });
 
+        const startX = Math.min(...allElements.map(e => e.position_x));
+        const startY = Math.min(...allElements.map(e => e.position_y));
+
+        // Determine layout settings
+        // Check for wide items (Capture Cards)
+        const hasWideItems = allElements.some(e => e.entityType === 'item' && (e as any).type === 'link' && (e as any).metadata?.image);
+        const colWidth = hasWideItems ? 300 : 200;
+        const gap = 40;
+        const effectiveColWidth = colWidth + gap;
+
+        // Calculate optimal columns
+        const cols = Math.ceil(Math.sqrt(allElements.length));
+        const colHeights = new Array(cols).fill(startY);
+
+        const newItemPositions = new Map();
+        const newFolderPositions = new Map();
         const itemsToUpdate: any[] = [];
         const foldersToUpdate: any[] = [];
         const historyUpdates: PositionUpdate[] = [];
 
-        const newItemPositions = new Map();
-        const newFolderPositions = new Map();
+        allElements.forEach(el => {
+            // Find shortest column (Masonry)
+            let colIndex = 0;
+            let minY = colHeights[0];
+            for (let i = 1; i < cols; i++) {
+                if (colHeights[i] < minY) {
+                    minY = colHeights[i];
+                    colIndex = i;
+                }
+            }
 
-        allElements.forEach((el, index) => {
-            const col = index % cols;
-            const row = Math.floor(index / cols);
-            const x = startX + (col * itemWidth);
-            const y = startY + (row * itemHeight);
+            // Determine height
+            let height = 160;
+            if (el.entityType === 'folder') {
+                height = 148; // Folder fixed height
+            } else {
+                const item = el as any;
+                if (item.type === 'link') {
+                    if (item.metadata?.image) height = 100; // Capture Card
+                    else height = 40; // Link Card
+                } else if (item.type === 'image') {
+                    height = 200; // Standard image card height approx
+                } else {
+                    height = 120; // Text/Note min-height
+                }
+            }
 
-            if (el.type === 'item') {
+            const x = startX + (colIndex * effectiveColWidth);
+            const y = minY;
+
+            colHeights[colIndex] = y + height + gap;
+
+            if (el.entityType === 'item') {
                 newItemPositions.set(el.id, { x, y });
-                itemsToUpdate.push({ id: el.id, x, y });
-                // We need original item to get prev pos... simplified here as we iterate below
+                itemsToUpdate.push({ id: el.id, position_x: x, position_y: y });
+                historyUpdates.push({ id: el.id, type: 'item', x, y, prevX: el.position_x, prevY: el.position_y });
             } else {
                 newFolderPositions.set(el.id, { x, y });
-                foldersToUpdate.push({ id: el.id, x, y });
+                foldersToUpdate.push({ id: el.id, position_x: x, position_y: y });
+                historyUpdates.push({ id: el.id, type: 'folder', x, y, prevX: el.position_x, prevY: el.position_y });
             }
         });
 
-        // construct history
-        canvasItems.forEach(i => {
-            const n = newItemPositions.get(i.id);
-            if (n) historyUpdates.push({ id: i.id, type: 'item', x: n.x, y: n.y, prevX: i.position_x, prevY: i.position_y });
-        });
-        canvasFolders.forEach(f => {
-            const n = newFolderPositions.get(f.id);
-            if (n) historyUpdates.push({ id: f.id, type: 'folder', x: n.x, y: n.y, prevX: f.position_x, prevY: f.position_y });
-        });
-
-
         // Batch Update
-        itemsToUpdate.forEach(u => supabase.from('items').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then());
-        foldersToUpdate.forEach(u => supabase.from('folders').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then());
+        itemsToUpdate.forEach(u => supabase.from('items').update({ position_x: u.position_x, position_y: u.position_y }).eq('id', u.id).then());
+        foldersToUpdate.forEach(u => supabase.from('folders').update({ position_x: u.position_x, position_y: u.position_y }).eq('id', u.id).then());
 
         return {
             items: state.items.map(i => {

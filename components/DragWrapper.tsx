@@ -22,16 +22,7 @@ import InboxItem from './Inbox/InboxItem';
 import { ItemCardView } from './Grid/ItemCard';
 import { FolderItemView } from './Grid/FolderItem';
 
-// Professional drop animation configuration
-const dropAnimationConfig: DropAnimation = {
-    sideEffects: defaultDropAnimationSideEffects({
-        styles: {
-            active: {
-                opacity: '0.4',
-            },
-        },
-    }),
-};
+
 
 export default function DragWrapper({ children }: { children: React.ReactNode }) {
     const { scale } = useCanvasStore();
@@ -177,8 +168,6 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                     folderItems={folderItems}
                     isOverlay
                     isSelected={selectedIds.includes(activeItem.id)}
-                    onDelete={() => { }}
-                    onDuplicate={() => { }}
                     onClick={() => { }}
                 />
             );
@@ -206,7 +195,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             onDragEnd={handleDragEnd}
         >
             {children}
-            <DragOverlay dropAnimation={dropAnimationConfig}>
+            <DragOverlay dropAnimation={null}>
                 {activeId ? renderOverlayItem() : null}
             </DragOverlay>
         </DndContext>

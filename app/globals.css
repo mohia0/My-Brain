@@ -2,19 +2,20 @@
   /* Premium Dark Palette */
   --background: #0a0a0c;
   --foreground: #ededed;
-  
+
   --card-bg: rgba(255, 255, 255, 0.03);
   --card-border: rgba(255, 255, 255, 0.08);
   --card-hover: rgba(255, 255, 255, 0.06);
-  
-  --accent: #6e56cf; /* Premium Purple */
+
+  --accent: #6e56cf;
+  /* Premium Purple */
   --accent-glow: rgba(110, 86, 207, 0.4);
-  
+
   --grid-color: rgba(255, 255, 255, 0.03);
   --grid-size: 40px;
-  
+
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
+
   /* Zoom/Pan Context */
   --scale: 1;
 }
@@ -29,11 +30,21 @@ html,
 body {
   max-width: 100vw;
   height: 100vh;
-  overflow: hidden; /* Critical for Zoomable Canvas */
+  overflow: hidden;
+  /* Critical for Zoomable Canvas */
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 a {
@@ -46,13 +57,16 @@ a {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--card-border);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--card-hover);
 }

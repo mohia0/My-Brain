@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase';
 import styles from './AuthModal.module.css';
 import { Eye, EyeOff } from 'lucide-react';
 
+import Orb from '../Orb/Orb';
+
 export default function AuthModal({ onLogin }: { onLogin: () => void }) {
     const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState('');
@@ -53,6 +55,8 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
     return (
         <div className={styles.overlay}>
+            <Orb hue={260} hoverIntensity={0.5} backgroundColor="#050505" />
+
             <div className={styles.card}>
                 <div className={styles.header}>
                     <h1 className={styles.logo}>My Brain</h1>
@@ -134,3 +138,4 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
         </div>
     );
 }
+

@@ -33,7 +33,7 @@
 .overlay {
     position: fixed;
     inset: 0;
-    background: var(--background);
+    background: #050505;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -41,34 +41,6 @@
     overflow: hidden;
 }
 
-/* Ambient Background Effects */
-.overlay::before,
-.overlay::after {
-    content: '';
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.2;
-    z-index: 1;
-    animation: float 20s infinite ease-in-out;
-}
-
-.overlay::before {
-    background: var(--accent);
-    /* Indigo */
-    top: -100px;
-    left: -100px;
-}
-
-.overlay::after {
-    background: #ec4899;
-    /* Pink */
-    bottom: -100px;
-    right: -100px;
-    animation-delay: -10s;
-}
 
 .card {
     position: relative;

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">My Brain</string>
+    <string name="title_activity_main">My Brain</string>
+    <string name="package_name">com.mybrain.app</string>
+    <string name="custom_url_scheme">com.mybrain.app</string>
+</resources>

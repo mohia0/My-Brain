@@ -16,8 +16,47 @@
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
+  /* Additional Themed Variables */
+  --overlay-bg: rgba(20, 20, 20, 0.9);
+  --overlay-blur: 24px;
+  --input-bg: rgba(255, 255, 255, 0.03);
+  --text-muted: #666666;
+  --text-dim: #aeaeae;
+  --text-bright: #ffffff;
+  --border-light: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --modal-bg: #1a1a1a;
+  --grid-dot: #333333;
+  --canvas-gutter: #0f0f11;
+
   /* Zoom/Pan Context */
   --scale: 1;
+}
+
+[data-theme='light'] {
+  --background: #fdfdfd;
+  --foreground: #1a1a1a;
+
+  --card-bg: rgba(0, 0, 0, 0.02);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-hover: rgba(0, 0, 0, 0.04);
+
+  --accent: #6e56cf;
+  --accent-glow: rgba(110, 86, 207, 0.2);
+
+  --grid-color: rgba(0, 0, 0, 0.04);
+
+  --overlay-bg: rgba(255, 255, 255, 0.8);
+  --overlay-blur: 24px;
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --text-muted: #888888;
+  --text-dim: #555555;
+  --text-bright: #000000;
+  --border-light: rgba(0, 0, 0, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --modal-bg: #ffffff;
+  --grid-dot: #e0e0e0;
+  --canvas-gutter: #f0f0f2;
 }
 
 * {

@@ -21,7 +21,7 @@ interface FolderItemViewProps {
     isDimmed?: boolean;
     isDragging?: boolean;
     isOverlay?: boolean;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent) => void;
     style?: React.CSSProperties;
     attributes?: any;
     listeners?: any;
@@ -142,6 +142,16 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
         transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined
     };
 
+    const handleClick = (e: React.MouseEvent) => {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+            e.stopPropagation();
+            useItemsStore.getState().toggleSelection(folder.id);
+        } else {
+            useItemsStore.getState().selectItem(folder.id);
+            onClick?.();
+        }
+    };
+
     return (
         <FolderItemView
             ref={setNodeRef}
@@ -151,7 +161,7 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
             isSelected={isSelected}
             isDimmed={isDimmed}
             isDragging={isDragging}
-            onClick={onClick}
+            onClick={handleClick}
             attributes={attributes}
             listeners={listeners}
             style={dragStyle}

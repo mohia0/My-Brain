@@ -49,7 +49,10 @@ export default function Header() {
 
     return (
         <header className={styles.header}>
-            <div className={styles.logo}>
+            <div className={styles.logo} onClick={() => {
+                setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                setScale(1);
+            }}>
                 <div className={styles.logoDot} />
                 <h1>My Brain</h1>
             </div>

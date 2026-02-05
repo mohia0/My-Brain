@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Inbox as InboxIcon } from 'lucide-react';
 import styles from './Inbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
@@ -18,30 +19,49 @@ export default function Inbox({ onItemClick }: InboxProps) {
         data: { type: 'inbox-drop-zone' }
     });
 
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
     return (
         <div
             ref={setNodeRef}
-            className={clsx(styles.inboxWrapper, isOver && styles.isOver)}
+            className={clsx(
+                styles.inboxWrapper,
+                isOver && styles.isOver,
+                isCollapsed && styles.collapsed
+            )}
         >
-            <div className={styles.header}>
-                <InboxIcon size={20} />
-                <span>Inbox ({inboxItems.length})</span>
+            <div className={styles.header} onClick={() => setIsCollapsed(!isCollapsed)}>
+                <div className={styles.headerTitle}>
+                    <InboxIcon size={20} />
+                    <span>Inbox ({inboxItems.length})</span>
+                </div>
+                <button
+                    className={styles.collapseBtn}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(!isCollapsed);
+                    }}
+                >
+                    {isCollapsed ? "Expand" : "Collapse"}
+                </button>
             </div>
-            <div className={styles.content}>
-                {inboxItems.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        {isOver ? "Drop to Move to Inbox" : "No items"}
-                    </div>
-                ) : (
-                    inboxItems.map(item => (
-                        <InboxItem
-                            key={item.id}
-                            item={item}
-                            onClick={() => onItemClick?.(item.id)}
-                        />
-                    ))
-                )}
-            </div>
+            {!isCollapsed && (
+                <div className={styles.content}>
+                    {inboxItems.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            {isOver ? "Drop to Move to Inbox" : "No items"}
+                        </div>
+                    ) : (
+                        inboxItems.map(item => (
+                            <InboxItem
+                                key={item.id}
+                                item={item}
+                                onClick={() => onItemClick?.(item.id)}
+                            />
+                        ))
+                    )}
+                </div>
+            )}
         </div>
     );
 }

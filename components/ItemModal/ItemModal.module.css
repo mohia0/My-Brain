@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -13,13 +13,13 @@
 }
 
 .modal {
-    background: var(--card-bg);
+    background: var(--modal-bg);
     width: 900px;
     height: 85vh;
     max-height: 800px;
     border-radius: 16px;
     border: 1px solid var(--card-border);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 50px var(--shadow-color);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -50,7 +50,7 @@
 }
 
 .leftColumn {
-    background: #000;
+    background: var(--background);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,7 +66,7 @@
 }
 
 .previewPlaceholder {
-    color: #555;
+    color: var(--text-muted);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -76,7 +76,7 @@
 .rightColumn {
     display: flex;
     flex-direction: column;
-    background: var(--card-bg);
+    background: var(--modal-bg);
 }
 
 /* --- RIGHT COLUMN SECTIONS --- */
@@ -103,14 +103,14 @@
 .closeBtn {
     background: transparent;
     border: none;
-    color: #888;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
 }
 
 .closeBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--card-hover);
     color: var(--foreground);
 }
 
@@ -133,12 +133,12 @@
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #666;
+    color: var(--text-muted);
     font-weight: 600;
 }
 
 .urlLink {
-    color: #60A5FA;
+    color: var(--accent);
     text-decoration: none;
     font-size: 0.9rem;
     white-space: nowrap;
@@ -152,7 +152,7 @@
 }
 
 .descriptionInput {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--input-bg);
     border: 1px solid var(--card-border);
     border-radius: 8px;
     padding: 12px;
@@ -165,7 +165,7 @@
 }
 
 .descriptionInput:focus {
-    border-color: #60A5FA;
+    border-color: var(--accent);
     outline: none;
 }
 
@@ -179,7 +179,8 @@
 }
 
 .tag {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     padding: 4px 10px;
     border-radius: 100px;
     font-size: 0.8rem;
@@ -213,8 +214,8 @@
 
 .addTagBtn {
     background: transparent;
-    border: 1px dashed #666;
-    color: #888;
+    border: 1px dashed var(--text-muted);
+    color: var(--text-muted);
     padding: 4px 10px;
     border-radius: 100px;
     font-size: 0.8rem;
@@ -222,13 +223,13 @@
 }
 
 .addTagBtn:hover {
-    border-color: #888;
+    border-color: var(--text-dim);
     color: var(--foreground);
 }
 
 .tagInput {
     background: transparent;
-    border: 1px solid #60A5FA;
+    border: 1px solid var(--accent);
     color: var(--foreground);
     padding: 4px 10px;
     border-radius: 100px;
@@ -244,7 +245,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--card-bg);
+    background: var(--modal-bg);
 }
 
 .deleteBtn {
@@ -262,8 +263,8 @@
 }
 
 .saveBtn {
-    background: #fff;
-    color: #000;
+    background: var(--accent);
+    color: white;
     border: none;
     padding: 8px 24px;
     font-weight: 600;
@@ -272,8 +273,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .saveBtn:hover {
-    background: #ddd;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px var(--accent-glow);
 }

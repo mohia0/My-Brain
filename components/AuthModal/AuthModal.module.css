@@ -33,7 +33,7 @@
 .overlay {
     position: fixed;
     inset: 0;
-    background: #030303;
+    background: var(--background);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -56,7 +56,7 @@
 }
 
 .overlay::before {
-    background: #4f46e5;
+    background: var(--accent);
     /* Indigo */
     top: -100px;
     left: -100px;
@@ -73,11 +73,11 @@
 .card {
     position: relative;
     z-index: 10;
-    background: rgba(20, 20, 20, 0.6);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: var(--overlay-bg);
+    backdrop-filter: blur(var(--overlay-blur));
+    -webkit-backdrop-filter: blur(var(--overlay-blur));
     /* Safari */
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--card-border);
     padding: 48px;
     border-radius: 24px;
     width: 420px;
@@ -85,9 +85,7 @@
     display: flex;
     flex-direction: column;
     gap: 32px;
-    box-shadow:
-        0 25px 50px -12px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    box-shadow: 0 25px 50px -12px var(--shadow-color);
     transition: transform 0.3s ease;
 }
 
@@ -101,15 +99,13 @@
 .logo {
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #fff 0%, #aaa 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--foreground);
     letter-spacing: -0.04em;
     margin-bottom: 4px;
 }
 
 .subtitle {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
     font-weight: 400;
 }
@@ -126,24 +122,24 @@
 
 .input {
     width: 100%;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
     padding: 16px;
     border-radius: 12px;
-    color: white;
+    color: var(--foreground);
     font-size: 1rem;
     outline: none;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .input:focus {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.02);
+    background: var(--card-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 .input::placeholder {
-    color: #444;
+    color: var(--text-muted);
 }
 
 .passwordToggle {
@@ -153,7 +149,7 @@
     transform: translateY(-50%);
     background: transparent;
     border: none;
-    color: #666;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
     display: flex;
@@ -164,12 +160,12 @@
 }
 
 .passwordToggle:hover {
-    color: #fff;
+    color: var(--foreground);
 }
 
 .button {
-    background: white;
-    color: black;
+    background: var(--accent);
+    color: white;
     border: none;
     padding: 16px;
     border-radius: 12px;
@@ -180,11 +176,12 @@
     margin-top: 8px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 30px -10px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px -10px var(--accent-glow);
 }
 
 .button:active {
@@ -204,7 +201,7 @@
 }
 
 .divider {
-    color: #333;
+    color: var(--text-muted);
     font-size: 0.8rem;
     display: flex;
     align-items: center;
@@ -217,23 +214,21 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--card-border);
 }
 
 .guestBtn {
     background: transparent;
     border: none;
-    color: #555;
+    color: var(--text-muted);
     font-size: 0.9rem;
     cursor: pointer;
     transition: color 0.2s;
     text-decoration: underline;
-    text-decoration-color: transparent;
 }
 
 .guestBtn:hover {
-    color: #888;
-    text-decoration-color: #444;
+    color: var(--text-dim);
 }
 
 .error {
@@ -251,13 +246,13 @@
     justify-content: center;
     gap: 8px;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .toggleLink {
-    color: #fff;
+    color: var(--accent);
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     transition: opacity 0.2s;
 }
 

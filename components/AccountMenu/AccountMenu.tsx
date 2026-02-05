@@ -4,14 +4,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import styles from './AccountMenu.module.css';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Sun, Moon } from 'lucide-react';
 
 export default function AccountMenu() {
     const [isOpen, setIsOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        // Theme initialization
+        const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' || 'dark';
+        setTheme(savedTheme);
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
         // Fetch initial user
         supabase.auth.getUser().then(({ data: { user } }) => {
             setUser(user);
@@ -37,6 +43,13 @@ export default function AccountMenu() {
         };
     }, []);
 
+    const toggleTheme = () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    };
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         setIsOpen(false);
@@ -49,8 +62,13 @@ export default function AccountMenu() {
 
     return (
         <div className={styles.container} ref={containerRef}>
-            <div className={styles.avatar} onClick={() => setIsOpen(!isOpen)}>
-                {initial}
+            <div className={styles.controls}>
+                <button className={styles.themeToggle} onClick={toggleTheme} aria-label="Toggle Theme">
+                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+                <div className={styles.avatar} onClick={() => setIsOpen(!isOpen)}>
+                    {initial}
+                </div>
             </div>
 
             {isOpen && (

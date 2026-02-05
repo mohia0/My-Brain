@@ -7,8 +7,10 @@ import styles from './Canvas.module.css';
 import { Undo, Redo } from 'lucide-react';
 
 // Fixed Canvas Size (Figma-like artboard)
-const CANVAS_SIZE = 5000;
-const HALF_SIZE = CANVAS_SIZE / 2;
+const CANVAS_WIDTH = 10000;
+const CANVAS_HEIGHT = 5000;
+const HALF_WIDTH = CANVAS_WIDTH / 2;
+const HALF_HEIGHT = CANVAS_HEIGHT / 2;
 
 export default function Canvas({ children }: { children: React.ReactNode }) {
     const { scale, position, setPosition, setScale, currentTool } = useCanvasStore();
@@ -106,13 +108,12 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 // Strict limits logic
                 const viewportW = window.innerWidth;
                 const viewportH = window.innerHeight;
-                const HALF_SIZE = 2500;
 
-                const minX = viewportW - (HALF_SIZE * currentScale);
-                const maxX = HALF_SIZE * currentScale;
+                const minX = viewportW - (HALF_WIDTH * currentScale);
+                const maxX = HALF_WIDTH * currentScale;
 
-                const minY = viewportH - (HALF_SIZE * currentScale);
-                const maxY = HALF_SIZE * currentScale;
+                const minY = viewportH - (HALF_HEIGHT * currentScale);
+                const maxY = HALF_HEIGHT * currentScale;
 
                 if (minX <= maxX) {
                     newX = Math.max(minX, Math.min(maxX, newX));
@@ -204,11 +205,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             const viewportW = window.innerWidth;
             const viewportH = window.innerHeight;
 
-            const minX = viewportW - (HALF_SIZE * scale);
-            const maxX = HALF_SIZE * scale;
+            const minX = viewportW - (HALF_WIDTH * scale);
+            const maxX = HALF_WIDTH * scale;
 
-            const minY = viewportH - (HALF_SIZE * scale);
-            const maxY = HALF_SIZE * scale;
+            const minY = viewportH - (HALF_HEIGHT * scale);
+            const maxY = HALF_HEIGHT * scale;
 
             if (minX > maxX) {
                 newX = viewportW / 2;
@@ -249,8 +250,8 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const worldW = width / scale;
                 const worldH = height / scale;
 
-                const selected = items.filter(item => {
-                    const itemW = 200; // Approx
+                const selectedItems = items.filter(item => {
+                    const itemW = 200;
                     const itemH = 100;
                     return (
                         item.position_x < worldX + worldW &&
@@ -260,7 +261,18 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     );
                 }).map(i => i.id);
 
-                setSelection(selected);
+                const selectedFolders = useItemsStore.getState().folders.filter(folder => {
+                    const folderW = 240; // Folder width approx
+                    const folderH = 180; // Folder height approx
+                    return (
+                        folder.position_x < worldX + worldW &&
+                        folder.position_x + folderW > worldX &&
+                        folder.position_y < worldY + worldH &&
+                        folder.position_y + folderH > worldY
+                    );
+                }).map(f => f.id);
+
+                setSelection([...selectedItems, ...selectedFolders]);
             }
         }
     };
@@ -335,13 +347,13 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 {/* Visual Board Boundaries */}
                 <div style={{
                     position: 'absolute',
-                    left: -HALF_SIZE,
-                    top: -HALF_SIZE,
-                    width: CANVAS_SIZE,
-                    height: CANVAS_SIZE,
+                    left: -HALF_WIDTH,
+                    top: -HALF_HEIGHT,
+                    width: CANVAS_WIDTH,
+                    height: CANVAS_HEIGHT,
                     backgroundColor: 'var(--background)', // Keep board original color
-                    border: '2px solid rgba(255, 255, 255, 0.1)',
-                    backgroundImage: 'radial-gradient(#333 1px, transparent 1px)',
+                    border: '1px solid var(--card-border)',
+                    backgroundImage: 'radial-gradient(var(--grid-dot) 1px, transparent 1px)',
                     backgroundSize: '40px 40px',
                     pointerEvents: 'none',
                     zIndex: -1
@@ -382,24 +394,25 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                         width: 36,
                         height: 36,
                         borderRadius: 8,
-                        background: 'rgba(20, 20, 20, 0.6)',
+                        background: 'var(--card-bg)',
                         backdropFilter: 'blur(4px)',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        color: history?.past.length > 0 ? '#eee' : '#444',
+                        border: '1px solid var(--card-border)',
+                        color: history?.past.length > 0 ? 'var(--foreground)' : 'var(--text-muted)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: history?.past.length > 0 ? 'pointer' : 'default',
-                        transition: 'all 0.2s'
+                        transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px var(--shadow-color)'
                     }}
                     onMouseEnter={(e) => {
                         if (history?.past.length > 0) {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.background = 'var(--card-hover)';
                             e.currentTarget.style.transform = 'translateY(-2px)';
                         }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(20, 20, 20, 0.6)';
+                        e.currentTarget.style.background = 'var(--card-bg)';
                         e.currentTarget.style.transform = 'none';
                     }}
                     title="Undo (Ctrl+Z)"
@@ -413,24 +426,25 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                         width: 36,
                         height: 36,
                         borderRadius: 8,
-                        background: 'rgba(20, 20, 20, 0.6)',
+                        background: 'var(--card-bg)',
                         backdropFilter: 'blur(4px)',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        color: history?.future.length > 0 ? '#eee' : '#444',
+                        border: '1px solid var(--card-border)',
+                        color: history?.future.length > 0 ? 'var(--foreground)' : 'var(--text-muted)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: history?.future.length > 0 ? 'pointer' : 'default',
-                        transition: 'all 0.2s'
+                        transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px var(--shadow-color)'
                     }}
                     onMouseEnter={(e) => {
                         if (history?.future.length > 0) {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.background = 'var(--card-hover)';
                             e.currentTarget.style.transform = 'translateY(-2px)';
                         }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(20, 20, 20, 0.6)';
+                        e.currentTarget.style.background = 'var(--card-bg)';
                         e.currentTarget.style.transform = 'none';
                     }}
                     title="Redo (Ctrl+Y)"

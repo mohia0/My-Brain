@@ -4,7 +4,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
     z-index: 20000;
     display: flex;
@@ -15,41 +15,41 @@
 
 .modal {
     width: 380px;
-    background: #1a1a1a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--modal-bg);
+    border: 1px solid var(--card-border);
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 50px var(--shadow-color);
     overflow: hidden;
     animation: scaleIn 0.2s ease-out;
 }
 
 .header {
     padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--card-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--card-bg);
 }
 
 .title {
     font-weight: 500;
-    color: #eee;
+    color: var(--foreground);
 }
 
 .closeBtn {
     background: transparent;
     border: none;
-    color: #888;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
     display: flex;
 }
 
 .closeBtn:hover {
-    color: white;
+    color: var(--foreground);
 }
 
 .body {
@@ -61,30 +61,31 @@
 
 .input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
     border-radius: 8px;
     padding: 12px;
-    color: white;
+    color: var(--foreground);
     font-size: 1rem;
     outline: none;
     transition: border-color 0.2s;
 }
 
 .input:focus {
-    border-color: var(--accent, #00aaff);
+    border-color: var(--accent);
 }
 
 .footer {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+    padding: 0 20px 20px;
 }
 
 .cancelBtn {
     background: transparent;
     border: none;
-    color: #aaa;
+    color: var(--text-muted);
     padding: 8px 16px;
     font-size: 0.9rem;
     cursor: pointer;
@@ -92,23 +93,25 @@
 }
 
 .cancelBtn:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--foreground);
+    background: var(--card-hover);
 }
 
 .submitBtn {
-    background: white;
-    color: black;
+    background: var(--accent);
+    color: white;
     border: none;
     padding: 8px 16px;
     font-size: 0.9rem;
     font-weight: 500;
     border-radius: 6px;
     cursor: pointer;
+    box-shadow: 0 2px 8px var(--accent-glow);
 }
 
 .submitBtn:hover {
-    background: #ccc;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 @keyframes fadeIn {
@@ -131,33 +134,34 @@
         transform: scale(1);
         opacity: 1;
     }
+}
 
-    .fileInputWrapper {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
+.fileInputWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-    .fileInput {
-        display: none;
-    }
+.fileInput {
+    display: none;
+}
 
-    .fileLabel {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.05);
-        border: 2px dashed rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 30px;
-        color: #aaa;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.9rem;
-    }
+.fileLabel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--input-bg);
+    border: 2px dashed var(--card-border);
+    border-radius: 8px;
+    padding: 30px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
 
-    .fileLabel:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-        color: white;
-    }
+.fileLabel:hover {
+    background: var(--card-hover);
+    border-color: var(--accent);
+    color: var(--foreground);
+}

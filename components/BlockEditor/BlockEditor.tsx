@@ -1,7 +1,6 @@
 "use client";
 
 import "@blocknote/core/fonts/inter.css";
-import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
@@ -15,6 +14,28 @@ interface BlockEditorProps {
 }
 
 export default function BlockEditor({ initialContent, onChange, editable = true }: BlockEditorProps) {
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+    useEffect(() => {
+        // Initial theme check
+        const currentTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'dark';
+        setTheme(currentTheme);
+
+        // Watch for theme changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                    const newTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'dark';
+                    setTheme(newTheme);
+                }
+            });
+        });
+
+        observer.observe(document.documentElement, { attributes: true });
+
+        return () => observer.disconnect();
+    }, []);
+
     // Try to parse initial content as JSON blocks, if fail, create a paragraph block with text
     const getInitialBlocks = (): Block[] | undefined => {
         if (!initialContent) return undefined;
@@ -48,7 +69,8 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
             <BlockNoteView
                 editor={editor}
                 onChange={handleChange}
-                theme={"dark"}
+                theme={theme}
+                editable={editable}
             />
         </div>
     );

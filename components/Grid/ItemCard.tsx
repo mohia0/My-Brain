@@ -20,7 +20,7 @@ interface ItemCardViewProps {
     isDimmed?: boolean;
     isDragging?: boolean;
     isOverlay?: boolean;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent) => void;
     onDuplicate: (e: React.MouseEvent) => void;
     onDelete: (e: React.MouseEvent) => void;
     style?: React.CSSProperties;
@@ -88,17 +88,14 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         isDimmed && styles.dimmed
     );
 
-    // For overlay, we override position to relative so it fits in the dnd-kit portal correctly (fixed type error)
-    // But we still need width/height.
     const finalStyle = isOverlay ? {
         ...style,
         position: 'relative' as const,
         top: 0,
         left: 0,
-        transform: 'none' // Ensure no transform doubles up
+        transform: 'none'
     } : style;
 
-    // Render Link Card (Compact)
     if (item.type === 'link' && !item.metadata?.image) {
         return (
             <div
@@ -125,7 +122,6 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         );
     }
 
-    // Render Web Capture Card (Horizontal)
     if (item.type === 'link' && item.metadata?.image) {
         return (
             <div
@@ -150,14 +146,13 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
     return (
         <div
-            id={`draggable-item-${item.id}`} // Important for multi-select drag in DragWrapper
+            id={`draggable-item-${item.id}`}
             ref={ref}
             className={baseClassName}
             style={finalStyle}
             {...listeners}
             {...attributes}
             onPointerDown={(e) => {
-                // Prevent drag from propagating to canvas pan
                 e.stopPropagation();
                 listeners?.onPointerDown?.(e);
             }}
@@ -181,7 +176,6 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             if (item.content.startsWith('[')) {
                                 try {
                                     const blocks = JSON.parse(item.content);
-                                    // Extract text from blocks
                                     return blocks.map((b: any) =>
                                         Array.isArray(b.content)
                                             ? b.content.map((c: any) => c.text).join('')
@@ -205,13 +199,7 @@ ItemCardView.displayName = 'ItemCardView';
 
 export default function ItemCard({ item, onClick }: ItemCardProps) {
     const { duplicateItem, removeItem, selectedIds } = useItemsStore();
-
     const { scale } = useCanvasStore();
-
-    // Figma-like behavior: 
-    // 1. We don't hide the item (opacity 1).
-    // 2. We apply the transform directly to the item.
-    // 3. We lift it up (z-index).
 
     const isSelected = selectedIds.includes(item.id);
     const isDimmed = selectedIds.length > 0 && !isSelected;
@@ -230,13 +218,22 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
         removeItem(item.id);
     };
 
-    // Calculate dynamic style for drag
     const dragStyle: React.CSSProperties = {
         left: item.position_x,
         top: item.position_y,
-        opacity: 1, // Always visible
-        zIndex: isDragging ? 1000 : undefined, // Lift when dragging
+        opacity: 1,
+        zIndex: isDragging ? 1000 : undefined,
         transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined
+    };
+
+    const handleClick = (e: React.MouseEvent) => {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+            e.stopPropagation();
+            useItemsStore.getState().toggleSelection(item.id);
+        } else {
+            useItemsStore.getState().selectItem(item.id);
+            onClick?.();
+        }
     };
 
     return (
@@ -246,7 +243,7 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
             isSelected={isSelected}
             isDimmed={isDimmed}
             isDragging={isDragging}
-            onClick={onClick}
+            onClick={handleClick}
             onDuplicate={handleDuplicate}
             onDelete={handleDelete}
             attributes={attributes}

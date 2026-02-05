@@ -3,15 +3,16 @@
     bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--card-bg);
-    backdrop-filter: blur(16px);
+    background: var(--overlay-bg);
+    backdrop-filter: blur(var(--overlay-blur));
+    -webkit-backdrop-filter: blur(var(--overlay-blur));
     border: 1px solid var(--card-border);
     padding: 8px 16px;
     border-radius: 100px;
     display: flex;
     align-items: center;
     gap: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px var(--shadow-color);
     z-index: 1200;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -29,7 +30,7 @@
 }
 
 .count {
-    color: #888;
+    color: var(--text-dim);
     font-size: 0.85rem;
     font-weight: 500;
     white-space: nowrap;
@@ -38,7 +39,7 @@
 .divider {
     width: 1px;
     height: 20px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--card-border);
 }
 
 .actionBtn {
@@ -56,7 +57,7 @@
 }
 
 .actionBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--card-hover);
     transform: translateY(-2px);
 }
 
@@ -79,9 +80,9 @@
 }
 
 .closeBtn {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--card-bg);
     border: none;
-    color: #666;
+    color: var(--text-muted);
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -94,8 +95,8 @@
 }
 
 .closeBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: var(--card-hover);
+    color: var(--foreground);
 }
 
 /* Organize Button Animation */
@@ -120,9 +121,9 @@
 }
 
 .organizeBtn:hover {
-    background: linear-gradient(135deg, #60A5FA, #A855F7);
+    background: var(--accent);
     color: white;
-    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 12px var(--accent-glow);
     padding-right: 16px;
 }
 

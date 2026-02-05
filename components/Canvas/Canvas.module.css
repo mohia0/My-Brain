@@ -2,8 +2,8 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background-color: #1e1e1e;
-    /* Dark Grey for outside area */
+    background-color: var(--canvas-gutter);
+    /* Themed for both modes */
     /* Dot Grid Pattern - Removed per user request */
     cursor: default;
     position: relative;

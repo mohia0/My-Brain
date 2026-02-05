@@ -17,16 +17,14 @@
 }
 
 .container {
-    width: 150px;
-    height: 150px;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-bg);
     border: 1px solid var(--card-border);
     border-radius: 12px;
     overflow: hidden;
     backdrop-filter: blur(4px);
     position: relative;
     /* Simple grid background for map */
-    background-image: radial-gradient(#333 1px, transparent 1px);
+    background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
     background-size: 10px 10px;
 }
 
@@ -41,16 +39,16 @@
 .viewport {
     position: absolute;
     border: 1px solid var(--accent);
-    background: rgba(110, 86, 207, 0.1);
+    background: var(--accent-glow);
     pointer-events: none;
     border-radius: 2px;
 }
 
 .zoomControl {
-    height: 150px;
+    height: 125px;
     display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-bg);
     border-radius: 12px;
     padding: 0 4px;
     border: 1px solid var(--card-border);

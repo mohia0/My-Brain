@@ -703,7 +703,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     subscribeToChanges: () => {
         const channels = [
             supabase.channel('items-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, (payload) => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, (payload: any) => {
                     if (payload.eventType === 'INSERT') {
                         set(state => {
                             if (state.items.find(i => i.id === payload.new.id)) return state;
@@ -720,7 +720,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 .subscribe(),
 
             supabase.channel('folders-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, (payload) => {
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, (payload: any) => {
                     if (payload.eventType === 'INSERT') {
                         set(state => {
                             if (state.folders.find(f => f.id === payload.new.id)) return state;

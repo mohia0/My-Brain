@@ -182,13 +182,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const state = get();
         const historyUpdates: PositionUpdate[] = [];
 
-        // Apply non-overlap to each update sequentially
-        const processedUpdates = updates.map(u => {
-            const width = 280;
-            const height = 120;
-            const safe = getSafePosition(u.id, u.x, u.y, width, height, state.items, state.folders);
-            return { ...u, x: safe.x, y: safe.y };
-        });
+        // Move items as a unit - preserve relative structure by skipping individual collision resolution
+        const processedUpdates = updates;
 
         processedUpdates.forEach(u => {
             if (u.type === 'item') {

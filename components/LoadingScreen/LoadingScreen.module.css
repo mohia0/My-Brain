@@ -23,25 +23,6 @@
     text-align: center;
 }
 
-.logoRow {
-    display: flex;
-    align-items: flex-end;
-    /* Align to bottom */
-    justify-content: center;
-    gap: 16px;
-    margin-bottom: 8px;
-}
-
-.logoDotWrapper {
-    width: 64px;
-    height: 64px;
-    position: relative;
-    filter: drop-shadow(0 0 25px var(--accent-glow)) brightness(1.6);
-    margin-right: -8px;
-    margin-bottom: 12px;
-    /* Optical bottom alignment */
-}
-
 .logo {
     font-size: 3.5rem;
     font-weight: 800;
@@ -52,8 +33,6 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
-    transform: translateY(-8px);
-    /* Shift text up */
 }
 
 .status {

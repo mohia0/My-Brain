@@ -37,12 +37,7 @@ export default function LoadingScreen({ isFading }: { isFading: boolean }) {
         <div className={`${styles.container} ${isFading ? styles.fading : ''}`}>
             <Orb hue={280} hoverIntensity={0.5} forceHoverState={true} backgroundColor="#050505" />
             <div className={styles.content}>
-                <div className={styles.logoRow}>
-                    <div className={styles.logoDotWrapper}>
-                        <Orb hue={280} hoverIntensity={0.8} forceHoverState={true} backgroundColor="transparent" />
-                    </div>
-                    <h1 className={styles.logo}>My Brain</h1>
-                </div>
+                <h1 className={styles.logo}>My Brain</h1>
                 <div className={styles.status}>
                     <span>{status}{dots}</span>
                 </div>

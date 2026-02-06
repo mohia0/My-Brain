@@ -93,25 +93,6 @@
     gap: 8px;
 }
 
-.logoRow {
-    display: flex;
-    align-items: flex-end;
-    /* Align to bottom */
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 4px;
-}
-
-.logoDotWrapper {
-    width: 44px;
-    height: 44px;
-    position: relative;
-    filter: drop-shadow(0 0 18px var(--accent-glow)) brightness(1.5);
-    margin-right: -4px;
-    margin-bottom: 4px;
-    /* Move to bottom of text */
-}
-
 .logo {
     font-size: 2rem;
     font-weight: 800;
@@ -120,6 +101,7 @@
     font-family: var(--font-outfit), sans-serif;
     transform: translateY(-4px);
     /* Shift text up */
+    margin-bottom: 4px;
 }
 
 .subtitle {

@@ -1,19 +1,21 @@
 "use client";
 
-import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import styles from './AuthModal.module.css';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 import Orb from '../Orb/Orb';
 
 export default function AuthModal({ onLogin }: { onLogin: () => void }) {
-    const [isSignUp, setIsSignUp] = useState(() => {
+    const [isSignUp, setIsSignUp] = useState(false);
+
+    useEffect(() => {
         if (typeof window !== 'undefined') {
-            return new URLSearchParams(window.location.search).get('signup') === 'true';
+            setIsSignUp(new URLSearchParams(window.location.search).get('signup') === 'true');
         }
-        return false;
-    });
+    }, []);
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,10 +36,19 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isSupabaseConfigured) {
+            setError("Configuration Error: NEXT_PUBLIC_SUPABASE_URL or ANAL_KEY is missing. Authentication is disabled.");
+            console.error("Supabase is not configured. Check your environment variables.");
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
+            console.log(`Attempting ${isSignUp ? 'signup' : 'signin'} for ${email}...`);
+
             if (isSignUp) {
                 if (password !== confirmPassword) {
                     setError("Passwords do not match");
@@ -47,26 +58,36 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
                 const { data, error } = await supabase.auth.signUp({ email, password });
                 if (error) {
+                    console.error("Signup error details:", error);
                     setError(error.message);
                     setLoading(false);
                 } else if (data.session) {
+                    console.log("Signup successful, session created.");
                     handleSuccess();
                 } else {
+                    console.log("Signup successful, confirmation email sent.");
                     setError("Please check your email to confirm signup!");
                     setLoading(false);
                 }
             } else {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) {
+                    console.error("Signin error details:", error);
                     setError(error.message);
                     setLoading(false);
+                } else if (data.session) {
+                    console.log("Signin successful.");
+                    handleSuccess();
                 } else {
+                    // This case shouldn't really happen with signInWithPassword if error is null, 
+                    // unless session is missing for some reason.
+                    console.warn("Signin returned no error but no session either.");
                     handleSuccess();
                 }
             }
         } catch (err: any) {
-            console.error("Auth error:", err);
-            setError(err.message || "An unexpected error occurred");
+            console.error("Critical Auth error catch:", err);
+            setError(err.message || "An unexpected error occurred during authentication.");
             setLoading(false);
         }
     };
@@ -84,6 +105,27 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                     </p>
                 </div>
 
+                {!isSupabaseConfigured && (
+                    <div className={styles.error} style={{
+                        background: 'rgba(255, 100, 100, 0.1)',
+                        border: '1px solid #ff4444',
+                        color: '#ff4444',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '13px'
+                    }}>
+                        <AlertTriangle size={18} />
+                        <div>
+                            <strong>Configuration Missing</strong><br />
+                            Environment variables are not set in Vercel.
+                        </div>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.inputGroup}>
                         <input
@@ -93,6 +135,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             required
+                            autoComplete="email"
                         />
                     </div>
                     <div className={styles.inputGroup}>
@@ -104,6 +147,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                             onChange={e => setPassword(e.target.value)}
                             required
                             minLength={6}
+                            autoComplete={isSignUp ? "new-password" : "current-password"}
                         />
                         <button
                             type="button"
@@ -124,6 +168,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                                 onChange={e => setConfirmPassword(e.target.value)}
                                 required={isSignUp}
                                 minLength={6}
+                                autoComplete="new-password"
                             />
                             <button
                                 type="button"
@@ -137,7 +182,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
                     {error && <div className={styles.error}>{error}</div>}
 
-                    <button type="submit" className={styles.button} disabled={loading}>
+                    <button type="submit" className={styles.button} disabled={loading || !isSupabaseConfigured}>
                         {loading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}
                     </button>
                 </form>

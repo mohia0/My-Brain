@@ -37,31 +37,37 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
         setLoading(true);
         setError(null);
 
-        if (isSignUp) {
-            if (password !== confirmPassword) {
-                setError("Passwords do not match");
-                setLoading(false);
-                return;
-            }
+        try {
+            if (isSignUp) {
+                if (password !== confirmPassword) {
+                    setError("Passwords do not match");
+                    setLoading(false);
+                    return;
+                }
 
-            const { data, error } = await supabase.auth.signUp({ email, password });
-            if (error) {
-                setError(error.message);
-                setLoading(false);
-            } else if (data.session) {
-                handleSuccess();
+                const { data, error } = await supabase.auth.signUp({ email, password });
+                if (error) {
+                    setError(error.message);
+                    setLoading(false);
+                } else if (data.session) {
+                    handleSuccess();
+                } else {
+                    setError("Please check your email to confirm signup!");
+                    setLoading(false);
+                }
             } else {
-                setError("Please check your email to confirm signup!");
-                setLoading(false);
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    setError(error.message);
+                    setLoading(false);
+                } else {
+                    handleSuccess();
+                }
             }
-        } else {
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                setError(error.message);
-                setLoading(false);
-            } else {
-                handleSuccess();
-            }
+        } catch (err: any) {
+            console.error("Auth error:", err);
+            setError(err.message || "An unexpected error occurred");
+            setLoading(false);
         }
     };
 

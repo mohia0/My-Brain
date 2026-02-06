@@ -41,6 +41,12 @@ const dummySupabase = {
 };
 
 // Create client only if variables are available to avoid build-time crashes
+if (!supabaseUrl || !supabaseKey) {
+    if (typeof window !== 'undefined') {
+        console.warn('Supabase environment variables are missing! Authentication will not work. Please check your Vercel/Environment Variables.');
+    }
+}
+
 export const supabase = (supabaseUrl && supabaseKey)
     ? createClient(supabaseUrl, supabaseKey)
     : dummySupabase as any;

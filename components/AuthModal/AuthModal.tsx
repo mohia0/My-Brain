@@ -121,7 +121,11 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                         <AlertTriangle size={18} />
                         <div>
                             <strong>Configuration Missing</strong><br />
-                            Environment variables are not set in Vercel.
+                            {!process.env.NEXT_PUBLIC_SUPABASE_URL && <span style={{ display: 'block' }}>• NEXT_PUBLIC_SUPABASE_URL is missing</span>}
+                            {!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && <span style={{ display: 'block' }}>• NEXT_PUBLIC_SUPABASE_ANON_KEY is missing</span>}
+                            <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.8 }}>
+                                Note: You must <strong>Redeploy</strong> in Vercel after adding keys.
+                            </div>
                         </div>
                     </div>
                 )}

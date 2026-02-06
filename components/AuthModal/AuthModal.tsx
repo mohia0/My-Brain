@@ -18,6 +18,14 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isFading, setIsFading] = useState(false);
+
+    const handleSuccess = () => {
+        setIsFading(true);
+        setTimeout(() => {
+            onLogin();
+        }, 800);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,7 +44,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                 setError(error.message);
                 setLoading(false);
             } else if (data.session) {
-                onLogin();
+                handleSuccess();
             } else {
                 setError("Please check your email to confirm signup!");
                 setLoading(false);
@@ -47,14 +55,14 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                 setError(error.message);
                 setLoading(false);
             } else {
-                onLogin();
+                handleSuccess();
             }
         }
     };
 
 
     return (
-        <div className={styles.overlay}>
+        <div className={`${styles.overlay} ${isFading ? styles.overlayFading : ''}`}>
             <Orb hue={260} hoverIntensity={0.5} backgroundColor="#050505" />
 
             <div className={styles.card}>

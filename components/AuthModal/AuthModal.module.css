@@ -39,6 +39,13 @@
     align-items: center;
     z-index: 50000;
     overflow: hidden;
+    transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+}
+
+.overlayFading {
+    opacity: 0;
+    transform: scale(1.05);
+    pointer-events: none;
 }
 
 
@@ -58,8 +65,13 @@
     flex-direction: column;
     gap: 32px;
     box-shadow: 0 25px 50px -12px var(--shadow-color);
-    transition: transform 0.3s ease;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
     animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.overlayFading .card {
+    transform: scale(0.95) translateY(-10px);
+    opacity: 0;
 }
 
 @keyframes cardFadeIn {

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './LoadingScreen.module.css';
 import Orb from '../Orb/Orb';
 
-export default function LoadingScreen() {
+export default function LoadingScreen({ isFading }: { isFading: boolean }) {
     const [status, setStatus] = useState('Initializing quantum sync');
     const [dots, setDots] = useState('');
 
@@ -34,7 +34,7 @@ export default function LoadingScreen() {
     }, []);
 
     return (
-        <div className={styles.container}>
+        <div className={`${styles.container} ${isFading ? styles.fading : ''}`}>
             <Orb hue={280} hoverIntensity={0.5} forceHoverState={true} backgroundColor="#050505" />
             <div className={styles.content}>
                 <h1 className={styles.logo}>My Brain</h1>

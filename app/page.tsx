@@ -6,7 +6,7 @@ import DragWrapper from "@/components/DragWrapper";
 import ItemCard from "@/components/Grid/ItemCard";
 import ItemModal from "@/components/ItemModal/ItemModal";
 import { useItemsStore } from "@/lib/store/itemsStore";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import MiniMap from "@/components/MiniMap/MiniMap";
 import Header from "@/components/Header/Header";
 import AddButton from "@/components/AddButton/AddButton";
@@ -15,7 +15,6 @@ import FloatingBar from "@/components/FloatingBar/FloatingBar";
 import FolderModal from "@/components/FolderModal/FolderModal";
 import AccountMenu from "@/components/AccountMenu/AccountMenu";
 import AuthModal from "@/components/AuthModal/AuthModal";
-import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 import Toolbar from "@/components/Toolbar/Toolbar";
@@ -31,40 +30,76 @@ export default function Home() {
   const { items, folders, fetchData, subscribeToChanges, clearSelection, loading: dataLoading } = useItemsStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+
   const [session, setSession] = useState<any>(null);
   const [initializing, setInitializing] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
+  const [isFading, setIsFading] = useState(false);
+  const [shouldShowAuth, setShouldShowAuth] = useState(false);
+
+  // Refs to avoid closure staleness in auth listener
+  const isInitializingRef = useRef(true);
+  const showLoadingRef = useRef(true);
+
+  const runInit = async () => {
+    let unsubscribe: (() => void) | undefined;
+    const MIN_LOADING_TIME = 3500;
+
+    setInitializing(true);
+    isInitializingRef.current = true;
+    setShowLoading(true);
+    showLoadingRef.current = true;
+    setIsFading(false);
+
+    try {
+      const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
+
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      setSession(initialSession);
+
+      let dataPromise = Promise.resolve();
+      if (initialSession) {
+        dataPromise = fetchData(initialSession.user).then(() => {
+          unsubscribe = subscribeToChanges();
+        });
+      }
+
+      await Promise.all([timerPromise, dataPromise]);
+
+      setIsFading(true);
+      setTimeout(() => {
+        setShowLoading(false);
+        showLoadingRef.current = false;
+        setInitializing(false);
+        isInitializingRef.current = false;
+      }, 800);
+
+    } catch (err) {
+      console.error("Initialization error:", err);
+      setInitializing(false);
+      isInitializingRef.current = false;
+      setShowLoading(false);
+      showLoadingRef.current = false;
+    }
+    return unsubscribe;
+  };
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
 
-    const init = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-
-        if (initialSession) {
-          // Fire and wait for data
-          await fetchData(initialSession.user);
-          unsubscribe = subscribeToChanges();
-        }
-      } catch (err) {
-        console.error("Initialization error:", err);
-      } finally {
-        setInitializing(false);
-      }
-    };
-
-    init();
+    runInit().then(unsub => {
+      unsubscribe = unsub;
+    });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) {
+      if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData();
         if (unsubscribe) unsubscribe();
         unsubscribe = subscribeToChanges();
-      } else {
+      } else if (!session) {
         if (unsubscribe) unsubscribe();
       }
     });
@@ -75,64 +110,78 @@ export default function Home() {
     };
   }, [fetchData, subscribeToChanges]);
 
+  useEffect(() => {
+    if (!session && !showLoading && !initializing) {
+      setShouldShowAuth(true);
+    }
+  }, [session, showLoading, initializing]);
+
   // Only show items and folders that are NOT nested (root level) and NOT archived
   const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived');
   const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
 
-  if (initializing || (session && dataLoading)) {
-    return <LoadingScreen />;
-  }
-
   return (
     <DragWrapper>
-      <main className="fade-in">
-        {!session && <AuthModal onLogin={() => fetchData()} />}
-        <Header />
-        <AccountMenu />
-        <Canvas>
-          {visibleFolders.map(folder => (
-            <FolderItem
-              key={folder.id}
-              folder={folder}
-              onClick={() => setSelectedFolderId(folder.id)}
-            />
-          ))}
-          {visibleItems.map(item => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onClick={() => setSelectedItemId(item.id)}
-            />
-          ))}
-        </Canvas>
-        <MiniMap />
-        <Toolbar />
-        <ZoomWheel />
-        <Inbox onItemClick={setSelectedItemId} />
-        <FloatingBar />
-        <ArchiveZone />
-        <ArchiveView />
+      {(showLoading || isFading) && <LoadingScreen isFading={isFading} />}
 
-        {selectedItemId && (
-          <ItemModal
-            itemId={selectedItemId}
-            onClose={() => {
-              setSelectedItemId(null);
-              clearSelection();
-            }}
-          />
-        )}
-        {selectedFolderId && (
-          <FolderModal
-            folderId={selectedFolderId}
-            onClose={() => {
-              setSelectedFolderId(null);
-              clearSelection();
-            }}
-            onItemClick={(id) => setSelectedItemId(id)}
-          />
-        )}
-      </main>
+      {(!showLoading || isFading) && (
+        <>
+          {(!session || shouldShowAuth) ? (
+            <AuthModal onLogin={() => {
+              setShouldShowAuth(false);
+              runInit();
+            }} />
+          ) : (
+            <main className={`fade-in ${isFading && showLoading ? 'pointer-events-none' : ''}`}>
+              <Header />
+              <AccountMenu />
+              <Canvas>
+                {visibleFolders.map(folder => (
+                  <FolderItem
+                    key={folder.id}
+                    folder={folder}
+                    onClick={() => setSelectedFolderId(folder.id)}
+                  />
+                ))}
+                {visibleItems.map(item => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    onClick={() => setSelectedItemId(item.id)}
+                  />
+                ))}
+              </Canvas>
+              <MiniMap />
+              <Toolbar />
+              <ZoomWheel />
+              <Inbox onItemClick={setSelectedItemId} />
+              <FloatingBar />
+              <ArchiveZone />
+              <ArchiveView />
+
+              {selectedItemId && (
+                <ItemModal
+                  itemId={selectedItemId}
+                  onClose={() => {
+                    setSelectedItemId(null);
+                    clearSelection();
+                  }}
+                />
+              )}
+              {selectedFolderId && (
+                <FolderModal
+                  folderId={selectedFolderId}
+                  onClose={() => {
+                    setSelectedFolderId(null);
+                    clearSelection();
+                  }}
+                  onItemClick={(id) => setSelectedItemId(id)}
+                />
+              )}
+            </main>
+          )}
+        </>
+      )}
     </DragWrapper>
   );
 }

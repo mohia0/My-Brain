@@ -45,7 +45,7 @@ export default function SecurityPage() {
                     <div>
                         <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#ff4d4d', marginBottom: '8px' }}>Delete Account</h3>
                         <p style={{ color: '#888', fontSize: '14px', marginBottom: '16px', lineHeight: '1.5' }}>
-                            Permanently remove your account and all of its contents from the My Brain platform. This action is not reversible, so please continue with caution.
+                            Permanently remove your account and all of its contents from the Brainia platform. This action is not reversible, so please continue with caution.
                         </p>
                         <Button variant="destructive">Delete Personal Account</Button>
                     </div>

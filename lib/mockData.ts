@@ -5,7 +5,7 @@ export const MOCK_ITEMS: Item[] = [
         id: '1',
         user_id: 'user_1',
         type: 'text',
-        content: 'Welcome to My Brain',
+        content: 'Welcome to Brainia',
         metadata: { title: 'Welcome Node' },
         folder_id: null,
         position_x: 600,

@@ -18,7 +18,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "My Brain - Digital Second Brain",
+  title: "Brainia - Digital Second Brain",
   description: "Your personal workspace for organizing thoughts, ideas, and projects.",
   keywords: ["productivity", "workspace", "second brain", "notes", "canvas"],
   authors: [{ name: "Mohi Hassan" }],

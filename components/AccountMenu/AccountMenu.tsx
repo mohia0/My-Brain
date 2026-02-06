@@ -75,7 +75,7 @@ export default function AccountMenu() {
                 <div className={styles.menu}>
                     <div className={styles.userInfo}>
                         <div className={styles.email}>{user.email}</div>
-                        <div className={styles.role}>{user.email?.includes('guest') ? 'Guest Account' : 'Synced Brain'}</div>
+                        <div className={styles.role}>{user.email?.includes('guest') ? 'Guest Account' : 'Synced Brainia'}</div>
                     </div>
 
                     <Link href="/account" className={styles.menuItem} onClick={() => setIsOpen(false)}>

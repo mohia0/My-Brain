@@ -9,7 +9,7 @@ export default function LoadingScreen({ isFading }: { isFading: boolean }) {
     const [dots, setDots] = useState('');
 
     const statuses = [
-        'Syncing your second brain',
+        'Syncing Brainia',
         'Retrieving digital nodes',
         'Mapping neural pathways',
         'Optimizing canvas reality',
@@ -37,7 +37,7 @@ export default function LoadingScreen({ isFading }: { isFading: boolean }) {
         <div className={`${styles.container} ${isFading ? styles.fading : ''}`}>
             <Orb hue={280} hoverIntensity={0.5} forceHoverState={true} backgroundColor="#050505" />
             <div className={styles.content}>
-                <h1 className={styles.logo}>My Brain</h1>
+                <h1 className={styles.logo}>Brainia</h1>
                 <div className={styles.status}>
                     <span>{status}{dots}</span>
                 </div>

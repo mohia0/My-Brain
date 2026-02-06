@@ -88,7 +88,7 @@ export default function Header() {
                 <div className={styles.logoDotWrapper}>
                     <Orb hue={280} hoverIntensity={0.8} forceHoverState={true} backgroundColor="transparent" />
                 </div>
-                <h1>My Brain</h1>
+                <h1>Brainia</h1>
             </div>
 
             <div className={styles.searchWrapper}>

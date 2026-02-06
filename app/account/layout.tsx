@@ -19,7 +19,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarHeader}>
                     <Link href="/" className={styles.backLink}>
-                        <ArrowLeft size={16} /> Back to Brain
+                        <ArrowLeft size={16} /> Back to Brainia
                     </Link>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{

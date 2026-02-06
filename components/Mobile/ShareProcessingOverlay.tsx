@@ -16,7 +16,7 @@ export default function ShareProcessingOverlay({ status, message }: ShareOverlay
                 <Check size={32} />
             </div>
             <div className={styles.overlayText}>
-                {status === 'saving' ? 'Saving to Brain...' : 'Saved!'}
+                {status === 'saving' ? 'Saving to Brainia...' : 'Saved!'}
             </div>
         </div>
     );

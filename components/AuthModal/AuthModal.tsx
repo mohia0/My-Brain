@@ -99,7 +99,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
             <div className={styles.card}>
                 <div className={styles.header}>
-                    <h1 className={styles.logo}>My Brain</h1>
+                    <h1 className={styles.logo}>Brainia</h1>
                     <p className={styles.subtitle}>
                         {isSignUp ? "Create your infinite digital space." : "Welcome back to your second brain."}
                     </p>
@@ -193,7 +193,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
                 <div className={styles.footer}>
                     <div className={styles.toggleMeta}>
-                        {isSignUp ? "Already have an account?" : "New to My Brain?"}
+                        {isSignUp ? "Already have an account?" : "New to Brainia?"}
                         <span
                             className={styles.toggleLink}
                             onClick={() => { setError(null); setIsSignUp(!isSignUp); }}

@@ -1,7 +1,7 @@
 {
     "_forced": "sync",
     "manifest_version": 3,
-    "name": "My Brain",
+    "name": "Brainia",
     "version": "1.0",
     "description": "Capture to your Second Brain",
     "permissions": [

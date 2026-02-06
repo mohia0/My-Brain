@@ -39,12 +39,16 @@ export default function Home() {
 
     const init = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        if (session) {
-          await fetchData();
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+
+        if (initialSession) {
+          // Fire and wait for data
+          await fetchData(initialSession.user);
           unsubscribe = subscribeToChanges();
         }
+      } catch (err) {
+        console.error("Initialization error:", err);
       } finally {
         setInitializing(false);
       }

@@ -5,14 +5,32 @@ import styles from './LoadingScreen.module.css';
 import Orb from '../Orb/Orb';
 
 export default function LoadingScreen() {
-    const [text, setText] = useState('Syncing your brain');
+    const [status, setStatus] = useState('Initializing quantum sync');
     const [dots, setDots] = useState('');
 
+    const statuses = [
+        'Syncing your second brain',
+        'Retrieving digital nodes',
+        'Mapping neural pathways',
+        'Optimizing canvas reality',
+        'Finalizing consciousness link'
+    ];
+
     useEffect(() => {
-        const interval = setInterval(() => {
+        let i = 0;
+        const statusInterval = setInterval(() => {
+            i = (i + 1) % statuses.length;
+            setStatus(statuses[i]);
+        }, 800);
+
+        const dotsInterval = setInterval(() => {
             setDots(prev => (prev.length >= 3 ? '' : prev + '.'));
-        }, 500);
-        return () => clearInterval(interval);
+        }, 300);
+
+        return () => {
+            clearInterval(statusInterval);
+            clearInterval(dotsInterval);
+        };
     }, []);
 
     return (
@@ -21,7 +39,7 @@ export default function LoadingScreen() {
             <div className={styles.content}>
                 <h1 className={styles.logo}>My Brain</h1>
                 <div className={styles.status}>
-                    <span>{text}{dots}</span>
+                    <span>{status}{dots}</span>
                 </div>
                 <div className={styles.loaderBar}>
                     <div className={styles.loaderProgress}></div>

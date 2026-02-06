@@ -60,7 +60,7 @@ interface ItemsState {
     items: Item[];
     folders: Folder[];
     setItems: (items: Item[]) => void;
-    fetchData: () => Promise<void>;
+    fetchData: (user?: any) => Promise<void>;
 
     addItem: (item: Item) => void;
     updateItemPosition: (id: string, x: number, y: number) => void;
@@ -112,20 +112,28 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     setItems: (items) => set({ items }),
 
-    fetchData: async () => {
+    fetchData: async (user?: any) => {
         set({ loading: true });
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            let targetUser = user;
+            if (!targetUser) {
+                const { data: { session } } = await supabase.auth.getSession();
+                targetUser = session?.user;
+            }
+
+            if (!targetUser) {
                 set({ loading: false });
                 return;
             }
 
-            const { data: items } = await supabase.from('items').select('*');
-            const { data: folders } = await supabase.from('folders').select('*');
+            // Parallel fetch for speed
+            const [itemsRes, foldersRes] = await Promise.all([
+                supabase.from('items').select('*'),
+                supabase.from('folders').select('*')
+            ]);
 
-            if (items) set({ items: items as Item[] });
-            if (folders) set({ folders: folders as Folder[] });
+            if (itemsRes.data) set({ items: itemsRes.data as Item[] });
+            if (foldersRes.data) set({ folders: foldersRes.data as Folder[] });
         } finally {
             set({ loading: false });
         }

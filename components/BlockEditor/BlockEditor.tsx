@@ -113,7 +113,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
             borderRadius: 'inherit',
             position: 'relative'
         }}>
-            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80 }}>
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80, paddingTop: 60, paddingLeft: 20, paddingRight: 20 }}>
                 <BlockNoteView
                     editor={editor}
                     onChange={handleChange}
@@ -136,60 +136,85 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
             {editable && (
                 <div style={{
                     position: 'absolute',
-                    bottom: '40px',
+                    bottom: '16px',
                     left: '50%',
                     transform: 'translateX(-50%)',
                     display: 'flex',
-                    gap: '4px',
-                    padding: '6px',
-                    background: theme === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 30, 30, 0.8)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: '12px',
+                    padding: '2px',
+                    background: theme === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(20, 20, 20, 0.4)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '8px',
                     alignItems: 'center',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                    zIndex: 100
-                }}>
+                    zIndex: 100,
+                    opacity: 0.4,
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.background = theme === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 30, 30, 0.8)';
+                        e.currentTarget.style.transform = 'translateX(-50%) translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.4';
+                        e.currentTarget.style.background = theme === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(20, 20, 20, 0.4)';
+                        e.currentTarget.style.transform = 'translateX(-50%) translateY(0)';
+                    }}
+                >
                     <button
                         onClick={() => editor.undo()}
                         style={{
                             background: 'transparent',
                             border: 'none',
                             color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
-                            padding: '8px',
-                            borderRadius: '8px',
+                            padding: '6px',
+                            borderRadius: '6px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            opacity: 0.7
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                            e.currentTarget.style.opacity = '1';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.opacity = '0.7';
+                        }}
                         title="Undo (Ctrl+Z)"
                     >
-                        <Undo size={18} />
+                        <Undo size={14} />
                     </button>
-                    <div style={{ width: '1px', height: '16px', background: 'var(--card-border)', margin: '0 4px' }} />
+                    <div style={{ width: '1px', height: '12px', background: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }} />
                     <button
                         onClick={() => editor.redo()}
                         style={{
                             background: 'transparent',
                             border: 'none',
                             color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
-                            padding: '8px',
-                            borderRadius: '8px',
+                            padding: '6px',
+                            borderRadius: '6px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            opacity: 0.7
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                            e.currentTarget.style.opacity = '1';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.opacity = '0.7';
+                        }}
                         title="Redo (Ctrl+Shift+Z)"
                     >
-                        <Redo size={18} />
+                        <Redo size={14} />
                     </button>
                 </div>
             )}

@@ -61,6 +61,7 @@ const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const authError = document.getElementById('auth-error');
 const loginBtn = document.getElementById('login-btn');
+const signupLinkBtn = document.getElementById('signup-link-btn');
 
 
 const tabPreview = document.getElementById('tab-preview');
@@ -78,8 +79,48 @@ const saveNoteBtn = document.getElementById('save-note-btn');
 
 const toast = document.getElementById('toast');
 
+// --- TAB DETECTION ---
+async function updateTabInfo() {
+    console.log("[Extension] Updating tab info...");
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+        // Use lastFocusedWindow to be more reliable in popups
+        chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+            if (tabs[0]) {
+                console.log("[Extension] Tab found:", tabs[0].title);
+                state.currentTab = tabs[0];
+                renderTabInfo();
+            }
+        });
+    } else {
+        console.log("[Extension] No chrome.tabs API found, using mock.");
+        state.currentTab = {
+            title: "Dev Tab",
+            url: "http://localhost:3000",
+            favIconUrl: "https://www.google.com/s2/favicons?domain=localhost"
+        };
+        renderTabInfo();
+    }
+}
+
+// Listen for tab changes while popup is open
+if (typeof chrome !== 'undefined' && chrome.tabs) {
+    chrome.tabs.onActivated.addListener(() => {
+        console.log("[Extension] onActivated triggered");
+        updateTabInfo();
+    });
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (tab.active) {
+            console.log("[Extension] onUpdated triggered for active tab", changeInfo.status);
+            updateTabInfo();
+        }
+    });
+}
+
 // --- INIT ---
 async function init() {
+    console.log("[Extension] Initializing...");
+    updateTabInfo(); // Initial fetch
+
     // Check Session
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
@@ -89,20 +130,6 @@ async function init() {
         navigate('main');
     } else {
         navigate('auth');
-    }
-
-    // Get Tab Info
-    if (chrome.tabs) {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs[0]) {
-                state.currentTab = tabs[0];
-                renderTabInfo();
-            }
-        });
-    } else {
-        // Mock for dev
-        state.currentTab = { title: "Dev Tab", url: "http://localhost:3000", favIconUrl: "https://via.placeholder.com/32" };
-        renderTabInfo();
     }
 }
 
@@ -123,6 +150,7 @@ function navigate(viewName) {
         mainView.classList.remove('hidden');
         saveTabBtn.disabled = false;
         addNoteBtn.disabled = false;
+        updateTabInfo(); // Refresh on navigation to main
     }
     if (viewName === 'note') {
         noteView.classList.remove('hidden');
@@ -131,6 +159,8 @@ function navigate(viewName) {
 
 function renderTabInfo() {
     if (!state.currentTab) return;
+    console.log("[Extension] Rendering tab info:", state.currentTab.title);
+
     tabTitle.textContent = state.currentTab.title;
     try {
         tabUrl.textContent = new URL(state.currentTab.url).hostname;
@@ -140,6 +170,7 @@ function renderTabInfo() {
 
     if (state.currentTab.favIconUrl) {
         tabFavicon.src = state.currentTab.favIconUrl;
+        tabFavicon.style.display = 'block';
     } else {
         tabFavicon.style.display = 'none';
     }
@@ -177,6 +208,11 @@ loginForm.addEventListener('submit', async (e) => {
         statusDot.classList.add('connected');
         navigate('main');
     }
+});
+
+signupLinkBtn.addEventListener('click', () => {
+    // Open the app's signup page specifically
+    chrome.tabs.create({ url: 'http://localhost:3000?signup=true' });
 });
 
 

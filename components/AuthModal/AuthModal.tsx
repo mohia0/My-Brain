@@ -8,7 +8,12 @@ import { Eye, EyeOff } from 'lucide-react';
 import Orb from '../Orb/Orb';
 
 export default function AuthModal({ onLogin }: { onLogin: () => void }) {
-    const [isSignUp, setIsSignUp] = useState(false);
+    const [isSignUp, setIsSignUp] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return new URLSearchParams(window.location.search).get('signup') === 'true';
+        }
+        return false;
+    });
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');

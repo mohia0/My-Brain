@@ -15,7 +15,7 @@ export default function ProfilePage() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        supabase.auth.getUser().then(({ data: { user } }) => {
+        supabase.auth.getUser().then(({ data: { user } }: any) => {
             setUser(user);
             if (user?.user_metadata?.avatar_url) {
                 setAvatarUrl(user.user_metadata.avatar_url);

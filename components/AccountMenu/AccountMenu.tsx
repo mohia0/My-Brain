@@ -19,12 +19,12 @@ export default function AccountMenu() {
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         // Fetch initial user
-        supabase.auth.getUser().then(({ data: { user } }) => {
+        supabase.auth.getUser().then(({ data: { user } }: any) => {
             setUser(user);
         });
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
             setUser(session?.user ?? null);
         });
 

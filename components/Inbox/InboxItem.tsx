@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Link, Image as ImageIcon, ArrowRight } from 'lucide-react';
+import { FileText, Link, Image as ImageIcon, ArrowRight, Trash2 } from 'lucide-react';
 import styles from './Inbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useDraggable } from '@dnd-kit/core';
@@ -13,7 +13,7 @@ interface InboxItemProps {
 }
 
 export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) {
-    const { updateItemContent, selectedIds, selectItem, toggleSelection } = useItemsStore();
+    const { updateItemContent, selectedIds, selectItem, toggleSelection, removeItem } = useItemsStore();
     const { scale, position } = useCanvasStore();
     const titleRef = React.useRef<HTMLDivElement>(null);
     const [isOverflowing, setIsOverflowing] = React.useState(false);
@@ -62,6 +62,11 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
         });
     };
 
+    const handleRemove = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        removeItem(item.id);
+    };
+
     const isSelected = selectedIds.includes(item.id);
 
     const handleClick = (e: React.MouseEvent) => {
@@ -105,7 +110,7 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                                 {item.metadata?.title || 'Untitled Link'}
                             </div>
                         </div>
-                        <div className={styles.domainRow}>
+                        <div className={styles.infoRow}>
                             <div className={styles.domain}>{new URL(item.content).hostname}</div>
                             <div className={styles.itemDateSmall}>
                                 {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -120,14 +125,15 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                         {item.type === 'link' && <Link size={14} />}
                         {item.type === 'image' && <ImageIcon size={14} />}
                     </div>
-                    <div className={styles.titleRow}>
-                        <span
-                            ref={titleRef}
-                            className={clsx(styles.title, isOverflowing && styles.canAnimate)}
-                        >
-                            {item.metadata?.title || item.content}
-                        </span>
-
+                    <div className={styles.meta}>
+                        <div className={styles.titleRow}>
+                            <span
+                                ref={titleRef}
+                                className={clsx(styles.title, isOverflowing && styles.canAnimate)}
+                            >
+                                {item.metadata?.title || item.content}
+                            </span>
+                        </div>
                         <div className={styles.itemDateSmall}>
                             {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>
@@ -135,16 +141,24 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                 </div>
             )}
 
-            {/* Move Button (Only show if not dragging) */}
+            {/* Action Buttons (Only show if not dragging) */}
             {!isDragging && (
-                <button
-                    className={styles.moveBtn}
-                    onClick={handleMoveToCanvas}
-                    onPointerDown={(e) => e.stopPropagation()} // Prevent drag start on button click
-                    title="Move to Canvas"
-                >
-                    <ArrowRight size={14} />
-                </button>
+                <div className={styles.actions} onPointerDown={(e) => e.stopPropagation()}>
+                    <button
+                        className={styles.actionBtn}
+                        onClick={handleMoveToCanvas}
+                        title="Move to Canvas"
+                    >
+                        <ArrowRight size={14} />
+                    </button>
+                    <button
+                        className={clsx(styles.actionBtn, styles.removeBtn)}
+                        onClick={handleRemove}
+                        title="Remove"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
             )}
         </div>
     );

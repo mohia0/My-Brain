@@ -224,15 +224,12 @@
     /* Prevents sliding text from hitting the thumbnail */
 }
 
-.inboxItem:hover .titleRow {
-    padding-right: 28px;
-}
 
-.domainRow {
+
+.infoRow {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 0px;
     margin-top: 1px;
 }
 
@@ -289,36 +286,56 @@
     z-index: 9999;
 }
 
-.moveBtn {
+.actions {
     position: absolute;
-    right: 10px;
+    right: -40px;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--accent);
-    color: white;
-    border: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 10;
+    padding-right: 6px;
+}
+
+.inboxItem:hover .actions {
+    right: 0;
+}
+
+.actionBtn {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid var(--card-border);
+    background: var(--modal-bg);
+    color: var(--text-muted);
     cursor: pointer;
-    opacity: 0;
-    right: -40px;
-    /* Start off-screen */
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.inboxItem:hover .moveBtn {
-    opacity: 1;
-    right: 8px;
-    /* Slide in */
+.actionBtn:hover {
+    transform: scale(1.1) translateY(-2px);
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 8px 20px var(--accent-glow);
 }
 
-.moveBtn:hover {
-    transform: translateY(-50%) scale(1.1);
-    background: white;
-    color: var(--accent);
+.removeBtn:hover {
+    background: #ff4d4d;
+    border-color: #ff4d4d;
+    color: white;
+    box-shadow: 0 8px 20px rgba(255, 77, 77, 0.4);
+}
+
+.inboxItem:hover .titleRow,
+.inboxItem:hover .infoRow,
+.inboxItem:hover .meta>.itemDateSmall {
+    padding-right: 32px;
 }

@@ -91,9 +91,10 @@ export default function Home() {
       unsubscribe = unsub;
     });
 
+    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData();

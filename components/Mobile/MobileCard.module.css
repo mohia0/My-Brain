@@ -1,0 +1,152 @@
+.card {
+    background: rgba(20, 20, 20, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card:active {
+    background: rgba(30, 30, 30, 0.6);
+    transform: scale(0.98);
+}
+
+.folderCard {
+    background: rgba(147, 51, 234, 0.05);
+    border-color: rgba(147, 51, 234, 0.1);
+}
+
+.mainContent {
+    flex: 1;
+}
+
+.imageLayout {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.simpleLayout {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.iconBox {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.folderIconBox {
+    background: rgba(147, 51, 234, 0.1);
+    color: var(--accent);
+}
+
+.favicon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+.info {
+    flex: 1;
+    min-width: 0;
+}
+
+.title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+}
+
+.sub {
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.dot {
+    color: #444;
+}
+
+.time {
+    color: #666;
+    font-weight: 500;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    padding-top: 10px;
+    justify-content: flex-end;
+}
+
+.actionBtn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.actionBtn:active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.actionBtn.delete:active {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.confirmDelete {
+    width: auto;
+    padding: 0 12px;
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(239, 68, 68, 0.1) !important;
+}

@@ -338,3 +338,31 @@
         transform: scale(1) translateY(0);
     }
 }
+
+/* --- MOBILE ADJUSTMENTS --- */
+@media (max-width: 768px) {
+    .modal {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .header {
+        padding: 20px 20px !important;
+    }
+
+    .content {
+        padding: 8px 20px 100px !important;
+    }
+
+    .folderNameWrapper {
+        width: 180px !important;
+    }
+}

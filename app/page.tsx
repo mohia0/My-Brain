@@ -24,6 +24,7 @@ import ArchiveView from "@/components/ArchiveView/ArchiveView";
 
 
 import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
+import MobilePageContent from "@/components/Mobile/MobilePageContent";
 
 
 export default function Home() {
@@ -117,6 +118,20 @@ export default function Home() {
     }
   }, [session, showLoading, initializing]);
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileSize = window.innerWidth <= 768;
+      const isCapacitor = (window as any).Capacitor !== undefined;
+      setIsMobile(isMobileSize || isCapacitor);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Only show items and folders that are NOT nested (root level) and NOT archived
   const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived');
   const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
@@ -133,53 +148,59 @@ export default function Home() {
               runInit();
             }} />
           ) : (
-            <main className={`fade-in ${isFading && showLoading ? 'pointer-events-none' : ''}`}>
-              <Header />
-              <AccountMenu />
-              <Canvas>
-                {visibleFolders.map(folder => (
-                  <FolderItem
-                    key={folder.id}
-                    folder={folder}
-                    onClick={() => setSelectedFolderId(folder.id)}
-                  />
-                ))}
-                {visibleItems.map(item => (
-                  <ItemCard
-                    key={item.id}
-                    item={item}
-                    onClick={() => setSelectedItemId(item.id)}
-                  />
-                ))}
-              </Canvas>
-              <MiniMap />
-              <Toolbar />
-              <ZoomWheel />
-              <Inbox onItemClick={setSelectedItemId} />
-              <FloatingBar />
-              <ArchiveZone />
-              <ArchiveView />
+            <>
+              {isMobile ? (
+                <MobilePageContent session={session} />
+              ) : (
+                <main className={`fade-in ${(isFading || showLoading) ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500 ${isFading && showLoading ? 'pointer-events-none' : ''}`}>
+                  <Header />
+                  <AccountMenu />
+                  <Canvas>
+                    {visibleFolders.map(folder => (
+                      <FolderItem
+                        key={folder.id}
+                        folder={folder}
+                        onClick={() => setSelectedFolderId(folder.id)}
+                      />
+                    ))}
+                    {visibleItems.map(item => (
+                      <ItemCard
+                        key={item.id}
+                        item={item}
+                        onClick={() => setSelectedItemId(item.id)}
+                      />
+                    ))}
+                  </Canvas>
+                  <MiniMap />
+                  <Toolbar />
+                  <ZoomWheel />
+                  <Inbox onItemClick={setSelectedItemId} />
+                  <FloatingBar />
+                  <ArchiveZone />
+                  <ArchiveView />
 
-              {selectedItemId && (
-                <ItemModal
-                  itemId={selectedItemId}
-                  onClose={() => {
-                    setSelectedItemId(null);
-                    clearSelection();
-                  }}
-                />
+                  {selectedItemId && (
+                    <ItemModal
+                      itemId={selectedItemId}
+                      onClose={() => {
+                        setSelectedItemId(null);
+                        clearSelection();
+                      }}
+                    />
+                  )}
+                  {selectedFolderId && (
+                    <FolderModal
+                      folderId={selectedFolderId}
+                      onClose={() => {
+                        setSelectedFolderId(null);
+                        clearSelection();
+                      }}
+                      onItemClick={(id) => setSelectedItemId(id)}
+                    />
+                  )}
+                </main>
               )}
-              {selectedFolderId && (
-                <FolderModal
-                  folderId={selectedFolderId}
-                  onClose={() => {
-                    setSelectedFolderId(null);
-                    clearSelection();
-                  }}
-                  onItemClick={(id) => setSelectedItemId(id)}
-                />
-              )}
-            </main>
+            </>
           )}
         </>
       )}

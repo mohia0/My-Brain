@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import styles from './MobileInbox.module.css';
 
 interface ShareOverlayProps {
-    status: 'saving' | 'saved' | 'error';
+    status: 'saving' | 'saved' | 'error' | 'capturing';
     message?: string;
 }
 
@@ -16,7 +16,8 @@ export default function ShareProcessingOverlay({ status, message }: ShareOverlay
                 <Check size={32} />
             </div>
             <div className={styles.overlayText}>
-                {status === 'saving' ? 'Saving to Brainia...' : 'Saved!'}
+                {status === 'saving' ? 'Saving to Brainia...' :
+                    status === 'capturing' ? 'Capturing Screenshot...' : 'Saved!'}
             </div>
         </div>
     );

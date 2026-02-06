@@ -1,0 +1,115 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Item } from '@/types';
+import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock } from 'lucide-react';
+import styles from './MobileCard.module.css';
+import { useItemsStore } from '@/lib/store/itemsStore';
+import clsx from 'clsx';
+
+interface MobileCardProps {
+    item: Item;
+    onClick?: () => void;
+}
+
+export default function MobileCard({ item, onClick }: MobileCardProps) {
+    const { duplicateItem, removeItem, archiveItem } = useItemsStore();
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const isFolder = 'type' in item && (item as any).type === 'folder';
+    const isImage = item.type === 'link' && item.metadata?.image;
+
+    const hostname = (url: string) => {
+        try { return new URL(url).hostname; } catch { return url; }
+    };
+
+    const getRelativeTime = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+    };
+
+    const handleDuplicate = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        duplicateItem(item.id);
+    };
+
+    const handleArchive = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        archiveItem(item.id);
+    };
+
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isDeleting) {
+            setIsDeleting(true);
+            return;
+        }
+        removeItem(item.id);
+    };
+
+    return (
+        <div className={clsx(styles.card, isFolder && styles.folderCard)} onClick={onClick}>
+            <div className={styles.mainContent}>
+                {isImage ? (
+                    <div className={styles.imageLayout}>
+                        <img src={item.metadata!.image!} alt="" className={styles.thumb} />
+                        <div className={styles.info}>
+                            <div className={styles.title}>{item.metadata?.title || 'Unknown Image'}</div>
+                            <div className={styles.metaRow}>
+                                <span className={styles.sub}>{hostname(item.content)}</span>
+                                <span className={styles.dot}>•</span>
+                                <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={styles.simpleLayout}>
+                        <div className={clsx(styles.iconBox, isFolder && styles.folderIconBox)}>
+                            {isFolder && <Folder size={20} />}
+                            {item.type === 'text' && <FileText size={20} />}
+                            {item.type === 'link' && !isFolder && (
+                                <img
+                                    src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
+                                    className={styles.favicon}
+                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                            )}
+                            {item.type === 'image' && <ImageIcon size={20} />}
+                        </div>
+                        <div className={styles.info}>
+                            <div className={styles.title}>
+                                {isFolder ? (item as any).name : (item.metadata?.title || item.content.slice(0, 50))}
+                            </div>
+                            <div className={styles.metaRow}>
+                                <span className={styles.sub}>
+                                    {isFolder ? 'Folder' : (item.type === 'link' ? hostname(item.content) : 'Note')}
+                                </span>
+                                <span className={styles.dot}>•</span>
+                                <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className={styles.actions} onClick={e => e.stopPropagation()}>
+                <button onClick={handleArchive} className={styles.actionBtn} title="Archive"><Archive size={14} /></button>
+                <button onClick={handleDuplicate} className={styles.actionBtn} title="Duplicate"><Copy size={14} /></button>
+                <button
+                    onClick={handleDelete}
+                    className={clsx(styles.actionBtn, styles.delete, isDeleting && styles.confirmDelete)}
+                    onMouseLeave={() => setIsDeleting(false)}
+                    title="Delete"
+                >
+                    {isDeleting ? "Delete?" : <Trash2 size={14} />}
+                </button>
+            </div>
+        </div>
+    );
+}

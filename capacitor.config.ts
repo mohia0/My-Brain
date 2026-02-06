@@ -3,9 +3,9 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.mybrain.app',
   appName: 'Brainia',
-  webDir: 'public', // Use public as placeholder since we use server.url for dev
+  webDir: 'out',
   server: {
-    url: 'http://10.0.2.2:3000',
+    url: 'http://192.168.1.237:3000', // Your computer's IP
     cleartext: true
   }
 };

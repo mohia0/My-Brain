@@ -1,7 +1,10 @@
 "use client";
 
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import React from 'react';
+import { supabase } from '@/lib/supabase';
+import AuthModal from '@/components/AuthModal/AuthModal';
+import LoadingScreen from '@/components/LoadingScreen/LoadingScreen';
 
 const MobilePageContent = dynamic(
     () => import('@/components/Mobile/MobilePageContent'),
@@ -9,5 +12,28 @@ const MobilePageContent = dynamic(
 );
 
 export default function MobilePage() {
-    return <MobilePageContent />;
+    const [session, setSession] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        supabase.auth.getSession().then((res: any) => {
+            const session = res.data?.session;
+            setSession(session);
+            setLoading(false);
+        });
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+            setSession(session);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    if (loading) return <LoadingScreen isFading={false} />;
+
+    if (!session) {
+        return <AuthModal onLogin={() => window.location.reload()} />;
+    }
+
+    return <MobilePageContent session={session} />;
 }

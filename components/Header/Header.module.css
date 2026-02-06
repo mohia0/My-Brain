@@ -20,95 +20,61 @@
     cursor: pointer;
 }
 
-.logoDot {
-    width: 12px;
-    height: 12px;
-    background: var(--accent);
-    border-radius: 50%;
+.logoDotWrapper {
+    width: 28px;
+    height: 28px;
     position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 12px var(--accent-glow);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: pulse 3s infinite ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    filter: drop-shadow(0 0 12px var(--accent-glow)) brightness(1.4);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin-right: -2px;
+    align-self: flex-end;
+    /* Align to bottom */
+    margin-bottom: 2px;
+    /* Fine-tune baseline alignment */
 }
 
-.logoDot::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg,
-            transparent,
-            rgba(255, 255, 255, 0.3),
-            transparent);
-    transform: rotate(45deg);
-    animation: shine 4s infinite ease-in-out;
-}
-
-.logo:hover .logoDot {
+.logo:hover .logoDotWrapper {
     transform: scale(1.3);
-    box-shadow: 0 0 20px var(--accent-glow), 0 0 35px var(--accent), 0 0 50px var(--accent-glow);
-    filter: brightness(1.2);
-}
-
-@keyframes pulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 12px var(--accent-glow);
-        transform: scale(1);
-    }
-
-    50% {
-        box-shadow: 0 0 20px var(--accent-glow), 0 0 25px var(--accent-glow);
-        transform: scale(1.05);
-    }
-}
-
-@keyframes shine {
-    0% {
-        left: -150%;
-        top: -150%;
-    }
-
-    40%,
-    100% {
-        left: 150%;
-        top: 150%;
-    }
+    filter: drop-shadow(0 0 12px var(--accent));
 }
 
 .logo h1 {
     font-size: 1.2rem;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--foreground);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    font-family: var(--font-outfit), sans-serif;
     transition: all 0.3s ease;
+    transform: translateY(-3.5px);
+    /* Shift text up */
 }
 
 .logo:hover h1 {
     color: var(--text-bright);
-    letter-spacing: 0em;
+    letter-spacing: -0.01em;
 }
 
 .searchWrapper {
     display: flex;
     align-items: center;
+    justify-content: center;
     pointer-events: auto;
     position: fixed;
-    top: 10px;
+    top: 24px;
+    /* Align with logo top */
     left: 50%;
     transform: translateX(-50%);
-    width: 320px;
+    width: auto;
     z-index: 1001;
 }
 
 .searchIcon {
     position: absolute;
-    left: 12px;
-    color: #666;
+    left: 16px;
+    color: #888;
     pointer-events: none;
     transition: color 0.2s;
 }
@@ -116,29 +82,25 @@
 .searchInput {
     background: var(--input-bg);
     border: 1px solid var(--card-border);
-    border-radius: 20px;
-    /* Pill shape */
-    padding: 8px 16px 8px 36px;
+    border-radius: 24px;
+    padding: 10px 16px 10px 42px;
     color: var(--foreground);
     font-family: inherit;
-    font-size: 0.9rem;
-    width: 180px;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(4px);
+    font-size: 0.95rem;
+    width: 280px;
+    /* Fixed width for better centering */
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     outline: none;
-}
-
-.searchInput::placeholder {
-    color: var(--text-muted);
-    transition: color 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .searchInput:focus {
-    width: 240px;
-    /* Expand on focus */
+    width: 320px;
     background: var(--card-hover);
     border-color: var(--accent);
-    box-shadow: 0 0 20px var(--shadow-color);
+    box-shadow: 0 0 0 4px var(--accent-glow), 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .searchInput:focus+.searchIcon,

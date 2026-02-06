@@ -67,7 +67,12 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
             <div className={styles.card}>
                 <div className={styles.header}>
-                    <h1 className={styles.logo}>My Brain</h1>
+                    <div className={styles.logoRow}>
+                        <div className={styles.logoDotWrapper}>
+                            <Orb hue={280} hoverIntensity={0.8} forceHoverState={true} backgroundColor="transparent" />
+                        </div>
+                        <h1 className={styles.logo}>My Brain</h1>
+                    </div>
                     <p className={styles.subtitle}>
                         {isSignUp ? "Create your infinite digital space." : "Welcome back to your second brain."}
                     </p>

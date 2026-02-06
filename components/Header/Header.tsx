@@ -5,6 +5,7 @@ import styles from './Header.module.css';
 import { Search, Folder as FolderIcon } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
+import Orb from '../Orb/Orb';
 
 export default function Header() {
     const { items, folders, setSelection } = useItemsStore();
@@ -84,7 +85,9 @@ export default function Header() {
                 setPosition(window.innerWidth / 2, window.innerHeight / 2);
                 setScale(0.65);
             }}>
-                <div className={styles.logoDot} />
+                <div className={styles.logoDotWrapper}>
+                    <Orb hue={280} hoverIntensity={0.8} forceHoverState={true} backgroundColor="transparent" />
+                </div>
                 <h1>My Brain</h1>
             </div>
 

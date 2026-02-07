@@ -80,6 +80,20 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
             toggleSelection(item.id);
             return;
         }
+
+        // If it's a folder, always open folder modal
+        if (isFolder) {
+            onClick?.();
+            return;
+        }
+
+        // Check if it's a link or an image with an external link
+        const externalUrl = item.type === 'link' ? item.content : item.metadata?.url;
+        if (externalUrl && (externalUrl.startsWith('http') || externalUrl.startsWith('https'))) {
+            window.open(externalUrl, '_blank');
+            return;
+        }
+
         onClick?.();
     };
 

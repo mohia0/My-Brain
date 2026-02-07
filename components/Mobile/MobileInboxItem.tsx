@@ -74,6 +74,14 @@ export default function MobileInboxItem({ item, onClick }: MobileInboxItemProps)
             toggleSelection(item.id);
             return;
         }
+
+        // Check if it's a link or an image with an external link
+        const externalUrl = item.type === 'link' ? item.content : item.metadata?.url;
+        if (externalUrl && (externalUrl.startsWith('http') || externalUrl.startsWith('https'))) {
+            window.open(externalUrl, '_blank');
+            return;
+        }
+
         onClick?.();
     };
 

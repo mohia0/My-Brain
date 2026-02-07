@@ -12,7 +12,8 @@ interface InboxProps {
 
 export default function Inbox({ onItemClick }: InboxProps) {
     const { items } = useItemsStore();
-    const inboxItems = items.filter(i => i.status === 'inbox');
+    const inboxItems = items.filter(i => i.status === 'inbox')
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const { setNodeRef, isOver } = useDroppable({
         id: 'inbox-area',

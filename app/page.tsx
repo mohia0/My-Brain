@@ -40,8 +40,9 @@ export default function Home() {
   const isInitializingRef = useRef(true);
   const showLoadingRef = useRef(true);
 
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
   const runInit = async () => {
-    let unsubscribe: (() => void) | undefined;
     const MIN_LOADING_TIME = 1500;
 
     setInitializing(true);
@@ -58,7 +59,8 @@ export default function Home() {
       let dataPromise = Promise.resolve();
       if (initialSession) {
         dataPromise = fetchData(initialSession.user).then(() => {
-          unsubscribe = subscribeToChanges();
+          if (unsubscribeRef.current) unsubscribeRef.current();
+          unsubscribeRef.current = subscribeToChanges();
         });
       }
 
@@ -75,31 +77,29 @@ export default function Home() {
       }, 800);
 
     } catch (err: any) {
-      if (err.name === 'AbortError') return unsubscribe;
+      if (err.name === 'AbortError') return;
       console.error("Initialization error:", err);
       setInitializing(false);
       setShowLoading(false);
       setIsFading(false);
     }
-    return unsubscribe;
   };
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    runInit().then(unsub => { unsubscribe = unsub; });
+    runInit();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData();
-        if (unsubscribe) unsubscribe();
-        unsubscribe = subscribeToChanges();
+        if (unsubscribeRef.current) unsubscribeRef.current();
+        unsubscribeRef.current = subscribeToChanges();
       }
     });
 
     return () => {
       subscription.unsubscribe();
-      if (unsubscribe) unsubscribe();
+      if (unsubscribeRef.current) unsubscribeRef.current();
     };
   }, []);
 

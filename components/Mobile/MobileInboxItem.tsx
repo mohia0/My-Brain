@@ -125,7 +125,6 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                             </div>
                             <div className={styles.subRow}>
                                 <span className={styles.sub}>Video</span>
-                                {getStatus() && <span className={styles.statusInfo}>{getStatus()}</span>}
                             </div>
                         </div>
                     </div>
@@ -139,7 +138,6 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                             </div>
                             <div className={styles.subRow}>
                                 <span className={styles.sub}>{item.type === 'link' ? hostname(item.content) : 'Image'}</span>
-                                {getStatus() && <span className={styles.statusInfo}>{getStatus()}</span>}
                             </div>
                         </div>
                     </div>
@@ -160,7 +158,6 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                                 <span className={styles.sub}>
                                     {item.type === 'video' ? 'Video' : item.type === 'link' ? hostname(item.content) : 'Idea'}
                                 </span>
-                                {getStatus() && <span className={styles.statusInfo}>{getStatus()}</span>}
                             </div>
                         </div>
                     </div>

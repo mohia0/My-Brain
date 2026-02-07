@@ -17,7 +17,8 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
     const visibleItems = items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id)
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    const visibleFolders = folders.filter(f => f.status !== 'archived' && !f.parent_id);
+    const visibleFolders = folders.filter(f => f.status !== 'archived' && !f.parent_id)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const hasContent = visibleItems.length > 0 || visibleFolders.length > 0;
 

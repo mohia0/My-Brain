@@ -364,7 +364,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                         </div>
                                     )
                                 )}
-                                {isSaving && <div className={styles.savingIndicator}>Saving...</div>}
+                                {(isSaving || item.syncStatus === 'syncing') && <div className={styles.savingIndicator}>Saving...</div>}
                                 <div className={styles.timestamp}>
                                     {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>

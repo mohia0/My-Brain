@@ -20,9 +20,8 @@ export default function MobileInbox({ onItemClick }: MobileInboxProps) {
     const inboxItems = items.filter(i => i.status === 'inbox')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    // Initial fetch is handled by the root Home component
+    // Real-time updates are handled by the items store subscription
 
     const handleTouchStart = (e: React.TouchEvent) => {
         if (containerRef.current?.scrollTop === 0) {

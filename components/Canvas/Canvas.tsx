@@ -333,7 +333,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     const content = e.target?.result as string;
                     addItem({
                         id: generateId(),
-                        user_id: 'user-1',
+                        user_id: 'unknown',
                         type: 'image',
                         content,
                         position_x: dropX,

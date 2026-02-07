@@ -62,6 +62,15 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         }
     };
 
+    const SyncIndicator = () => {
+        if (!item.syncStatus || item.syncStatus === 'synced') return null;
+        return (
+            <div className={clsx(styles.syncStatus, styles[item.syncStatus])}>
+                {item.syncStatus === 'syncing' ? '...' : '!'}
+            </div>
+        );
+    };
+
     const renderActions = () => (
         <div className={styles.actions}>
             <button onClick={onArchive} title="Archive"><Archive size={12} /></button>
@@ -121,6 +130,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         />
                     )}
                     <span className={styles.title}>{item.metadata?.title || item.content}</span>
+                    <SyncIndicator />
                 </div>
                 {renderActions()}
             </div>
@@ -143,6 +153,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     <div className={styles.captureTitle}>{item.metadata.title}</div>
                     <div className={styles.captureDomain}>{safeHostname(item.content)}</div>
                     <div className={styles.captureDesc}>{item.metadata.description}</div>
+                    <SyncIndicator />
                 </div>
                 {renderActions()}
             </div>
@@ -166,6 +177,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <div className={styles.header}>
                 {getIcon()}
                 <span className={styles.title}>{item.metadata?.title || 'Untitled Idea'}</span>
+                <SyncIndicator />
             </div>
             <div className={styles.content}>
                 {item.type === 'image' ? (

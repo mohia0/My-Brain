@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Archive, Copy, X, FolderInput } from 'lucide-react';
+import { Trash2, Archive, Copy, X, FolderInput, CircleArrowOutUpRight, Inbox } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './MobileSelectionBar.module.css';
 import { clsx } from 'clsx';
@@ -9,12 +9,12 @@ export default function MobileSelectionBar() {
     const {
         selectedIds, clearSelection, removeItem,
         archiveSelected, duplicateSelected,
-        updateItemContent, moveSelectedToFolder
+        updateItemContent, moveSelectedToFolder, items
     } = useItemsStore();
 
     const [isPickerOpen, setIsPickerOpen] = React.useState(false);
 
-    if (selectedIds.length === 0) return null;
+
 
     const handleDelete = () => {
         selectedIds.forEach(id => {
@@ -59,6 +59,8 @@ export default function MobileSelectionBar() {
         return () => window.removeEventListener('systemBack', onSystemBack);
     }, [isPickerOpen, selectedIds.length]);
 
+    if (selectedIds.length === 0) return null;
+
     return (
         <div className={styles.barWrapper}>
             <div className={styles.selectionBar}>
@@ -70,6 +72,38 @@ export default function MobileSelectionBar() {
                 </div>
 
                 <div className={styles.actions}>
+                    {/* Move to Canvas / Move to Inbox Logic */}
+                    {(() => {
+                        const selectedItems = items.filter(i => selectedIds.includes(i.id));
+                        if (selectedItems.length > 0) {
+                            const isInbox = selectedItems[0].status === 'inbox';
+                            return isInbox ? (
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={() => {
+                                        selectedIds.forEach(id => updateItemContent(id, { status: 'active', folder_id: null }));
+                                        clearSelection();
+                                    }}
+                                    title="Move to Canvas"
+                                >
+                                    <CircleArrowOutUpRight size={20} />
+                                </button>
+                            ) : (
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={() => {
+                                        selectedIds.forEach(id => updateItemContent(id, { status: 'inbox', folder_id: null }));
+                                        clearSelection();
+                                    }}
+                                    title="Move to Inbox"
+                                >
+                                    <Inbox size={20} />
+                                </button>
+                            );
+                        }
+                        return null;
+                    })()}
+
                     <button className={styles.actionBtn} onClick={handleMoveClick} title="Move to Folder">
                         <FolderInput size={20} />
                     </button>

@@ -163,12 +163,32 @@
 }
 
 /* Organize Button Animation */
-.organizeBtn {
+.organizeBtn,
+.moveCanvasBtn,
+.moveInboxBtn {
     overflow: hidden;
     gap: 0;
     padding: 8px 14px;
     border-radius: 100px;
     width: auto;
+}
+
+.moveCanvasBtn:hover {
+    background: var(--accent-glow);
+    color: var(--accent);
+}
+
+.moveInboxBtn:hover {
+    background: var(--card-hover);
+    color: var(--foreground);
+}
+
+.organizeBtn:hover .btnText,
+.moveCanvasBtn:hover .btnText,
+.moveInboxBtn:hover .btnText {
+    max-width: 100px;
+    opacity: 1;
+    margin-left: 8px;
 }
 
 .btnText {

@@ -57,7 +57,7 @@ export default function Toolbar() {
 
         if (type === 'folder') {
             addFolder({
-                id, user_id: 'user-1', name: value,
+                id, user_id: 'unknown', name: value,
                 position_x: centerX, position_y: centerY,
                 created_at: new Date().toISOString()
             });
@@ -69,7 +69,7 @@ export default function Toolbar() {
             const title = type === 'text' ? value : 'New Idea';
 
             addItem({
-                id, user_id: 'user-1', type: type as any,
+                id, user_id: 'unknown', type: type as any,
                 content: content,
                 position_x: centerX, position_y: centerY,
                 created_at: new Date().toISOString(),

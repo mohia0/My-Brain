@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './FloatingBar.module.css';
-import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder, Archive } from 'lucide-react';
+import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder, Archive, CircleArrowOutUpRight, Inbox } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { generateId } from '@/lib/utils';
 import InputModal from '@/components/InputModal/InputModal';
@@ -16,9 +16,9 @@ export default function FloatingBar() {
         removeFolder,
         addFolder,
         items,
-        folders,
-        updateItemContent,
-        layoutSelectedItems,
+        folders, /**/
+        updateItemContent,/* */
+        layoutSelectedItems,/* */
         archiveSelected
     } = useItemsStore();
 
@@ -27,7 +27,6 @@ export default function FloatingBar() {
     const [isMoveMenuOpen, setIsMoveMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    // Close menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -85,7 +84,7 @@ export default function FloatingBar() {
         const folderId = generateId();
         addFolder({
             id: folderId,
-            user_id: 'user-1',
+            user_id: 'unknown',
             name,
             position_x: avgX - 100, // Offset to center the folder icon
             position_y: avgY - 50,
@@ -153,6 +152,50 @@ export default function FloatingBar() {
                 )}
             </div>
 
+            {/* Move to Canvas / Move to Inbox Logic */}
+            {
+                (() => {
+                    const selectedItems = items.filter(i => selectedIds.includes(i.id));
+                    // Only show if we have items selected (folders don't switch between inbox/canvas usually, or do they? Assuming items for now)
+                    if (selectedItems.length > 0) {
+                        const view = selectedItems[0].status === 'inbox' ? 'inbox' : 'canvas';
+
+                        if (view === 'inbox') {
+                            return (
+                                <button
+                                    className={`${styles.actionBtn} ${styles.moveCanvasBtn}`}
+                                    onClick={() => {
+                                        selectedIds.forEach(id => updateItemContent(id, { status: 'active', folder_id: null })); // Move to root canvas
+                                        clearSelection();
+                                    }}
+                                    title="Move to Canvas"
+                                >
+                                    <CircleArrowOutUpRight size={18} />
+                                    <span className={styles.btnText}>To Canvas</span>
+                                </button>
+                            );
+                        } else {
+                            return (
+                                <button
+                                    className={`${styles.actionBtn} ${styles.moveInboxBtn}`}
+                                    onClick={() => {
+                                        selectedIds.forEach(id => updateItemContent(id, { status: 'inbox', folder_id: null }));
+                                        clearSelection();
+                                    }}
+                                    title="Move to Inbox"
+                                >
+                                    <Inbox size={18} />
+                                    <span className={styles.btnText}>To Inbox</span>
+                                </button>
+                            );
+                        }
+                    }
+                    return null;
+                })()
+            }
+
+            <div className={styles.divider} />
+
             <button className={`${styles.actionBtn} ${styles.organizeBtn}`} onClick={layoutSelectedItems} title="Clean up layout">
                 <Sparkles size={18} />
                 <span className={styles.btnText}>Organize</span>
@@ -184,7 +227,7 @@ export default function FloatingBar() {
                 title="Create Group"
                 placeholder="Folder Name"
             />
-        </div>
+        </div >
     );
 }
 

@@ -30,28 +30,37 @@ const getSafePosition = (
     items: Item[],
     folders: Folder[]
 ) => {
-    let x = targetX;
-    let y = targetY;
-    let attempts = 0;
-    const maxAttempts = 50; // Safety break
-
+    const obstacleBuffer = 20; // Extra padding
     const obstacles = [
-        ...items.filter(i => i.id !== id && i.status !== 'inbox' && !i.folder_id).map(i => ({ x: i.position_x, y: i.position_y, w: 280, h: 120 })),
-        ...folders.filter(f => f.id !== id && !f.parent_id).map(f => ({ x: f.position_x, y: f.position_y, w: 280, h: 120 }))
+        ...items.filter(i => i.id !== id && i.status === 'active' && !i.folder_id).map(i => ({ x: i.position_x, y: i.position_y, w: 280, h: 120 })),
+        ...folders.filter(f => f.id !== id && f.status === 'active' && !f.parent_id).map(f => ({ x: f.position_x, y: f.position_y, w: 280, h: 120 }))
     ];
 
-    while (attempts < maxAttempts) {
-        const collision = obstacles.find(obs => isOverlapping({ x, y, w: width, h: height }, obs));
-        if (!collision) return { x, y };
+    let x = targetX;
+    let y = targetY;
 
-        // If collision, move slightly down and to the right, or to the next grid slot
-        // Let's try moving down by height + gap for a clean "push"
-        y += 20; // Small increment for natural feel
-        if (attempts > 0 && attempts % 5 === 0) {
-            x += 20;
-            y = targetY; // Reset Y slightly to explore horizontally
+    // Grid-based search for a free spot
+    const stepX = 300; // colWidth + gap
+    const stepY = 150; // approx height + gap
+    const maxRings = 10;
+
+    for (let ring = 0; ring <= maxRings; ring++) {
+        for (let ix = -ring; ix <= ring; ix++) {
+            for (let iy = -ring; iy <= ring; iy++) {
+                // We only check the perimeter of the current "ring" to be efficient
+                if (Math.abs(ix) !== ring && Math.abs(iy) !== ring) continue;
+
+                const curX = targetX + ix * stepX;
+                const curY = targetY + iy * stepY;
+
+                const collision = obstacles.find(obs => isOverlapping(
+                    { x: curX - obstacleBuffer, y: curY - obstacleBuffer, w: width + obstacleBuffer * 2, h: height + obstacleBuffer * 2 },
+                    obs
+                ));
+
+                if (!collision) return { x: curX, y: curY };
+            }
         }
-        attempts++;
     }
 
     return { x, y };
@@ -475,19 +484,50 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     // Folders
     addFolder: async (folder) => {
-        const newFolder = { ...folder, syncStatus: 'syncing' as const };
+        const state = get();
+        const safePos = getSafePosition(folder.id, folder.position_x, folder.position_y, 280, 120, state.items, state.folders);
+        const safeFolder = { ...folder, position_x: safePos.x, position_y: safePos.y, syncStatus: 'syncing' as const };
+
         set((state) => ({
-            folders: [...state.folders, newFolder],
+            folders: [...state.folders, safeFolder],
             history: {
-                past: [...state.history.past, { type: 'ADD_FOLDER', folder: newFolder }],
+                past: [...state.history.past, { type: 'ADD_FOLDER', folder: safeFolder }],
                 future: []
             }
         }));
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { error } = await supabase.from('folders').insert([{ ...folder, user_id: user.id }]);
+
+        let finalUserId = safeFolder.user_id;
+        if (!finalUserId || finalUserId === 'unknown') {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) finalUserId = user.id;
+        }
+
+        if (finalUserId) {
+            const { syncStatus, ...dbFolder } = safeFolder;
+
+            // Explicitly ensure 'name' is present (fallback to title or default if missing)
+            if (!('name' in dbFolder) && 'title' in (dbFolder as any)) {
+                (dbFolder as any).name = (dbFolder as any).title;
+            }
+
+            console.log('[Store] Inserting folder:', dbFolder);
+
+            const { error } = await supabase.from('folders').insert([{
+                ...dbFolder,
+                user_id: finalUserId
+            }]);
+
+            if (error) {
+                console.error('[Store] Supabase folder insert failed:', error);
+            }
+
             set(state => ({
-                folders: state.folders.map(f => f.id === folder.id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)
+                folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)
+            }));
+        } else {
+            console.error('[Store] Cannot persist folder: user_id is missing');
+            set(state => ({
+                folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, syncStatus: 'error' } : f)
             }));
         }
     },
@@ -524,6 +564,10 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             )
         }));
         const { error } = await supabase.from('folders').update(updates).eq('id', id);
+
+        if (error) {
+            console.error('[Store] Supabase folder update failed:', JSON.stringify(error, null, 2));
+        }
 
         set(state => ({
             folders: state.folders.map(f => f.id === id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)
@@ -810,44 +854,56 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     }),
 
     subscribeToChanges: () => {
-        const channels = [
-            supabase.channel('items-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, (payload: any) => {
-                    if (payload.eventType === 'INSERT') {
-                        set(state => {
-                            if (state.items.find(i => i.id === payload.new.id)) return state;
-                            return { items: [...state.items, payload.new as Item] };
-                        });
-                    } else if (payload.eventType === 'UPDATE') {
-                        set(state => ({
-                            items: state.items.map(i => i.id === payload.new.id ? { ...i, ...payload.new } : i)
-                        }));
-                    } else if (payload.eventType === 'DELETE') {
-                        set(state => ({ items: state.items.filter(i => i.id !== payload.old.id) }));
-                    }
-                })
-                .subscribe(),
+        console.log('[Realtime] Initializing subscriptions...');
 
-            supabase.channel('folders-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, (payload: any) => {
-                    if (payload.eventType === 'INSERT') {
-                        set(state => {
-                            if (state.folders.find(f => f.id === payload.new.id)) return state;
-                            return { folders: [...state.folders, payload.new as Folder] };
-                        });
-                    } else if (payload.eventType === 'UPDATE') {
-                        set(state => ({
-                            folders: state.folders.map(f => f.id === payload.new.id ? { ...f, ...payload.new } : f)
-                        }));
-                    } else if (payload.eventType === 'DELETE') {
-                        set(state => ({ folders: state.folders.filter(f => f.id !== payload.old.id) }));
-                    }
-                })
-                .subscribe()
-        ];
+        const handleItemChange = (payload: any) => {
+            console.log('[Realtime] Item change received:', payload.eventType, payload.new?.id || payload.old?.id);
+            if (payload.eventType === 'INSERT') {
+                set(state => {
+                    if (state.items.find(i => i.id === payload.new.id)) return state;
+                    return { items: [...state.items, { ...payload.new, syncStatus: 'synced' as const } as Item] };
+                });
+            } else if (payload.eventType === 'UPDATE') {
+                set(state => ({
+                    items: state.items.map(i => i.id === payload.new.id ? { ...i, ...payload.new, syncStatus: 'synced' as const } : i)
+                }));
+            } else if (payload.eventType === 'DELETE') {
+                set(state => ({ items: state.items.filter(i => i.id !== payload.old.id) }));
+            }
+        };
+
+        const handleFolderChange = (payload: any) => {
+            console.log('[Realtime] Folder change received:', payload.eventType, payload.new?.id || payload.old?.id);
+            if (payload.eventType === 'INSERT') {
+                set(state => {
+                    if (state.folders.find(f => f.id === payload.new.id)) return state;
+                    return { folders: [...state.folders, { ...payload.new, syncStatus: 'synced' as const } as Folder] };
+                });
+            } else if (payload.eventType === 'UPDATE') {
+                set(state => ({
+                    folders: state.folders.map(f => f.id === payload.new.id ? { ...f, ...payload.new, syncStatus: 'synced' as const } : f)
+                }));
+            } else if (payload.eventType === 'DELETE') {
+                set(state => ({ folders: state.folders.filter(f => f.id !== payload.old.id) }));
+            }
+        };
+
+        const itemChannel = supabase.channel('items-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, handleItemChange)
+            .subscribe((status: string) => {
+                console.log('[Realtime] Items channel status:', status);
+            });
+
+        const folderChannel = supabase.channel('folders-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, handleFolderChange)
+            .subscribe((status: string) => {
+                console.log('[Realtime] Folders channel status:', status);
+            });
 
         return () => {
-            channels.forEach(channel => supabase.removeChannel(channel));
+            console.log('[Realtime] Cleaning up subscriptions...');
+            supabase.removeChannel(itemChannel);
+            supabase.removeChannel(folderChannel);
         };
     }
 }));

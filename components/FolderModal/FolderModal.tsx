@@ -145,7 +145,13 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                 <div className={styles.swipeHandle} />
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
-                        <div className={styles.iconCircle} style={{ backgroundColor: folder.color ? `${folder.color}22` : undefined, color: folder.color || 'var(--accent)' }}>
+                        <div
+                            className={styles.iconCircle}
+                            style={{
+                                backgroundColor: folder.color?.startsWith('var') ? folder.color : (folder.color ? `${folder.color}22` : undefined),
+                                color: folder.color || 'var(--accent)'
+                            }}
+                        >
                             <FolderOpen size={22} />
                         </div>
                         <div className={styles.titleLayout}>
@@ -169,6 +175,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                         </span>
                                     )}
                                 </div>
+                                {folder.syncStatus === 'syncing' && <span className={styles.savingIndicator}>Saving...</span>}
                                 <div className={styles.colorDots}>
                                     {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
                                         <button

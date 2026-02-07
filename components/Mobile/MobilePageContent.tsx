@@ -257,7 +257,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                     user_id: userId,
                     type: isUrl ? 'link' : 'text',
                     content: finalUrl || textContent,
-                    status: 'inbox',
+                    status: 'active',
                     metadata: {
                         title: intentTitle || (isUrl ? "Shared Link" : "Idea Note"),
                         description: isUrl ? "Captured from Mobile" : "Shared from Mobile"
@@ -328,7 +328,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                         user_id: userId,
                         type: 'image', // Use 'image' as type to bypass DB constraints, use metadata.isVideo for logic
                         content: finalFileContent,
-                        status: 'inbox',
+                        status: 'active',
                         metadata: {
                             title: file.name || intentTitle || (isImage ? "Idea Capture" : "Video Capture"),
                             description: textContent || `Shared via mobile`,
@@ -383,6 +383,8 @@ export default function MobilePageContent({ session }: { session: any }) {
         if (type === 'folder') {
             addFolder({
                 id, user_id: userId, name: value,
+                parent_id: null,
+                color: '#6e56cf',
                 position_x: 0, position_y: 0, status: 'active',
                 created_at: new Date().toISOString()
             });
@@ -403,7 +405,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             await addItem({
                 id, user_id: userId, type: (type === 'camera' ? 'image' : type) as any,
-                content: content, status: activeTab === 'inbox' ? 'inbox' : 'active',
+                content: content, status: 'active',
                 position_x: 0, position_y: 0,
                 created_at: new Date().toISOString(),
                 metadata: { title: metadataTitle }

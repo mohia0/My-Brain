@@ -291,6 +291,16 @@
     gap: 6px;
 }
 
+@media (max-width: 768px) {
+    .titleDisplayWrapper {
+        display: none !important;
+    }
+
+    .titleInputEdit {
+        display: none !important;
+    }
+}
+
 .savingIndicator::before {
     content: '';
     width: 6px;
@@ -725,19 +735,18 @@
     }
 
     .rightColumn {
-        flex: 1 !important;
-        min-height: 0 !important;
-        /* Crucial for scrolling */
+        flex: none !important;
+        min-height: auto !important;
         display: flex !important;
         flex-direction: column !important;
-        overflow: hidden !important;
+        overflow: visible !important;
     }
 
     .scrollBody {
-        flex: 1 !important;
-        overflow-y: auto !important;
-        padding: 20px 20px 160px 20px !important;
-        /* Massive padding to clear footer */
+        flex: none !important;
+        overflow-y: visible !important;
+        padding: 20px 20px 140px 20px !important;
+        /* Massive padding to clear fixed footer */
         gap: 20px !important;
     }
 

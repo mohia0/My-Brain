@@ -156,7 +156,10 @@
     user-select: none;
     position: relative;
     overflow: hidden;
-    /* Hide sliding elements */
+    min-height: 68px;
+    /* Standardize card height */
+    display: flex;
+    align-items: center;
 }
 
 .selected {
@@ -192,6 +195,7 @@
     gap: 12px;
     padding: 10px;
     align-items: center;
+    width: 100%;
 }
 
 .thumbnail {
@@ -268,10 +272,11 @@
 
 /* Simple Item */
 .simpleItem {
-    padding: 12px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    width: 100%;
 }
 
 .icon {

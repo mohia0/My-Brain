@@ -51,6 +51,19 @@
     background: #1a1a1a;
 }
 
+.itemCard.selected {
+    background: rgba(110, 86, 207, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(110, 86, 207, 0.1);
+}
+
+.itemCard.removing {
+    opacity: 0;
+    transform: translateX(100px);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
 .itemMain {
     flex: 1;
     min-width: 0;
@@ -87,18 +100,32 @@
     color: #ff4444;
 }
 
-.imageLayout {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+.confirmDelete {
+    background: #ff4444 !important;
+    color: white !important;
+    border-color: #ff4444 !important;
+    width: auto !important;
+    padding: 0 12px !important;
+    border-radius: 100px !important;
 }
 
-.thumb {
-    width: 60px;
-    height: 60px;
+.sureText {
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.verticalImageLayout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.fullThumb {
+    width: 100%;
+    height: 180px;
     object-fit: cover;
-    border-radius: 8px;
-    background: #222;
+    border-radius: 12px;
+    background: #1a1a1a;
 }
 
 .simpleLayout {
@@ -133,9 +160,27 @@
     margin-bottom: 0.2rem;
 }
 
+.subRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
 .sub {
     font-size: 0.75rem;
     color: #666;
+}
+
+.statusInfo {
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(110, 86, 207, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
 /* Overlay */

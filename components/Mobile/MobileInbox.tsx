@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import MobileCard from './MobileCard';
+import MobileInboxItem from './MobileInboxItem';
 import styles from './MobileHome.module.css'; // Reusing Home styles for consistency
 import { Inbox as InboxIcon, ArrowDown } from 'lucide-react';
 
@@ -104,7 +104,7 @@ export default function MobileInbox({ onItemClick }: MobileInboxProps) {
                         </div>
                         <div className={styles.list}>
                             {inboxItems.map(item => (
-                                <MobileCard
+                                <MobileInboxItem
                                     key={item.id}
                                     item={item}
                                     onClick={() => onItemClick(item.id)}

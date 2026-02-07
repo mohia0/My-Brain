@@ -74,13 +74,18 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
         setIsSaving(true);
         saveTimeoutRef.current = setTimeout(async () => {
-            await updateItemContent(item.id, {
-                content: content,
-                metadata: { ...item.metadata, title, description }
-            });
-            setIsSaving(false);
-            console.log("[LiveSync] Auto-saved item");
-        }, 1500); // 1.5s debounce for content stability
+            try {
+                await updateItemContent(item.id, {
+                    content: content,
+                    metadata: { ...item.metadata, title, description }
+                });
+            } catch (err) {
+                console.error("[LiveSync] Save failed:", err);
+            } finally {
+                setIsSaving(false);
+                console.log("[LiveSync] Auto-saved item");
+            }
+        }, 1000); // 1s debounce for better responsiveness
 
         return () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

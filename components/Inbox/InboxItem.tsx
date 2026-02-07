@@ -41,7 +41,11 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
     // If it's the Overlay itself, we show it fully opaque
     const opacity = isDragging && !isOverlay ? 0.3 : 1;
 
-    const hasImage = item.type === 'link' && item.metadata?.image;
+    const getImageUrl = () => {
+        if (item.type === 'image') return item.content;
+        return item.metadata?.image;
+    };
+    const hasImage = !!getImageUrl();
 
     const handleMoveToCanvas = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -96,7 +100,7 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
             {hasImage ? (
                 <div className={styles.richItem}>
                     <img
-                        src={item.metadata.image}
+                        src={getImageUrl()!}
                         alt=""
                         className={styles.thumbnail}
                         draggable={false}

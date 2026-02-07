@@ -10,6 +10,7 @@ import ShareProcessingOverlay from './ShareProcessingOverlay';
 import ItemModal from '@/components/ItemModal/ItemModal';
 import FolderModal from '@/components/FolderModal/FolderModal';
 import InputModal from '@/components/InputModal/InputModal';
+import MobileSelectionBar from './MobileSelectionBar';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import { Capacitor } from '@capacitor/core';
@@ -184,25 +185,28 @@ export default function MobilePageContent({ session }: { session: any }) {
         // Robust file detection
         let processedFiles = data.files || [];
 
-        // Check for single file in various fields
-        const singleUri = data.uri || data.path || data.url || extras['android.intent.extra.STREAM'];
+        // Check for single file in extra stream (Standard Android approach)
+        const streamUri = extras['android.intent.extra.STREAM'];
+        const dataUri = data.uri || data.path; // ONLY use uri/path for files, not .url
 
-        if (processedFiles.length === 0 && singleUri) {
+        if (processedFiles.length === 0 && (streamUri || dataUri)) {
+            const finalUri = streamUri || dataUri;
             const mime = data.mimeType || data.type || "";
-            const uriStr = singleUri.toString();
-            console.log(`[MobileShare] Single URI detected: ${uriStr}, Mime: ${mime}`);
+            const uriStr = finalUri.toString();
+            console.log(`[MobileShare] Single Stream/Data URI detected: ${uriStr}, Mime: ${mime}`);
 
             const definitelyImage = mime.startsWith('image/') ||
                 /\.(jpg|jpeg|png|gif|webp)$/i.test(uriStr) ||
-                uriStr.includes('com.google.android.apps.photos.contentprovider');
+                uriStr.includes('com.google.android.apps.photos.contentprovider') ||
+                uriStr.startsWith('content://');
 
-            if (definitelyImage || mime.startsWith('video/') || uriStr.startsWith('content://')) {
+            if (definitelyImage || mime.startsWith('video/')) {
                 processedFiles = [{
-                    uri: singleUri,
+                    uri: finalUri,
                     mimeType: mime || (definitelyImage ? 'image/jpeg' : 'application/octet-stream'),
                     name: data.name || "Shared Idea"
                 }];
-                console.log("[MobileShare] Auto-packaged single file share");
+                console.log("[MobileShare] Auto-packaged single stream share");
             }
         }
         const hasFiles = processedFiles.length > 0;
@@ -232,11 +236,14 @@ export default function MobilePageContent({ session }: { session: any }) {
 
         try {
             const userId = session?.user?.id || 'unknown';
+            console.log(`[MobileShare] Processing for User: ${userId}`);
 
-            // 1. Process as URL or Text if content exists (AND no files are present)
-            // If files ARE present, they will be handled in the next section to avoid duplicates
-            if ((textContent || finalUrl) && !hasFiles) {
+            // 1. Process as URL or Text
+            // We ALWAYS process this if it exists, even if there are files
+            // (e.g. sharing a link with a thumbnail image)
+            if (textContent || finalUrl) {
                 const itemId = generateId();
+                console.log(`[MobileShare] Creating ${isUrl ? 'Link' : 'Text'} item: ${itemId}`);
                 await addItem({
                     id: itemId,
                     user_id: userId,
@@ -271,8 +278,11 @@ export default function MobilePageContent({ session }: { session: any }) {
                     const fileUri = file.uri || file.path || file.url || "";
 
                     const isImage = mime.startsWith('image/') ||
-                        (typeof fileUri === 'string' && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUri)) ||
-                        fileUri.toString().startsWith('content://');
+                        (typeof fileUri === 'string' && (
+                            /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUri) ||
+                            fileUri.startsWith('content://') ||
+                            fileUri.includes('com.google.android.apps.photos.contentprovider')
+                        ));
 
                     if (!fileUri) {
                         console.warn("[MobileShare] Skipping file with no URI");
@@ -320,14 +330,18 @@ export default function MobilePageContent({ session }: { session: any }) {
             }
 
             setShareState('saved');
+            setTimeout(() => setIsOverlayFading(true), 600);
             setTimeout(() => {
-                setActiveTab('inbox');
-                setIsOverlayFading(true);
-                setTimeout(() => {
-                    setShareState('idle');
-                    setIsOverlayFading(false);
-                }, 500);
-            }, 1200);
+                setShareState('idle');
+                setIsOverlayFading(false);
+
+                // "Work like hack" - Exit the app after sharing to return to the original app
+                const cap = (window as any).Capacitor;
+                if (cap?.Plugins?.App?.exitApp) {
+                    console.log("[MobileShare] Auto-exiting app after successful share");
+                    cap.Plugins.App.exitApp();
+                }
+            }, 1000);
 
         } catch (error) {
             console.error("[MobileShare] Critical Error:", error);
@@ -418,8 +432,10 @@ export default function MobilePageContent({ session }: { session: any }) {
                 paddingBottom: 'calc(100px + env(safe-area-inset-bottom))',
                 paddingTop: 'calc(64px + env(safe-area-inset-top))',
                 minHeight: '100vh',
-                background: isSharing ? 'transparent' : '#000',
-                display: isSharing ? 'none' : 'block'
+                background: '#000',
+                opacity: isSharing ? 0.4 : 1,
+                filter: isSharing ? 'blur(10px)' : 'none',
+                transition: 'all 0.3s ease'
             }}>
                 {activeTab === 'home' ? (
                     <MobileHome
@@ -438,6 +454,8 @@ export default function MobilePageContent({ session }: { session: any }) {
                     onAdd={handleAddClick}
                 />
             )}
+
+            <MobileSelectionBar />
 
             {isSharing && (
                 <ShareProcessingOverlay

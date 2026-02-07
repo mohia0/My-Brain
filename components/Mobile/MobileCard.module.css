@@ -12,8 +12,21 @@
 }
 
 .card:active {
-    background: rgba(30, 30, 30, 0.6);
+    background: #1a1a1a;
     transform: scale(0.98);
+}
+
+.card.selected {
+    background: rgba(110, 86, 207, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(110, 86, 207, 0.1);
+}
+
+.card.removing {
+    opacity: 0;
+    transform: translateX(100px);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .folderCard {
@@ -137,14 +150,11 @@
 }
 
 .actionBtn.delete:active {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
 }
 
 .confirmDelete {
-    width: auto;
-    padding: 0 12px;
-    color: #ef4444;
     border-color: rgba(239, 68, 68, 0.3);
     font-size: 11px;
     font-weight: 700;

@@ -67,6 +67,8 @@ interface ItemsState {
     updateItemPosition: (id: string, x: number, y: number) => void;
     updateItemContent: (id: string, updates: Partial<Item>) => void;
     duplicateItem: (id: string) => void;
+    duplicateFolder: (id: string) => void;
+    duplicateSelected: () => void;
     removeItem: (id: string) => void;
 
     // Folders
@@ -371,6 +373,46 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
         });
         await supabase.from('items').insert([newItem]);
+    },
+
+    duplicateFolder: async (id) => {
+        const state = get();
+        const folder = state.folders.find(f => f.id === id);
+        if (!folder) return;
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const newId = generateId();
+        const safePos = getSafePosition(newId, folder.position_x + 30, folder.position_y + 30, 280, 120, state.items, state.folders);
+
+        const newFolder = {
+            ...folder,
+            id: newId,
+            user_id: user.id,
+            position_x: safePos.x,
+            position_y: safePos.y,
+            name: `${folder.name} (Copy)`,
+            created_at: new Date().toISOString()
+        };
+
+        set({
+            folders: [...state.folders, newFolder],
+            history: {
+                past: [...state.history.past, { type: 'ADD_FOLDER', folder: newFolder }],
+                future: []
+            }
+        });
+        await supabase.from('folders').insert([newFolder]);
+    },
+
+    duplicateSelected: async () => {
+        const { selectedIds, items, folders, duplicateItem, duplicateFolder, clearSelection } = get();
+        for (const id of selectedIds) {
+            if (items.some(i => i.id === id)) await duplicateItem(id);
+            if (folders.some(f => f.id === id)) await duplicateFolder(id);
+        }
+        clearSelection();
     },
 
     removeItem: async (id) => {

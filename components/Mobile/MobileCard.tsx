@@ -13,8 +13,12 @@ interface MobileCardProps {
 }
 
 export default function MobileCard({ item, onClick }: MobileCardProps) {
-    const { duplicateItem, removeItem, archiveItem } = useItemsStore();
+    const { duplicateItem, removeItem, archiveItem, selectedIds, toggleSelection } = useItemsStore();
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isRemoving, setIsRemoving] = useState(false);
+    const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
+    const isSelected = selectedIds.includes(item.id);
+    const inSelectionMode = selectedIds.length > 0;
 
     const isFolder = 'type' in item && (item as any).type === 'folder';
     const isImage = item.type === 'image' || (item.type === 'link' && item.metadata?.image);
@@ -52,15 +56,45 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
         e.stopPropagation();
         if (!isDeleting) {
             setIsDeleting(true);
+            setTimeout(() => setIsDeleting(false), 3000);
             return;
         }
-        removeItem(item.id);
+        setIsRemoving(true);
+        setTimeout(() => removeItem(item.id), 300);
+    };
+
+    const handleTouchStart = () => {
+        longPressTimer.current = setTimeout(() => {
+            toggleSelection(item.id);
+            if (window.navigator.vibrate) window.navigator.vibrate(50);
+        }, 600);
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    };
+
+    const handleClick = (e: React.MouseEvent) => {
+        if (inSelectionMode) {
+            e.stopPropagation();
+            toggleSelection(item.id);
+            return;
+        }
+        onClick?.();
     };
 
     return (
         <div
-            className={clsx(styles.card, isFolder && styles.folderCard)}
-            onClick={onClick}
+            className={clsx(
+                styles.card,
+                isFolder && styles.folderCard,
+                isRemoving && styles.removing,
+                isSelected && styles.selected
+            )}
+            onClick={handleClick}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchEnd}
             style={isFolder && (item as any).color ? {
                 backgroundColor: `${(item as any).color}15`,
                 borderColor: `${(item as any).color}30`
@@ -121,10 +155,9 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                 <button
                     onClick={handleDelete}
                     className={clsx(styles.actionBtn, styles.delete, isDeleting && styles.confirmDelete)}
-                    onMouseLeave={() => setIsDeleting(false)}
                     title="Delete"
                 >
-                    {isDeleting ? "Delete?" : <Trash2 size={14} />}
+                    {isDeleting ? "Sure?" : <Trash2 size={14} />}
                 </button>
             </div>
         </div>

@@ -21,7 +21,6 @@ import { generateId } from '@/lib/utils';
 // We access SendIntent dynamically to avoid Capacitor 2 build errors
 
 export default function MobilePageContent({ session }: { session: any }) {
-    const { addItem, addFolder, clearSelection, updateItemContent } = useItemsStore();
     const [activeTab, setActiveTab] = useState<'home' | 'inbox'>('home');
     const [shareState, setShareState] = useState<'idle' | 'saving' | 'saved' | 'capturing'>('idle');
     const [isOverlayFading, setIsOverlayFading] = useState(false);
@@ -41,10 +40,14 @@ export default function MobilePageContent({ session }: { session: any }) {
     const selectedItemIdRef = React.useRef<string | null>(null);
     const selectedFolderIdRef = React.useRef<string | null>(null);
     const inputModalOpenRef = React.useRef<boolean>(false);
+    const selectionCountRef = React.useRef<number>(0);
+
+    const { items, folders, selectedIds, addItem, addFolder, clearSelection, updateItemContent } = useItemsStore();
 
     useEffect(() => { selectedItemIdRef.current = selectedItemId; }, [selectedItemId]);
     useEffect(() => { selectedFolderIdRef.current = selectedFolderId; }, [selectedFolderId]);
     useEffect(() => { inputModalOpenRef.current = inputModalConfig.isOpen; }, [inputModalConfig.isOpen]);
+    useEffect(() => { selectionCountRef.current = selectedIds.length; }, [selectedIds.length]);
 
     useEffect(() => {
         const initCapacitor = async () => {
@@ -74,13 +77,17 @@ export default function MobilePageContent({ session }: { session: any }) {
                 }
 
                 // 2. Handle System Back Button (Android)
-                const AppPlugin = cap.Plugins.App;
+                const AppPlugin = (window as any).Capacitor?.Plugins?.App;
                 if (AppPlugin) {
-                    // Remove existing listeners before adding a new one
-                    if (AppPlugin.removeAllListeners) { try { await AppPlugin.removeAllListeners(); } catch (e) { } }
+                    console.log("[MobileInit] Setting up Back Button listener");
+                    AppPlugin.addListener('backButton', (data: { canGoBack: boolean }) => {
+                        const backEvent = new CustomEvent('systemBack', { cancelable: true });
+                        window.dispatchEvent(backEvent);
 
-                    AppPlugin.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
-                        console.log("Back button event. canGoBack:", canGoBack);
+                        if (backEvent.defaultPrevented) {
+                            console.log("Back event handled by component");
+                            return;
+                        }
 
                         if (inputModalOpenRef.current) {
                             setInputModalConfig(prev => ({ ...prev, isOpen: false }));
@@ -88,12 +95,13 @@ export default function MobilePageContent({ session }: { session: any }) {
                             setSelectedFolderId(null);
                         } else if (selectedItemIdRef.current) {
                             setSelectedItemId(null);
+                        } else if (selectionCountRef.current > 0) {
+                            clearSelection();
                         } else {
-                            if (canGoBack) {
+                            if (data.canGoBack) {
                                 window.history.back();
                             } else {
-                                // Double check if we really want to exit
-                                console.log("No modals open and no history. Exiting app...");
+                                console.log("No UI state active, exiting app");
                                 AppPlugin.exitApp();
                             }
                         }
@@ -283,25 +291,27 @@ export default function MobilePageContent({ session }: { session: any }) {
                             fileUri.startsWith('content://') ||
                             fileUri.includes('com.google.android.apps.photos.contentprovider')
                         ));
+                    const isVideo = mime.startsWith('video/') ||
+                        (typeof fileUri === 'string' && /\.(mp4|mov|avi|mkv|webm)$/i.test(fileUri));
 
                     if (!fileUri) {
                         console.warn("[MobileShare] Skipping file with no URI");
                         continue;
                     }
 
-                    console.log(`[MobileShare] File detected: mime=${mime}, isImage=${isImage}, uri=${fileUri.toString().substring(0, 50)}...`);
+                    console.log(`[MobileShare] File detected: mime=${mime}, isImage=${isImage}, isVideo=${isVideo}, uri=${fileUri.toString().substring(0, 50)}...`);
 
                     const finalFileUri = fileUri.toString();
                     let finalFileContent = "";
 
-                    if (isImage) {
-                        console.log(`[MobileShare] Processing Image: ${finalFileUri.substring(0, 50)}...`);
+                    if (isImage || isVideo) {
+                        console.log(`[MobileShare] Processing ${isImage ? 'Image' : 'Video'}: ${finalFileUri.substring(0, 50)}...`);
                         const uploaded = await uploadMobileFile(finalFileUri, fileId, userId);
                         if (uploaded) {
                             finalFileContent = uploaded;
-                            console.log(`[MobileShare] Image Uploaded Successfully: ${uploaded}`);
+                            console.log(`[MobileShare] ${isImage ? 'Image' : 'Video'} Uploaded Successfully: ${uploaded}`);
                         } else {
-                            console.error("[MobileShare] Image upload failed - skipping this file to avoid broken cards");
+                            console.error(`[MobileShare] ${isImage ? 'Image' : 'Video'} upload failed - skipping this file`);
                             continue;
                         }
                     } else {
@@ -316,12 +326,13 @@ export default function MobilePageContent({ session }: { session: any }) {
                     await addItem({
                         id: fileId,
                         user_id: userId,
-                        type: isImage ? 'image' : 'link',
+                        type: 'image', // Use 'image' as type to bypass DB constraints, use metadata.isVideo for logic
                         content: finalFileContent,
                         status: 'inbox',
                         metadata: {
-                            title: file.name || intentTitle || (isImage ? "Idea Capture" : "Shared Idea"),
-                            description: textContent || `Shared via mobile`
+                            title: file.name || intentTitle || (isImage ? "Idea Capture" : "Video Capture"),
+                            description: textContent || `Shared via mobile`,
+                            isVideo: isVideo
                         },
                         position_x: 0, position_y: 0,
                         created_at: new Date().toISOString()
@@ -392,7 +403,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             await addItem({
                 id, user_id: userId, type: (type === 'camera' ? 'image' : type) as any,
-                content: content, status: 'active',
+                content: content, status: activeTab === 'inbox' ? 'inbox' : 'active',
                 position_x: 0, position_y: 0,
                 created_at: new Date().toISOString(),
                 metadata: { title: metadataTitle }

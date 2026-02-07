@@ -85,7 +85,8 @@
     border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.previewImage {
+.previewImage,
+.previewVideo {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;

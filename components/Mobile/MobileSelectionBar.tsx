@@ -42,6 +42,23 @@ export default function MobileSelectionBar() {
         setIsPickerOpen(false);
     };
 
+    React.useEffect(() => {
+        const onSystemBack = (e: Event) => {
+            if (isPickerOpen) {
+                e.preventDefault();
+                setIsPickerOpen(false);
+            } else if (selectedIds.length > 0) {
+                // If selection exists, let's clear it but only if there are no modals above us
+                // Actually MobilePageContent already handles this, but we can do it here for extra safety
+                // and to prevent event propagation.
+                e.preventDefault();
+                clearSelection();
+            }
+        };
+        window.addEventListener('systemBack', onSystemBack);
+        return () => window.removeEventListener('systemBack', onSystemBack);
+    }, [isPickerOpen, selectedIds.length]);
+
     return (
         <div className={styles.barWrapper}>
             <div className={styles.selectionBar}>

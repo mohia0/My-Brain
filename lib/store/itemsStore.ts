@@ -146,7 +146,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     addItem: async (item) => {
         const state = get();
         const safePos = getSafePosition(item.id, item.position_x, item.position_y, 280, 120, state.items, state.folders);
-        const safeItem = { ...item, position_x: safePos.x, position_y: safePos.y };
+        const safeItem = { ...item, position_x: safePos.x, position_y: safePos.y, syncStatus: 'syncing' as const };
 
         set((state) => ({
             items: [...state.items, safeItem],
@@ -164,17 +164,30 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         }
 
         if (finalUserId) {
-            const { error } = await supabase.from('items').insert([{ ...safeItem, user_id: finalUserId }]);
-            if (error) console.error('[Store] Supabase insert failed:', error);
-            else console.log('[Store] Item persisted successfully');
+            // Explicitly exclude local-only UI state before DB insert
+            const { syncStatus, ...dbItem } = safeItem;
+
+            const { error } = await supabase.from('items').insert([{
+                ...dbItem,
+                user_id: finalUserId
+            }]);
+
+            if (error) {
+                console.error('[Store] Supabase insert failed:', error);
+                set(state => ({
+                    items: state.items.map(i => i.id === safeItem.id ? { ...i, syncStatus: 'error' } : i)
+                }));
+            } else {
+                set(state => ({
+                    items: state.items.map(i => i.id === safeItem.id ? { ...i, syncStatus: 'synced' } : i)
+                }));
+            }
         } else {
             console.error('[Store] Cannot persist item: user_id is missing');
         }
     },
 
     updateItemPosition: async (id, x, y) => {
-        // Legacy single update - wrapping it in batch logic for consistency if needed, 
-        // but for now keeping it simple. Ideally drag uses updatePositions.
         const state = get();
         const item = state.items.find(i => i.id === id);
         if (!item) return;
@@ -184,13 +197,17 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         };
 
         set((state) => ({
-            items: state.items.map((i) => i.id === id ? { ...i, position_x: x, position_y: y } : i),
+            items: state.items.map((i) => i.id === id ? { ...i, position_x: x, position_y: y, syncStatus: 'syncing' } : i),
             history: {
                 past: [...state.history.past, { type: 'MOVE', updates: [update] }],
                 future: []
             }
         }));
-        await supabase.from('items').update({ position_x: x, position_y: y }).eq('id', id);
+        const { error } = await supabase.from('items').update({ position_x: x, position_y: y }).eq('id', id);
+
+        set(state => ({
+            items: state.items.map(i => i.id === id ? { ...i, syncStatus: error ? 'error' : 'synced' } : i)
+        }));
     },
 
     updatePositions: async (updates) => {
@@ -339,10 +356,14 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         set((state) => ({
             items: state.items.map((item) =>
-                item.id === id ? { ...item, ...finalUpdates } : item
+                item.id === id ? { ...item, ...finalUpdates, syncStatus: 'syncing' } : item
             )
         }));
-        await supabase.from('items').update(finalUpdates).eq('id', id);
+        const { error } = await supabase.from('items').update(finalUpdates).eq('id', id);
+
+        set(state => ({
+            items: state.items.map(i => i.id === id ? { ...i, syncStatus: error ? 'error' : 'synced' } : i)
+        }));
     },
 
     duplicateItem: async (id) => {
@@ -387,7 +408,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const newId = generateId();
         const safePos = getSafePosition(newId, folder.position_x + 30, folder.position_y + 30, 280, 120, state.items, state.folders);
 
-        const newFolder = {
+        const folderToInsert = {
             ...folder,
             id: newId,
             user_id: user.id,
@@ -397,6 +418,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             created_at: new Date().toISOString()
         };
 
+        const newFolder = { ...folderToInsert, syncStatus: 'syncing' as const };
+
         set({
             folders: [...state.folders, newFolder],
             history: {
@@ -404,7 +427,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 future: []
             }
         });
-        await supabase.from('folders').insert([newFolder]);
+        await supabase.from('folders').insert([folderToInsert]);
     },
 
     duplicateSelected: async () => {
@@ -448,16 +471,20 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     // Folders
     addFolder: async (folder) => {
+        const newFolder = { ...folder, syncStatus: 'syncing' as const };
         set((state) => ({
-            folders: [...state.folders, folder],
+            folders: [...state.folders, newFolder],
             history: {
-                past: [...state.history.past, { type: 'ADD_FOLDER', folder }],
+                past: [...state.history.past, { type: 'ADD_FOLDER', folder: newFolder }],
                 future: []
             }
         }));
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            await supabase.from('folders').insert([{ ...folder, user_id: user.id }]);
+            const { error } = await supabase.from('folders').insert([{ ...folder, user_id: user.id }]);
+            set(state => ({
+                folders: state.folders.map(f => f.id === folder.id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)
+            }));
         }
     },
 
@@ -472,23 +499,31 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         set((state) => ({
             folders: state.folders.map((f) =>
-                f.id === id ? { ...f, position_x: x, position_y: y } : f
+                f.id === id ? { ...f, position_x: x, position_y: y, syncStatus: 'syncing' } : f
             ),
             history: {
                 past: [...state.history.past, { type: 'MOVE', updates: [update] }],
                 future: []
             }
         }));
-        await supabase.from('folders').update({ position_x: x, position_y: y }).eq('id', id);
+        const { error } = await supabase.from('folders').update({ position_x: x, position_y: y }).eq('id', id);
+
+        set(state => ({
+            folders: state.folders.map(f => f.id === id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)
+        }));
     },
 
     updateFolderContent: async (id, updates) => {
         set((state) => ({
             folders: state.folders.map((f) =>
-                f.id === id ? { ...f, ...updates } : f
+                f.id === id ? { ...f, ...updates, syncStatus: 'syncing' } : f
             )
         }));
-        await supabase.from('folders').update(updates).eq('id', id);
+        const { error } = await supabase.from('folders').update(updates).eq('id', id);
+
+        set(state => ({
+            folders: state.folders.map(f => f.id === id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)
+        }));
     },
 
     removeFolder: async (id) => {

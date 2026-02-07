@@ -1,6 +1,6 @@
 import React from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2 } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2, RefreshCw, AlertCircle, Play, Video } from 'lucide-react';
 import styles from './MobileInbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import clsx from 'clsx';
@@ -8,16 +8,18 @@ import clsx from 'clsx';
 interface MobileInboxItemProps {
     item: Item;
     onClick?: () => void;
+    style?: React.CSSProperties;
 }
 
-export default function MobileInboxItem({ item, onClick }: MobileInboxItemProps) {
+export default function MobileInboxItem({ item, onClick, style }: MobileInboxItemProps) {
     const { updateItemContent, removeItem, toggleSelection, selectedIds } = useItemsStore();
     const [isDeleting, setIsDeleting] = React.useState(false);
     const [isRemoving, setIsRemoving] = React.useState(false);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
     const isSelected = selectedIds.includes(item.id);
     const inSelectionMode = selectedIds.length > 0;
-    const isImage = (item.type === 'link' && item.metadata?.image) || item.type === 'image';
+    const isVideo = item.type === 'video' || item.metadata?.isVideo;
+    const isImage = ((item.type === 'link' && item.metadata?.image) || item.type === 'image') && !isVideo;
 
     const getImageUrl = () => {
         if (item.type === 'image') return item.content;
@@ -43,7 +45,10 @@ export default function MobileInboxItem({ item, onClick }: MobileInboxItemProps)
 
     const handleMove = (e: React.MouseEvent) => {
         e.stopPropagation();
-        updateItemContent(item.id, { status: 'active' });
+        setIsRemoving(true); // Re-use removing state for the exit animation
+        setTimeout(() => {
+            updateItemContent(item.id, { status: 'active' });
+        }, 400);
     };
 
     const handleRemove = (e: React.MouseEvent) => {
@@ -75,14 +80,22 @@ export default function MobileInboxItem({ item, onClick }: MobileInboxItemProps)
             return;
         }
 
-        // Check if it's a link or an image with an external link
-        const externalUrl = item.type === 'link' ? item.content : item.metadata?.url;
-        if (externalUrl && (externalUrl.startsWith('http') || externalUrl.startsWith('https'))) {
-            window.open(externalUrl, '_blank');
-            return;
-        }
-
         onClick?.();
+    };
+
+    const SyncIndicator = () => {
+        if (!item.syncStatus || item.syncStatus === 'synced') return null;
+
+        return (
+            <div className={clsx(styles.syncBadge, styles[item.syncStatus])}>
+                {item.syncStatus === 'syncing' ? (
+                    <RefreshCw size={10} className={styles.spin} />
+                ) : (
+                    <AlertCircle size={10} />
+                )}
+                <span>{item.syncStatus === 'syncing' ? 'Syncing...' : 'Error'}</span>
+            </div>
+        );
     };
 
     return (
@@ -96,13 +109,34 @@ export default function MobileInboxItem({ item, onClick }: MobileInboxItemProps)
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchEnd}
+            style={style}
         >
             <div className={styles.itemMain}>
-                {isImage && getImageUrl() ? (
+                {isVideo ? (
+                    <div className={styles.verticalImageLayout}>
+                        <div className={styles.videoThumbnailWrapper}>
+                            <video src={item.content} className={styles.fullThumb} />
+                            <div className={styles.playOverlay}><Play size={24} fill="white" /></div>
+                        </div>
+                        <div className={styles.info}>
+                            <div className={styles.titleRow}>
+                                <div className={styles.title}>{item.metadata?.title || 'Video Idea'}</div>
+                                <SyncIndicator />
+                            </div>
+                            <div className={styles.subRow}>
+                                <span className={styles.sub}>Video</span>
+                                {getStatus() && <span className={styles.statusInfo}>{getStatus()}</span>}
+                            </div>
+                        </div>
+                    </div>
+                ) : isImage && getImageUrl() ? (
                     <div className={styles.verticalImageLayout}>
                         <img src={getImageUrl()!} alt="" className={styles.fullThumb} />
                         <div className={styles.info}>
-                            <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Idea' : 'Shared Idea')}</div>
+                            <div className={styles.titleRow}>
+                                <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Idea' : 'Shared Idea')}</div>
+                                <SyncIndicator />
+                            </div>
                             <div className={styles.subRow}>
                                 <span className={styles.sub}>{item.type === 'link' ? hostname(item.content) : 'Image'}</span>
                                 {getStatus() && <span className={styles.statusInfo}>{getStatus()}</span>}
@@ -115,12 +149,16 @@ export default function MobileInboxItem({ item, onClick }: MobileInboxItemProps)
                             {item.type === 'text' && <FileText size={18} />}
                             {item.type === 'link' && <LinkIcon size={18} />}
                             {item.type === 'image' && <ImageIcon size={18} />}
+                            {item.type === 'video' && <Video size={18} />}
                         </div>
                         <div className={styles.info}>
-                            <div className={styles.title}>{item.metadata?.title || item.content.slice(0, 50) || 'Idea'}</div>
+                            <div className={styles.titleRow}>
+                                <div className={styles.title}>{item.metadata?.title || item.content.slice(0, 50) || 'Idea'}</div>
+                                <SyncIndicator />
+                            </div>
                             <div className={styles.subRow}>
                                 <span className={styles.sub}>
-                                    {item.type === 'link' ? hostname(item.content) : 'Idea'}
+                                    {item.type === 'video' ? 'Video' : item.type === 'link' ? hostname(item.content) : 'Idea'}
                                 </span>
                                 {getStatus() && <span className={styles.statusInfo}>{getStatus()}</span>}
                             </div>

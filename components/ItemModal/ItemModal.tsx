@@ -105,7 +105,17 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
         window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
+
+        const onSystemBack = (e: Event) => {
+            e.preventDefault();
+            onClose();
+        };
+        window.addEventListener('systemBack', onSystemBack);
+
+        return () => {
+            window.removeEventListener('keydown', handleEsc);
+            window.removeEventListener('systemBack', onSystemBack);
+        };
     }, [onClose]);
 
     useEffect(() => {
@@ -215,7 +225,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     styles.modal,
                     isLink && styles.compactModal,
                     isNote && styles.noteModal,
-                    item.type === 'image' && styles.imageModal
+                    ((item.type === 'image' || item.type === 'video') || item.metadata?.isVideo) && styles.imageModal
                 )}
                 onClick={e => e.stopPropagation()}
                 style={{
@@ -253,15 +263,33 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             </div>
                         ) : (
                             <div className={styles.visualContainer}>
-                                <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageReplace} />
-                                <button className={styles.replaceImageBtn} onClick={() => fileInputRef.current?.click()}>
-                                    <ImageIcon size={18} />
-                                    <span>Replace Image</span>
-                                </button>
+                                {item.type !== 'video' && !item.metadata?.isVideo && (
+                                    <>
+                                        <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageReplace} />
+                                        <button className={styles.replaceImageBtn} onClick={() => fileInputRef.current?.click()}>
+                                            <ImageIcon size={18} />
+                                            <span>Replace Image</span>
+                                        </button>
+                                    </>
+                                )}
 
-                                {item.type === 'image' ? (
+                                {(item.type === 'video' || item.metadata?.isVideo) ? (
+                                    <video
+                                        src={content}
+                                        controls
+                                        autoPlay
+                                        className={styles.previewVideo}
+                                        poster={item.metadata?.thumbnail}
+                                    />
+                                ) : item.type === 'image' ? (
                                     content ? (
-                                        <img src={content} className={styles.previewImage} alt="Idea" />
+                                        item.metadata?.url ? (
+                                            <a href={item.metadata.url} target="_blank" rel="noopener noreferrer">
+                                                <img src={content} className={styles.previewImage} alt="Idea" />
+                                            </a>
+                                        ) : (
+                                            <img src={content} className={styles.previewImage} alt="Idea" />
+                                        )
                                     ) : (
                                         <div className={styles.previewPlaceholder}>
                                             <ImageIcon size={48} />
@@ -271,7 +299,9 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 ) : isLink ? (
                                     <>
                                         {screenshotUrl ? (
-                                            <img src={screenshotUrl} className={styles.previewImage} alt="Snapshot" />
+                                            <a href={url} target="_blank" rel="noopener noreferrer" className={styles.imageLinkWrapper}>
+                                                <img src={screenshotUrl} className={styles.previewImage} alt="Snapshot" />
+                                            </a>
                                         ) : (
                                             <div className={styles.previewPlaceholder}>
                                                 <ExternalLink size={48} />

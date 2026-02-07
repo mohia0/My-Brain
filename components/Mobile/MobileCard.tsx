@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video } from 'lucide-react';
 import styles from './MobileCard.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import clsx from 'clsx';
@@ -21,7 +21,8 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     const inSelectionMode = selectedIds.length > 0;
 
     const isFolder = 'type' in item && (item as any).type === 'folder';
-    const isImage = item.type === 'image' || (item.type === 'link' && item.metadata?.image);
+    const isVideo = item.type === 'video' || item.metadata?.isVideo;
+    const isImage = (item.type === 'image' || (item.type === 'link' && item.metadata?.image)) && !isVideo;
     const imageUrl = item.type === 'image' ? item.content : item.metadata?.image;
 
     const hostname = (url: string) => {
@@ -81,20 +82,22 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
             return;
         }
 
-        // If it's a folder, always open folder modal
-        if (isFolder) {
-            onClick?.();
-            return;
-        }
-
-        // Check if it's a link or an image with an external link
-        const externalUrl = item.type === 'link' ? item.content : item.metadata?.url;
-        if (externalUrl && (externalUrl.startsWith('http') || externalUrl.startsWith('https'))) {
-            window.open(externalUrl, '_blank');
-            return;
-        }
-
         onClick?.();
+    };
+
+    const SyncIndicator = () => {
+        if (!item.syncStatus || item.syncStatus === 'synced') return null;
+
+        return (
+            <div className={clsx(styles.syncBadge, styles[item.syncStatus])}>
+                {item.syncStatus === 'syncing' ? (
+                    <RefreshCw size={10} className={styles.spin} />
+                ) : (
+                    <AlertCircle size={10} />
+                )}
+                <span>{item.syncStatus === 'syncing' ? 'Syncing...' : 'Error'}</span>
+            </div>
+        );
     };
 
     return (
@@ -115,11 +118,32 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
             } : {}}
         >
             <div className={styles.mainContent}>
-                {isImage && imageUrl ? (
+                {isVideo ? (
+                    <div className={styles.imageLayout}>
+                        <div className={styles.videoThumbnailWrapper}>
+                            <video src={item.content} className={styles.thumb} />
+                            <div className={styles.playOverlay}><Play size={24} fill="white" /></div>
+                        </div>
+                        <div className={styles.info}>
+                            <div className={styles.titleRow}>
+                                <div className={styles.title}>{item.metadata?.title || 'Video Idea'}</div>
+                                <SyncIndicator />
+                            </div>
+                            <div className={styles.metaRow}>
+                                <span className={styles.sub}>Video</span>
+                                <span className={styles.dot}>•</span>
+                                <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
+                            </div>
+                        </div>
+                    </div>
+                ) : isImage && imageUrl ? (
                     <div className={styles.imageLayout}>
                         <img src={imageUrl} alt="" className={styles.thumb} />
                         <div className={styles.info}>
-                            <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Idea' : 'Shared Idea')}</div>
+                            <div className={styles.titleRow}>
+                                <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Idea' : 'Shared Idea')}</div>
+                                <SyncIndicator />
+                            </div>
                             <div className={styles.metaRow}>
                                 <span className={styles.sub}>{hostname(item.content)}</span>
                                 <span className={styles.dot}>•</span>
@@ -146,14 +170,20 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                                 />
                             )}
                             {item.type === 'image' && <ImageIcon size={20} />}
+                            {item.type === 'video' && <Video size={20} />}
                         </div>
                         <div className={styles.info}>
-                            <div className={styles.title}>
-                                {isFolder ? (item as any).name : (item.metadata?.title || item.content.slice(0, 50))}
+                            <div className={styles.titleRow}>
+                                <div className={styles.title}>
+                                    {isFolder ? (item as any).name : (item.metadata?.title || item.content.slice(0, 50))}
+                                </div>
+                                <SyncIndicator />
                             </div>
                             <div className={styles.metaRow}>
                                 <span className={styles.sub}>
-                                    {isFolder ? 'Folder' : (item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Idea')}
+                                    {isFolder ? 'Folder' :
+                                        isVideo ? 'Video' :
+                                            item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Idea'}
                                 </span>
                                 <span className={styles.dot}>•</span>
                                 <span className={styles.time}>{getRelativeTime(item.created_at)}</span>

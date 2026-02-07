@@ -39,6 +39,15 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         }
     };
 
+    React.useEffect(() => {
+        const onSystemBack = (e: Event) => {
+            e.preventDefault();
+            handleBack();
+        };
+        window.addEventListener('systemBack', onSystemBack);
+        return () => window.removeEventListener('systemBack', onSystemBack);
+    }, [folder?.id]);
+
     const handleNameChange = (newName: string) => {
         setTempName(newName);
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

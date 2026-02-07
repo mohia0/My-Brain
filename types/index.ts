@@ -1,4 +1,4 @@
-export type ItemType = 'link' | 'text' | 'image';
+export type ItemType = 'link' | 'text' | 'image' | 'video';
 
 export interface Item {
     id: string;
@@ -11,6 +11,7 @@ export interface Item {
     position_y: number;
     created_at: string;
     status?: 'inbox' | 'active' | 'archived';
+    syncStatus?: 'synced' | 'syncing' | 'error';
 }
 
 export interface Folder {
@@ -23,6 +24,7 @@ export interface Folder {
     created_at: string;
     color?: string;
     status?: 'active' | 'archived';
+    syncStatus?: 'synced' | 'syncing' | 'error';
 }
 
 export interface Tag {

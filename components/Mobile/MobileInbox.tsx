@@ -103,12 +103,13 @@ export default function MobileInbox({ onItemClick }: MobileInboxProps) {
                             <span>Unsorted Ideas</span>
                         </div>
                         <div className={styles.list}>
-                            {inboxItems.map(item => (
-                                <MobileInboxItem
-                                    key={item.id}
-                                    item={item}
-                                    onClick={() => onItemClick(item.id)}
-                                />
+                            {inboxItems.map((item, index) => (
+                                <div key={item.id} style={{ animationDelay: `${index * 0.05}s` }}>
+                                    <MobileInboxItem
+                                        item={item}
+                                        onClick={() => onItemClick(item.id)}
+                                    />
+                                </div>
                             ))}
                         </div>
                     </section>

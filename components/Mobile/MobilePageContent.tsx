@@ -449,7 +449,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 paddingBottom: 'calc(100px + env(safe-area-inset-bottom))',
                 paddingTop: 'calc(64px + env(safe-area-inset-top))',
                 minHeight: '100vh',
-                background: '#000',
+                background: 'var(--background)',
                 opacity: isSharing ? 0.4 : 1,
                 filter: isSharing ? 'blur(10px)' : 'none',
                 transition: 'all 0.3s ease'
@@ -508,11 +508,11 @@ export default function MobilePageContent({ session }: { session: any }) {
             <style jsx global>{`
                 body {
                     overflow-y: auto !important;
-                    background: ${shareState === 'idle' ? '#000' : 'transparent'};
+                    background: ${shareState === 'idle' ? 'var(--background)' : 'transparent'};
                     transition: background 0.3s ease;
                 }
                 .mobile-app {
-                    background: ${shareState === 'idle' ? '#000' : 'transparent'};
+                    background: ${shareState === 'idle' ? 'var(--background)' : 'transparent'};
                 }
             `}</style>
         </div>

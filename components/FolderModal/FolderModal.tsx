@@ -2,7 +2,7 @@
 
 import React from 'react';
 import styles from './FolderModal.module.css';
-import { X, FolderOpen, LogOut, Check } from 'lucide-react';
+import { X, FolderOpen, LogOut, Check, CheckCircle2 } from 'lucide-react';
 import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
@@ -12,7 +12,7 @@ import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consist
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
 export default function FolderModal({ folderId: initialFolderId, onClose, onItemClick, onFolderClick }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void, onFolderClick?: (id: string) => void }) {
-    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent } = useItemsStore();
+    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection } = useItemsStore();
     const [currentFolderId, setCurrentFolderId] = React.useState(initialFolderId);
     const folder = folders.find(f => f.id === currentFolderId);
     const folderItems = items.filter(i => i.folder_id === currentFolderId);
@@ -20,6 +20,16 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const [isOverflowing, setIsOverflowing] = React.useState(false);
     const titleRef = React.useRef<HTMLDivElement>(null);
     const scrollContentRef = React.useRef<HTMLDivElement>(null);
+    const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
+    const [manualSelectionMode, setManualSelectionMode] = React.useState(false);
+
+    const isSelectionMode = selectedIds.length > 0 || manualSelectionMode;
+
+    // Clear selection on mount to ensure clean state
+    React.useEffect(() => {
+        clearSelection();
+        return () => clearSelection(); // Clear on unmount too
+    }, []);
 
     const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 120, scrollContentRef);
 
@@ -69,6 +79,18 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         window.addEventListener('resize', checkOverflow);
         return () => window.removeEventListener('resize', checkOverflow);
     }, [folder?.name]);
+
+    const getRelativeTime = (dateStr: string) => {
+        if (!dateStr) return 'unknown';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+    };
 
     // Handle ESC key
     React.useEffect(() => {
@@ -126,6 +148,43 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         onClose();
     };
 
+    const handleItemClick = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        // Check for modifier keys explicitly
+        const hasModifier = e.ctrlKey || e.metaKey || e.shiftKey;
+
+        if (hasModifier || isSelectionMode) {
+            toggleSelection(id);
+        } else {
+            onClose();
+            onItemClick(id);
+        }
+    };
+
+    const handleSubFolderClick = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const hasModifier = e.ctrlKey || e.metaKey || e.shiftKey;
+
+        if (hasModifier || isSelectionMode) {
+            toggleSelection(id);
+        } else {
+            setCurrentFolderId(id);
+        }
+    };
+
+    const handleTouchStart = (id: string) => {
+        longPressTimer.current = setTimeout(() => {
+            toggleSelection(id);
+            if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+        }, 600);
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    };
+
     return (
         <div
             className={styles.overlay}
@@ -170,24 +229,29 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                         <span
                                             ref={titleRef}
                                             className={clsx(styles.folderName, isOverflowing && styles.canAnimate)}
+                                            title={folder.name}
                                         >
                                             {folder.name}
                                         </span>
                                     )}
                                 </div>
                                 {folder.syncStatus === 'syncing' && <span className={styles.savingIndicator}>Saving...</span>}
-                                <div className={styles.colorDots}>
-                                    {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
-                                        <button
-                                            key={color}
-                                            className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}
-                                            style={{ backgroundColor: color }}
-                                            onClick={() => updateFolderContent(currentFolderId, { color })}
-                                        />
-                                    ))}
-                                </div>
+                                {folder.parent_id === undefined && (
+                                    <div className={styles.colorDots}>
+                                        {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
+                                            <button
+                                                key={color}
+                                                className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}
+                                                style={{ backgroundColor: color }}
+                                                onClick={() => updateFolderContent(currentFolderId, { color })}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            <span className={styles.itemCount}>{folderItems.length} ideas collected</span>
+                            <span className={styles.itemMetaHeader}>
+                                {folderItems.length} ideas • Created {getRelativeTime(folder.created_at)}
+                            </span>
                         </div>
                     </div>
                     <div className={styles.actions}>
@@ -196,6 +260,13 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                             className={`${styles.deleteBtn} ${isDeleting ? styles.confirmDelete : ''}`}
                         >
                             {isDeleting ? "Sure?" : "Delete"}
+                        </button>
+                        <button
+                            onClick={() => setManualSelectionMode(!manualSelectionMode)}
+                            className={clsx(styles.actionBtn, manualSelectionMode && styles.activeActionBtn)}
+                            title="Select Items"
+                        >
+                            <CheckCircle2 size={20} />
                         </button>
                         <button onClick={handleBack} className={styles.closeBtn}>
                             {folder.parent_id ? <LogOut size={20} style={{ transform: 'rotate(180deg)' }} /> : <X size={20} />}
@@ -214,8 +285,15 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                             {subFolders.map(sf => (
                                 <div
                                     key={sf.id}
-                                    className={clsx(styles.itemWrapper, styles.folderItem)}
-                                    onClick={() => setCurrentFolderId(sf.id)}
+                                    className={clsx(
+                                        styles.itemWrapper,
+                                        styles.folderItem,
+                                        selectedIds.includes(sf.id) && styles.selected
+                                    )}
+                                    onClick={(e) => handleSubFolderClick(sf.id, e)}
+                                    onTouchStart={() => handleTouchStart(sf.id)}
+                                    onTouchEnd={handleTouchEnd}
+                                    onTouchMove={handleTouchEnd}
                                 >
                                     <button
                                         className={styles.removeBtn}
@@ -237,11 +315,14 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                             {folderItems.map(item => (
                                 <div
                                     key={item.id}
-                                    className={styles.itemWrapper}
-                                    onClick={() => {
-                                        onClose();
-                                        onItemClick(item.id);
-                                    }}
+                                    className={clsx(
+                                        styles.itemWrapper,
+                                        selectedIds.includes(item.id) && styles.selected
+                                    )}
+                                    onClick={(e) => handleItemClick(item.id, e)}
+                                    onTouchStart={() => handleTouchStart(item.id)}
+                                    onTouchEnd={handleTouchEnd}
+                                    onTouchMove={handleTouchEnd}
                                 >
                                     <button
                                         className={styles.removeBtn}
@@ -272,7 +353,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                                     item.type === 'text' ? 'Idea' : 'Image'}
                                             </span>
                                             <span className={styles.itemDate}>
-                                                {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                {getRelativeTime(item.created_at)}
                                             </span>
                                         </div>
                                     </div>

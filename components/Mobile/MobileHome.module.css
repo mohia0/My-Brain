@@ -1,5 +1,5 @@
 .container {
-    padding: 20px;
+    padding: 20px 16px;
     min-height: 100vh;
     position: relative;
 }
@@ -82,32 +82,44 @@
     gap: 12px;
 }
 
+.folderGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
 .section {
     animation: fadeIn 0.4s ease-out both;
 }
 
-.list>div {
+.list>div,
+.folderGrid>div {
     animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Staggered delay for first 10 items */
-.list>div:nth-child(1) {
+.list>div:nth-child(1),
+.folderGrid>div:nth-child(1) {
     animation-delay: 0.1s;
 }
 
-.list>div:nth-child(2) {
+.list>div:nth-child(2),
+.folderGrid>div:nth-child(2) {
     animation-delay: 0.15s;
 }
 
-.list>div:nth-child(3) {
+.list>div:nth-child(3),
+.folderGrid>div:nth-child(3) {
     animation-delay: 0.2s;
 }
 
-.list>div:nth-child(4) {
+.list>div:nth-child(4),
+.folderGrid>div:nth-child(4) {
     animation-delay: 0.25s;
 }
 
-.list>div:nth-child(5) {
+.list>div:nth-child(5),
+.folderGrid>div:nth-child(5) {
     animation-delay: 0.3s;
 }
 

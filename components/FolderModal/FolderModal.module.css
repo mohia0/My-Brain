@@ -100,15 +100,15 @@
 }
 
 .folderNameInput {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--card-hover);
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--foreground);
     width: 100%;
     outline: none;
-    padding: 0 4px;
+    padding: 4px 8px;
 }
 
 .folderName {
@@ -160,10 +160,11 @@
     transform: scale(1.2);
 }
 
-.itemCount {
-    font-size: 0.75rem;
+.itemMetaHeader {
+    font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 500;
+    opacity: 0.9;
 }
 
 .savingIndicator {
@@ -267,6 +268,32 @@
     }
 }
 
+.actionBtn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.actionBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--foreground);
+    transform: scale(1.05);
+}
+
+.activeActionBtn {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
 
 .content {
     flex: 1;
@@ -361,8 +388,8 @@
 }
 
 .itemDate {
-    font-weight: 400;
-    opacity: 0.6;
+    font-weight: 500;
+    opacity: 0.8;
 }
 
 .removeBtn {
@@ -432,12 +459,12 @@
 @media (max-width: 768px) {
     .modal {
         width: 100vw !important;
-        height: auto !important;
+        height: 85vh !important;
         max-width: none !important;
-        max-height: 92vh !important;
+        max-height: none !important;
         border-radius: 24px 24px 0 0 !important;
         margin: 0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid var(--card-border) !important;
         border-bottom: none !important;
         bottom: 0 !important;
         top: auto !important;
@@ -462,9 +489,9 @@
 
     .header {
         padding: calc(20px + env(safe-area-inset-top)) 20px 20px !important;
-        background: rgba(18, 18, 18, 0.8) !important;
+        background: var(--modal-bg) !important;
         backdrop-filter: blur(20px) !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-bottom: 1px solid var(--card-border) !important;
         flex-direction: column !important;
         gap: 16px !important;
         align-items: stretch !important;
@@ -517,8 +544,8 @@
         padding: 0 !important;
         border-radius: 18px !important;
         gap: 0 !important;
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
         overflow: hidden !important;
     }
 
@@ -526,7 +553,7 @@
         height: 100px !important;
         border-radius: 0 !important;
         border: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-bottom: 1px solid var(--card-border) !important;
     }
 
     .itemInfo {
@@ -568,7 +595,7 @@
     }
 
     .folderItem .itemPreview {
-        background: rgba(255, 255, 255, 0.02) !important;
+        background: var(--card-hover) !important;
     }
 
     .folderItem .itemTitle {
@@ -579,4 +606,10 @@
 .folderItem .itemPreview {
     background: rgba(0, 0, 0, 0.1);
     color: var(--accent);
+}
+
+.selected {
+    border-color: var(--accent) !important;
+    background: rgba(110, 86, 207, 0.15) !important;
+    box-shadow: 0 0 0 2px var(--accent-glow);
 }

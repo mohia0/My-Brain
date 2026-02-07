@@ -38,14 +38,17 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                 <Folder size={16} />
                                 <span>Folders</span>
                             </div>
-                            <div className={styles.list}>
-                                {visibleFolders.map(folder => (
-                                    <MobileCard
-                                        key={folder.id}
-                                        item={{ ...folder, type: 'folder' } as any}
-                                        onClick={() => onFolderClick(folder.id)}
-                                    />
-                                ))}
+                            <div className={styles.folderGrid}>
+                                {visibleFolders.map(folder => {
+                                    const itemCount = items.filter(i => i.folder_id === folder.id).length;
+                                    return (
+                                        <MobileCard
+                                            key={folder.id}
+                                            item={{ ...folder, type: 'folder', itemCount } as any}
+                                            onClick={() => onFolderClick(folder.id)}
+                                        />
+                                    );
+                                })}
                             </div>
                         </section>
                     )}

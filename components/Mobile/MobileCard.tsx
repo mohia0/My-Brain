@@ -104,7 +104,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
         <div
             className={clsx(
                 styles.card,
-                isFolder && styles.folderCard,
+                isFolder && styles.gridCard,
                 isRemoving && styles.removing,
                 isSelected && styles.selected
             )}
@@ -145,7 +145,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                                 <SyncIndicator />
                             </div>
                             <div className={styles.metaRow}>
-                                <span className={styles.sub}>{hostname(item.content)}</span>
+                                <span className={styles.sub}>{item.type === 'link' ? hostname(item.content) : 'Image'}</span>
                                 <span className={styles.dot}>•</span>
                                 <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
                             </div>
@@ -160,13 +160,13 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                                 color: (item as any).color
                             } : {}}
                         >
-                            {isFolder && <Folder size={20} fill={((item as any).color ? `${(item as any).color}40` : "transparent")} />}
+                            {isFolder && <Folder size={24} fill={((item as any).color ? `${(item as any).color}40` : "var(--accent-glow)")} />}
                             {item.type === 'text' && <FileText size={20} />}
                             {item.type === 'link' && !isFolder && (
                                 <img
                                     src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
                                     className={styles.favicon}
-                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                 />
                             )}
                             {item.type === 'image' && <ImageIcon size={20} />}
@@ -179,15 +179,21 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                                 </div>
                                 <SyncIndicator />
                             </div>
-                            <div className={styles.metaRow}>
-                                <span className={styles.sub}>
-                                    {isFolder ? 'Folder' :
-                                        isVideo ? 'Video' :
-                                            item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Idea'}
-                                </span>
-                                <span className={styles.dot}>•</span>
-                                <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
-                            </div>
+
+                            {isFolder ? (
+                                <div className={styles.folderMeta}>
+                                    <span className={styles.itemCount}>{(item as any).itemCount || 0} items</span>
+                                    <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
+                                </div>
+                            ) : (
+                                <div className={styles.metaRow}>
+                                    <span className={styles.sub}>
+                                        {isVideo ? 'Video' : item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Idea'}
+                                    </span>
+                                    <span className={styles.dot}>•</span>
+                                    <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -204,6 +210,6 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                     {isDeleting ? "Sure?" : <Trash2 size={14} />}
                 </button>
             </div>
-        </div>
+        </div >
     );
 }

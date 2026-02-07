@@ -17,13 +17,17 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const isFolder = 'type' in item && (item as any).type === 'folder';
-    const isImage = item.type === 'link' && item.metadata?.image;
+    const isImage = item.type === 'image' || (item.type === 'link' && item.metadata?.image);
+    const imageUrl = item.type === 'image' ? item.content : item.metadata?.image;
 
     const hostname = (url: string) => {
+        if (!url) return '';
+        if (url.startsWith('data:') || url.startsWith('content:') || url.startsWith('file:')) return 'Local File';
         try { return new URL(url).hostname; } catch { return url; }
     };
 
     const getRelativeTime = (dateStr: string) => {
+        if (!dateStr) return 'unknown';
         const date = new Date(dateStr);
         const now = new Date();
         const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -56,11 +60,11 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     return (
         <div className={clsx(styles.card, isFolder && styles.folderCard)} onClick={onClick}>
             <div className={styles.mainContent}>
-                {isImage ? (
+                {isImage && imageUrl ? (
                     <div className={styles.imageLayout}>
-                        <img src={item.metadata!.image!} alt="" className={styles.thumb} />
+                        <img src={imageUrl} alt="" className={styles.thumb} />
                         <div className={styles.info}>
-                            <div className={styles.title}>{item.metadata?.title || 'Unknown Image'}</div>
+                            <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Capture' : 'Shared Link')}</div>
                             <div className={styles.metaRow}>
                                 <span className={styles.sub}>{hostname(item.content)}</span>
                                 <span className={styles.dot}>•</span>
@@ -88,7 +92,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                             </div>
                             <div className={styles.metaRow}>
                                 <span className={styles.sub}>
-                                    {isFolder ? 'Folder' : (item.type === 'link' ? hostname(item.content) : 'Note')}
+                                    {isFolder ? 'Folder' : (item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Note')}
                                 </span>
                                 <span className={styles.dot}>•</span>
                                 <span className={styles.time}>{getRelativeTime(item.created_at)}</span>

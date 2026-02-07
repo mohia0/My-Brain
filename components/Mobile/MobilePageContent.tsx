@@ -30,10 +30,10 @@ export default function MobilePageContent({ session }: { session: any }) {
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
     const [inputModalConfig, setInputModalConfig] = useState<{
         isOpen: boolean;
-        type: 'text' | 'link' | 'image' | 'folder' | null;
+        type: 'text' | 'link' | 'image' | 'camera' | 'folder' | null;
         placeholder: string;
         title: string;
-        mode: 'text' | 'file';
+        mode: 'text' | 'file' | 'camera';
     }>({ isOpen: false, type: null, placeholder: '', title: '', mode: 'text' });
 
     // State Refs for Back Button (to avoid stale closures)
@@ -52,6 +52,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             try {
                 // 1. Handle Sharing Intents
+                console.log("[MobileInit] Initializing SendIntent. User:", session?.user?.id);
                 const SendIntent = cap.Plugins.SendIntent;
                 if (SendIntent) {
                     if (SendIntent.removeAllListeners) { try { await SendIntent.removeAllListeners(); } catch (e) { } }
@@ -102,11 +103,20 @@ export default function MobilePageContent({ session }: { session: any }) {
 
 
     const uploadMobileFile = async (uri: string, itemId: string, userId: string): Promise<string | null> => {
+        console.log(`[MobileUpload] Starting for URI: ${uri}`);
         try {
             // Capacitor.convertFileSrc is needed to read content:// or file:// URIs in the webview
-            const response = await fetch(Capacitor.convertFileSrc(uri));
+            const pocketUri = Capacitor.convertFileSrc(uri);
+            console.log(`[MobileUpload] Converted URI: ${pocketUri}`);
+
+            const response = await fetch(pocketUri);
+            if (!response.ok) throw new Error(`Fetch failed: ${response.statusText}`);
+
             const blob = await response.blob();
-            const filename = `${userId}/${itemId}_capture.jpg`;
+            console.log(`[MobileUpload] Blob created: ${blob.size} bytes, type: ${blob.type}`);
+
+            const extension = blob.type.split('/')[1] || 'jpg';
+            const filename = `${userId}/${itemId}_capture.${extension}`;
 
             const { error } = await supabase.storage
                 .from('screenshots')
@@ -115,15 +125,19 @@ export default function MobilePageContent({ session }: { session: any }) {
                     upsert: true
                 });
 
-            if (error) throw error;
+            if (error) {
+                console.error("[MobileUpload] Supabase error:", error);
+                throw error;
+            }
 
             const { data: { publicUrl } } = supabase.storage
                 .from('screenshots')
                 .getPublicUrl(filename);
 
+            console.log(`[MobileUpload] Success: ${publicUrl}`);
             return publicUrl;
         } catch (err) {
-            console.error("[MobileUpload] Failed:", err);
+            console.error("[MobileUpload] Critical Failure:", err);
             return null;
         }
     };
@@ -145,7 +159,26 @@ export default function MobilePageContent({ session }: { session: any }) {
             ""
         ).trim();
 
-        const hasFiles = data.files && data.files.length > 0;
+        // Robust file detection
+        let processedFiles = data.files || [];
+        if (processedFiles.length === 0 && (data.uri || data.path || data.url)) {
+            const mime = data.mimeType || data.type || "";
+            if (mime.startsWith('image/') || mime.startsWith('video/') || (data.path && /\.(jpg|jpeg|png|gif|webp)$/i.test(data.path))) {
+                processedFiles = [{
+                    uri: data.uri || data.path || data.url,
+                    mimeType: mime || 'image/jpeg',
+                    name: data.name || "Shared Item"
+                }];
+            }
+        }
+        const hasFiles = processedFiles.length > 0;
+
+        console.log("[MobileShare] Payload Analysis:", {
+            hasFiles,
+            processedCount: processedFiles.length,
+            textContent: textContent ? (textContent.substring(0, 30) + "...") : "NONE",
+            sessionActive: !!session
+        });
 
         if (!textContent && !hasFiles) {
             console.warn("[MobileShare] Empty share - ignoring");
@@ -173,7 +206,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
                 // Try to find a preview image if it's a link share
                 if (isUrl && hasFiles) {
-                    const previewFile = data.files.find((f: any) => f.mimeType?.startsWith('image/'));
+                    const previewFile = processedFiles.find((f: any) => f.mimeType?.startsWith('image/'));
                     if (previewFile) {
                         localPreviewUrl = await uploadMobileFile(previewFile.uri || previewFile.path || previewFile.url, itemId, userId);
                     }
@@ -208,7 +241,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             // 2. Process Files (Gallery / Screenshots)
             if (hasFiles) {
-                for (const file of data.files) {
+                for (const file of processedFiles) {
                     // Avoid double-processing if it was already used as a preview for a link
                     // (Actually we might want both if the user shared an image AND a link)
 
@@ -257,13 +290,15 @@ export default function MobilePageContent({ session }: { session: any }) {
     };
 
 
-    const handleAddClick = (type: 'text' | 'link' | 'image' | 'folder') => {
+    const handleAddClick = (type: 'text' | 'link' | 'image' | 'folder' | 'camera') => {
         setInputModalConfig({
             isOpen: true,
             type,
-            title: type === 'folder' ? 'Create Folder' : `Add ${type === 'image' ? 'Image' : type === 'link' ? 'Link URL' : 'Note'}`,
+            title: type === 'folder' ? 'Create Folder' :
+                type === 'camera' ? 'Capture Image' :
+                    `Add ${type === 'image' ? 'Image' : type === 'link' ? 'Link URL' : 'Note'}`,
             placeholder: type === 'folder' ? 'Folder Name' : type === 'text' ? 'Note Title' : 'example.com',
-            mode: type === 'image' ? 'file' : 'text'
+            mode: type === 'camera' ? 'camera' : (type === 'image' ? 'file' : 'text')
         });
     };
 
@@ -287,7 +322,7 @@ export default function MobilePageContent({ session }: { session: any }) {
             const title = type === 'text' ? value : 'New Item';
 
             addItem({
-                id, user_id: session?.user?.id || 'unknown', type: type as any,
+                id, user_id: session?.user?.id || 'unknown', type: (type === 'camera' ? 'image' : type) as any,
                 content: content, status: 'active',
                 position_x: 0, position_y: 0,
                 created_at: new Date().toISOString(),

@@ -161,7 +161,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         }
 
         if (finalUserId) {
-            await supabase.from('items').insert([{ ...safeItem, user_id: finalUserId }]);
+            const { error } = await supabase.from('items').insert([{ ...safeItem, user_id: finalUserId }]);
+            if (error) console.error('[Store] Supabase insert failed:', error);
+            else console.log('[Store] Item persisted successfully');
         } else {
             console.error('[Store] Cannot persist item: user_id is missing');
         }

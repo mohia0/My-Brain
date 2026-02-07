@@ -87,3 +87,7 @@
 .options button:nth-child(4) {
     animation-delay: 0.15s;
 }
+
+.options button:nth-child(5) {
+    animation-delay: 0.2s;
+}

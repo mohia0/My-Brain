@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './InputModal.module.css';
 import { X } from 'lucide-react';
+import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
 
 interface InputModalProps {
     isOpen: boolean;
@@ -11,13 +12,16 @@ interface InputModalProps {
     title: string;
     placeholder?: string;
     defaultValue?: string;
-    mode?: 'text' | 'file'; // Add mode support
+    mode?: 'text' | 'file' | 'camera'; // Add mode support
 }
 
 export default function InputModal({ isOpen, onClose, onSubmit, title, placeholder, defaultValue = '', mode = 'text' }: InputModalProps) {
     const [value, setValue] = useState(defaultValue);
     const inputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const formRef = useRef<HTMLFormElement>(null);
+
+    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 80, formRef);
 
     useEffect(() => {
         if (isOpen) {
@@ -60,14 +64,28 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div
+            className={styles.overlay}
+            onClick={onClose}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+        >
+            <div
+                className={styles.modal}
+                onClick={e => e.stopPropagation()}
+                style={{
+                    transform: offset > 0 ? `translateY(${offset}px)` : undefined,
+                    transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
+                }}
+            >
+                <div className={styles.swipeHandle} />
                 <header className={styles.header}>
                     <span className={styles.title}>{title}</span>
                     <button onClick={onClose} className={styles.closeBtn}><X size={18} /></button>
                 </header>
-                <form onSubmit={handleSubmit} className={styles.body}>
-                    {mode === 'file' ? (
+                <form onSubmit={handleSubmit} className={styles.body} ref={formRef}>
+                    {(mode === 'file' || mode === 'camera') ? (
                         <div className={styles.fileInputWrapper}>
                             {value && (value.startsWith('data:') || value.startsWith('http')) && (
                                 <div className={styles.imagePreviewWrapper}>
@@ -85,6 +103,7 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                                 ref={fileInputRef}
                                 type="file"
                                 accept="image/*"
+                                capture={mode === 'camera' ? 'environment' : undefined}
                                 onChange={handleFileChange}
                                 className={styles.fileInput}
                                 id="file-upload"

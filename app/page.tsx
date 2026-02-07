@@ -7,12 +7,9 @@ import ItemCard from "@/components/Grid/ItemCard";
 import ItemModal from "@/components/ItemModal/ItemModal";
 import { useItemsStore } from "@/lib/store/itemsStore";
 import { useState, useEffect, useRef } from "react";
+import clsx from 'clsx';
 import MiniMap from "@/components/MiniMap/MiniMap";
 import Header from "@/components/Header/Header";
-import AddButton from "@/components/AddButton/AddButton";
-import FolderItem from "@/components/Grid/FolderItem";
-import FloatingBar from "@/components/FloatingBar/FloatingBar";
-import FolderModal from "@/components/FolderModal/FolderModal";
 import AccountMenu from "@/components/AccountMenu/AccountMenu";
 import AuthModal from "@/components/AuthModal/AuthModal";
 import { supabase } from "@/lib/supabase";
@@ -21,14 +18,15 @@ import Toolbar from "@/components/Toolbar/Toolbar";
 import ZoomWheel from "@/components/ZoomWheel/ZoomWheel";
 import ArchiveZone from "@/components/ArchiveZone/ArchiveZone";
 import ArchiveView from "@/components/ArchiveView/ArchiveView";
-
+import FloatingBar from "@/components/FloatingBar/FloatingBar";
+import FolderItem from "@/components/Grid/FolderItem";
+import FolderModal from "@/components/FolderModal/FolderModal";
 
 import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
 import MobilePageContent from "@/components/Mobile/MobilePageContent";
 
-
 export default function Home() {
-  const { items, folders, fetchData, subscribeToChanges, clearSelection, loading: dataLoading } = useItemsStore();
+  const { items, folders, fetchData, subscribeToChanges, clearSelection } = useItemsStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
@@ -37,14 +35,14 @@ export default function Home() {
   const [showLoading, setShowLoading] = useState(true);
   const [isFading, setIsFading] = useState(false);
   const [shouldShowAuth, setShouldShowAuth] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Refs to avoid closure staleness in auth listener
   const isInitializingRef = useRef(true);
   const showLoadingRef = useRef(true);
 
   const runInit = async () => {
     let unsubscribe: (() => void) | undefined;
-    const MIN_LOADING_TIME = 3500;
+    const MIN_LOADING_TIME = 1500;
 
     setInitializing(true);
     isInitializingRef.current = true;
@@ -54,7 +52,6 @@ export default function Home() {
 
     try {
       const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
-
       const { data: { session: initialSession } } = await supabase.auth.getSession();
       setSession(initialSession);
 
@@ -67,42 +64,35 @@ export default function Home() {
 
       await Promise.all([timerPromise, dataPromise]);
 
+      // Start fade sequence
       setIsFading(true);
       setTimeout(() => {
         setShowLoading(false);
         showLoadingRef.current = false;
         setInitializing(false);
         isInitializingRef.current = false;
+        setIsFading(false);
       }, 800);
 
     } catch (err) {
       console.error("Initialization error:", err);
       setInitializing(false);
-      isInitializingRef.current = false;
       setShowLoading(false);
-      showLoadingRef.current = false;
+      setIsFading(false);
     }
     return unsubscribe;
   };
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
+    runInit().then(unsub => { unsubscribe = unsub; });
 
-    runInit().then(unsub => {
-      unsubscribe = unsub;
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData();
         if (unsubscribe) unsubscribe();
         unsubscribe = subscribeToChanges();
-      } else if (!session) {
-        if (unsubscribe) unsubscribe();
       }
     });
 
@@ -110,7 +100,7 @@ export default function Home() {
       subscription.unsubscribe();
       if (unsubscribe) unsubscribe();
     };
-  }, [fetchData, subscribeToChanges]);
+  }, []);
 
   useEffect(() => {
     if (!session && !showLoading && !initializing) {
@@ -118,13 +108,25 @@ export default function Home() {
     }
   }, [session, showLoading, initializing]);
 
-  const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     const checkMobile = () => {
-      const isMobileSize = window.innerWidth <= 768;
-      const isCapacitor = (window as any).Capacitor !== undefined;
-      setIsMobile(isMobileSize || isCapacitor);
+      const params = new URLSearchParams(window.location.search);
+      const viewOverride = params.get('view');
+
+      if (viewOverride === 'desktop') {
+        setIsMobile(false);
+        console.log("[Platform] Forced Desktop view via URL.");
+        return;
+      }
+      if (viewOverride === 'mobile') {
+        setIsMobile(true);
+        console.log("[Platform] Forced Mobile view via URL.");
+        return;
+      }
+
+      // Default to Mobile for easier Android Studio sync.
+      setIsMobile(true);
+      console.log("[Platform] Defaulting to Mobile view. Use ?view=desktop for Canvas.");
     };
 
     checkMobile();
@@ -132,14 +134,15 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Only show items and folders that are NOT nested (root level) and NOT archived
   const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived');
   const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
 
   return (
     <DragWrapper>
+      {/* Loading Screen: Only visible during initial load OR fading out */}
       {(showLoading || isFading) && <LoadingScreen isFading={isFading} />}
 
+      {/* Main Content: Rendered when loading is finished OR currently fading in */}
       {(!showLoading || isFading) && (
         <>
           {(!session || shouldShowAuth) ? (
@@ -152,7 +155,10 @@ export default function Home() {
               {isMobile ? (
                 <MobilePageContent session={session} />
               ) : (
-                <main className={`fade-in ${(isFading || showLoading) ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500 ${isFading && showLoading ? 'pointer-events-none' : ''}`}>
+                <main className={clsx(
+                  'desktop-version',
+                  isFading ? 'fade-in' : 'opacity-100'
+                )}>
                   <Header />
                   <AccountMenu />
                   <Canvas>

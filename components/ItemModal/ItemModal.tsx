@@ -8,6 +8,7 @@ import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Ch
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
+import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
 
 const BlockEditor = dynamic(() => import('@/components/BlockEditor/BlockEditor'), { ssr: false });
 
@@ -39,6 +40,9 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const titleRef = useRef<HTMLDivElement>(null);
     const headerTitleRef = useRef<HTMLDivElement>(null);
+    const scrollBodyRef = useRef<HTMLDivElement>(null);
+
+    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 150, scrollBodyRef);
 
     useEffect(() => {
         if (item) {
@@ -149,8 +153,22 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={clsx(styles.modal, isLink && styles.compactModal)} onClick={e => e.stopPropagation()}>
+        <div
+            className={styles.overlay}
+            onClick={onClose}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+        >
+            <div
+                className={clsx(styles.modal, isLink && styles.compactModal)}
+                onClick={e => e.stopPropagation()}
+                style={{
+                    transform: offset > 0 ? `translateY(${offset}px)` : undefined,
+                    transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
+                }}
+            >
+                <div className={styles.swipeHandle} />
                 <div className={clsx(styles.modalContent, isLink && styles.compactContent)}>
 
                     {/* LEFT COLUMN: EDITOR / PREVIEW */}
@@ -243,7 +261,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
                         </div>
 
-                        <div className={styles.scrollBody}>
+                        <div className={styles.scrollBody} ref={scrollBodyRef}>
                             {isLink && (
                                 <div className={styles.section}>
                                     <div className={styles.labelRow}>

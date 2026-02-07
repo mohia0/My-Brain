@@ -5,6 +5,7 @@ import styles from './FolderModal.module.css';
 import { X, FolderOpen, LogOut, Check } from 'lucide-react';
 import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
 import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consistency? 
 // Actually ItemCard is Draggable, we might just want a static view or re-use logic.
 // If we re-use ItemCard, they might try to drag inside the modal which is tricky.
@@ -16,6 +17,9 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
     const folderItems = items.filter(i => i.folder_id === folderId);
     const [isOverflowing, setIsOverflowing] = React.useState(false);
     const titleRef = React.useRef<HTMLDivElement>(null);
+    const scrollContentRef = React.useRef<HTMLDivElement>(null);
+
+    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 120, scrollContentRef);
 
     // Check for title overflow
     React.useEffect(() => {
@@ -73,8 +77,22 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div
+            className={styles.overlay}
+            onClick={onClose}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+        >
+            <div
+                className={styles.modal}
+                onClick={e => e.stopPropagation()}
+                style={{
+                    transform: offset > 0 ? `translateY(${offset}px)` : undefined,
+                    transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
+                }}
+            >
+                <div className={styles.swipeHandle} />
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
                         <div className={styles.iconCircle} style={{ backgroundColor: folder.color ? `${folder.color}22` : undefined, color: folder.color || 'var(--accent)' }}>
@@ -116,7 +134,7 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                     </div>
                 </header>
 
-                <div className={styles.content}>
+                <div className={styles.content} ref={scrollContentRef}>
                     {folderItems.length === 0 ? (
                         <div className={styles.emptyState}>
                             <FolderOpen size={48} strokeWidth={1} style={{ opacity: 0.2 }} />

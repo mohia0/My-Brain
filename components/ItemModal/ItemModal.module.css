@@ -28,6 +28,22 @@
     user-select: text;
 }
 
+.swipeHandle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .swipeHandle {
+        display: block;
+        width: 40px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 100px;
+        margin: 10px auto 0;
+        flex-shrink: 0;
+    }
+}
+
 .compactModal {
     height: auto;
     max-height: 700px;

@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Brainia',
   webDir: 'out',
   server: {
-    url: 'http://localhost:3000',
+    url: 'http://192.168.1.237:3000',
     cleartext: true
   }
 };

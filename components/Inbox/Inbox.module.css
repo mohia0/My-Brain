@@ -109,6 +109,39 @@
     color: var(--foreground);
 }
 
+.refreshBtn {
+    background: var(--card-border);
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refreshBtn:hover {
+    background: var(--card-hover);
+    color: var(--accent);
+}
+
+.spinning {
+    animation: refresh-spin 0.6s linear infinite;
+}
+
+@keyframes refresh-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .content {
     flex: 1;
     padding: 12px;

@@ -37,7 +37,7 @@ export default function FloatingBar() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    if (selectedIds.length === 0) return null;
+    if (selectedIds.length <= 1) return null;
 
     const handleDelete = () => {
         if (!isDeleting) {

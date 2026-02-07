@@ -35,7 +35,7 @@ export default function LoadingScreen({ isFading }: { isFading: boolean }) {
 
     return (
         <div className={`${styles.container} ${isFading ? styles.fading : ''}`}>
-            <Orb hue={280} hoverIntensity={0.5} forceHoverState={true} backgroundColor="#050505" />
+            <Orb hue={280} hoverIntensity={0.5} forceHoverState={true} backgroundColor="transparent" />
             <div className={styles.content}>
                 <h1 className={styles.logo}>Brainia</h1>
                 <div className={styles.status}>

@@ -203,6 +203,64 @@
     line-height: 1.3;
 }
 
+/* Video Card Variant */
+.videoCard {
+    width: 280px;
+    height: auto;
+    min-height: 180px;
+    background: #000;
+}
+
+.videoHeader {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+    font-size: 10px;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.videoPreview {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    background: #111;
+}
+
+.videoOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: background 0.3s;
+}
+
+.videoCard:hover .videoOverlay {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.videoCard .captureInfo {
+    background: var(--card-bg);
+    border-top: 1px solid var(--card-border);
+}
+
 .syncStatus {
     font-size: 10px;
     font-weight: 800;

@@ -66,8 +66,14 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
         });
     };
 
+    const [isDeleting, setIsDeleting] = React.useState(false);
+
     const handleRemove = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!isDeleting) {
+            setIsDeleting(true);
+            return;
+        }
         removeItem(item.id);
     };
 
@@ -164,11 +170,12 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                         <ArrowRight size={14} />
                     </button>
                     <button
-                        className={clsx(styles.actionBtn, styles.removeBtn)}
+                        className={clsx(styles.actionBtn, styles.removeBtn, isDeleting && styles.confirmDelete)}
                         onClick={handleRemove}
-                        title="Remove"
+                        onMouseLeave={() => setIsDeleting(false)}
+                        title={isDeleting ? "Confirm Delete" : "Remove"}
                     >
-                        <Trash2 size={14} />
+                        {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={14} />}
                     </button>
                 </div>
             )}

@@ -97,9 +97,17 @@ export default function Home() {
       }
     });
 
+    const handleFocus = () => {
+      if (!isInitializingRef.current && !showLoadingRef.current) {
+        fetchData();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+
     return () => {
       subscription.unsubscribe();
       if (unsubscribeRef.current) unsubscribeRef.current();
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 

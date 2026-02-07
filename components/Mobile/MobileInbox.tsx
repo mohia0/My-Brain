@@ -8,16 +8,17 @@ import { Inbox as InboxIcon, ArrowDown } from 'lucide-react';
 
 interface MobileInboxProps {
     onItemClick: (id: string) => void;
+    filterStatus?: 'inbox' | 'archived';
 }
 
-export default function MobileInbox({ onItemClick }: MobileInboxProps) {
+export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: MobileInboxProps) {
     const { items, fetchData } = useItemsStore();
     const [refreshing, setRefreshing] = useState(false);
     const [pullDistance, setPullDistance] = useState(0);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const touchStart = React.useRef(0);
 
-    const inboxItems = items.filter(i => i.status === 'inbox')
+    const inboxItems = items.filter(i => i.status === filterStatus)
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     // Initial fetch is handled by the root Home component
@@ -91,15 +92,15 @@ export default function MobileInbox({ onItemClick }: MobileInboxProps) {
             {inboxItems.length === 0 ? (
                 <div className={styles.empty}>
                     <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
-                    <h3>Inbox is clear</h3>
-                    <p>When you share links or ideas to Brainia, they&apos;ll appear here for organization.</p>
+                    <h3>{filterStatus === 'archived' ? 'Archive is empty' : 'Inbox is clear'}</h3>
+                    <p>{filterStatus === 'archived' ? 'Items you archive will appear here.' : 'When you share links or ideas to Brainia, they\'ll appear here for organization.'}</p>
                 </div>
             ) : (
                 <div className={styles.content}>
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <InboxIcon size={16} />
-                            <span>Unsorted Ideas</span>
+                            <span>{filterStatus === 'archived' ? 'Archived Ideas' : 'Unsorted Ideas'}</span>
                         </div>
                         <div className={styles.list}>
                             {inboxItems.map((item, index) => (

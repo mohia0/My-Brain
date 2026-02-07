@@ -12,6 +12,20 @@ export default function Header() {
     const { setPosition, setScale } = useCanvasStore();
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+    React.useEffect(() => {
+        const savedTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' || 'dark';
+        setTheme(savedTheme);
+
+        // Optional: observe attribute changes
+        const observer = new MutationObserver(() => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' || 'dark';
+            setTheme(currentTheme);
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        return () => observer.disconnect();
+    }, []);
 
     const filteredFolders = folders.filter(folder => {
         if (!query) return false;
@@ -86,7 +100,12 @@ export default function Header() {
                 setScale(0.65);
             }}>
                 <div className={styles.logoDotWrapper}>
-                    <Orb hue={280} hoverIntensity={0.8} forceHoverState={true} backgroundColor="transparent" />
+                    <Orb
+                        hue={280}
+                        hoverIntensity={0.8}
+                        forceHoverState={true}
+                        backgroundColor="transparent"
+                    />
                 </div>
                 <h1>Brainia</h1>
             </div>

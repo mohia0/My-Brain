@@ -95,7 +95,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
     return (
         <div className={`${styles.overlay} ${isFading ? styles.overlayFading : ''}`}>
-            <Orb hue={260} hoverIntensity={0.5} backgroundColor="#050505" />
+            <Orb hue={260} hoverIntensity={0.5} backgroundColor="transparent" />
 
             <div className={styles.card}>
                 <div className={styles.header}>

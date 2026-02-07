@@ -58,6 +58,33 @@
     box-shadow: 0 0 15px rgba(110, 86, 207, 0.1);
 }
 
+.itemCard.deleting {
+    animation: shake 0.5s infinite;
+    border-color: #ff4444;
+}
+
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px) rotate(-1deg);
+    }
+
+    50% {
+        transform: translateX(2px) rotate(1deg);
+    }
+
+    75% {
+        transform: translateX(-2px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
 .itemCard.removing {
     opacity: 0;
     transform: scale(0.5) translateX(100px) rotate(10deg);
@@ -240,6 +267,19 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
+}
+
+.faviconRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.miniFavicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    background: white;
 }
 
 .sub {

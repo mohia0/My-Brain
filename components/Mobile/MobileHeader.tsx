@@ -3,16 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import styles from './MobileHeader.module.css';
 import Orb from '../Orb/Orb';
-import { Search, X, Folder, LogOut, Sun, Moon, User } from 'lucide-react';
+import { Search, X, Folder, LogOut, Sun, Moon, User, Archive } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
 
 interface MobileHeaderProps {
     onResultClick: (id: string, type: 'item' | 'folder') => void;
+    onArchiveClick: () => void;
 }
 
-export default function MobileHeader({ onResultClick }: MobileHeaderProps) {
+export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHeaderProps) {
     const { items, folders } = useItemsStore();
     const [isSearching, setIsSearching] = useState(false);
     const [query, setQuery] = useState('');
@@ -21,9 +22,25 @@ export default function MobileHeader({ onResultClick }: MobileHeaderProps) {
     const [showAccountMenu, setShowAccountMenu] = useState(false);
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' || 'dark';
-        setTheme(savedTheme);
+        // Initial theme from document or localStorage
+        const docTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light';
+        const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+        const initialTheme = docTheme || savedTheme || 'dark';
+
+        setTheme(initialTheme);
+        if (!docTheme) document.documentElement.setAttribute('data-theme', initialTheme);
+
+        // Sync with any changes to the data-theme attribute (e.g. from desktop toggle)
+        const observer = new MutationObserver(() => {
+            const newTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' || 'dark';
+            setTheme(newTheme);
+        });
+
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
         supabase.auth.getUser().then(({ data: { user } }: { data: { user: any } }) => setUser(user));
+
+        return () => observer.disconnect();
     }, []);
 
     const toggleTheme = () => {
@@ -100,7 +117,12 @@ export default function MobileHeader({ onResultClick }: MobileHeaderProps) {
 
                 <div className={styles.logo}>
                     <div className={styles.logoDotWrapper}>
-                        <Orb hue={280} hoverIntensity={0.8} forceHoverState={true} backgroundColor="transparent" />
+                        <Orb
+                            hue={280}
+                            hoverIntensity={0.8}
+                            forceHoverState={true}
+                            backgroundColor="transparent"
+                        />
                     </div>
                     <h1>Brainia</h1>
                 </div>
@@ -121,6 +143,10 @@ export default function MobileHeader({ onResultClick }: MobileHeaderProps) {
                         </div>
 
                         <div className={styles.menuItems}>
+                            <div className={styles.menuItem} onClick={() => { onArchiveClick(); setShowAccountMenu(false); }}>
+                                <Archive size={18} />
+                                <span>View Archive</span>
+                            </div>
                             <div className={styles.menuItem} onClick={toggleTheme}>
                                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                                 <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode</span>

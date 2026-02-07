@@ -26,9 +26,8 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     const imageUrl = item.type === 'image' ? item.content : item.metadata?.image;
 
     const hostname = (url: string) => {
-        if (!url) return '';
-        if (url.startsWith('data:') || url.startsWith('content:') || url.startsWith('file:')) return 'Local File';
-        try { return new URL(url).hostname; } catch { return url; }
+        if (!url || !url.startsWith('http')) return null;
+        try { return new URL(url).hostname; } catch { return null; }
     };
 
     const getRelativeTime = (dateStr: string) => {
@@ -163,11 +162,15 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                             {isFolder && <Folder size={24} fill={((item as any).color ? `${(item as any).color}40` : "var(--accent-glow)")} />}
                             {item.type === 'text' && <FileText size={20} />}
                             {item.type === 'link' && !isFolder && (
-                                <img
-                                    src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
-                                    className={styles.favicon}
-                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                />
+                                hostname(item.content) ? (
+                                    <img
+                                        src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
+                                        className={styles.favicon}
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                ) : (
+                                    <LinkIcon size={20} />
+                                )
                             )}
                             {item.type === 'image' && <ImageIcon size={20} />}
                             {item.type === 'video' && <Video size={20} />}
@@ -188,7 +191,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                             ) : (
                                 <div className={styles.metaRow}>
                                     <span className={styles.sub}>
-                                        {isVideo ? 'Video' : item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Idea'}
+                                        {isVideo ? 'Video' : (item.type === 'link' ? (hostname(item.content) || 'Link') : (item.type === 'image' ? 'Image' : 'Idea'))}
                                     </span>
                                     <span className={styles.dot}>•</span>
                                     <span className={styles.time}>{getRelativeTime(item.created_at)}</span>

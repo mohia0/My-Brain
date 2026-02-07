@@ -49,13 +49,35 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     useEffect(() => {
         if (item) {
             // Only update local state if not currently editing (to avoid jumping)
-            if (!isEditingTitle) setTitle(item.metadata?.title || '');
-            setDescription(item.metadata?.description || '');
+            // Or if content was missing and just arrived (for new captures)
+            if (!isEditingTitle && (!title || title === '' || !item.metadata?.title)) {
+                setTitle(item.metadata?.title || '');
+            }
+            if (!description || description === '' || !item.metadata?.description) {
+                setDescription(item.metadata?.description || '');
+            }
+
             setContent(item.content);
             if (item.type === 'link') setUrl(item.content);
             fetchItemTags();
+
+            // Polling for metadata if it's a fresh capture missing images/titles
+            if (item.type === 'link' && !item.metadata?.image) {
+                let attempts = 0;
+                const poll = setInterval(async () => {
+                    attempts++;
+                    if (attempts > 15) { clearInterval(poll); return; }
+
+                    const { data } = await supabase.from('items').select('metadata').eq('id', item.id).single();
+                    if (data?.metadata?.image || data?.metadata?.title) {
+                        updateItemContent(item.id, { metadata: data.metadata });
+                        clearInterval(poll);
+                    }
+                }, 3000);
+                return () => clearInterval(poll);
+            }
         }
-    }, [item?.id]);
+    }, [item?.id, item?.metadata?.image, item?.metadata?.title]);
 
     // Live Auto-save Effect
     useEffect(() => {
@@ -94,12 +116,31 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     useEffect(() => {
         const checkOverflow = () => {
-            if (titleRef.current) setIsOverflowing(titleRef.current.scrollWidth > titleRef.current.clientWidth);
-            if (headerTitleRef.current) setIsOverflowingHeader(headerTitleRef.current.scrollWidth > headerTitleRef.current.clientWidth);
+            if (titleRef.current) {
+                const overflowing = titleRef.current.scrollWidth > titleRef.current.clientWidth;
+                setIsOverflowing(overflowing);
+                if (overflowing) {
+                    const dist = titleRef.current.clientWidth - titleRef.current.scrollWidth;
+                    titleRef.current.style.setProperty('--scroll-dist-overlay', `${dist}px`);
+                }
+            }
+            if (headerTitleRef.current) {
+                const overflowing = headerTitleRef.current.scrollWidth > headerTitleRef.current.clientWidth;
+                setIsOverflowingHeader(overflowing);
+                if (overflowing) {
+                    const dist = headerTitleRef.current.clientWidth - headerTitleRef.current.scrollWidth - 20;
+                    headerTitleRef.current.style.setProperty('--scroll-dist-header', `${dist}px`);
+                }
+            }
         };
         checkOverflow();
+        // Set a small timeout to ensure layout has settled
+        const timer = setTimeout(checkOverflow, 100);
         window.addEventListener('resize', checkOverflow);
-        return () => window.removeEventListener('resize', checkOverflow);
+        return () => {
+            window.removeEventListener('resize', checkOverflow);
+            clearTimeout(timer);
+        };
     }, [title, isLink, isEditingTitle]);
 
     useEffect(() => {
@@ -283,30 +324,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     </>
                                 )}
 
-                                {(item.type === 'video' || item.metadata?.isVideo) ? (
-                                    <video
-                                        src={content}
-                                        controls
-                                        autoPlay
-                                        className={styles.previewVideo}
-                                        poster={item.metadata?.thumbnail}
-                                    />
-                                ) : item.type === 'image' ? (
-                                    content ? (
-                                        item.metadata?.url ? (
-                                            <a href={item.metadata.url} target="_blank" rel="noopener noreferrer">
-                                                <img src={content} className={styles.previewImage} alt="Idea" />
-                                            </a>
-                                        ) : (
-                                            <img src={content} className={styles.previewImage} alt="Idea" />
-                                        )
-                                    ) : (
-                                        <div className={styles.previewPlaceholder}>
-                                            <ImageIcon size={48} />
-                                            <span>Image Missing</span>
-                                        </div>
-                                    )
-                                ) : isLink ? (
+                                {isLink ? (
                                     <>
                                         {screenshotUrl ? (
                                             <a href={url} target="_blank" rel="noopener noreferrer" className={styles.imageLinkWrapper}>
@@ -336,6 +354,29 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             </div>
                                         </div>
                                     </>
+                                ) : (item.type === 'video' || item.metadata?.isVideo) ? (
+                                    <video
+                                        src={content}
+                                        controls
+                                        autoPlay
+                                        className={styles.previewVideo}
+                                        poster={item.metadata?.thumbnail}
+                                    />
+                                ) : item.type === 'image' ? (
+                                    content ? (
+                                        item.metadata?.url ? (
+                                            <a href={item.metadata.url} target="_blank" rel="noopener noreferrer">
+                                                <img src={content} className={styles.previewImage} alt="Idea" />
+                                            </a>
+                                        ) : (
+                                            <img src={content} className={styles.previewImage} alt="Idea" />
+                                        )
+                                    ) : (
+                                        <div className={styles.previewPlaceholder}>
+                                            <ImageIcon size={48} />
+                                            <span>Image Missing</span>
+                                        </div>
+                                    )
                                 ) : null}
                             </div>
                         )}

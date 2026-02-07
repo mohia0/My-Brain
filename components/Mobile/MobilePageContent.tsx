@@ -5,6 +5,7 @@ import MobileHeader from './MobileHeader';
 import MobileNav from './MobileNav';
 import MobileHome from './MobileHome';
 import MobileInbox from './MobileInbox';
+import MobileArchive from './MobileArchive';
 import MobileAddButton from './MobileAddButton';
 import ShareProcessingOverlay from './ShareProcessingOverlay';
 import ItemModal from '@/components/ItemModal/ItemModal';
@@ -21,7 +22,7 @@ import { generateId } from '@/lib/utils';
 // We access SendIntent dynamically to avoid Capacitor 2 build errors
 
 export default function MobilePageContent({ session }: { session: any }) {
-    const [activeTab, setActiveTab] = useState<'home' | 'inbox'>('home');
+    const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'archive'>('home');
     const [shareState, setShareState] = useState<'idle' | 'saving' | 'saved' | 'capturing'>('idle');
     const [isOverlayFading, setIsOverlayFading] = useState(false);
 
@@ -232,10 +233,23 @@ export default function MobilePageContent({ session }: { session: any }) {
         }
 
         // Detect URL
-        const urlRegex = /(https?:\/\/[^\s]+)/i;
+        const urlRegex = /(https?:\/\/\S+)/i;
         const urlMatch = textContent.match(urlRegex);
         const finalUrl = data.url || (urlMatch ? urlMatch[0] : null);
         const isUrl = !!finalUrl;
+
+        // Improve Title extraction (e.g. Instagram captions)
+        let cleanTitle = intentTitle;
+        if (!cleanTitle && textContent) {
+            if (isUrl) {
+                const candidate = textContent.replace(finalUrl, "").trim();
+                if (candidate.length > 2) {
+                    cleanTitle = candidate.length > 80 ? candidate.substring(0, 77) + "..." : candidate;
+                }
+            } else {
+                cleanTitle = textContent.length > 80 ? textContent.substring(0, 77) + "..." : textContent;
+            }
+        }
 
         console.log("[MobileShare] Identification:", { isUrl, finalUrl, hasFiles, filesCount: data.files?.length });
 
@@ -247,8 +261,6 @@ export default function MobilePageContent({ session }: { session: any }) {
             console.log(`[MobileShare] Processing for User: ${userId}`);
 
             // 1. Process as URL or Text
-            // We ALWAYS process this if it exists, even if there are files
-            // (e.g. sharing a link with a thumbnail image)
             if (textContent || finalUrl) {
                 const itemId = generateId();
                 console.log(`[MobileShare] Creating ${isUrl ? 'Link' : 'Text'} item: ${itemId}`);
@@ -257,10 +269,11 @@ export default function MobilePageContent({ session }: { session: any }) {
                     user_id: userId,
                     type: isUrl ? 'link' : 'text',
                     content: finalUrl || textContent,
-                    status: 'active',
+                    status: 'inbox',
                     metadata: {
-                        title: intentTitle || (isUrl ? "Shared Link" : "Idea Note"),
-                        description: isUrl ? "Captured from Mobile" : "Shared from Mobile"
+                        title: cleanTitle || (isUrl ? "Shared Link" : "Idea Note"),
+                        description: isUrl ? "Captured from Mobile" : "Shared from Mobile",
+                        source: 'share'
                     },
                     position_x: 0, position_y: 0,
                     created_at: new Date().toISOString()
@@ -268,12 +281,33 @@ export default function MobilePageContent({ session }: { session: any }) {
 
                 if (isUrl) {
                     setShareState('capturing');
-                    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-                    fetch(`${origin}/api/screenshot`, {
+
+                    console.log(`[MobileShare] Fetching metadata for: ${finalUrl}`);
+
+                    // 1. Quick Metadata (OG Tags) - Very high success rate for social media
+                    fetch('/api/metadata', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: finalUrl })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log('[MobileShare] Metadata received:', data);
+                            if (data.title || data.image) {
+                                updateItemContent(itemId, { metadata: { ...data, source: 'share-og' } });
+                            }
+                        })
+                        .catch(e => console.error("[MobileShare] OG Metadata failed:", e));
+
+                    // 2. Full Screenshot / Visual Preview
+                    fetch(`/api/screenshot`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: finalUrl, itemId, userId })
-                    }).catch(err => console.error("[MobileShare] Screenshot trigger failed:", err));
+                    })
+                        .then(res => res.json())
+                        .then(data => console.log('[MobileShare] Screenshot result:', data))
+                        .catch(err => console.error("[MobileShare] Screenshot trigger failed:", err));
                 }
             }
 
@@ -328,11 +362,12 @@ export default function MobilePageContent({ session }: { session: any }) {
                         user_id: userId,
                         type: 'image', // Use 'image' as type to bypass DB constraints, use metadata.isVideo for logic
                         content: finalFileContent,
-                        status: 'active',
+                        status: 'inbox',
                         metadata: {
                             title: file.name || intentTitle || (isImage ? "Idea Capture" : "Video Capture"),
                             description: textContent || `Shared via mobile`,
-                            isVideo: isVideo
+                            isVideo: isVideo,
+                            source: 'share'
                         },
                         position_x: 0, position_y: 0,
                         created_at: new Date().toISOString()
@@ -405,7 +440,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             await addItem({
                 id, user_id: userId, type: (type === 'camera' ? 'image' : type) as any,
-                content: content, status: 'active',
+                content: content, status: activeTab === 'inbox' ? 'inbox' : 'active',
                 position_x: 0, position_y: 0,
                 created_at: new Date().toISOString(),
                 metadata: { title: metadataTitle }
@@ -443,7 +478,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
     return (
         <div className="mobile-app">
-            {!isSharing && <MobileHeader onResultClick={handleResultClick} />}
+            {!isSharing && <MobileHeader onResultClick={handleResultClick} onArchiveClick={() => { setActiveTab('archive'); }} />}
 
             <div style={{
                 paddingBottom: 'calc(100px + env(safe-area-inset-bottom))',
@@ -459,8 +494,14 @@ export default function MobilePageContent({ session }: { session: any }) {
                         onItemClick={setSelectedItemId}
                         onFolderClick={setSelectedFolderId}
                     />
-                ) : (
+                ) : activeTab === 'inbox' ? (
                     <MobileInbox onItemClick={setSelectedItemId} />
+                ) : (
+                    <MobileArchive
+                        onItemClick={setSelectedItemId}
+                        onFolderClick={setSelectedFolderId}
+                        onBack={() => setActiveTab('home')}
+                    />
                 )}
             </div>
 

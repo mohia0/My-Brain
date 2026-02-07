@@ -171,7 +171,16 @@ export default function Orb({
       lightCol = clamp(lightCol, 0.0, 1.0);
       
       // Smoother mix for transparent mode
-      vec3 finalCol = mix(darkCol * 1.5, lightCol, bgLuminance);
+      vec3 finalCol = mix(darkCol * 1.8, lightCol, bgLuminance);
+      
+      if (bgLuminance > 0.8) {
+          // If purely light background, ensure we don't bleed any dark blue/black
+          return extractAlpha(mix(backgroundColor, colBase + v1, v0 * 1.2));
+      }
+      
+      if (bgLuminance < 0.01) {
+          return extractAlpha(darkCol * 2.0);
+      }
       
       return extractAlpha(finalCol);
     }
@@ -203,9 +212,10 @@ export default function Orb({
     const container = ctnDom.current;
     if (!container) return;
 
-    const renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
+    const renderer = new Renderer({ alpha: true, premultipliedAlpha: true });
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     container.appendChild(gl.canvas);
 
     const geometry = new Triangle(gl);

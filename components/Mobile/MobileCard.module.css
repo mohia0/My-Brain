@@ -16,17 +16,17 @@
 
 /* Specific class for grid items (folders) */
 .gridCard {
-    aspect-ratio: 1.2 / 1;
-    /* More height for content */
+    min-height: 180px;
+    /* Increased to fit all content comfortably */
     justify-content: space-between;
     border-radius: 0 16px 16px 16px;
-    padding: 16px;
+    padding: 16px 16px 12px;
+    /* Reduced bottom padding slightly to pull buttons up */
     display: flex;
     flex-direction: column;
     position: relative;
     margin-top: 12px;
     min-width: 0;
-    /* overflow: hidden removed to show the folder tab */
 }
 
 /* The Folder Tab */
@@ -304,6 +304,8 @@
 
 .gridCard .actions {
     padding-top: 12px;
+    padding-bottom: 4px;
+    /* Move buttons slightly up */
     justify-content: space-between;
     /* Spread for grid items */
     margin-top: auto;

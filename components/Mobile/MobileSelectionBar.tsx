@@ -3,13 +3,16 @@ import { Trash2, Archive, Copy, X, FolderInput } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './MobileSelectionBar.module.css';
 import { clsx } from 'clsx';
+import MobileFolderPicker from './MobileFolderPicker';
 
 export default function MobileSelectionBar() {
     const {
         selectedIds, clearSelection, removeItem,
         archiveSelected, duplicateSelected,
-        updateItemContent
+        updateItemContent, moveSelectedToFolder
     } = useItemsStore();
+
+    const [isPickerOpen, setIsPickerOpen] = React.useState(false);
 
     if (selectedIds.length === 0) return null;
 
@@ -30,13 +33,13 @@ export default function MobileSelectionBar() {
         duplicateSelected();
     };
 
-    const handleMoveToBrainia = () => {
-        selectedIds.forEach(id => {
-            updateItemContent(id, { status: 'active' });
-            const folder = useItemsStore.getState().folders.find(f => f.id === id);
-            if (folder) useItemsStore.getState().updateFolderContent(id, { status: 'active' });
-        });
-        clearSelection();
+    const handleMoveClick = () => {
+        setIsPickerOpen(true);
+    };
+
+    const handleSelectFolder = (folderId: string | null) => {
+        moveSelectedToFolder(folderId);
+        setIsPickerOpen(false);
     };
 
     return (
@@ -50,7 +53,7 @@ export default function MobileSelectionBar() {
                 </div>
 
                 <div className={styles.actions}>
-                    <button className={styles.actionBtn} onClick={handleMoveToBrainia} title="Move to Brainia">
+                    <button className={styles.actionBtn} onClick={handleMoveClick} title="Move to Folder">
                         <FolderInput size={20} />
                     </button>
                     <button className={styles.actionBtn} onClick={handleDuplicate} title="Duplicate">
@@ -64,6 +67,13 @@ export default function MobileSelectionBar() {
                     </button>
                 </div>
             </div>
+
+            {isPickerOpen && (
+                <MobileFolderPicker
+                    onClose={() => setIsPickerOpen(false)}
+                    onSelect={handleSelectFolder}
+                />
+            )}
         </div>
     );
 }

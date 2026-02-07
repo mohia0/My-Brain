@@ -11,10 +11,12 @@ import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consist
 // If we re-use ItemCard, they might try to drag inside the modal which is tricky.
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
-export default function FolderModal({ folderId, onClose, onItemClick }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void }) {
+export default function FolderModal({ folderId: initialFolderId, onClose, onItemClick, onFolderClick }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void, onFolderClick?: (id: string) => void }) {
     const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent } = useItemsStore();
-    const folder = folders.find(f => f.id === folderId);
-    const folderItems = items.filter(i => i.folder_id === folderId);
+    const [currentFolderId, setCurrentFolderId] = React.useState(initialFolderId);
+    const folder = folders.find(f => f.id === currentFolderId);
+    const folderItems = items.filter(i => i.folder_id === currentFolderId);
+    const subFolders = folders.filter(f => f.parent_id === currentFolderId);
     const [isOverflowing, setIsOverflowing] = React.useState(false);
     const titleRef = React.useRef<HTMLDivElement>(null);
     const scrollContentRef = React.useRef<HTMLDivElement>(null);
@@ -29,11 +31,19 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
         if (folder) setTempName(folder.name);
     }, [folder?.id]);
 
+    const handleBack = () => {
+        if (folder?.parent_id) {
+            setCurrentFolderId(folder.parent_id);
+        } else {
+            onClose();
+        }
+    };
+
     const handleNameChange = (newName: string) => {
         setTempName(newName);
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = setTimeout(() => {
-            updateFolderContent(folderId, { name: newName });
+            updateFolderContent(currentFolderId, { name: newName });
         }, 1000);
     };
 
@@ -64,11 +74,19 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
 
     const handleRemoveFromFolder = (itemId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        // Move back to canvas near the folder
         updateItemContent(itemId, {
             folder_id: undefined,
             position_x: folder.position_x + 50,
             position_y: folder.position_y + 50
+        });
+    };
+
+    const handleRemoveFolderFromFolder = (subFolderId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        updateFolderContent(subFolderId, {
+            parent_id: undefined,
+            position_x: folder.position_x + 80,
+            position_y: folder.position_y + 80
         });
     };
 
@@ -88,7 +106,14 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                 position_y: folder.position_y + 50
             });
         });
-        removeFolder(folderId);
+        subFolders.forEach(sf => {
+            updateFolderContent(sf.id, {
+                parent_id: undefined,
+                position_x: folder.position_x + 80,
+                position_y: folder.position_y + 80
+            });
+        });
+        removeFolder(currentFolderId);
         onClose();
     };
 
@@ -141,7 +166,7 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                                             key={color}
                                             className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}
                                             style={{ backgroundColor: color }}
-                                            onClick={() => updateFolderContent(folderId, { color })}
+                                            onClick={() => updateFolderContent(currentFolderId, { color })}
                                         />
                                     ))}
                                 </div>
@@ -153,22 +178,46 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                         <button
                             onClick={handleDeleteClick}
                             className={`${styles.deleteBtn} ${isDeleting ? styles.confirmDelete : ''}`}
-                            onMouseLeave={() => setIsDeleting(false)}
                         >
-                            {isDeleting ? "Confirm Delete?" : "Delete Folder"}
+                            {isDeleting ? "Sure?" : "Delete"}
                         </button>
-                        <button onClick={onClose} className={styles.closeBtn}><X size={20} /></button>
+                        <button onClick={handleBack} className={styles.closeBtn}>
+                            {folder.parent_id ? <LogOut size={20} style={{ transform: 'rotate(180deg)' }} /> : <X size={20} />}
+                        </button>
                     </div>
                 </header>
 
                 <div className={styles.content} ref={scrollContentRef}>
-                    {folderItems.length === 0 ? (
+                    {folderItems.length === 0 && subFolders.length === 0 ? (
                         <div className={styles.emptyState}>
                             <FolderOpen size={48} strokeWidth={1} style={{ opacity: 0.2 }} />
-                            <span>No ideas in this folder yet</span>
+                            <span>No ideas here yet</span>
                         </div>
                     ) : (
                         <div className={styles.grid}>
+                            {subFolders.map(sf => (
+                                <div
+                                    key={sf.id}
+                                    className={clsx(styles.itemWrapper, styles.folderItem)}
+                                    onClick={() => setCurrentFolderId(sf.id)}
+                                >
+                                    <button
+                                        className={styles.removeBtn}
+                                        onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
+                                    >
+                                        <LogOut size={14} />
+                                    </button>
+                                    <div className={styles.itemPreview} style={{ color: sf.color || 'var(--accent)' }}>
+                                        <FolderOpen size={32} />
+                                    </div>
+                                    <div className={styles.itemInfo}>
+                                        <span className={styles.itemTitle}>{sf.name}</span>
+                                        <div className={styles.itemMeta}>
+                                            <span>Folder</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                             {folderItems.map(item => (
                                 <div
                                     key={item.id}

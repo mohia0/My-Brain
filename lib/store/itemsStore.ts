@@ -69,6 +69,7 @@ interface ItemsState {
     duplicateItem: (id: string) => void;
     duplicateFolder: (id: string) => void;
     duplicateSelected: () => void;
+    moveSelectedToFolder: (targetFolderId: string | null) => void;
     removeItem: (id: string) => void;
 
     // Folders
@@ -411,6 +412,21 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         for (const id of selectedIds) {
             if (items.some(i => i.id === id)) await duplicateItem(id);
             if (folders.some(f => f.id === id)) await duplicateFolder(id);
+        }
+        clearSelection();
+    },
+
+    moveSelectedToFolder: async (targetFolderId) => {
+        const { selectedIds, items, folders, updateItemContent, updateFolderContent, clearSelection } = get();
+        for (const id of selectedIds) {
+            // Check if it's an item
+            if (items.some(i => i.id === id)) {
+                await updateItemContent(id, { folder_id: targetFolderId, status: 'active' });
+            }
+            // Check if it's a folder (and not moving into itself)
+            else if (folders.some(f => f.id === id) && id !== targetFolderId) {
+                await updateFolderContent(id, { parent_id: targetFolderId, status: 'active' });
+            }
         }
         clearSelection();
     },

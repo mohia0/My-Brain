@@ -36,16 +36,19 @@ export default function MobilePageContent({ session }: { session: any }) {
         mode: 'text' | 'file';
     }>({ isOpen: false, type: null, placeholder: '', title: '', mode: 'text' });
 
-    useEffect(() => {
-        // Register Intent Listener
-        console.log("MobileContent mounted, initializing SendIntent...");
+    // State Refs for Back Button (to avoid stale closures)
+    const selectedItemIdRef = React.useRef<string | null>(null);
+    const selectedFolderIdRef = React.useRef<string | null>(null);
+    const inputModalOpenRef = React.useRef<boolean>(false);
 
-        const initIntent = async () => {
+    useEffect(() => { selectedItemIdRef.current = selectedItemId; }, [selectedItemId]);
+    useEffect(() => { selectedFolderIdRef.current = selectedFolderId; }, [selectedFolderId]);
+    useEffect(() => { inputModalOpenRef.current = inputModalConfig.isOpen; }, [inputModalConfig.isOpen]);
+
+    useEffect(() => {
+        const initCapacitor = async () => {
             const cap = (window as any).Capacitor;
-            if (!cap) {
-                console.log("Capacitor not detected (likely web mode)");
-                return;
-            }
+            if (!cap) return;
 
             try {
                 // 1. Handle Sharing Intents
@@ -62,42 +65,41 @@ export default function MobilePageContent({ session }: { session: any }) {
                 // 2. Handle System Back Button (Android)
                 const AppPlugin = cap.Plugins.App;
                 if (AppPlugin) {
-                    AppPlugin.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
-                        console.log("Back button pressed. canGoBack:", canGoBack);
+                    // Remove existing listeners before adding a new one
+                    if (AppPlugin.removeAllListeners) { try { await AppPlugin.removeAllListeners(); } catch (e) { } }
 
-                        // Priority: Close Input Modal -> Folder Modal -> Item Modal
-                        if (inputModalConfig.isOpen) {
+                    AppPlugin.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
+                        console.log("Back button event. canGoBack:", canGoBack);
+
+                        if (inputModalOpenRef.current) {
                             setInputModalConfig(prev => ({ ...prev, isOpen: false }));
-                        } else if (selectedFolderId) {
+                        } else if (selectedFolderIdRef.current) {
                             setSelectedFolderId(null);
-                        } else if (selectedItemId) {
+                        } else if (selectedItemIdRef.current) {
                             setSelectedItemId(null);
                         } else {
-                            // If nothing is open, we can exit or go back in history
-                            if (!canGoBack) {
-                                AppPlugin.exitApp();
-                            } else {
+                            if (canGoBack) {
                                 window.history.back();
+                            } else {
+                                // Double check if we really want to exit
+                                console.log("No modals open and no history. Exiting app...");
+                                AppPlugin.exitApp();
                             }
                         }
                     });
                 }
             } catch (err) {
-                console.error("Capacitor Plugin registration failed:", err);
+                console.error("Capacitor registration error:", err);
             }
         };
 
-        const timer = setTimeout(initIntent, 300);
+        initCapacitor();
         return () => {
-            clearTimeout(timer);
-            // Cleanup App listeners if possible
             const cap = (window as any).Capacitor;
-            if (cap?.Plugins?.App?.removeAllListeners) {
-                cap.Plugins.App.removeAllListeners();
-            }
+            if (cap?.Plugins?.App?.removeAllListeners) cap.Plugins.App.removeAllListeners();
         };
-
     }, []);
+
 
     const uploadMobileFile = async (uri: string, itemId: string, userId: string): Promise<string | null> => {
         try {
@@ -128,147 +130,114 @@ export default function MobilePageContent({ session }: { session: any }) {
 
     const handleSharedContent = async (data: any) => {
         if (!data) return;
-        console.log("Processing shared content RAW:", JSON.stringify(data));
+        console.log("[MobileShare] Received RAW Data:", JSON.stringify(data));
 
         const extras = data.extras || {};
-        const title = data.title || data.subject || extras['android.intent.extra.SUBJECT'] || "Shared Item";
+        const intentTitle = data.title || data.subject || extras['android.intent.extra.SUBJECT'] || "";
 
-        // Robust text extraction: check extras, value, text, and url
-        const textContent = extras['android.intent.extra.TEXT'] ||
+        // Comprehensive text extraction
+        const textContent = (
+            extras['android.intent.extra.TEXT'] ||
             extras['android.intent.extra.PROCESS_TEXT'] ||
             data.value ||
             data.text ||
             data.url ||
-            "";
+            ""
+        ).trim();
 
-        console.log("Extracted share info:", { title, textContent, filesCount: data.files?.length });
+        const hasFiles = data.files && data.files.length > 0;
 
-        if (!textContent && (!data.files || data.files.length === 0)) {
-            console.warn("No shareable content found in data object");
+        if (!textContent && !hasFiles) {
+            console.warn("[MobileShare] Empty share - ignoring");
             return;
         }
 
+        // Detect URL
         const urlRegex = /(https?:\/\/[^\s]+)/i;
-        let finalContent = data.url || null;
-        let isUrl = !!data.url;
+        const urlMatch = textContent.match(urlRegex);
+        const finalUrl = data.url || (urlMatch ? urlMatch[0] : null);
+        const isUrl = !!finalUrl;
 
-        if (!finalContent) {
-            const urlMatch = textContent.match(urlRegex);
-            finalContent = urlMatch ? urlMatch[0] : (textContent || null);
-            isUrl = !!urlMatch;
-        }
-
-        console.log("Final share content strategy:", { finalContent, isUrl });
-
-        if (!finalContent && (!data.files || data.files.length === 0)) {
-            console.warn("No shareable content or files found");
-            return;
-        }
+        console.log("[MobileShare] Identification:", { isUrl, finalUrl, hasFiles, filesCount: data.files?.length });
 
         setShareState('saving');
         setIsOverlayFading(false);
 
         try {
-
-            const itemId = generateId();
             const userId = session?.user?.id || 'unknown';
 
-            // Check if we have a local image preview shared with the URL (common on Android)
-            let localPreviewUrl: string | null = null;
-            if (isUrl && data.files && data.files.length > 0) {
-                const previewFile = data.files.find((f: any) => f.mimeType?.startsWith('image/'));
-                if (previewFile) {
-                    console.log("Found native preview image, uploading...");
-                    localPreviewUrl = await uploadMobileFile(previewFile.uri || previewFile.path, itemId, userId);
-                }
-            }
+            // 1. Process as URL or Text if content exists
+            if (textContent || finalUrl) {
+                const itemId = generateId();
+                let localPreviewUrl: string | null = null;
 
-            if (finalContent) {
+                // Try to find a preview image if it's a link share
+                if (isUrl && hasFiles) {
+                    const previewFile = data.files.find((f: any) => f.mimeType?.startsWith('image/'));
+                    if (previewFile) {
+                        localPreviewUrl = await uploadMobileFile(previewFile.uri || previewFile.path || previewFile.url, itemId, userId);
+                    }
+                }
+
                 await addItem({
                     id: itemId,
                     user_id: userId,
                     type: isUrl ? 'link' : 'text',
-                    content: finalContent,
+                    content: finalUrl || textContent,
                     status: 'inbox',
                     metadata: {
-                        title: title === "Shared Item" && isUrl ? (textContent.split('\n')[0].substring(0, 50) || "Shared Link") : title,
-                        description: isUrl ? "Captured from Mobile" : "Shared Text",
+                        title: intentTitle || (isUrl ? "Shared Link" : "Shared Text"),
+                        description: isUrl ? "Captured from Mobile" : "Shared from Mobile",
                         image: localPreviewUrl || undefined
                     },
                     position_x: 0, position_y: 0,
                     created_at: new Date().toISOString()
                 });
 
-                // Only call the external guest-screenshot API if we didn't get a native one
+                // Auto-screenshot for links if no native preview
                 if (isUrl && !localPreviewUrl) {
                     setShareState('capturing');
-
-                    // On mobile (Capacitor), relative URLs might fail. 
-                    // We attempt to use the location's origin to build an absolute URL.
-                    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-                    const apiUrl = baseUrl.includes('localhost') ? '/api/screenshot' : `${baseUrl}/api/screenshot`;
-
-                    console.log(`[Screenshot] Initiating capture for ${finalContent} (API: ${apiUrl})`);
-
-                    fetch(apiUrl, {
+                    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                    fetch(`${origin}/api/screenshot`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: finalContent,
-                            itemId,
-                            userId: session?.user?.id || userId
-                        })
-                    }).then(res => {
-                        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-                        return res.json();
-                    }).then(result => {
-                        console.log("[Screenshot] API Success:", result);
-                    }).catch(err => {
-                        console.error("[Screenshot] API call failed definitely:", err);
-                    });
+                        body: JSON.stringify({ url: finalUrl, itemId, userId })
+                    }).catch(err => console.error("[MobileShare] Screenshot trigger failed:", err));
                 }
             }
 
-
-            // Handle additional files as separate items if they weren't used as a preview
-            if (data.files && data.files.length > 0) {
+            // 2. Process Files (Gallery / Screenshots)
+            if (hasFiles) {
                 for (const file of data.files) {
-                    // Skip if this was the preview we already used
-                    if (isUrl && (file.uri || file.path) && localPreviewUrl) continue;
+                    // Avoid double-processing if it was already used as a preview for a link
+                    // (Actually we might want both if the user shared an image AND a link)
 
                     const fileId = generateId();
                     const isImage = file.mimeType?.startsWith('image/');
-                    let persistentUrl = file.uri || file.path;
+                    const fileUri = file.uri || file.path || file.url;
 
+                    if (!fileUri) continue;
+
+                    let finalFileContent = fileUri;
                     if (isImage) {
-                        persistentUrl = await uploadMobileFile(file.uri || file.path, fileId, userId) || persistentUrl;
+                        const uploaded = await uploadMobileFile(fileUri, fileId, userId);
+                        if (uploaded) finalFileContent = uploaded;
                     }
 
                     await addItem({
                         id: fileId,
                         user_id: userId,
                         type: isImage ? 'image' : 'link',
-                        content: persistentUrl || "File Content",
+                        content: finalFileContent,
                         status: 'inbox',
                         metadata: {
-                            title: title === 'Shared Item' ? (file.name || "Shared File") : title,
-                            description: `Shared ${file.mimeType || 'file'}`
+                            title: file.name || (isImage ? "Shared Photo" : "Shared File"),
+                            description: `Shared via mobile gallery`
                         },
                         position_x: 0, position_y: 0,
                         created_at: new Date().toISOString()
                     });
                 }
-            } else if (!finalContent && data.value) {
-                await addItem({
-                    id: generateId(),
-                    user_id: userId,
-                    type: 'text',
-                    content: data.value,
-                    status: 'inbox',
-                    metadata: { title: "Shared Data" },
-                    position_x: 0, position_y: 0,
-                    created_at: new Date().toISOString()
-                });
             }
 
             setShareState('saved');
@@ -279,13 +248,14 @@ export default function MobilePageContent({ session }: { session: any }) {
                     setShareState('idle');
                     setIsOverlayFading(false);
                 }, 500);
-            }, 1000);
+            }, 1200);
 
         } catch (error) {
-            console.error("Sharing processing failed:", error);
+            console.error("[MobileShare] Critical Error:", error);
             setShareState('idle');
         }
     };
+
 
     const handleAddClick = (type: 'text' | 'link' | 'image' | 'folder') => {
         setInputModalConfig({

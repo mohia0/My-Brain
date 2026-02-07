@@ -366,7 +366,6 @@
     }
 }
 
-/* --- MOBILE ADJUSTMENTS --- */
 @media (max-width: 768px) {
     .modal {
         width: 100vw !important;
@@ -378,37 +377,116 @@
         border: none !important;
         top: 0 !important;
         left: 0 !important;
+        position: fixed !important;
+        background: #000 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .header {
+        padding: calc(20px + env(safe-area-inset-top)) 20px 20px !important;
+        background: rgba(18, 18, 18, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+        align-items: stretch !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 100 !important;
+    }
+
+    .titleInfo {
+        justify-content: space-between !important;
+        width: 100% !important;
+    }
+
+    .actions {
+        position: static !important;
+        justify-content: flex-end !important;
+    }
+
+    .folderNameWrapper {
+        width: auto !important;
+        max-width: calc(100vw - 140px) !important;
+    }
+
+    .iconCircle {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 12px !important;
+    }
+
+    .folderName {
+        font-size: 1.15rem !important;
+    }
+
+    .nameRow {
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+    }
+
+    .content {
+        padding: 20px 16px calc(40px + env(safe-area-inset-bottom)) !important;
+        background: transparent !important;
     }
 
     .grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
-        padding-bottom: 40px;
+        gap: 16px !important;
     }
 
-    .header {
-        padding: 20px 16px !important;
-        flex-direction: column;
-        gap: 16px;
-        align-items: stretch !important;
+    .itemWrapper {
+        padding: 0 !important;
+        border-radius: 18px !important;
+        gap: 0 !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        overflow: hidden !important;
     }
 
-    .actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
+    .itemPreview {
+        height: 100px !important;
+        border-radius: 0 !important;
+        border: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 
-    .content {
-        padding: 8px 16px calc(24px + env(safe-area-inset-bottom)) !important;
+    .itemInfo {
+        padding: 10px !important;
+        gap: 2px !important;
     }
 
-    .folderNameWrapper {
-        width: calc(100vw - 120px) !important;
+    .itemTitle {
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
     }
 
-    .titleInfo {
-        gap: 12px !important;
+    .itemMeta {
+        font-size: 0.6rem !important;
+    }
+
+
+
+    .closeBtn {
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+    }
+
+    .deleteBtn {
+        padding: 8px 14px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Floating confirm delete for mobile */
+    .confirmDelete {
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 20px !important;
+        z-index: 1000 !important;
+        padding: 16px 24px !important;
+        border-radius: 20px !important;
+        box-shadow: 0 10px 30px rgba(225, 29, 72, 0.4) !important;
     }
 }

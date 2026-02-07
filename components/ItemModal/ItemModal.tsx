@@ -179,10 +179,12 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <>
                                 <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageReplace} />
                                 <button className={styles.replaceImageBtn} onClick={() => fileInputRef.current?.click()}>
-                                    <ImageIcon size={10} />
+                                    <ImageIcon size={18} />
+                                    <span>Replace Image</span>
                                 </button>
                             </>
                         )}
+
 
                         {isLink && screenshotUrl ? (
                             <img src={screenshotUrl} className={styles.previewImage} alt="Preview" />

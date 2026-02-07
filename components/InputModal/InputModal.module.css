@@ -208,3 +208,14 @@
     background: var(--danger);
     transform: scale(1.1);
 }
+
+@media (max-width: 768px) {
+    .modal {
+        width: 90% !important;
+        max-height: 80vh !important;
+    }
+
+    .footer {
+        padding: 0 24px calc(24px + env(safe-area-inset-bottom)) !important;
+    }
+}

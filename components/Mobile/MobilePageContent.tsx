@@ -12,6 +12,8 @@ import FolderModal from '@/components/FolderModal/FolderModal';
 import InputModal from '@/components/InputModal/InputModal';
 import { useItemsStore } from '@/lib/store/itemsStore';
 
+// We access SendIntent dynamically to avoid Capacitor 2 build errors
+
 export default function MobilePageContent({ session }: { session: any }) {
     const { addItem, addFolder, clearSelection, updateItemContent } = useItemsStore();
     const [activeTab, setActiveTab] = useState<'home' | 'inbox'>('home');
@@ -30,64 +32,93 @@ export default function MobilePageContent({ session }: { session: any }) {
 
     useEffect(() => {
         // Register Intent Listener
+        console.log("MobileContent mounted, initializing SendIntent...");
+
         const initIntent = async () => {
+            const cap = (window as any).Capacitor;
+            if (!cap) {
+                console.log("Capacitor not detected (likely web mode)");
+                return;
+            }
+
             try {
-                if (typeof window !== 'undefined' && (window as any).Capacitor) {
-                    const { SendIntent } = await (0, eval)("import('capacitor-plugin-send-intent')");
+                const SendIntent = cap.Plugins.SendIntent;
+                if (SendIntent) {
+                    // Remove existing listeners if any
+                    if (SendIntent.removeAllListeners) {
+                        await SendIntent.removeAllListeners();
+                    }
+
                     SendIntent.addListener('appSendActionIntent', (data: any) => {
+                        console.log("Intent Event Received IN APP:", data);
                         handleSharedContent(data);
                     });
-                    const result = await SendIntent.checkSendIntentReceived();
-                    if (result) handleSharedContent(result);
+
+                    console.log("SendIntent listeners successfully registered");
+                } else {
+                    console.error("SendIntent plugin not found in Capacitor.Plugins");
                 }
             } catch (err) {
-                console.log("Capacitor SendIntent not available");
+                console.error("Capacitor SendIntent registration failed:", err);
             }
         };
-        initIntent();
+
+        const timer = setTimeout(initIntent, 1000);
+        return () => clearTimeout(timer);
     }, []);
 
     const handleSharedContent = async (data: any) => {
-        let content = data.value || data.text || data.url || "";
-        let title = data.title || "Shared Item";
+        console.log("Shared data received:", data);
+
+        let extras = data.extras || {};
+        let content = extras['android.intent.extra.TEXT'] || extras['android.intent.extra.PROCESS_TEXT'] || data.value || data.text || "";
+        let title = extras['android.intent.extra.SUBJECT'] || data.title || "Shared Item";
         let fileData = data.files?.[0];
 
-        if (!content && data.extras) {
-            content = data.extras['android.intent.extra.TEXT'] || "";
-            title = data.extras['android.intent.extra.SUBJECT'] || title;
+        // If content is empty but we have files, it's a file share
+        if (!content && !fileData) {
+            // Check if it's a direct URL field some plugins use
+            content = data.url || "";
         }
 
         if (!content && !fileData) return;
 
-        const isUrl = /^https?:\/\//i.test((content || "").trim());
+        // Clean up content (sometimes it contains extra text like "Check out this link: https://...")
+        const urlRegex = /(https?:\/\/[^\s]+)/i;
+        const urlMatch = content.match(urlRegex);
+        const finalContent = urlMatch ? urlMatch[0] : content;
+        const isUrl = !!urlMatch;
+
         setShareState('saving');
 
         try {
             const itemId = crypto.randomUUID();
             const userId = session?.user?.id || 'unknown';
 
-            if (content) {
+            if (finalContent) {
                 await addItem({
                     id: itemId,
                     user_id: userId,
                     type: isUrl ? 'link' : 'text',
-                    content: content,
+                    content: finalContent,
                     status: 'inbox',
-                    metadata: { title, description: "Shared from Android" },
+                    metadata: {
+                        title: title === "Shared Item" && isUrl ? "Shared Link" : title,
+                        description: isUrl ? "Shared URL" : "Shared Text"
+                    },
                     position_x: 0, position_y: 0,
                     created_at: new Date().toISOString()
                 });
 
-                // If it's a URL, trigger screenshot capture
                 if (isUrl) {
                     setShareState('capturing');
                     fetch('/api/screenshot', {
                         method: 'POST',
-                        body: JSON.stringify({ url: content, itemId, userId })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: finalContent, itemId, userId })
                     }).catch(err => console.error("Screenshot failed:", err));
                 }
             } else if (fileData) {
-                // Handle direct file share (image/video/pdf)
                 await addItem({
                     id: itemId,
                     user_id: userId,
@@ -103,7 +134,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 });
             }
             setShareState('saved');
-            setTimeout(() => setShareState('idle'), 2000);
+            setTimeout(() => setShareState('idle'), 2500);
         } catch (e) {
             console.error("Save error:", e);
             setShareState('idle');
@@ -174,7 +205,12 @@ export default function MobilePageContent({ session }: { session: any }) {
         <div className="mobile-app">
             <MobileHeader onResultClick={handleResultClick} />
 
-            <div style={{ paddingBottom: '128px' }}>
+            <div style={{
+                paddingBottom: 'calc(100px + env(safe-area-inset-bottom))',
+                paddingTop: 'calc(64px + env(safe-area-inset-top))',
+                minHeight: '100vh',
+                background: '#000'
+            }}>
                 {activeTab === 'home' ? (
                     <MobileHome
                         onItemClick={setSelectedItemId}

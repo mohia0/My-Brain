@@ -1,6 +1,6 @@
 .container {
     position: fixed;
-    bottom: 80px;
+    bottom: calc(88px + env(safe-area-inset-bottom));
     right: 20px;
     z-index: 1000;
     display: flex;

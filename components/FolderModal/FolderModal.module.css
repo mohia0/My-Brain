@@ -359,7 +359,7 @@
     }
 
     .content {
-        padding: 8px 20px 100px !important;
+        padding: 8px 20px calc(120px + env(safe-area-inset-bottom)) !important;
     }
 
     .folderNameWrapper {

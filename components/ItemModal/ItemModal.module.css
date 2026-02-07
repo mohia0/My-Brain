@@ -539,10 +539,12 @@
     }
 
     .footer {
-        padding: 16px 20px !important;
+        padding: 16px 20px calc(16px + env(safe-area-inset-bottom)) !important;
         position: sticky !important;
         bottom: 0 !important;
         z-index: 10 !important;
+        background: #111 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 
     .titleDisplayText {

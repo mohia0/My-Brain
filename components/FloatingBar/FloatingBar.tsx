@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import styles from './FloatingBar.module.css';
 import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder, Archive } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { generateId } from '@/lib/utils';
 import InputModal from '@/components/InputModal/InputModal';
 import clsx from 'clsx';
 
@@ -81,7 +82,7 @@ export default function FloatingBar() {
         avgX /= total;
         avgY /= total;
 
-        const folderId = crypto.randomUUID();
+        const folderId = generateId();
         addFolder({
             id: folderId,
             user_id: 'user-1',

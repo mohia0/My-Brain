@@ -43,79 +43,91 @@
 }
 
 .closeBtn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-bright);
     cursor: pointer;
-    padding: 4px;
+    padding: 8px;
+    border-radius: 12px;
     display: flex;
+    transition: all 0.2s;
 }
 
 .closeBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
     color: var(--foreground);
+    transform: scale(1.05);
 }
 
 .body {
-    padding: 20px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
 }
 
 .input {
     width: 100%;
-    background: var(--input-bg);
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 16px;
     color: var(--foreground);
     font-size: 1rem;
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
 }
 
 .input:focus {
     border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 .footer {
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 0 20px 20px;
+    padding: 0 24px 24px;
+    gap: 12px;
 }
 
 .cancelBtn {
-    background: transparent;
-    border: none;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-muted);
-    padding: 8px 16px;
+    padding: 12px;
     font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 12px;
+    transition: all 0.2s;
 }
 
 .cancelBtn:hover {
     color: var(--foreground);
-    background: var(--card-hover);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .submitBtn {
+    flex: 2;
     background: var(--accent);
     color: white;
     border: none;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    border-radius: 6px;
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 2px 8px var(--accent-glow);
+    box-shadow: 0 8px 16px var(--accent-glow);
+    transition: all 0.2s;
 }
 
 .submitBtn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px var(--accent-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px var(--accent-glow);
+    filter: brightness(1.1);
 }
+
 
 @keyframes fadeIn {
     from {

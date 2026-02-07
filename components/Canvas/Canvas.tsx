@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { generateId } from '@/lib/utils';
 import styles from './Canvas.module.css';
 import { Undo, Redo } from 'lucide-react';
 import clsx from 'clsx';
@@ -331,7 +332,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 reader.onload = (e) => {
                     const content = e.target?.result as string;
                     addItem({
-                        id: crypto.randomUUID(),
+                        id: generateId(),
                         user_id: 'user-1',
                         type: 'image',
                         content,

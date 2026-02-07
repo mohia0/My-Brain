@@ -4,14 +4,29 @@
     left: 0;
     right: 0;
     height: calc(64px + env(safe-area-inset-bottom));
-    background: #000;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
+    padding: 0 10px;
     padding-bottom: env(safe-area-inset-bottom);
     z-index: 1000;
 }
+
+.centerItem {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    top: -20px;
+    /* Lift it up a bit */
+}
+
 
 .navItem {
     flex: 1;

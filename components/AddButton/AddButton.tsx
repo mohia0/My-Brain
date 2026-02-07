@@ -5,6 +5,7 @@ import styles from './AddButton.module.css';
 import { Plus, Type, Link, Image as ImageIcon, FolderPlus, X } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
+import { generateId } from '@/lib/utils';
 
 import InputModal from '@/components/InputModal/InputModal';
 
@@ -41,7 +42,7 @@ export default function AddButton() {
         const viewportH = window.innerHeight;
         const centerX = ((viewportW / 2) - position.x) / scale;
         const centerY = ((viewportH / 2) - position.y) / scale;
-        const id = crypto.randomUUID();
+        const id = generateId();
 
         if (type === 'folder') {
             addFolder({

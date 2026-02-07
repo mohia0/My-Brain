@@ -1,17 +1,20 @@
 "use client";
 
 import React from 'react';
-import { Home, Inbox, LayoutGrid } from 'lucide-react';
+import { Inbox, LayoutGrid } from 'lucide-react';
 import styles from './MobileNav.module.css';
 import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import MobileAddButton from './MobileAddButton';
+
 
 interface MobileNavProps {
     activeTab: 'home' | 'inbox';
     onTabChange: (tab: 'home' | 'inbox') => void;
+    onAdd: (type: 'text' | 'link' | 'image' | 'folder') => void;
 }
 
-export default function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
+export default function MobileNav({ activeTab, onTabChange, onAdd }: MobileNavProps) {
     const { items } = useItemsStore();
     const inboxCount = items.filter(i => i.status === 'inbox').length;
 
@@ -24,8 +27,14 @@ export default function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
                 <div className={styles.iconWrapper}>
                     <LayoutGrid size={22} />
                 </div>
-                <span>Canvas</span>
+                <span>Ideas</span>
             </button>
+
+
+            <div className={styles.centerItem}>
+                <MobileAddButton onAdd={onAdd} />
+            </div>
+
             <button
                 className={clsx(styles.navItem, activeTab === 'inbox' && styles.active)}
                 onClick={() => onTabChange('inbox')}
@@ -39,3 +48,4 @@ export default function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
         </nav>
     );
 }
+

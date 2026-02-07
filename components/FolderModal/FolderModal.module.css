@@ -14,19 +14,31 @@
 }
 
 .modal {
-    width: 720px;
+    width: 600px;
     max-width: 90vw;
-    height: 640px;
     max-height: 85vh;
     background: var(--modal-bg);
     border: 1px solid var(--card-border);
-    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
-    border-radius: 24px;
+    border-radius: 28px;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
     overflow: hidden;
-    animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
+    animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 768px) {
+    .modal {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        position: fixed !important;
+    }
 }
 
 [data-theme='light'] .modal {
@@ -132,51 +144,66 @@
     align-items: center;
 }
 
-.deleteBtn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-size: 0.8rem;
+.closeBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-bright);
     cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.deleteBtn {
+    background: rgba(225, 29, 72, 0.05);
+    border: 1px solid rgba(225, 29, 72, 0.15);
+    color: var(--danger);
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
     transition: all 0.2s;
-    font-weight: 500;
 }
 
 .deleteBtn:hover {
-    color: var(--danger);
-    background: var(--danger-glow);
+    background: var(--danger);
+    color: white;
 }
 
 .confirmDelete {
     background: var(--danger) !important;
     color: white !important;
-    font-weight: 600;
+    border-color: rgba(255, 255, 255, 0.2);
+    animation: confirmPulse 1.5s infinite;
 }
 
-.closeBtn {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    color: var(--text-muted);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+@keyframes confirmPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4);
+    }
+
+    70% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 10px rgba(225, 29, 72, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
+    }
 }
 
-.closeBtn:hover {
-    background: var(--card-hover);
-    color: var(--foreground);
-    transform: rotate(90deg);
-}
 
 .content {
     flex: 1;
@@ -347,22 +374,41 @@
         max-width: none !important;
         max-height: none !important;
         border-radius: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        top: 0 !important;
+        left: 0 !important;
     }
 
     .grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px !important;
+        padding-bottom: 40px;
     }
 
     .header {
-        padding: 20px 20px !important;
+        padding: 20px 16px !important;
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch !important;
+    }
+
+    .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
     }
 
     .content {
-        padding: 8px 20px calc(120px + env(safe-area-inset-bottom)) !important;
+        padding: 8px 16px calc(24px + env(safe-area-inset-bottom)) !important;
     }
 
     .folderNameWrapper {
-        width: 180px !important;
+        width: calc(100vw - 120px) !important;
+    }
+
+    .titleInfo {
+        gap: 12px !important;
     }
 }

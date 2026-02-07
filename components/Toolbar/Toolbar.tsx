@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { generateId } from '@/lib/utils';
 import styles from './Toolbar.module.css';
 import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, Type, Undo, Redo } from 'lucide-react';
 import clsx from 'clsx';
@@ -52,7 +53,7 @@ export default function Toolbar() {
         const viewportH = window.innerHeight;
         const centerX = ((viewportW / 2) - position.x) / scale;
         const centerY = ((viewportH / 2) - position.y) / scale;
-        const id = crypto.randomUUID();
+        const id = generateId();
 
         if (type === 'folder') {
             addFolder({

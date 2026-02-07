@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { generateId } from '@/lib/utils';
 import { Item, Folder } from '@/types';
 import { supabase } from '@/lib/supabase';
 
@@ -151,9 +152,18 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 future: []
             }
         }));
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            await supabase.from('items').insert([{ ...safeItem, user_id: user.id }]);
+
+        // Use the ID provided in the item (e.g. from sharing) or fetch current user
+        let finalUserId = safeItem.user_id;
+        if (!finalUserId || finalUserId === 'unknown') {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) finalUserId = user.id;
+        }
+
+        if (finalUserId) {
+            await supabase.from('items').insert([{ ...safeItem, user_id: finalUserId }]);
+        } else {
+            console.error('[Store] Cannot persist item: user_id is missing');
         }
     },
 
@@ -338,7 +348,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const newItemId = crypto.randomUUID();
+        const newItemId = generateId();
         const safePos = getSafePosition(newItemId, item.position_x + 30, item.position_y + 30, 280, 120, state.items, state.folders);
 
         const newItem = {

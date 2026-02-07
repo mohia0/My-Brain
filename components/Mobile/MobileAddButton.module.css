@@ -1,73 +1,89 @@
 .container {
-    position: fixed;
-    bottom: calc(88px + env(safe-area-inset-bottom));
-    right: 20px;
-    z-index: 1000;
+    position: relative;
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
 }
 
 .addButton {
-    width: 56px;
-    height: 56px;
-    border-radius: 28px;
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
     background: var(--accent);
     color: #fff;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px var(--accent-glow);
+    border: 4px solid #000;
+    box-shadow: 0 0 20px rgba(124, 77, 255, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 2;
 }
 
 .addButton.open {
-    background: #222;
-    transform: rotate(0deg);
-}
-
-.addButton:active {
+    background: #111;
+    border-color: #222;
     transform: scale(0.9);
 }
 
 .options {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    gap: 16px;
+    z-index: 1;
 }
 
 .optionBtn {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #1a1a1a;
-    border: 1px solid #333;
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: fanOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .optionBtn:active {
     transform: scale(0.9);
-    background: #333;
+    background: var(--accent);
 }
 
-@keyframes slideUp {
+@keyframes fanOut {
     from {
         opacity: 0;
-        transform: translateY(20px) scale(0.8);
+        transform: translateY(40px) scale(0.5);
     }
 
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+/* Staggered animation for options */
+.options button:nth-child(1) {
+    animation-delay: 0.0s;
+}
+
+.options button:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+.options button:nth-child(3) {
+    animation-delay: 0.1s;
+}
+
+.options button:nth-child(4) {
+    animation-delay: 0.15s;
 }

@@ -1,89 +1,177 @@
 .overlay {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(10, 10, 10, 0.85);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 28px;
-    padding: 32px;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.8) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10000;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    z-index: 9999;
-    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 40px var(--accent-glow);
-    animation: premiumOverlayLifecycle 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    justify-content: center;
+    overflow: hidden;
+    animation: slideAndFadeDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+.overlay.fadeOut {
+    animation: slideAndFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.orb {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.15;
+    filter: blur(80px);
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    animation: orbPulse 8s ease-in-out infinite alternate;
+}
+
+.orb2 {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, #6e56cf 0%, transparent 70%);
+    opacity: 0.1;
+    filter: blur(60px);
+    bottom: -100px;
+    left: 20%;
+    pointer-events: none;
+    animation: orbPulse 6s ease-in-out infinite alternate-reverse;
+}
+
+.content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 20px;
+    text-align: center;
 }
 
 .iconWrapper {
-    width: 64px;
-    height: 64px;
-    background: var(--accent);
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    box-shadow: 0 0 20px rgba(124, 77, 255, 0.2);
+}
+
+.successIcon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, var(--accent), #8a70ff);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    box-shadow: 0 0 20px var(--accent-glow);
-    animation: iconPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    box-shadow: 0 10px 30px rgba(124, 77, 255, 0.4), 0 0 0 4px rgba(124, 77, 255, 0.1);
+    animation: popAndGlow 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 .text {
     color: #fff;
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    text-align: center;
+    letter-spacing: -0.03em;
+    background: linear-gradient(to bottom, #fff, #aaa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeInUp 0.5s ease 0.2s both;
 }
 
-.spinner {
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+.hint {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    animation: fadeInUp 0.5s ease 0.4s both;
 }
 
-@keyframes premiumOverlayLifecycle {
+@keyframes slideAndFadeDown {
     0% {
+        transform: translateY(-100%);
         opacity: 0;
-        transform: translate(-50%, -40%) scale(0.9);
-    }
-
-    15% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-
-    85% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
     }
 
     100% {
-        opacity: 0;
-        transform: translate(-50%, -60%) scale(0.95);
+        transform: translateY(0);
+        opacity: 1;
     }
 }
 
-@keyframes iconPop {
-    from {
-        transform: scale(0);
+@keyframes slideAndFadeUp {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-100%);
         opacity: 0;
+    }
+}
+
+@keyframes orbPulse {
+    from {
+        opacity: 0.1;
+        transform: translateX(-50%) scale(1);
     }
 
     to {
+        opacity: 0.2;
+        transform: translateX(-50%) scale(1.1);
+    }
+}
+
+@keyframes popAndGlow {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+        box-shadow: 0 0 0 rgba(124, 77, 255, 0);
+    }
+
+    100% {
         transform: scale(1);
         opacity: 1;
+        box-shadow: 0 10px 30px rgba(124, 77, 255, 0.4), 0 0 50px rgba(124, 77, 255, 0.2);
     }
 }
 
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

@@ -138,6 +138,10 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
             if (itemsRes.data) set({ items: itemsRes.data as Item[] });
             if (foldersRes.data) set({ folders: foldersRes.data as Folder[] });
+        } catch (err: any) {
+            // Silence AbortError as it's typically an intentional cancellation by the browser/Next.js
+            if (err.name === 'AbortError') return;
+            console.error('[ItemsStore] fetchData failed:', err);
         } finally {
             set({ loading: false });
         }

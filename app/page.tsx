@@ -74,7 +74,8 @@ export default function Home() {
         setIsFading(false);
       }, 800);
 
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'AbortError') return unsubscribe;
       console.error("Initialization error:", err);
       setInitializing(false);
       setShowLoading(false);

@@ -414,7 +414,11 @@ export default function MobilePageContent({ session }: { session: any }) {
                 // Trigger metadata AND screenshot
                 fetch('/api/metadata', { method: 'POST', body: JSON.stringify({ url: content }) })
                     .then(res => res.json())
-                    .then(data => updateItemContent(id, { metadata: data }));
+                    .then(data => updateItemContent(id, { metadata: data }))
+                    .catch(err => {
+                        if (err.name === 'AbortError') return;
+                        console.error("Metadata fetch failed:", err);
+                    });
 
                 fetch('/api/screenshot', {
                     method: 'POST',

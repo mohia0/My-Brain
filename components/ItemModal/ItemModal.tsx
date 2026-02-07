@@ -120,16 +120,26 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     useEffect(() => {
         const fetchAllTags = async () => {
-            const { data } = await supabase.from('tags').select('*');
-            if (data) setExistingTags(data as Tag[]);
+            try {
+                const { data } = await supabase.from('tags').select('*');
+                if (data) setExistingTags(data as Tag[]);
+            } catch (err: any) {
+                if (err.name === 'AbortError') return;
+                console.error("Failed to fetch all tags:", err);
+            }
         };
         fetchAllTags();
     }, []);
 
     const fetchItemTags = async () => {
         if (!item) return;
-        const { data } = await supabase.from('item_tags').select('tag_id, tags(*)').eq('item_id', item.id);
-        if (data) setTags(data.map((t: any) => t.tags).filter(Boolean) as Tag[]);
+        try {
+            const { data } = await supabase.from('item_tags').select('tag_id, tags(*)').eq('item_id', item.id);
+            if (data) setTags(data.map((t: any) => t.tags).filter(Boolean) as Tag[]);
+        } catch (err: any) {
+            if (err.name === 'AbortError') return;
+            console.error("Failed to fetch item tags:", err);
+        }
     };
 
     if (!item) return null;

@@ -26,8 +26,8 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
             {!hasContent ? (
                 <div className={styles.empty}>
                     <div className={styles.emptyIcon}><Inbox size={48} /></div>
-                    <h3>Start your digital brain</h3>
-                    <p>Your library is empty. Tap the + button to capture links, notes, or images.</p>
+                    <h3>Start your digital library</h3>
+                    <p>Your library is empty. Tap the + button to capture links, ideas, or images.</p>
                 </div>
             ) : (
                 <div className={styles.content}>
@@ -53,7 +53,7 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                         <section className={styles.section}>
                             <div className={styles.sectionHeader}>
                                 <LayoutGrid size={16} />
-                                <span>Canvas Items</span>
+                                <span>Canvas Ideas</span>
                             </div>
                             <div className={styles.list}>
                                 {visibleItems.map(item => (

@@ -28,9 +28,9 @@ export default function ShareProcessingOverlay({ status, isFadingOut }: ShareOve
                     )}
                 </div>
                 <div className={styles.text}>
-                    {status === 'saving' ? 'Capturing to Brainia...' :
-                        status === 'capturing' ? 'Processing Link...' :
-                            'Captured to your Brain!'}
+                    {status === 'saving' ? 'Saving to Brainia...' :
+                        status === 'capturing' ? 'Capturing Link...' :
+                            'Saved to Brainia!'}
                 </div>
                 {status === 'saved' && (
                     <div className={styles.hint}>Saved to Inbox</div>

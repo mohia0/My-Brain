@@ -1,8 +1,9 @@
 "use client";
 
 import { Mesh, Program, Renderer, Triangle, Vec3 } from 'ogl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './Orb.module.css';
+import clsx from 'clsx';
 
 interface OrbProps {
   hue?: number;
@@ -20,6 +21,7 @@ export default function Orb({
   backgroundColor = '#000000'
 }: OrbProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState(false);
 
   const vert = /* glsl */ `
     precision highp float;
@@ -290,6 +292,7 @@ export default function Orb({
       renderer.render({ scene: mesh });
     };
     rafId = requestAnimationFrame(update);
+    setIsReady(true);
 
     return () => {
       cancelAnimationFrame(rafId);
@@ -302,7 +305,7 @@ export default function Orb({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hue, hoverIntensity, rotateOnHover, forceHoverState, backgroundColor]);
 
-  return <div ref={ctnDom} className={styles.orbContainer} />;
+  return <div ref={ctnDom} className={clsx(styles.orbContainer, isReady && styles.ready)} />;
 }
 
 function hslToRgb(h: number, s: number, l: number) {

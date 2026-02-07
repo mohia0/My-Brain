@@ -45,12 +45,12 @@ export default function MobileInbox({ onItemClick }: MobileInboxProps) {
     const handleTouchEnd = async () => {
         if (pullDistance > 55 && !refreshing) {
             setRefreshing(true);
-            setPullDistance(50);
+            setPullDistance(60); // Hold it open
             await fetchData();
             setTimeout(() => {
                 setRefreshing(false);
                 setPullDistance(0);
-            }, 600);
+            }, 800);
         } else {
             setPullDistance(0);
         }
@@ -70,22 +70,22 @@ export default function MobileInbox({ onItemClick }: MobileInboxProps) {
             }}
         >
             <div className={styles.pullIndicator} style={{
-                opacity: pullDistance / 40,
-                transform: `translateY(-${Math.max(0, 40 - pullDistance)}px)`
+                height: 60,
+                opacity: pullDistance > 10 ? 1 : 0,
             }}>
                 {refreshing ? (
                     <div className={styles.refreshSpinner} />
                 ) : (
-                    <>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <div className={styles.refreshIcon} style={{
-                            transform: `rotate(${Math.min(pullDistance * 3, 180)}deg)`
+                            transform: `rotate(${Math.min(pullDistance * 3, 180)}deg) scale(${Math.min(0.5 + pullDistance / 100, 1)})`
                         }}>
-                            <ArrowDown size={20} />
+                            <ArrowDown size={24} />
                         </div>
                         <span className={styles.refreshText}>
-                            {pullDistance > 55 ? 'Release' : 'Pull'}
+                            {pullDistance > 55 ? 'Release' : 'Pull to refresh'}
                         </span>
-                    </>
+                    </div>
                 )}
             </div>
 
@@ -93,14 +93,14 @@ export default function MobileInbox({ onItemClick }: MobileInboxProps) {
                 <div className={styles.empty}>
                     <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
                     <h3>Inbox is clear</h3>
-                    <p>When you share links or captures to Brainia, they&apos;ll appear here for organization.</p>
+                    <p>When you share links or ideas to Brainia, they&apos;ll appear here for organization.</p>
                 </div>
             ) : (
                 <div className={styles.content}>
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <InboxIcon size={16} />
-                            <span>Unsorted Captures</span>
+                            <span>Unsorted Ideas</span>
                         </div>
                         <div className={styles.list}>
                             {inboxItems.map(item => (

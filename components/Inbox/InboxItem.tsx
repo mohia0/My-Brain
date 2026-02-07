@@ -107,11 +107,19 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                                 ref={titleRef}
                                 className={clsx(styles.title, isOverflowing && styles.canAnimate)}
                             >
-                                {item.metadata?.title || 'Untitled Link'}
+                                {item.metadata?.title || 'Untitled Idea'}
                             </div>
                         </div>
                         <div className={styles.infoRow}>
-                            <div className={styles.domain}>{new URL(item.content).hostname}</div>
+                            <div className={styles.domain}>
+                                {(() => {
+                                    try {
+                                        return new URL(item.content).hostname;
+                                    } catch {
+                                        return 'Link';
+                                    }
+                                })()}
+                            </div>
                             <div className={styles.itemDateSmall}>
                                 {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
@@ -147,7 +155,7 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                     <button
                         className={styles.actionBtn}
                         onClick={handleMoveToCanvas}
-                        title="Move to Canvas"
+                        title="Move to Brainia"
                     >
                         <ArrowRight size={14} />
                     </button>

@@ -89,7 +89,7 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                         <div className={styles.fileInputWrapper}>
                             {value && (value.startsWith('data:') || value.startsWith('http')) && (
                                 <div className={styles.imagePreviewWrapper}>
-                                    <img src={value} alt="Preview" className={styles.imagePreview} />
+                                    {value && <img src={value} alt="Preview" className={styles.imagePreview} />}
                                     <button
                                         type="button"
                                         className={styles.removeImageBtn}

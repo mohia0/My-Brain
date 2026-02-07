@@ -58,13 +58,20 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     };
 
     return (
-        <div className={clsx(styles.card, isFolder && styles.folderCard)} onClick={onClick}>
+        <div
+            className={clsx(styles.card, isFolder && styles.folderCard)}
+            onClick={onClick}
+            style={isFolder && (item as any).color ? {
+                backgroundColor: `${(item as any).color}15`,
+                borderColor: `${(item as any).color}30`
+            } : {}}
+        >
             <div className={styles.mainContent}>
                 {isImage && imageUrl ? (
                     <div className={styles.imageLayout}>
                         <img src={imageUrl} alt="" className={styles.thumb} />
                         <div className={styles.info}>
-                            <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Capture' : 'Shared Link')}</div>
+                            <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Idea' : 'Shared Idea')}</div>
                             <div className={styles.metaRow}>
                                 <span className={styles.sub}>{hostname(item.content)}</span>
                                 <span className={styles.dot}>•</span>
@@ -74,8 +81,14 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                     </div>
                 ) : (
                     <div className={styles.simpleLayout}>
-                        <div className={clsx(styles.iconBox, isFolder && styles.folderIconBox)}>
-                            {isFolder && <Folder size={20} />}
+                        <div
+                            className={clsx(styles.iconBox, isFolder && styles.folderIconBox)}
+                            style={isFolder && (item as any).color ? {
+                                backgroundColor: `${(item as any).color}25`,
+                                color: (item as any).color
+                            } : {}}
+                        >
+                            {isFolder && <Folder size={20} fill={((item as any).color ? `${(item as any).color}40` : "transparent")} />}
                             {item.type === 'text' && <FileText size={20} />}
                             {item.type === 'link' && !isFolder && (
                                 <img
@@ -92,7 +105,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                             </div>
                             <div className={styles.metaRow}>
                                 <span className={styles.sub}>
-                                    {isFolder ? 'Folder' : (item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Note')}
+                                    {isFolder ? 'Folder' : (item.type === 'link' ? hostname(item.content) : item.type === 'image' ? 'Image' : 'Idea')}
                                 </span>
                                 <span className={styles.dot}>•</span>
                                 <span className={styles.time}>{getRelativeTime(item.created_at)}</span>

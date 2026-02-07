@@ -37,8 +37,8 @@ export default function Toolbar() {
         setModalConfig({
             isOpen: true,
             type,
-            title: type === 'folder' ? 'Create Folder' : `Add ${type === 'image' ? 'Image' : type === 'link' ? 'Link URL' : 'Note'}`,
-            placeholder: type === 'folder' ? 'Folder Name' : type === 'text' ? 'Note Title' : 'example.com',
+            title: type === 'folder' ? 'Create Folder' : `Add ${type === 'image' ? 'Image' : type === 'link' ? 'Link URL' : 'Idea'}`,
+            placeholder: type === 'folder' ? 'Folder Name' : type === 'text' ? 'Idea Title' : 'example.com',
             mode: type === 'image' ? 'file' : 'text'
         });
     };
@@ -66,7 +66,7 @@ export default function Toolbar() {
             if (type === 'link' && content && !/^https?:\/\//i.test(content)) {
                 content = 'https://' + content;
             }
-            const title = type === 'text' ? value : 'New Item';
+            const title = type === 'text' ? value : 'New Idea';
 
             addItem({
                 id, user_id: 'user-1', type: type as any,
@@ -147,7 +147,7 @@ export default function Toolbar() {
                     <button
                         className={clsx(styles.toolBtn, isAddOpen && styles.active)}
                         onClick={toggleAddMenu}
-                        title="Add Item"
+                        title="Add Idea"
                     >
                         <Plus size={18} style={{
                             transform: isAddOpen ? 'rotate(135deg)' : 'none',

@@ -3,7 +3,8 @@
     top: 80px;
     left: 20px;
     width: 300px;
-    max-height: calc(85vh - 80px);
+    max-height: calc(100vh - 80px - 200px);
+    /* Stop above MiniMap and bottom buffer */
     background: var(--modal-bg);
     border: 1px solid var(--card-border);
     border-radius: 16px;
@@ -109,14 +110,30 @@
 }
 
 .content {
+    flex: 1;
     padding: 12px;
-    overflow-y: auto;
+    overflow-y: overlay;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    /* Custom Scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--card-border) transparent;
+}
+
+/* Minimal Custom Scrollbar */
+.content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 10px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 .emptyState {
@@ -130,6 +147,7 @@
 /* --- ITEM STYLES --- */
 
 .inboxItem {
+    flex-shrink: 0;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 10px;

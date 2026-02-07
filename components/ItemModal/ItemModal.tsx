@@ -41,18 +41,51 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const titleRef = useRef<HTMLDivElement>(null);
     const headerTitleRef = useRef<HTMLDivElement>(null);
     const scrollBodyRef = useRef<HTMLDivElement>(null);
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 150, scrollBodyRef);
 
     useEffect(() => {
         if (item) {
-            setContent(item.content);
-            setTitle(item.metadata?.title || '');
+            // Only update local state if not currently editing (to avoid jumping)
+            if (!isEditingTitle) setTitle(item.metadata?.title || '');
             setDescription(item.metadata?.description || '');
+            setContent(item.content);
             if (item.type === 'link') setUrl(item.content);
             fetchItemTags();
         }
     }, [item?.id]);
+
+    // Live Auto-save Effect
+    useEffect(() => {
+        if (!item) return;
+
+        // Check if anything has actually changed
+        const hasTitleChanged = title !== (item.metadata?.title || '');
+        const hasDescChanged = description !== (item.metadata?.description || '');
+        const hasContentChanged = content !== item.content;
+
+        if (!hasTitleChanged && !hasDescChanged && !hasContentChanged) {
+            return;
+        }
+
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+        setIsSaving(true);
+        saveTimeoutRef.current = setTimeout(async () => {
+            await updateItemContent(item.id, {
+                content: content,
+                metadata: { ...item.metadata, title, description }
+            });
+            setIsSaving(false);
+            console.log("[LiveSync] Auto-saved item");
+        }, 1500); // 1.5s debounce for content stability
+
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, [title, description, content]);
 
     useEffect(() => {
         const checkOverflow = () => {
@@ -87,10 +120,14 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     if (!item) return null;
 
     const handleSave = () => {
-        updateItemContent(item.id, {
-            content: isLink ? url : content,
-            metadata: { ...item.metadata, title, description }
-        });
+        // Final explicit save if any pending
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+            updateItemContent(item.id, {
+                content: isLink ? url : content,
+                metadata: { ...item.metadata, title, description }
+            });
+        }
         onClose();
     };
 
@@ -118,7 +155,15 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     };
 
     const handleConvertToNote = () => {
-        updateItemContent(item.id, { type: 'text', content: `Origin: ${item.content} \n\n${item.metadata?.description || ''}` });
+        const newMetadata = { ...item.metadata };
+        if (item.type === 'image') {
+            newMetadata.image = item.content; // Save image path to metadata so it's not lost
+        }
+        updateItemContent(item.id, {
+            type: 'text',
+            content: item.type === 'link' ? `Origin: ${item.content}\n\n${item.metadata?.description || ''}` : '',
+            metadata: newMetadata
+        });
         onClose();
     };
 
@@ -161,7 +206,12 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             onTouchEnd={onTouchEnd}
         >
             <div
-                className={clsx(styles.modal, isLink && styles.compactModal)}
+                className={clsx(
+                    styles.modal,
+                    isLink && styles.compactModal,
+                    isNote && styles.noteModal,
+                    item.type === 'image' && styles.imageModal
+                )}
                 onClick={e => e.stopPropagation()}
                 style={{
                     transform: offset > 0 ? `translateY(${offset}px)` : undefined,
@@ -171,68 +221,83 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 <div className={styles.swipeHandle} />
                 <div className={clsx(styles.modalContent, isLink && styles.compactContent)}>
 
-                    {/* LEFT COLUMN: EDITOR / PREVIEW */}
+                    {/* LEFT COLUMN: PRIMARY VIEW */}
                     <div className={styles.leftColumn}>
-                        {isNote && (
-                            <div className={styles.noteTitleSection}>
-                                {isEditingTitle ? (
-                                    <input
-                                        autoFocus
-                                        className={styles.noteTitleInput}
-                                        value={title}
-                                        onChange={e => setTitle(e.target.value)}
-                                        onBlur={() => setIsEditingTitle(false)}
-                                        onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
-                                        placeholder="Note Title"
-                                    />
-                                ) : (
-                                    <div className={styles.noteTitleDisplay} onClick={() => setIsEditingTitle(true)}>
-                                        {title || "Note Title"}
-                                    </div>
-                                )}
+                        {isNote ? (
+                            <div className={styles.noteLayout}>
+                                <div className={styles.noteTitleSection}>
+                                    {isEditingTitle ? (
+                                        <input
+                                            autoFocus
+                                            className={styles.noteTitleInput}
+                                            value={title}
+                                            onChange={e => setTitle(e.target.value)}
+                                            onBlur={() => setIsEditingTitle(false)}
+                                            onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
+                                            placeholder="Idea Title"
+                                        />
+                                    ) : (
+                                        <div className={styles.noteTitleDisplay} onClick={() => setIsEditingTitle(true)}>
+                                            {title || "Idea Title"}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={styles.editorWrapper}>
+                                    <BlockEditor initialContent={content} onChange={setContent} />
+                                </div>
                             </div>
-                        )}
-
-                        {(isLink || item.type === 'image') && (
-                            <>
+                        ) : (
+                            <div className={styles.visualContainer}>
                                 <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageReplace} />
                                 <button className={styles.replaceImageBtn} onClick={() => fileInputRef.current?.click()}>
                                     <ImageIcon size={18} />
                                     <span>Replace Image</span>
                                 </button>
-                            </>
-                        )}
 
-
-                        {isLink && screenshotUrl ? (
-                            <img src={screenshotUrl} className={styles.previewImage} alt="Preview" />
-                        ) : isLink ? (
-                            <div className={styles.previewPlaceholder}><ExternalLink size={48} /><span>No Snapshot</span></div>
-                        ) : (item.type === 'image' && content) ? (
-                            <img src={content} className={styles.previewImage} alt="Image" />
-                        ) : (
-                            <div className={styles.editorWrapper}>
-                                <BlockEditor initialContent={content} onChange={setContent} />
-                            </div>
-                        )}
-
-                        {isLink && (
-                            <div className={styles.imageOverlay}>
-                                <div className={styles.titleWrapper}>
-                                    <div ref={titleRef} className={clsx(styles.overlayTitle, isOverflowing && styles.canAnimate)}>
-                                        {title || 'Untitled Link'}
-                                    </div>
-                                </div>
-                                <div className={styles.overlayDomain}>
-                                    {url && <img src={`https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`} className={styles.favicon} alt="" />}
-                                    {url ? new URL(url).hostname : 'No Source'}
-                                </div>
+                                {item.type === 'image' ? (
+                                    content ? (
+                                        <img src={content} className={styles.previewImage} alt="Idea" />
+                                    ) : (
+                                        <div className={styles.previewPlaceholder}>
+                                            <ImageIcon size={48} />
+                                            <span>Image Missing</span>
+                                        </div>
+                                    )
+                                ) : isLink ? (
+                                    <>
+                                        {screenshotUrl ? (
+                                            <img src={screenshotUrl} className={styles.previewImage} alt="Snapshot" />
+                                        ) : (
+                                            <div className={styles.previewPlaceholder}>
+                                                <ExternalLink size={48} />
+                                                <span>No Snapshot</span>
+                                            </div>
+                                        )}
+                                        <div className={styles.imageOverlay}>
+                                            <div className={styles.titleWrapper}>
+                                                <div ref={titleRef} className={clsx(styles.overlayTitle, isOverflowing && styles.canAnimate)}>
+                                                    {title || 'Untitled Idea'}
+                                                </div>
+                                            </div>
+                                            <div className={styles.overlayDomain}>
+                                                {url && (
+                                                    <img
+                                                        src={`https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`}
+                                                        className={styles.favicon}
+                                                        alt=""
+                                                    />
+                                                )}
+                                                {url ? new URL(url).hostname : 'No Source'}
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : null}
                             </div>
                         )}
                     </div>
 
                     {/* RIGHT COLUMN: METADATA */}
-                    <div className={clsx(styles.rightColumn, isNote && styles.compactMetadata)}>
+                    <div className={clsx(styles.rightColumn, (isNote || item.type === 'image') && styles.compactMetadata)}>
                         <div className={styles.header}>
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 {!isNote && (
@@ -254,6 +319,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                         </div>
                                     )
                                 )}
+                                {isSaving && <div className={styles.savingIndicator}>Saving...</div>}
                                 <div className={styles.timestamp}>
                                     {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
@@ -306,7 +372,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <div className={styles.footerLeft}>
                                 <button className={styles.deleteBtn} onClick={handleDelete} onMouseLeave={() => setIsDeleting(false)}>{isDeleting ? "Confirm?" : <Trash2 size={16} />}</button>
                                 <button className={styles.archiveBtn} onClick={handleArchive}><Archive size={16} /></button>
-                                {isLink && <button className={styles.convertBtn} onClick={handleConvertToNote}>Note</button>}
+                                {(isLink || item.type === 'image') && <button className={styles.convertBtn} onClick={handleConvertToNote}>Idea</button>}
                             </div>
                             <button className={styles.saveBtn} onClick={handleSave}><Save size={16} /> Save</button>
                         </div>

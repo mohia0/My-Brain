@@ -111,13 +111,15 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 onClick={onClick}
             >
                 <div className={styles.header}>
-                    <img
-                        src={`https://www.google.com/s2/favicons?domain=${safeHostname(item.content)}`}
-                        alt=""
-                        width={16}
-                        height={16}
-                        onError={(e) => e.currentTarget.style.display = 'none'}
-                    />
+                    {safeHostname(item.content) && (
+                        <img
+                            src={`https://www.google.com/s2/favicons?domain=${safeHostname(item.content)}`}
+                            alt=""
+                            width={16}
+                            height={16}
+                            onError={(e) => e.currentTarget.style.display = 'none'}
+                        />
+                    )}
                     <span className={styles.title}>{item.metadata?.title || item.content}</span>
                 </div>
                 {renderActions()}
@@ -136,7 +138,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
             >
-                <img src={item.metadata.image} className={styles.captureThumb} draggable={false} />
+                {item.metadata?.image && <img src={item.metadata.image} className={styles.captureThumb} draggable={false} />}
                 <div className={styles.captureInfo}>
                     <div className={styles.captureTitle}>{item.metadata.title}</div>
                     <div className={styles.captureDomain}>{safeHostname(item.content)}</div>
@@ -163,7 +165,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         >
             <div className={styles.header}>
                 {getIcon()}
-                <span className={styles.title}>{item.metadata?.title || 'Untitled'}</span>
+                <span className={styles.title}>{item.metadata?.title || 'Untitled Idea'}</span>
             </div>
             <div className={styles.content}>
                 {item.type === 'image' ? (
@@ -183,7 +185,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                                         Array.isArray(b.content)
                                             ? b.content.map((c: any) => c.text).join('')
                                             : b.content || ''
-                                    ).join('\n') || "Empty Note";
+                                    ).join('\n') || "Empty Idea";
                                 } catch {
                                     return "Invalid Content";
                                 }

@@ -21,6 +21,22 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
 
     const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 120, scrollContentRef);
 
+    const [isEditingName, setIsEditingName] = React.useState(false);
+    const [tempName, setTempName] = React.useState('');
+    const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    React.useEffect(() => {
+        if (folder) setTempName(folder.name);
+    }, [folder?.id]);
+
+    const handleNameChange = (newName: string) => {
+        setTempName(newName);
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => {
+            updateFolderContent(folderId, { name: newName });
+        }, 1000);
+    };
+
     // Check for title overflow
     React.useEffect(() => {
         const checkOverflow = () => {
@@ -100,13 +116,24 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                         </div>
                         <div className={styles.titleLayout}>
                             <div className={styles.nameRow}>
-                                <div className={styles.folderNameWrapper}>
-                                    <span
-                                        ref={titleRef}
-                                        className={clsx(styles.folderName, isOverflowing && styles.canAnimate)}
-                                    >
-                                        {folder.name}
-                                    </span>
+                                <div className={styles.folderNameWrapper} onClick={() => setIsEditingName(true)}>
+                                    {isEditingName ? (
+                                        <input
+                                            autoFocus
+                                            className={styles.folderNameInput}
+                                            value={tempName}
+                                            onChange={e => handleNameChange(e.target.value)}
+                                            onBlur={() => setIsEditingName(false)}
+                                            onKeyDown={e => e.key === 'Enter' && setIsEditingName(false)}
+                                        />
+                                    ) : (
+                                        <span
+                                            ref={titleRef}
+                                            className={clsx(styles.folderName, isOverflowing && styles.canAnimate)}
+                                        >
+                                            {folder.name}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className={styles.colorDots}>
                                     {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
@@ -119,7 +146,7 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                                     ))}
                                 </div>
                             </div>
-                            <span className={styles.itemCount}>{folderItems.length} items collected</span>
+                            <span className={styles.itemCount}>{folderItems.length} ideas collected</span>
                         </div>
                     </div>
                     <div className={styles.actions}>
@@ -138,7 +165,7 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                     {folderItems.length === 0 ? (
                         <div className={styles.emptyState}>
                             <FolderOpen size={48} strokeWidth={1} style={{ opacity: 0.2 }} />
-                            <span>This folder is currently empty</span>
+                            <span>No ideas in this folder yet</span>
                         </div>
                     ) : (
                         <div className={styles.grid}>
@@ -154,7 +181,7 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                                     <button
                                         className={styles.removeBtn}
                                         onClick={(e) => handleRemoveFromFolder(item.id, e)}
-                                        title="Move to Canvas"
+                                        title="Move to Ideas"
                                     >
                                         <LogOut size={14} />
                                     </button>
@@ -173,8 +200,11 @@ export default function FolderModal({ folderId, onClose, onItemClick }: { folder
                                         <span className={styles.itemTitle}>{item.metadata?.title || 'Untitled'}</span>
                                         <div className={styles.itemMeta}>
                                             <span>
-                                                {item.type === 'link' ? new URL(item.content).hostname :
-                                                    item.type === 'text' ? 'Note' : 'Image'}
+                                                {item.type === 'link' ? (() => {
+                                                    try { return new URL(item.content).hostname; }
+                                                    catch { return 'Link'; }
+                                                })() :
+                                                    item.type === 'text' ? 'Idea' : 'Image'}
                                             </span>
                                             <span className={styles.itemDate}>
                                                 {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}

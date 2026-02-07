@@ -2,23 +2,22 @@
     padding: 20px;
     min-height: 100vh;
     position: relative;
-    overflow-x: hidden;
 }
 
 .pullIndicator {
     position: absolute;
-    top: -60px;
+    top: 0;
     left: 0;
     right: 0;
-    height: 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    z-index: 100;
-    transition: all 0.2s ease;
-    gap: 4px;
+    z-index: 50;
+    transition: opacity 0.2s ease;
+    transform: translateY(-100%);
+    /* Start above the container */
 }
 
 .refreshIcon {
@@ -28,21 +27,22 @@
 }
 
 .refreshText {
-    font-size: 10px;
-    font-weight: 700;
-    color: #444;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
+    opacity: 0.9;
 }
 
 .refreshSpinner {
-    width: 24px;
-    height: 24px;
-    border: 2.5px solid rgba(255, 255, 255, 0.05);
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    box-shadow: 0 0 15px rgba(124, 77, 255, 0.1);
+    box-shadow: 0 0 20px var(--accent-glow);
 }
 
 @keyframes spin {

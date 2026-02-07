@@ -54,7 +54,7 @@ export default function MobileHeader({ onResultClick }: MobileHeaderProps) {
                     <Search size={18} className={styles.searchIcon} />
                     <input
                         autoFocus
-                        placeholder="Search your brain..."
+                        placeholder="Search your ideas..."
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                         className={styles.searchInput}

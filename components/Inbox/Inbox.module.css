@@ -36,11 +36,20 @@
     height: 100%;
     width: 100%;
     justify-content: center;
+    align-items: center;
+    /* Ensure vertical centering too */
     background: transparent;
+    gap: 0;
+}
+
+.collapsed .headerTitle {
+    gap: 0;
+    justify-content: center;
 }
 
 .collapsed .headerTitle span,
-.collapsed .collapseBtn {
+.collapsed .collapseBtn,
+.collapsed .header>div:first-child {
     display: none;
 }
 

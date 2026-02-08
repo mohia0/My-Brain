@@ -124,18 +124,22 @@ export default function Home() {
 
       if (viewOverride === 'desktop') {
         setIsMobile(false);
-        console.log("[Platform] Forced Desktop view via URL.");
         return;
       }
       if (viewOverride === 'mobile') {
         setIsMobile(true);
-        console.log("[Platform] Forced Mobile view via URL.");
         return;
       }
 
-      // Default to Mobile for easier Android Studio sync.
-      setIsMobile(true);
-      console.log("[Platform] Defaulting to Mobile view. Use ?view=desktop for Canvas.");
+      // Check for Capacitor or mobile screen size
+      const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
+      const isSmallScreen = window.innerWidth <= 768;
+
+      if (isCapacitor || isSmallScreen) {
+        setIsMobile(true);
+      } else {
+        setIsMobile(false);
+      }
     };
 
     checkMobile();

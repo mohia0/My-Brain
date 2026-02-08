@@ -51,10 +51,9 @@ export default function MobilePage() {
         };
     }, []);
 
-    if (loading) return <LoadingScreen isFading={false} />;
-
     return (
         <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
+            {/* Background Orb */}
             <div style={{
                 position: 'fixed',
                 top: '85vh',
@@ -74,7 +73,9 @@ export default function MobilePage() {
             </div>
 
             <div style={{ position: 'relative', zIndex: 1 }}>
-                {!session ? (
+                {loading ? (
+                    <LoadingScreen isFading={false} />
+                ) : !session ? (
                     <AuthModal onLogin={() => window.location.reload()} />
                 ) : (
                     <MobilePageContent session={session} />

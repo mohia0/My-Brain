@@ -11,7 +11,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        registerPlugin(SendIntent.class);
+        registerPlugin(com.gustavosanjose.sendintentplugin.SendIntent.class);
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
@@ -24,7 +24,6 @@ public class MainActivity extends BridgeActivity {
     public void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        // The plugin usually handles this, but we log it for debugging
         handleIntent(intent);
     }
 
@@ -35,11 +34,47 @@ public class MainActivity extends BridgeActivity {
         String type = intent.getType();
         Log.d(TAG, "Handling intent: action=" + action + ", type=" + type);
 
-        // Debug: Log extras for complex sharing scenarios
-        Bundle extras = intent.getExtras();
-        if (extras != null) {
-            for (String key : extras.keySet()) {
-                Log.d(TAG, "Intent Extra: " + key + " = " + extras.get(key));
+        if (Intent.ACTION_SEND.equals(action) || Intent.ACTION_SEND_MULTIPLE.equals(action)) {
+            // Re-trigger the plugin manually for cold starts because some old plugins don't
+            // handle them
+            try {
+                Bundle bundle = intent.getExtras();
+                if (bundle != null) {
+                    com.getcapacitor.JSObject extras = new com.getcapacitor.JSObject();
+                    for (String key : bundle.keySet()) {
+                        Object value = bundle.get(key);
+                        // Convert specific types to string for JS bridge safety
+                        if (value instanceof android.net.Uri) {
+                            extras.put(key, value.toString());
+                        } else if (value instanceof java.util.ArrayList) {
+                            java.util.ArrayList list = (java.util.ArrayList) value;
+                            com.getcapacitor.JSArray array = new com.getcapacitor.JSArray();
+                            for (Object o : list) {
+                                if (o instanceof android.net.Uri)
+                                    array.put(o.toString());
+                                else
+                                    array.put(o);
+                            }
+                            extras.put(key, array);
+                        } else {
+                            extras.put(key, value);
+                        }
+                    }
+
+                    com.getcapacitor.JSObject ret = new com.getcapacitor.JSObject();
+                    ret.put("extras", extras);
+
+                    // Manually notify the listeners on the "SendIntent" plugin
+                    // This creates a "retained" event that JS will receive when it adds the
+                    // listener
+                    com.getcapacitor.Plugin plugin = getBridge().getPlugin("SendIntent").getInstance();
+                    if (plugin != null) {
+                        plugin.notifyListeners("appSendActionIntent", ret, true);
+                        Log.d(TAG, "Notified SendIntent listeners manually");
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing share intent", e);
             }
         }
     }

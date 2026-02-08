@@ -57,30 +57,44 @@ export default function MobilePageContent({ session }: { session: any }) {
             try {
                 // 1. Handle Sharing Intents
                 console.log("[MobileInit] Initializing SendIntent. User:", session?.user?.id);
-                // Accessing via window as Capacitor.Plugins is deprecated in Capacitor 3+
-                const cap = (window as any).Capacitor;
-                const SendIntent = cap?.Plugins?.SendIntent;
+
+                // Modern Capacitor 3+ way to register/access plugins
+                const { registerPlugin } = await import('@capacitor/core');
+                const SendIntent = registerPlugin<any>('SendIntent');
 
                 if (SendIntent) {
-                    if (SendIntent.removeAllListeners) { try { await SendIntent.removeAllListeners(); } catch (e) { } }
+                    // Remove existing listeners to avoid duplicates, but only for the App plugin
+                    // For SendIntent, we want to keep the retained event if it's a cold start
+
                     SendIntent.addListener('appSendActionIntent', (data: any) => {
                         console.log("[MobileShare] Listener triggered", !!data);
                         handleSharedContent(data);
                     });
 
-                    if (SendIntent.checkSendIntentReceived) {
-                        const result = await SendIntent.checkSendIntentReceived();
-                        if (result && (result.value || result.extras)) {
-                            console.log("[MobileShare] Cold start share detected");
-                            handleSharedContent(result);
+                    // Check for cold start share
+                    // Note: Some versions of the plugin don't support this, so we check existence
+                    if (typeof SendIntent.checkSendIntentReceived === 'function') {
+                        try {
+                            const result = await SendIntent.checkSendIntentReceived();
+                            if (result && (result.value || result.extras || result.files)) {
+                                console.log("[MobileShare] Cold start share detected via checkSendIntentReceived");
+                                handleSharedContent(result);
+                            }
+                        } catch (e) {
+                            console.warn("[MobileShare] checkSendIntentReceived failed or not implemented", e);
                         }
                     }
                 }
 
                 // 2. Handle System Back Button (Android)
-                const AppPlugin = (window as any).Capacitor?.Plugins?.App;
+                const AppPlugin = registerPlugin<any>('App');
                 if (AppPlugin) {
                     console.log("[MobileInit] Setting up Back Button listener");
+                    // Important: remove previous listeners for App to avoid multiple fires on re-renders
+                    if (AppPlugin.removeAllListeners) {
+                        try { await AppPlugin.removeAllListeners(); } catch (e) { }
+                    }
+
                     AppPlugin.addListener('backButton', (data: { canGoBack: boolean }) => {
                         const backEvent = new CustomEvent('systemBack', { cancelable: true });
                         window.dispatchEvent(backEvent);
@@ -189,34 +203,39 @@ export default function MobilePageContent({ session }: { session: any }) {
             data.text ||
             data.url ||
             ""
-        ).trim();
+        ).toString().trim();
 
         // Robust file detection
         let processedFiles = data.files || [];
 
-        // Check for single file in extra stream (Standard Android approach)
+        // Check for file in extra stream (Standard Android approach)
         const streamUri = extras['android.intent.extra.STREAM'];
-        const dataUri = data.uri || data.path; // ONLY use uri/path for files, not .url
+        const dataUri = data.uri || data.path;
 
         if (processedFiles.length === 0 && (streamUri || dataUri)) {
-            const finalUri = streamUri || dataUri;
-            const mime = data.mimeType || data.type || "";
-            const uriStr = finalUri.toString();
-            console.log(`[MobileShare] Single Stream/Data URI detected: ${uriStr}, Mime: ${mime}`);
+            const finalUris = Array.isArray(streamUri) ? streamUri : [streamUri || dataUri];
 
-            const definitelyImage = mime.startsWith('image/') ||
-                /\.(jpg|jpeg|png|gif|webp)$/i.test(uriStr) ||
-                uriStr.includes('com.google.android.apps.photos.contentprovider') ||
-                uriStr.startsWith('content://');
+            for (const uri of finalUris) {
+                if (!uri) continue;
+                const uriStr = uri.toString();
+                const mime = data.mimeType || data.type || "";
 
-            if (definitelyImage || mime.startsWith('video/')) {
-                processedFiles = [{
-                    uri: finalUri,
-                    mimeType: mime || (definitelyImage ? 'image/jpeg' : 'application/octet-stream'),
-                    name: data.name || "Shared Idea"
-                }];
-                console.log("[MobileShare] Auto-packaged single stream share");
+                console.log(`[MobileShare] Processing URI: ${uriStr}, Mime: ${mime}`);
+
+                const definitelyImage = mime.startsWith('image/') ||
+                    /\.(jpg|jpeg|png|gif|webp)$/i.test(uriStr) ||
+                    uriStr.includes('com.google.android.apps.photos.contentprovider') ||
+                    uriStr.startsWith('content://');
+
+                if (definitelyImage || mime.startsWith('video/')) {
+                    processedFiles.push({
+                        uri: uriStr,
+                        mimeType: mime || (definitelyImage ? 'image/jpeg' : 'application/octet-stream'),
+                        name: data.name || "Shared Item"
+                    });
+                }
             }
+            console.log(`[MobileShare] Auto-packaged ${processedFiles.length} stream share(s)`);
         }
         const hasFiles = processedFiles.length > 0;
 

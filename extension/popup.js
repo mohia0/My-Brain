@@ -452,7 +452,7 @@ function initOrb(selector, options = {}) {
             vec3 col = mix(color1, color2, sin(iTime * 0.5) * 0.5 + 0.5);
             col = mix(color3, col, n);
             
-            float alpha = options_mask ? mask * 0.5 : mask;
+            float alpha = options_mask ? mask * 0.1 : mask;
             gl_FragColor = vec4(col * mask, alpha);
         }
     `.replace('options_mask', options.isBackground ? 'true' : 'false');
@@ -486,10 +486,15 @@ function initOrb(selector, options = {}) {
 
     function update(t) {
         requestAnimationFrame(update);
+        if (gl.canvas.width === 0 || gl.canvas.height === 0) resize();
         program.uniforms.iTime.value = t * 0.001;
         renderer.render({ scene: mesh });
     }
     requestAnimationFrame(update);
+
+    // Explicitly call resize after a few frames to handle extension layout lag
+    setTimeout(resize, 100);
+    setTimeout(resize, 300);
 }
 
 // Start

@@ -12,8 +12,24 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            setIsSignUp(new URLSearchParams(window.location.search).get('signup') === 'true');
+            const params = new URLSearchParams(window.location.search);
+            setIsSignUp(params.get('signup') === 'true');
+
+            // Detect if we landed here from a password recovery link
+            // Supabase often puts this in the hash: #access_token=...&type=recovery
+            if (window.location.hash.includes('type=recovery')) {
+                setRecoveringPassword(true);
+            }
         }
+
+        // Also listen for the specific event from Supabase
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                setRecoveringPassword(true);
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const [email, setEmail] = useState('');
@@ -30,6 +46,8 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
     const [showReset, setShowReset] = useState(false);
     const [resetSent, setResetSent] = useState(false);
     const [signupSuccess, setSignupSuccess] = useState(false);
+    const [recoveringPassword, setRecoveringPassword] = useState(false);
+    const [updateSuccess, setUpdateSuccess] = useState(false);
 
     const handleSuccess = () => {
         setIsFading(true);
@@ -48,12 +66,34 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
         setError(null);
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/auth/reset-password`,
+                redirectTo: `${window.location.origin}/`,
             });
             if (error) setError(error.message);
             else {
                 setResetSent(true);
                 setError(null);
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdatePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+            const { error } = await supabase.auth.updateUser({ password });
+            if (error) setError(error.message);
+            else {
+                setUpdateSuccess(true);
+                setTimeout(() => handleSuccess(), 2000);
             }
         } catch (err: any) {
             setError(err.message);
@@ -129,7 +169,9 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                 <div className={styles.header}>
                     <h1 className={styles.logo}>Brainia</h1>
                     <p className={styles.subtitle}>
-                        {isSignUp ? "Create your infinite digital space." : "Welcome back to your second brain."}
+                        {recoveringPassword
+                            ? "Secure your account with a new password."
+                            : (isSignUp ? "Create your infinite digital space." : "Welcome back to your second brain.")}
                     </p>
                 </div>
 
@@ -159,28 +201,31 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                 )}
 
                 <form onSubmit={handleSubmit} className={styles.form}>
-                    <div className={styles.inputGroup}>
-                        <input
-                            type="email"
-                            placeholder="Email address"
-                            className={styles.input}
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            required
-                            autoComplete="email"
-                        />
-                    </div>
-                    {!showReset && (
+                    {!recoveringPassword && (
+                        <div className={styles.inputGroup}>
+                            <input
+                                type="email"
+                                placeholder="Email address"
+                                className={styles.input}
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                required
+                                autoComplete="email"
+                            />
+                        </div>
+                    )}
+
+                    {(recoveringPassword || !showReset) && (
                         <div className={styles.inputGroup}>
                             <input
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Password"
+                                placeholder={recoveringPassword ? "New Password" : "Password"}
                                 className={styles.input}
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                                 required
                                 minLength={6}
-                                autoComplete={isSignUp ? "new-password" : "current-password"}
+                                autoComplete={isSignUp || recoveringPassword ? "new-password" : "current-password"}
                             />
                             <button
                                 type="button"
@@ -192,15 +237,15 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                         </div>
                     )}
 
-                    {isSignUp && !showReset && (
+                    {(isSignUp || recoveringPassword) && !showReset && (
                         <div className={styles.inputGroup} style={{ animation: 'fadeIn 0.3s ease' }}>
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
-                                placeholder="Confirm Password"
+                                placeholder={recoveringPassword ? "Confirm New Password" : "Confirm Password"}
                                 className={styles.input}
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}
-                                required={isSignUp}
+                                required={isSignUp || recoveringPassword}
                                 minLength={6}
                                 autoComplete="new-password"
                             />
@@ -217,14 +262,15 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                     {error && <div className={styles.error}>{error}</div>}
                     {resetSent && <div className={styles.success}>Password reset link sent! Check your inbox.</div>}
                     {signupSuccess && <div className={styles.signupSuccess}>Please check your email to confirm signup!</div>}
+                    {updateSuccess && <div className={styles.success}>Password updated! Redirecting...</div>}
 
                     <button
                         type="submit"
                         className={styles.button}
                         disabled={loading || !isSupabaseConfigured}
-                        onClick={showReset ? handleResetPassword : handleSubmit}
+                        onClick={recoveringPassword ? handleUpdatePassword : (showReset ? handleResetPassword : handleSubmit)}
                     >
-                        {loading ? 'Processing...' : (showReset ? 'Send Reset Link' : (isSignUp ? 'Create Account' : 'Sign In'))}
+                        {loading ? 'Processing...' : (recoveringPassword ? 'Set New Password' : (showReset ? 'Send Reset Link' : (isSignUp ? 'Create Account' : 'Sign In')))}
                     </button>
                 </form>
 

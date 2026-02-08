@@ -108,6 +108,7 @@ interface ItemsState {
     toggleSelection: (id: string) => void;
     clearSelection: () => void;
     setSelection: (ids: string[]) => void;
+    clearInbox: () => Promise<void>;
     layoutSelectedItems: () => void;
     layoutAllItems: () => void;
     loading: boolean;
@@ -644,6 +645,17 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     })),
     clearSelection: () => set({ selectedIds: [] }),
     setSelection: (ids) => set({ selectedIds: ids }),
+    clearInbox: async () => {
+        const state = get();
+        const inboxItemIds = state.items.filter(i => i.status === 'inbox').map(i => i.id);
+        if (inboxItemIds.length === 0) return;
+
+        set(state => ({
+            items: state.items.filter(i => i.status !== 'inbox')
+        }));
+
+        await supabase.from('items').delete().in('id', inboxItemIds);
+    },
     layoutSelectedItems: () => set((state) => {
         const selectedItems = state.items.filter(i => state.selectedIds.includes(i.id));
         const selectedFolders = state.folders.filter(f => state.selectedIds.includes(f.id));

@@ -27,11 +27,39 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
     const [error, setError] = useState<string | null>(null);
     const [isFading, setIsFading] = useState(false);
 
+    const [showReset, setShowReset] = useState(false);
+    const [resetSent, setResetSent] = useState(false);
+    const [signupSuccess, setSignupSuccess] = useState(false);
+
     const handleSuccess = () => {
         setIsFading(true);
         setTimeout(() => {
             onLogin();
         }, 800);
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) {
+            setError("Please enter your email first.");
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/auth/reset-password`,
+            });
+            if (error) setError(error.message);
+            else {
+                setResetSent(true);
+                setError(null);
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +94,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                     handleSuccess();
                 } else {
                     console.log("Signup successful, confirmation email sent.");
-                    setError("Please check your email to confirm signup!");
+                    setSignupSuccess(true);
                     setLoading(false);
                 }
             } else {
@@ -142,27 +170,29 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                             autoComplete="email"
                         />
                     </div>
-                    <div className={styles.inputGroup}>
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Password"
-                            className={styles.input}
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                            minLength={6}
-                            autoComplete={isSignUp ? "new-password" : "current-password"}
-                        />
-                        <button
-                            type="button"
-                            className={styles.passwordToggle}
-                            onClick={() => setShowPassword(!showPassword)}
-                        >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                    </div>
+                    {!showReset && (
+                        <div className={styles.inputGroup}>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                className={styles.input}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                required
+                                minLength={6}
+                                autoComplete={isSignUp ? "new-password" : "current-password"}
+                            />
+                            <button
+                                type="button"
+                                className={styles.passwordToggle}
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    )}
 
-                    {isSignUp && (
+                    {isSignUp && !showReset && (
                         <div className={styles.inputGroup} style={{ animation: 'fadeIn 0.3s ease' }}>
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
@@ -185,22 +215,43 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                     )}
 
                     {error && <div className={styles.error}>{error}</div>}
+                    {resetSent && <div className={styles.success}>Password reset link sent! Check your inbox.</div>}
+                    {signupSuccess && <div className={styles.signupSuccess}>Please check your email to confirm signup!</div>}
 
-                    <button type="submit" className={styles.button} disabled={loading || !isSupabaseConfigured}>
-                        {loading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}
+                    <button
+                        type="submit"
+                        className={styles.button}
+                        disabled={loading || !isSupabaseConfigured}
+                        onClick={showReset ? handleResetPassword : handleSubmit}
+                    >
+                        {loading ? 'Processing...' : (showReset ? 'Send Reset Link' : (isSignUp ? 'Create Account' : 'Sign In'))}
                     </button>
                 </form>
 
                 <div className={styles.footer}>
-                    <div className={styles.toggleMeta}>
-                        {isSignUp ? "Already have an account?" : "New to Brainia?"}
-                        <span
-                            className={styles.toggleLink}
-                            onClick={() => { setError(null); setIsSignUp(!isSignUp); }}
-                        >
-                            {isSignUp ? "Sign In" : "Create Account"}
-                        </span>
-                    </div>
+                    {showReset ? (
+                        <div className={styles.toggleMeta}>
+                            Wait, I remember!
+                            <span className={styles.toggleLink} onClick={() => setShowReset(false)}>Go Back</span>
+                        </div>
+                    ) : (
+                        <>
+                            <div className={styles.toggleMeta}>
+                                {isSignUp ? "Already have an account?" : "New to Brainia?"}
+                                <span
+                                    className={styles.toggleLink}
+                                    onClick={() => { setError(null); setIsSignUp(!isSignUp); }}
+                                >
+                                    {isSignUp ? "Sign In" : "Create Account"}
+                                </span>
+                            </div>
+                            {!isSignUp && (
+                                <div className={styles.resetLink} onClick={() => { setError(null); setShowReset(true); }}>
+                                    Forgot Password?
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
         </div>

@@ -12,6 +12,11 @@ const MobilePageContent = dynamic(
     { ssr: false }
 );
 
+const Orb = dynamic(
+    () => import('@/components/Orb/Orb'),
+    { ssr: false }
+);
+
 export default function MobilePage() {
     const [session, setSession] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -48,9 +53,33 @@ export default function MobilePage() {
 
     if (loading) return <LoadingScreen isFading={false} />;
 
-    if (!session) {
-        return <AuthModal onLogin={() => window.location.reload()} />;
-    }
+    return (
+        <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
+            <div style={{
+                position: 'fixed',
+                top: '85vh',
+                left: '-100vw',
+                width: '300vw',
+                height: '300vw',
+                opacity: 0.1,
+                pointerEvents: 'none',
+                zIndex: 0,
+                filter: 'blur(30px)',
+            }}>
+                <Orb
+                    hue={280}
+                    hoverIntensity={0.2}
+                    forceHoverState={true}
+                />
+            </div>
 
-    return <MobilePageContent session={session} />;
+            <div style={{ position: 'relative', zIndex: 1 }}>
+                {!session ? (
+                    <AuthModal onLogin={() => window.location.reload()} />
+                ) : (
+                    <MobilePageContent session={session} />
+                )}
+            </div>
+        </div>
+    );
 }

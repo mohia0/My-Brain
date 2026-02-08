@@ -30,18 +30,19 @@
 }
 
 .logoDotWrapper {
-    width: 120px;
-    height: 44px;
+    width: 28px;
+    height: 28px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
+    margin-right: 6px;
+    transform: translateY(-2px);
 }
 
 .logo h1 {
-    position: absolute;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 850;
     letter-spacing: -0.02em;
     color: var(--foreground);
@@ -49,8 +50,8 @@
     z-index: 5;
     pointer-events: none;
     line-height: 1;
-    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     white-space: nowrap;
+    transform: translateY(-2px);
 }
 
 /* Logo mask removed for better theme support */

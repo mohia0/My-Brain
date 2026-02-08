@@ -30,6 +30,29 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+#orb-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+#orb-bg canvas {
+    position: absolute !important;
+    top: 65% !important;
+    left: -100% !important;
+    width: 300% !important;
+    height: 300% !important;
+    opacity: 0.3;
+    filter: blur(40px);
 }
 
 /* Header */
@@ -46,11 +69,24 @@ header {
     gap: 8px;
 }
 
-.logo-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--text);
-    border-radius: 50%;
+.logo-orb-wrapper {
+    width: 24px;
+    height: 24px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: -2px;
+}
+
+.logo-orb-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    opacity: 1 !important;
+    filter: none !important;
 }
 
 h1 {

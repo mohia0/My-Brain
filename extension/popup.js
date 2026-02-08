@@ -1,6 +1,7 @@
 
 // Force sync
 import { createClient } from '@supabase/supabase-js';
+import { Renderer, Program, Mesh, Triangle, Vec3 } from 'ogl';
 
 // --- CONFIG ---
 const SUPABASE_URL = 'https://mopfyefzzdtohfxczdke.supabase.co';
@@ -366,5 +367,132 @@ saveNoteBtn.addEventListener('click', async () => {
 });
 
 
+// --- BACKGROUND ORB ---
+
+function initOrb(selector, options = {}) {
+    console.log(`[Extension] Initializing orb in ${selector}...`);
+    const container = document.querySelector(selector);
+    if (!container) return;
+
+    const renderer = new Renderer({ alpha: true, premultipliedAlpha: true });
+    const gl = renderer.gl;
+    container.appendChild(gl.canvas);
+
+    const vert = /* glsl */ `
+        precision highp float;
+        attribute vec2 position;
+        attribute vec2 uv;
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+    `;
+
+    const frag = /* glsl */ `
+        precision highp float;
+        uniform float iTime;
+        uniform vec3 iResolution;
+        uniform float hover;
+        varying vec2 vUv;
+
+        vec3 rgb2yiq(vec3 c) {
+            float y = dot(c, vec3(0.299, 0.587, 0.114));
+            float i = dot(c, vec3(0.596, -0.274, -0.322));
+            float q = dot(c, vec3(0.211, -0.523, 0.312));
+            return vec3(y, i, q);
+        }
+        vec3 yiq2rgb(vec3 c) {
+            float r = c.x + 0.956 * c.y + 0.621 * c.z;
+            float g = c.x - 0.272 * c.y - 0.647 * c.z;
+            float b = c.x - 1.106 * c.y + 1.703 * c.z;
+            return vec3(r, g, b);
+        }
+        vec3 adjustHue(vec3 color, float hueDeg) {
+            float hueRad = hueDeg * 3.14159265 / 180.0;
+            vec3 yiq = rgb2yiq(color);
+            float cosA = cos(hueRad); float sinA = sin(hueRad);
+            float i = yiq.y * cosA - yiq.z * sinA;
+            float q = yiq.y * sinA + yiq.z * cosA;
+            yiq.y = i; yiq.z = q;
+            return yiq2rgb(yiq);
+        }
+        vec3 hash33(vec3 p3) {
+            p3 = fract(p3 * vec3(0.1031, 0.11369, 0.13787));
+            p3 += dot(p3, p3.yxz + 19.19);
+            return -1.0 + 2.0 * fract(vec3(p3.x + p3.y, p3.x + p3.z, p3.y + p3.z) * p3.zyx);
+        }
+        float snoise3(vec3 p) {
+            const float K1 = 0.333333333; const float K2 = 0.166666667;
+            vec3 i = floor(p + (p.x + p.y + p.z) * K1);
+            vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);
+            vec3 e = step(vec3(0.0), d0 - d0.yzx);
+            vec3 i1 = e * (1.0 - e.zxy); vec3 i2 = 1.0 - e.zxy * (1.0 - e);
+            vec3 d1 = d0 - (i1 - K2); vec3 d2 = d0 - (i2 - K1); vec3 d3 = d0 - 0.5;
+            vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);
+            vec4 n = h * h * h * h * vec4(dot(d0, hash33(i)), dot(d1, hash33(i + i1)), dot(d2, hash33(i + i2)), dot(d3, hash33(i + 1.0)));
+            return dot(vec4(31.316), n);
+        }
+
+        const vec3 baseColor1 = vec3(0.6117, 0.2627, 0.9960);
+        const vec3 baseColor2 = vec3(0.2980, 0.7607, 0.9137);
+        const vec3 baseColor3 = vec3(0.0627, 0.0784, 0.6000);
+
+        void main() {
+            vec2 uv = (vUv * 2.0 - 1.0) * (iResolution.x / iResolution.y);
+            float hue = 280.0;
+            vec3 color1 = adjustHue(baseColor1, hue);
+            vec3 color2 = adjustHue(baseColor2, hue);
+            vec3 color3 = adjustHue(baseColor3, hue);
+
+            float n = snoise3(vec3(uv * 0.6, iTime * 0.2)) * 0.5 + 0.5;
+            float len = length(uv);
+            float mask = smoothstep(1.1, 0.4, len);
+            
+            vec3 col = mix(color1, color2, sin(iTime * 0.5) * 0.5 + 0.5);
+            col = mix(color3, col, n);
+            
+            float alpha = options_mask ? mask * 0.5 : mask;
+            gl_FragColor = vec4(col * mask, alpha);
+        }
+    `.replace('options_mask', options.isBackground ? 'true' : 'false');
+
+    const geometry = new Triangle(gl);
+    const program = new Program(gl, {
+        vertex: vert,
+        fragment: frag,
+        uniforms: {
+            iTime: { value: 0 },
+            iResolution: { value: new Vec3(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height) },
+        },
+        transparent: true
+    });
+
+    const mesh = new Mesh(gl, { geometry, program });
+
+    function resize() {
+        const dpr = 1;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        if (width === 0 || height === 0) return;
+        renderer.setSize(width * dpr, height * dpr);
+        program.uniforms.iResolution.value.set(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Small delay to ensure container is ready
+    setTimeout(resize, 50);
+
+    function update(t) {
+        requestAnimationFrame(update);
+        program.uniforms.iTime.value = t * 0.001;
+        renderer.render({ scene: mesh });
+    }
+    requestAnimationFrame(update);
+}
+
 // Start
 init();
+initOrb('#orb-bg', { isBackground: true });
+initOrb('.logo-orb-wrapper', { isBackground: false });

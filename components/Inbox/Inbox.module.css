@@ -390,6 +390,22 @@
     box-shadow: 0 8px 20px rgba(255, 77, 77, 0.4);
 }
 
+.confirmDelete {
+    width: auto !important;
+    padding: 0 10px;
+    background: #ff4d4d !important;
+    border-color: #ff4d4d !important;
+    color: white !important;
+    box-shadow: 0 8px 20px rgba(255, 77, 77, 0.4) !important;
+}
+
+.sureText {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
 .inboxItem:hover .titleRow,
 .inboxItem:hover .infoRow,
 .inboxItem:hover .meta>.itemDateSmall {

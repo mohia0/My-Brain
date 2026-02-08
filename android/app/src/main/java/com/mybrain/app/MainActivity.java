@@ -11,7 +11,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        registerPlugin(com.gustavosanjose.sendintentplugin.SendIntent.class);
+        registerPlugin(AppSendIntent.class);
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
@@ -64,14 +64,11 @@ public class MainActivity extends BridgeActivity {
                     com.getcapacitor.JSObject ret = new com.getcapacitor.JSObject();
                     ret.put("extras", extras);
 
-                    // Manually notify the listeners on the "SendIntent" plugin
-                    // This creates a "retained" event that JS will receive when it adds the
-                    // listener
-                    com.getcapacitor.Plugin plugin = getBridge().getPlugin("SendIntent").getInstance();
-                    if (plugin != null) {
-                        plugin.notifyListeners("appSendActionIntent", ret, true);
-                        Log.d(TAG, "Notified SendIntent listeners manually");
-                    }
+                    // Instead of manual notify (which is protected), we rely on the plugin
+                    // or the web side checking the intent on start.
+                    // For now, we just ensure the intent is set on the activity
+                    setIntent(intent);
+                    Log.d(TAG, "Share intent set on activity for cold start");
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing share intent", e);

@@ -11,7 +11,7 @@
     border-radius: 30px;
     background: var(--accent);
     color: #fff;
-    border: 4px solid var(--bg-paper);
+    border: 4px solid var(--background);
     box-shadow: 0 4px 20px rgba(124, 77, 255, 0.4);
     display: flex;
     align-items: center;
@@ -23,7 +23,8 @@
 
 .addButton.open {
     background: var(--card-hover);
-    border-color: var(--card-border);
+    border-color: var(--accent);
+    color: var(--foreground);
     transform: scale(0.9);
 }
 

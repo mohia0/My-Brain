@@ -17,16 +17,58 @@
 /* Specific class for grid items (folders) */
 .gridCard {
     min-height: 180px;
-    /* Increased to fit all content comfortably */
-    justify-content: space-between;
+    justify-content: flex-start;
     border-radius: 0 16px 16px 16px;
     padding: 16px 16px 12px;
-    /* Reduced bottom padding slightly to pull buttons up */
     display: flex;
     flex-direction: column;
     position: relative;
     margin-top: 12px;
     min-width: 0;
+    gap: 12px;
+}
+
+.previewGrid {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.grid1 {
+    grid-template-columns: 1fr;
+}
+
+.grid2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.grid4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.miniItem {
+    height: 50px;
+    background: var(--card-hover);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.miniImage {
+    width: 100%;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: var(--background);
+    border: 1px solid var(--card-border);
 }
 
 /* The Folder Tab */
@@ -151,15 +193,9 @@
     border-radius: 14px;
 }
 
+/* Hidden for folders now */
 .folderIconBox {
-    background: transparent;
-    border: none;
-    width: 100%;
-    height: auto;
-    justify-content: flex-start;
-    padding: 0;
-    margin-top: -4px;
-    /* Move icon up towards tab */
+    display: none;
 }
 
 /* Special styling for the folder icon within the card */
@@ -264,8 +300,8 @@
 
 .folderMeta {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: 6px;
 }
 
 .itemCount {
@@ -303,12 +339,9 @@
 }
 
 .gridCard .actions {
+    display: flex;
     padding-top: 12px;
-    padding-bottom: 4px;
-    /* Move buttons slightly up */
-    justify-content: space-between;
-    /* Spread for grid items */
-    margin-top: auto;
+    justify-content: flex-end;
 }
 
 .actionBtn {
@@ -331,7 +364,34 @@
     border-radius: 8px;
 }
 
-.actionBtn:active {
+.folderHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.compactActions {
+    display: flex;
+    gap: 6px;
+}
+
+.compactActionBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.compactActionBtn:active {
     background: var(--card-hover);
     color: var(--foreground);
 }

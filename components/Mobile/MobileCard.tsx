@@ -13,7 +13,7 @@ interface MobileCardProps {
 }
 
 export default function MobileCard({ item, onClick }: MobileCardProps) {
-    const { duplicateItem, removeItem, archiveItem, selectedIds, toggleSelection } = useItemsStore();
+    const { items, duplicateItem, removeItem, archiveItem, selectedIds, toggleSelection } = useItemsStore();
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRemoving, setIsRemoving] = useState(false);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -21,6 +21,8 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     const inSelectionMode = selectedIds.length > 0;
 
     const isFolder = 'type' in item && (item as any).type === 'folder';
+    const folderItems = isFolder ? items.filter(i => i.folder_id === item.id) : [];
+
     const isVideo = item.type === 'video' || item.metadata?.isVideo;
     const isImage = (item.type === 'image' || (item.type === 'link' && item.metadata?.image)) && !isVideo;
     const imageUrl = item.type === 'image' ? item.content : item.metadata?.image;
@@ -152,30 +154,55 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                     </div>
                 ) : (
                     <div className={styles.simpleLayout}>
-                        <div
-                            className={clsx(styles.iconBox, isFolder && styles.folderIconBox)}
-                            style={isFolder && (item as any).color ? {
-                                backgroundColor: `${(item as any).color}25`,
-                                color: (item as any).color
-                            } : {}}
-                        >
-                            {isFolder && <Folder size={24} fill={((item as any).color ? `${(item as any).color}40` : "var(--accent-glow)")} />}
-                            {item.type === 'text' && <FileText size={20} />}
-                            {item.type === 'link' && !isFolder && (
-                                hostname(item.content) ? (
-                                    <img
-                                        src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
-                                        className={styles.favicon}
-                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                    />
-                                ) : (
-                                    <LinkIcon size={20} />
-                                )
-                            )}
-                            {item.type === 'image' && <ImageIcon size={20} />}
-                            {item.type === 'video' && <Video size={20} />}
-                        </div>
+                        {!isFolder && (
+                            <div
+                                className={clsx(styles.iconBox, isFolder && styles.folderIconBox)}
+                                style={isFolder && (item as any).color ? {
+                                    backgroundColor: `${(item as any).color}25`,
+                                    color: (item as any).color
+                                } : {}}
+                            >
+                                {item.type === 'text' && <FileText size={20} />}
+                                {item.type === 'link' && !isFolder && (
+                                    hostname(item.content) ? (
+                                        <img
+                                            src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
+                                            className={styles.favicon}
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        />
+                                    ) : (
+                                        <LinkIcon size={20} />
+                                    )
+                                )}
+                                {item.type === 'image' && <ImageIcon size={20} />}
+                                {item.type === 'video' && <Video size={20} />}
+                            </div>
+                        )}
                         <div className={styles.info}>
+                            {isFolder && folderItems.length > 0 && (
+                                <div className={clsx(
+                                    styles.previewGrid,
+                                    folderItems.length === 1 && styles.grid1,
+                                    folderItems.length === 2 && styles.grid2,
+                                    folderItems.length === 3 && styles.grid3,
+                                    folderItems.length >= 4 && styles.grid4
+                                )}>
+                                    {folderItems.slice(0, 4).map(subItem => {
+                                        if (subItem.type === 'image' || (subItem.type === 'link' && subItem.metadata?.image)) {
+                                            return <img key={subItem.id} src={subItem.type === 'image' ? subItem.content : subItem.metadata?.image} className={styles.miniImage} alt="" />;
+                                        }
+                                        if (subItem.type === 'video' || subItem.metadata?.isVideo) {
+                                            return <div key={subItem.id} className={styles.miniItem}><Video size={12} /></div>;
+                                        }
+                                        return (
+                                            <div key={subItem.id} className={styles.miniItem}>
+                                                {subItem.type === 'link' ? <LinkIcon size={12} /> : <FileText size={12} />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
                             <div className={styles.titleRow}>
                                 <div className={styles.title}>
                                     {isFolder ? (item as any).name : (item.metadata?.title || item.content.slice(0, 50))}
@@ -185,7 +212,8 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
 
                             {isFolder ? (
                                 <div className={styles.folderMeta}>
-                                    <span className={styles.itemCount}>{(item as any).itemCount || 0} items</span>
+                                    <span className={styles.itemCount}>{(item as any).itemCount || folderItems.length} items</span>
+                                    <span className={styles.dot}>•</span>
                                     <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
                                 </div>
                             ) : (

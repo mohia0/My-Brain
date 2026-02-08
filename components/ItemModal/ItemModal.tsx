@@ -94,8 +94,8 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
-        setIsSaving(true);
         saveTimeoutRef.current = setTimeout(async () => {
+            setIsSaving(true);
             try {
                 await updateItemContent(item.id, {
                     content: content,
@@ -104,7 +104,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             } catch (err) {
                 console.error("[LiveSync] Save failed:", err);
             } finally {
-                setIsSaving(false);
+                setTimeout(() => setIsSaving(false), 500);
                 console.log("[LiveSync] Auto-saved item");
             }
         }, 1000); // 1s debounce for better responsiveness
@@ -220,18 +220,6 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         setTags(tags.filter(t => t.id !== tagId));
     };
 
-    const handleConvertToNote = () => {
-        const newMetadata = { ...item.metadata };
-        if (item.type === 'image') {
-            newMetadata.image = item.content; // Save image path to metadata so it's not lost
-        }
-        updateItemContent(item.id, {
-            type: 'text',
-            content: item.type === 'link' ? `Origin: ${item.content}\n\n${item.metadata?.description || ''}` : '',
-            metadata: newMetadata
-        });
-        onClose();
-    };
 
     const handleDelete = async () => {
         if (!isDeleting) { setIsDeleting(true); return; }
@@ -336,23 +324,6 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                                 <span>No Snapshot</span>
                                             </div>
                                         )}
-                                        <div className={styles.imageOverlay}>
-                                            <div className={styles.titleWrapper}>
-                                                <div ref={titleRef} className={clsx(styles.overlayTitle, isOverflowing && styles.canAnimate)}>
-                                                    {title || 'Untitled Idea'}
-                                                </div>
-                                            </div>
-                                            <div className={styles.overlayDomain}>
-                                                {url && (
-                                                    <img
-                                                        src={`https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`}
-                                                        className={styles.favicon}
-                                                        alt=""
-                                                    />
-                                                )}
-                                                {url ? new URL(url).hostname : 'No Source'}
-                                            </div>
-                                        </div>
                                     </>
                                 ) : (item.type === 'video' || item.metadata?.isVideo) ? (
                                     <video
@@ -386,8 +357,18 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     <div className={clsx(styles.rightColumn, (isNote || item.type === 'image') && styles.compactMetadata)}>
                         <div className={styles.header}>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                {!isNote && (
-                                    isEditingTitle ? (
+                                <div className={styles.timestamp}>
+                                    {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                                {(isSaving || item.syncStatus === 'syncing') && <div className={styles.savingIndicator}>Saving...</div>}
+                            </div>
+                            <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
+                        </div>
+
+                        <div className={styles.scrollBody} ref={scrollBodyRef}>
+                            {!isNote && (
+                                <div className={styles.captureTitleSection}>
+                                    {isEditingTitle ? (
                                         <input
                                             autoFocus
                                             className={styles.titleInputEdit}
@@ -395,25 +376,16 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             onChange={e => setTitle(e.target.value)}
                                             onBlur={() => setIsEditingTitle(false)}
                                             onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
-                                            placeholder="Title"
+                                            placeholder="Capture Title"
                                         />
                                     ) : (
-                                        <div className={styles.titleDisplayWrapper} onClick={() => setIsEditingTitle(true)}>
-                                            <div ref={headerTitleRef} className={clsx(styles.titleDisplayText, isOverflowingHeader && styles.canAnimate)}>
-                                                {title || "Title"}
-                                            </div>
-                                        </div>
-                                    )
-                                )}
-                                {(isSaving || item.syncStatus === 'syncing') && <div className={styles.savingIndicator}>Saving...</div>}
-                                <div className={styles.timestamp}>
-                                    {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        <h1 className={styles.captureTitle} onClick={() => setIsEditingTitle(true)}>
+                                            {title || "Untitled Capture"}
+                                        </h1>
+                                    )}
                                 </div>
-                            </div>
-                            <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
-                        </div>
+                            )}
 
-                        <div className={styles.scrollBody} ref={scrollBodyRef}>
                             {isLink && (
                                 <div className={styles.section}>
                                     <div className={styles.labelRow}>
@@ -449,8 +421,15 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             </div>
 
                             <div className={styles.section}>
-                                <span className={styles.label}>Description</span>
-                                <textarea className={styles.descriptionInput} value={description} onChange={e => setDescription(e.target.value)} placeholder="Thoughts..." />
+                                <div className={styles.labelRow}>
+                                    <span className={styles.label}>Notes</span>
+                                </div>
+                                <textarea
+                                    className={styles.descriptionInput}
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                    placeholder="Add thoughts..."
+                                />
                             </div>
                         </div>
 
@@ -458,7 +437,6 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <div className={styles.footerLeft}>
                                 <button className={styles.deleteBtn} onClick={handleDelete} onMouseLeave={() => setIsDeleting(false)}>{isDeleting ? "Confirm?" : <Trash2 size={16} />}</button>
                                 <button className={styles.archiveBtn} onClick={handleArchive}><Archive size={16} /></button>
-                                {(isLink || item.type === 'image') && <button className={styles.convertBtn} onClick={handleConvertToNote}>Idea</button>}
                             </div>
                             <button className={styles.saveBtn} onClick={handleSave}><Save size={16} /> Save</button>
                         </div>

@@ -33,6 +33,7 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .status {

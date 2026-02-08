@@ -244,11 +244,23 @@
     gap: 16px;
 }
 
-.titleDisplayWrapper {
-    width: 100%;
-    overflow: hidden;
+.captureTitleSection {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.captureTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--foreground);
+    line-height: 1.2;
     cursor: text;
-    padding: 2px 0;
+    margin: 0;
+}
+
+.captureTitle:hover {
+    color: var(--accent);
 }
 
 .titleDisplayText {
@@ -289,8 +301,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    opacity: 0.7;
-    animation: savingPulse 1.5s infinite ease-in-out;
+    opacity: 0.9;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -334,6 +345,39 @@
     font-weight: 500;
 }
 
+.expandEditorBtn {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.expandEditorBtn:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.inlineEditorWrapper {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 120px;
+}
+
+.inlineEditorWrapper :global(.blocknote-editor) {
+    background: transparent !important;
+}
+
+.inlineEditorWrapper :global(.bn-container) {
+    background: transparent !important;
+}
+
 .closeBtn {
     background: var(--card-bg);
     border: 1px solid var(--border-light);
@@ -371,7 +415,7 @@
 /* Vertical Note Layout Styles */
 .noteTitleSection {
     padding: 24px 24px 8px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .noteTitleInput {
@@ -497,21 +541,23 @@
     background: var(--input-bg);
     border: 1px solid var(--card-border);
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px 16px;
     color: var(--foreground);
     width: 100%;
-    min-height: 120px;
-    resize: vertical;
+    min-height: 48px;
+    resize: none;
     font-size: 0.95rem;
     font-family: inherit;
     line-height: 1.5;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .descriptionInput:focus {
+    min-height: 160px;
     border-color: var(--accent);
     background: rgba(255, 255, 255, 0.02);
     outline: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* --- TAGS --- */
@@ -751,6 +797,7 @@
         flex: 1 1 auto !important;
         height: 60vh !important;
         max-height: 80vh !important;
+        background: var(--modal-bg) !important;
     }
 
     .noteModal .rightColumn {

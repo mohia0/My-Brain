@@ -49,6 +49,8 @@
     z-index: 5;
     pointer-events: none;
     line-height: 1;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
 }
 
 /* Logo mask removed for better theme support */

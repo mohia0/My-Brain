@@ -22,6 +22,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const scrollContentRef = React.useRef<HTMLDivElement>(null);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
     const [manualSelectionMode, setManualSelectionMode] = React.useState(false);
+    const [showColorPicker, setShowColorPicker] = React.useState(false);
 
     const isSelectionMode = selectedIds.length > 0 || manualSelectionMode;
 
@@ -35,6 +36,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
 
     const [isEditingName, setIsEditingName] = React.useState(false);
     const [tempName, setTempName] = React.useState('');
+    const [isSaving, setIsSaving] = React.useState(false);
     const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     React.useEffect(() => {
@@ -61,8 +63,13 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const handleNameChange = (newName: string) => {
         setTempName(newName);
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = setTimeout(() => {
-            updateFolderContent(currentFolderId, { name: newName });
+        saveTimeoutRef.current = setTimeout(async () => {
+            setIsSaving(true);
+            try {
+                await updateFolderContent(currentFolderId, { name: newName });
+            } finally {
+                setTimeout(() => setIsSaving(false), 500);
+            }
         }, 1000);
     };
 
@@ -205,11 +212,13 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
                         <div
-                            className={styles.iconCircle}
+                            className={clsx(styles.iconCircle, showColorPicker && styles.activeIcon)}
                             style={{
                                 backgroundColor: folder.color?.startsWith('var') ? folder.color : (folder.color ? `${folder.color}22` : undefined),
-                                color: folder.color || 'var(--accent)'
+                                color: folder.color || 'var(--accent)',
+                                cursor: 'pointer'
                             }}
+                            onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                         >
                             <FolderOpen size={22} />
                         </div>
@@ -235,15 +244,19 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                         </span>
                                     )}
                                 </div>
-                                {folder.syncStatus === 'syncing' && <span className={styles.savingIndicator}>Saving...</span>}
-                                {folder.parent_id === undefined && (
-                                    <div className={styles.colorDots}>
+                                {(isSaving || folder.syncStatus === 'syncing') && <span className={styles.savingIndicator}>Saving...</span>}
+                                {showColorPicker && (
+                                    <div className={styles.colorDots} onClick={e => e.stopPropagation()}>
                                         {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
                                             <button
                                                 key={color}
                                                 className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}
                                                 style={{ backgroundColor: color }}
-                                                onClick={() => updateFolderContent(currentFolderId, { color })}
+                                                onClick={() => {
+                                                    updateFolderContent(currentFolderId, { color });
+                                                    // Optional: Hide after selection
+                                                    // setShowColorPicker(false);
+                                                }}
                                             />
                                         ))}
                                     </div>

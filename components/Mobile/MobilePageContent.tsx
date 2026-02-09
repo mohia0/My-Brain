@@ -26,6 +26,37 @@ export default function MobilePageContent({ session }: { session: any }) {
     const [shareState, setShareState] = useState<'idle' | 'saving' | 'saved' | 'capturing'>('idle');
     const [isOverlayFading, setIsOverlayFading] = useState(false);
 
+    // Dynamic API Base URL handling for Capacitor
+    // When running as a native app, we need to point to the production API
+    // Default to Vercel production URL if env var is not set
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://brainia.vercel.app';
+
+    // Helper to get full API URL
+    const getApiUrl = (endpoint: string) => {
+        // If we are on a custom domain/IP (Live Reload), use relative paths
+        if (typeof window !== 'undefined' &&
+            window.location.hostname !== 'localhost' &&
+            window.location.hostname !== '127.0.0.1' &&
+            !window.location.hostname.includes('vercel.app')) {
+            // We are likely on a local IP like 192.168.x.x
+            return endpoint;
+        }
+
+        // FAILSAFE: If we are running strictly natively (file:// or localhost on device)
+        // AND we want to debug locally, we need to point to the computer's IP.
+        // However, for now let's point to PROD if we can't detect a local server.
+
+        // Check if we are in extended dev mode (you can set this manually if needed)
+        // const DEV_IP = "http://192.168.1.12:3000"; // UNCOMMENT and set your PC IP to test locally on physical device without Live Reload
+
+        if (Capacitor.isNativePlatform()) {
+            // if (DEV_IP) return `${DEV_IP}${endpoint}`; 
+            return `${API_BASE}${endpoint}`;
+        }
+
+        return endpoint;
+    };
+
     // Modal states
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -138,17 +169,32 @@ export default function MobilePageContent({ session }: { session: any }) {
     const uploadMobileFile = async (uri: string, itemId: string, userId: string): Promise<string | null> => {
         console.log(`[MobileUpload] Starting for URI: ${uri}`);
         try {
+            // Ensure we have a usable URI
             const pocketUri = (uri.startsWith('data:') || uri.startsWith('http')) ? uri : Capacitor.convertFileSrc(uri);
-            console.log(`[MobileUpload] Converted URI: ${pocketUri.substring(0, 100)}...`);
+            console.log(`[MobileUpload] Converted URI: ${pocketUri.substring(0, 50)}...`);
 
             if (!pocketUri || pocketUri === "") {
                 throw new Error("Converted URI is empty");
             }
 
-            const response = await fetch(pocketUri);
-            if (!response.ok) {
-                console.error(`[MobileUpload] Fetch failed with status: ${response.status} ${response.statusText}`);
-                throw new Error(`Fetch failed: ${response.statusText}`);
+            // Retry mechanism for fetch
+            let response: Response | null = null;
+            let fetchError: any = null;
+
+            for (let i = 0; i < 3; i++) {
+                try {
+                    response = await fetch(pocketUri);
+                    if (response.ok) break;
+                } catch (e) {
+                    fetchError = e;
+                    console.warn(`[MobileUpload] Attempt ${i + 1} failed:`, e);
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            }
+
+            if (!response || !response.ok) {
+                console.error(`[MobileUpload] Fetch failed after retries: ${response?.statusText || fetchError}`);
+                throw new Error(`Fetch failed: ${response?.statusText || fetchError}`);
             }
 
             const blob = await response.blob();
@@ -158,14 +204,16 @@ export default function MobilePageContent({ session }: { session: any }) {
                 console.warn("[MobileUpload] Blob is suspiciously small, might be empty");
             }
 
-            const extension = blob.type.split('/')[1] || 'jpg';
+            // Ensure valid mime type
+            const mimeType = blob.type || 'image/jpeg';
+            const extension = mimeType.split('/')[1] || 'jpg';
             const filename = `${userId}/${itemId}_capture.${extension}`;
 
             console.log(`[MobileUpload] Attempting Supabase upload to: ${filename}`);
             const { error } = await supabase.storage
                 .from('screenshots')
                 .upload(filename, blob, {
-                    contentType: blob.type || 'image/jpeg',
+                    contentType: mimeType,
                     upsert: true
                 });
 
@@ -189,8 +237,25 @@ export default function MobilePageContent({ session }: { session: any }) {
     };
 
     const handleSharedContent = async (data: any) => {
-        if (!data) return;
-        console.log("[MobileShare] Received RAW Data:", JSON.stringify(data));
+        if (!data) {
+            console.error("[MobileShare] Received NULL data in handleSharedContent");
+            return;
+        }
+        console.log("[MobileShare] 1. Received RAW Data STRING:", JSON.stringify(data));
+        console.log("[MobileShare] 1. Received RAW Data OBJECT:", data);
+
+        // Immediately update UI to show processing
+        setActiveTab('inbox');
+        setShareState('capturing'); // Start with capturing/processing state
+
+        // Log the API URL being used
+        console.log("[MobileShare] 2. Checking API Configuration...");
+        const metaTestUrl = getApiUrl('/api/metadata');
+        console.log(`[MobileShare] 2. Resolved API Metadata Endpoint: ${metaTestUrl}`);
+        if (typeof window !== 'undefined') {
+            console.log(`[MobileShare] 2. Window Hostname: ${window.location.hostname}`);
+            console.log(`[MobileShare] 2. Window Origin: ${window.location.origin}`);
+        }
 
         const extras = data.extras || {};
         const intentTitle = data.title || data.subject || extras['android.intent.extra.SUBJECT'] || "";
@@ -227,7 +292,8 @@ export default function MobilePageContent({ session }: { session: any }) {
                     uriStr.includes('com.google.android.apps.photos.contentprovider') ||
                     uriStr.startsWith('content://');
 
-                if (definitelyImage || mime.startsWith('video/')) {
+                // Basic filter to avoid processing text as file
+                if (definitelyImage || mime.startsWith('video/') || mime === 'application/pdf' || mime === '*/*') {
                     processedFiles.push({
                         uri: uriStr,
                         mimeType: mime || (definitelyImage ? 'image/jpeg' : 'application/octet-stream'),
@@ -235,7 +301,6 @@ export default function MobilePageContent({ session }: { session: any }) {
                     });
                 }
             }
-            console.log(`[MobileShare] Auto-packaged ${processedFiles.length} stream share(s)`);
         }
         const hasFiles = processedFiles.length > 0;
 
@@ -248,41 +313,58 @@ export default function MobilePageContent({ session }: { session: any }) {
 
         if (!textContent && !hasFiles) {
             console.warn("[MobileShare] Empty share - ignoring");
+            // Only reset if we really have nothing. 
+            // Sometimes it takes a moment for stream to be ready? No, data should be here.
+            setShareState('idle');
             return;
         }
 
-        // Detect URL
-        const urlRegex = /(https?:\/\/\S+)/i;
+        // Improved URL Detection regex (handles surrounding text better)
+        // Matches http/https URLs, ignores trailing punctuation like . , )
+        const urlRegex = /(https?:\/\/[^\s\.,"'!]+)/i;
         const urlMatch = textContent.match(urlRegex);
-        const finalUrl = data.url || (urlMatch ? urlMatch[0] : null);
+
+        // Prioritize data.url, then regex match
+        let finalUrl = data.url || (urlMatch ? urlMatch[0] : null);
+
+        // Sanity check URL
+        if (finalUrl && !finalUrl.startsWith('http')) finalUrl = null;
+
         const isUrl = !!finalUrl;
 
-        // Improve Title extraction (e.g. Instagram captions)
+        // Improve Title extraction
         let cleanTitle = intentTitle;
         if (!cleanTitle && textContent) {
             if (isUrl) {
+                // If it's a URL share, try to remove the URL from text to find a title/caption
                 const candidate = textContent.replace(finalUrl, "").trim();
-                if (candidate.length > 2) {
-                    cleanTitle = candidate.length > 80 ? candidate.substring(0, 77) + "..." : candidate;
+                if (candidate.length > 0) {
+                    cleanTitle = candidate.length > 50 ? candidate.substring(0, 47) + "..." : candidate;
                 }
             } else {
-                cleanTitle = textContent.length > 80 ? textContent.substring(0, 77) + "..." : textContent;
+                cleanTitle = textContent.length > 50 ? textContent.substring(0, 47) + "..." : textContent;
             }
         }
 
         console.log("[MobileShare] Identification:", { isUrl, finalUrl, hasFiles, filesCount: data.files?.length });
 
         setShareState('saving');
-        setIsOverlayFading(false);
+        setIsOverlayFading(false); // Ensure overlay is visible
 
         try {
             const userId = session?.user?.id || 'unknown';
-            console.log(`[MobileShare] Processing for User: ${userId}`);
 
             // 1. Process as URL or Text
-            if (textContent || finalUrl) {
+            // We prioritize files if present, but if there is text/URL we also save it (or as metadata)
+            // Strategy: If there are files, save text as description of the first file?
+            // OR: If it is a distinct URL, save it as a separate item?
+            // Current approach: Independent items.
+
+            // EXCEPT: If the text is just the URL, and we have a file, ignore the text item?
+            // No, let's capture everything to be safe.
+
+            if (!hasFiles || (textContent !== finalUrl)) {
                 const itemId = generateId();
-                console.log(`[MobileShare] Creating ${isUrl ? 'Link' : 'Text'} item: ${itemId}`);
                 await addItem({
                     id: itemId,
                     user_id: userId,
@@ -291,7 +373,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                     status: 'inbox',
                     metadata: {
                         title: cleanTitle || (isUrl ? "Shared Link" : "Idea Note"),
-                        description: isUrl ? "Captured from Mobile" : "Shared from Mobile",
+                        description: textContent !== finalUrl ? textContent : (isUrl ? "Captured from Mobile" : "Shared from Mobile"),
                         source: 'share'
                     },
                     position_x: 0, position_y: 0,
@@ -299,45 +381,39 @@ export default function MobilePageContent({ session }: { session: any }) {
                 });
 
                 if (isUrl) {
-                    setShareState('capturing');
-
-                    console.log(`[MobileShare] Fetching metadata for: ${finalUrl}`);
-
-                    // 1. Quick Metadata (OG Tags) - Very high success rate for social media
-                    fetch('/api/metadata', {
+                    // Trigger backend processing
+                    const metadataUrl = getApiUrl('/api/metadata');
+                    fetch(metadataUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: finalUrl })
                     })
                         .then(res => res.json())
                         .then(data => {
-                            console.log('[MobileShare] Metadata received:', data);
                             if (data.title || data.image) {
                                 updateItemContent(itemId, { metadata: { ...data, source: 'share-og' } });
                             }
                         })
                         .catch(e => console.error("[MobileShare] OG Metadata failed:", e));
 
-                    // 2. Full Screenshot / Visual Preview
-                    fetch(`/api/screenshot`, {
+                    const screenshotUrl = getApiUrl('/api/screenshot');
+                    fetch(screenshotUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: finalUrl, itemId, userId })
-                    })
-                        .then(res => res.json())
-                        .then(data => console.log('[MobileShare] Screenshot result:', data))
-                        .catch(err => console.error("[MobileShare] Screenshot trigger failed:", err));
+                    }).catch(err => console.error("[MobileShare] Screenshot trigger failed:", err));
                 }
             }
 
-            // 2. Process Files (Gallery / Screenshots)
+
+            // 2. Process Files
             if (hasFiles) {
-                console.log(`[MobileShare] Processing ${processedFiles.length} files...`);
                 for (const file of processedFiles) {
                     const fileId = generateId();
                     const mime = file.mimeType || file.type || "";
                     const fileUri = file.uri || file.path || file.url || "";
 
+                    // Logic to upload file...
                     const isImage = mime.startsWith('image/') ||
                         (typeof fileUri === 'string' && (
                             /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUri) ||
@@ -347,46 +423,42 @@ export default function MobilePageContent({ session }: { session: any }) {
                     const isVideo = mime.startsWith('video/') ||
                         (typeof fileUri === 'string' && /\.(mp4|mov|avi|mkv|webm)$/i.test(fileUri));
 
-                    if (!fileUri) {
-                        console.warn("[MobileShare] Skipping file with no URI");
-                        continue;
-                    }
+                    if (!fileUri) continue;
 
-                    console.log(`[MobileShare] File detected: mime=${mime}, isImage=${isImage}, isVideo=${isVideo}, uri=${fileUri.toString().substring(0, 50)}...`);
-
-                    const finalFileUri = fileUri.toString();
                     let finalFileContent = "";
+                    let uploadCommit = false;
 
                     if (isImage || isVideo) {
-                        console.log(`[MobileShare] Processing ${isImage ? 'Image' : 'Video'}: ${finalFileUri.substring(0, 50)}...`);
-                        const uploaded = await uploadMobileFile(finalFileUri, fileId, userId);
+                        // Try uploading
+                        const uploaded = await uploadMobileFile(fileUri.toString(), fileId, userId);
                         if (uploaded) {
                             finalFileContent = uploaded;
-                            console.log(`[MobileShare] ${isImage ? 'Image' : 'Video'} Uploaded Successfully: ${uploaded}`);
+                            uploadCommit = true;
                         } else {
-                            console.error(`[MobileShare] ${isImage ? 'Image' : 'Video'} upload failed - skipping this file`);
+                            console.warn(`[MobileShare] Failed to upload ${mime}, fallback to local URI disabled (unusable remotely)`);
+                            // If upload fails, we skip creating the item to avoid "broken" items in the cloud
+                            // But maybe we should save it with a "failed" status?
+                            // For now, let's skip.
                             continue;
                         }
                     } else {
-                        // For non-images, we just use the URI for now (e.g. docs) 
-                        if (finalFileUri.startsWith('content://')) {
-                            console.warn("[MobileShare] Skipping non-image content:// URI as it cannot be accessed remotely");
-                            continue;
-                        }
-                        finalFileContent = finalFileUri;
+                        // Non-media files (skip for now or better handling later)
+                        if (fileUri.toString().startsWith('content://')) continue;
+                        finalFileContent = fileUri.toString();
                     }
 
                     await addItem({
                         id: fileId,
                         user_id: userId,
-                        type: 'image', // Use 'image' as type to bypass DB constraints, use metadata.isVideo for logic
+                        type: isVideo ? 'video' : 'image',
                         content: finalFileContent,
                         status: 'inbox',
                         metadata: {
                             title: file.name || intentTitle || (isImage ? "Idea Capture" : "Video Capture"),
                             description: textContent || `Shared via mobile`,
                             isVideo: isVideo,
-                            source: 'share'
+                            source: 'share',
+                            originalUri: fileUri.toString() // Debug info
                         },
                         position_x: 0, position_y: 0,
                         created_at: new Date().toISOString()
@@ -395,18 +467,18 @@ export default function MobilePageContent({ session }: { session: any }) {
             }
 
             setShareState('saved');
-            setTimeout(() => setIsOverlayFading(true), 600);
-            setTimeout(() => {
-                setShareState('idle');
-                setIsOverlayFading(false);
 
-                // "Work like hack" - Exit the app after sharing to return to the original app
-                const cap = (window as any).Capacitor;
-                if (cap?.Plugins?.App?.exitApp) {
-                    console.log("[MobileShare] Auto-exiting app after successful share");
-                    cap.Plugins.App.exitApp();
-                }
-            }, 1000);
+            // Reduced delay for snappier feel
+            setTimeout(() => {
+                setIsOverlayFading(true);
+                // Force a refresh of data to ensure UI is in sync
+                useItemsStore.getState().fetchData();
+
+                setTimeout(() => {
+                    setShareState('idle');
+                    setIsOverlayFading(false);
+                }, 500);
+            }, 1500); // 1.5s display time for success message
 
         } catch (error) {
             console.error("[MobileShare] Critical Error:", error);
@@ -468,7 +540,8 @@ export default function MobilePageContent({ session }: { session: any }) {
             if (type === 'link') {
                 const userId = session?.user?.id || 'unknown';
                 // Trigger metadata AND screenshot
-                fetch('/api/metadata', { method: 'POST', body: JSON.stringify({ url: content }) })
+                const metadataUrl = getApiUrl('/api/metadata');
+                fetch(metadataUrl, { method: 'POST', body: JSON.stringify({ url: content }) })
                     .then(res => res.json())
                     .then(data => updateItemContent(id, { metadata: data }))
                     .catch(err => {
@@ -476,7 +549,8 @@ export default function MobilePageContent({ session }: { session: any }) {
                         console.error("Metadata fetch failed:", err);
                     });
 
-                fetch('/api/screenshot', {
+                const screenshotUrl = getApiUrl('/api/screenshot');
+                fetch(screenshotUrl, {
                     method: 'POST',
                     body: JSON.stringify({ url: content, itemId: id, userId })
                 }).catch(err => console.error("Screenshot failed:", err));

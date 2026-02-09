@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import ogs from 'open-graph-scraper';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
 export async function POST(req: NextRequest) {
     try {
-        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
         if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
             console.error('Missing Supabase environment variables');
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
@@ -25,13 +21,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        // Clean trackers from URL (can trigger security challenges)
-        const urlObj = new URL(url);
-        urlObj.searchParams.delete('utm_source');
-        urlObj.searchParams.delete('utm_medium');
-        urlObj.searchParams.delete('igshid');
-        urlObj.searchParams.delete('fbclid');
-        url = urlObj.toString();
+        // Clean trackers from URL
+        try {
+            const urlObj = new URL(url);
+            ['utm_source', 'utm_medium', 'igshid', 'fbclid', 'share_id'].forEach(param =>
+                urlObj.searchParams.delete(param)
+            );
+            url = urlObj.toString();
+        } catch (e) {
+            // If URL parsing fails, proceed with original URL
+        }
 
         // Consistency check: Wait for item record
         let item = null;
@@ -48,71 +47,91 @@ export async function POST(req: NextRequest) {
 
         try {
             const isInstagram = url.includes('instagram.com');
+            const isTikTok = url.includes('tiktok.com');
+            const isFacebook = url.includes('facebook.com');
 
-            // For Instagram, ONLY use metadata - screenshots always hit login walls
-            if (isInstagram) {
-                console.log('[LinkProcessor] Instagram detected - using metadata-only strategy');
-                const ogs = require('open-graph-scraper');
-                const { result } = await ogs({ url, timeout: 8000 });
+            // Social Media Strategy: Prefer Metadata/OGS over Screenshot
+            // because login walls block screenshots.
+            if (isInstagram || isTikTok || isFacebook) {
+                console.log('[LinkProcessor] Social media detected - using metadata-only strategy');
 
-                if (result) {
+                // Configure OGS with a mobile user agent to try and get better results
+                const { result } = await ogs({
+                    url,
+                    timeout: 10000,
+                    fetchOptions: {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
+                        }
+                    }
+                });
+
+                if (result && result.success) {
                     pageTitle = result.ogTitle || result.twitterTitle || '';
                     pageDesc = result.ogDescription || result.twitterDescription || '';
 
-                    console.log('[LinkProcessor] Instagram OG data:', {
-                        title: pageTitle,
-                        imageCount: result.ogImage?.length || 0,
-                        images: result.ogImage?.map((img: any) => img.url)
-                    });
+                    const ogImages = result.ogImage || result.twitterImage || [];
 
-                    // Instagram OG images - filter out profile pics
-                    const ogImages = result.ogImage || [];
+                    // Filter out profile pics or generic assets
                     const isProfilePic = (imgUrl: string) => {
                         if (!imgUrl) return false;
                         const low = imgUrl.toLowerCase();
-                        // More lenient filtering - only skip obvious profile pics
-                        return low.includes('/profile_pic/') || low.includes('/avatar/');
+                        return low.includes('/profile_pic/') ||
+                            low.includes('/avatar/') ||
+                            low.includes('static.xx.fbcdn.net');
                     };
 
-                    // Find the best quality post image (not profile pic)
                     let postImage = ogImages.find((img: any) => img.url && !isProfilePic(img.url))?.url;
 
-                    // Fallback: if all images were filtered, just use the first one
                     if (!postImage && ogImages.length > 0) {
+                        // Fallback to first image if everything looks like a profile pic (or if detection is wrong)
                         postImage = ogImages[0].url;
-                        console.log('[LinkProcessor] Using first available image as fallback');
                     }
 
-                    console.log('[LinkProcessor] Selected image:', postImage);
+                    console.log('[LinkProcessor] Selected Social Image:', postImage);
 
                     if (postImage) {
                         // Download and mirror to Supabase
-                        const imgRes = await fetch(postImage);
-                        const blob = await imgRes.blob();
-                        const filename = `${userId}/${itemId}_preview.jpg`;
+                        try {
+                            const imgRes = await fetch(postImage);
+                            if (imgRes.ok) {
+                                const blob = await imgRes.blob();
+                                const filename = `${userId}/${itemId}_preview.jpg`;
 
-                        const { error: uploadError } = await supabase.storage
-                            .from('screenshots')
-                            .upload(filename, blob, { contentType: blob.type, upsert: true });
+                                const { error: uploadError } = await supabase.storage
+                                    .from('screenshots')
+                                    .upload(filename, blob, { contentType: blob.type || 'image/jpeg', upsert: true });
 
-                        if (!uploadError) {
-                            const { data: { publicUrl } } = supabase.storage
-                                .from('screenshots')
-                                .getPublicUrl(filename);
-                            finalImageUrl = publicUrl;
-                            console.log('[LinkProcessor] Image uploaded:', publicUrl);
-                        } else {
-                            console.error('[LinkProcessor] Upload error:', uploadError);
+                                if (!uploadError) {
+                                    const { data: { publicUrl } } = supabase.storage
+                                        .from('screenshots')
+                                        .getPublicUrl(filename);
+                                    finalImageUrl = publicUrl;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('[LinkProcessor] Failed to download/upload social image:', e);
+                            // If download fails, use the remote URL directly as fallback? 
+                            // Usually better to leave empty than broken link, 
+                            // but for some CDNs it might work.
+                            // Let's rely on the metadata update at the end.
                         }
-                    } else {
-                        console.warn('[LinkProcessor] No images found in OG data');
                     }
                 }
             } else {
-                // For non-Instagram sites, use Microlink with screenshot
-                const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=true&viewport.width=390&viewport.height=1290&viewport.isMobile=true&viewport.hasTouch=true&user_agent=Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%2017_2%20like%20Mac%20OS%20X)%20AppleWebKit/605.1.15%20(KHTML,%20like%20Gecko)%20Version/17.2%20Mobile/15E148%20Safari/604.1`;
+                // For general web pages, use Microlink with screenshot
+                const microlinkUrl = new URL('https://api.microlink.io');
+                microlinkUrl.searchParams.append('url', url);
+                microlinkUrl.searchParams.append('screenshot', 'true');
+                microlinkUrl.searchParams.append('meta', 'true');
+                microlinkUrl.searchParams.append('viewport.width', '390');
+                microlinkUrl.searchParams.append('viewport.height', '844'); // iPhone 12/13/14
+                microlinkUrl.searchParams.append('viewport.isMobile', 'true');
+                microlinkUrl.searchParams.append('viewport.hasTouch', 'true');
+                // Use a standard iOS User Agent
+                microlinkUrl.searchParams.append('user_agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1');
 
-                const response = await fetch(microlinkUrl);
+                const response = await fetch(microlinkUrl.toString());
                 const data = await response.json();
 
                 if (data.status === 'success') {
@@ -120,42 +139,57 @@ export async function POST(req: NextRequest) {
                     pageTitle = meta.title || '';
                     pageDesc = meta.description || '';
 
+                    // Prefer OG image if high quality, else screenshot
                     const ogImage = meta.image?.url;
                     const screenshotImage = meta.screenshot?.url;
 
-                    // Prefer OG image for quality, fallback to screenshot
-                    const candidateImage = ogImage || screenshotImage;
+                    // If we have a screenshot, it's usually what we want for "visual bookmark"
+                    // But if it's a blog post, the ogImage might be better.
+                    // Strategy: specific check? No, let's prefer screenshot for "browsers" as user asked for visual.
+                    const candidateImage = screenshotImage || ogImage;
 
                     if (candidateImage) {
                         const imgRes = await fetch(candidateImage);
-                        const blob = await imgRes.blob();
-                        const filename = `${userId}/${itemId}_preview.jpg`;
+                        if (imgRes.ok) {
+                            const blob = await imgRes.blob();
+                            const filename = `${userId}/${itemId}_preview.jpg`;
 
-                        const { error: uploadError } = await supabase.storage
-                            .from('screenshots')
-                            .upload(filename, blob, { contentType: blob.type, upsert: true });
-
-                        if (!uploadError) {
-                            const { data: { publicUrl } } = supabase.storage
+                            const { error: uploadError } = await supabase.storage
                                 .from('screenshots')
-                                .getPublicUrl(filename);
-                            finalImageUrl = publicUrl;
+                                .upload(filename, blob, { contentType: blob.type, upsert: true });
+
+                            if (!uploadError) {
+                                const { data: { publicUrl } } = supabase.storage
+                                    .from('screenshots')
+                                    .getPublicUrl(filename);
+                                finalImageUrl = publicUrl;
+                            }
                         }
                     }
                 }
 
-                // Fallback for non-Instagram if Microlink fails
+                // Fallback: If Microlink failed or returned no image, try OGS locally
                 if (!pageTitle || !finalImageUrl) {
-                    console.log('[LinkProcessor] Microlink failed, trying OG scraper...');
-                    const ogs = require('open-graph-scraper');
+                    console.log('[LinkProcessor] Microlink incomplete, trying OGS fallback...');
                     const { result } = await ogs({ url, timeout: 5000 });
 
-                    if (result) {
+                    if (result && result.success) {
                         pageTitle = pageTitle || result.ogTitle || result.twitterTitle || '';
                         pageDesc = pageDesc || result.ogDescription || result.twitterDescription || '';
 
-                        if (!finalImageUrl && result.ogImage?.[0]?.url) {
-                            finalImageUrl = result.ogImage[0].url;
+                        const fallbackImage = result.ogImage?.[0]?.url || result.twitterImage?.[0]?.url;
+                        if (!finalImageUrl && fallbackImage) {
+                            // Try to download and upload this one
+                            try {
+                                const imgRes = await fetch(fallbackImage);
+                                if (imgRes.ok) {
+                                    const blob = await imgRes.blob();
+                                    const filename = `${userId}/${itemId}_preview_fb.jpg`;
+                                    await supabase.storage.from('screenshots').upload(filename, blob, { upsert: true });
+                                    const { data } = supabase.storage.from('screenshots').getPublicUrl(filename);
+                                    finalImageUrl = data.publicUrl;
+                                }
+                            } catch (e) { }
                         }
                     }
                 }
@@ -168,7 +202,7 @@ export async function POST(req: NextRequest) {
         const updatedMetadata = {
             ...currentMetadata,
             image: finalImageUrl || currentMetadata.image,
-            title: pageTitle || currentMetadata.title,
+            title: pageTitle || currentMetadata.title || currentMetadata.description, // Fallback title
             description: pageDesc || currentMetadata.description
         };
 

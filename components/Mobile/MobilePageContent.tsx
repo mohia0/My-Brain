@@ -71,7 +71,7 @@ export default function MobilePageContent({ session }: { session: any }) {
     const inputModalOpenRef = React.useRef<boolean>(false);
     const selectionCountRef = React.useRef<number>(0);
 
-    const { items, folders, selectedIds, addItem, addFolder, clearSelection, updateItemContent } = useItemsStore();
+    const { items, folders, selectedIds, addItem, addFolder, clearSelection, updateItemContent, fetchData } = useItemsStore();
 
     useEffect(() => { selectedItemIdRef.current = selectedItemId; }, [selectedItemId]);
     useEffect(() => { selectedFolderIdRef.current = selectedFolderId; }, [selectedFolderId]);
@@ -381,6 +381,8 @@ export default function MobilePageContent({ session }: { session: any }) {
             setShareState('saved');
             setTimeout(() => {
                 setIsOverlayFading(true);
+                // Safety sync - ensure store is perfectly up to date
+                fetchData().catch(() => { });
                 setTimeout(() => { setShareState('idle'); setIsOverlayFading(false); }, 500);
             }, 1000);
 

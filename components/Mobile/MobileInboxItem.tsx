@@ -28,59 +28,10 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
         setLocalItem(item);
     }, [item]);
 
-    // Poll for metadata updates if item is still loading
+    // Sync with store updates immediately
     React.useEffect(() => {
-        const isPlaceholder = localItem.metadata?.title === 'Capturing...' ||
-            localItem.metadata?.title === 'Shared Link' ||
-            localItem.metadata?.title === 'sharedlink';
-        const needsUpdate = localItem.type === 'link' && (!localItem.metadata?.image || isPlaceholder);
-
-        if (!needsUpdate) {
-            if (pollTimer.current) {
-                clearInterval(pollTimer.current);
-                pollTimer.current = null;
-            }
-            return;
-        }
-
-        // Poll every 3 seconds for up to 60 seconds
-        let attempts = 0;
-        pollTimer.current = setInterval(async () => {
-            attempts++;
-            if (attempts > 20) {
-                clearInterval(pollTimer.current!);
-                return;
-            }
-
-            try {
-                const { supabase } = await import('@/lib/supabase');
-                const { data } = await supabase
-                    .from('items')
-                    .select('metadata')
-                    .eq('id', localItem.id)
-                    .single();
-
-                if (data?.metadata) {
-                    const hasImage = !!data.metadata.image;
-                    const isPlace = !data.metadata.title || /capturing|shared link|sharedlink/i.test(data.metadata.title);
-
-                    if (hasImage || !isPlace || data.metadata.author !== localItem.metadata?.author) {
-                        setLocalItem(prev => ({ ...prev, metadata: data.metadata }));
-                    }
-
-                    if (hasImage) {
-                        clearInterval(pollTimer.current!);
-                    }
-                }
-            } catch (err) {
-                console.error('[InboxItem] Poll failed:', err);
-            }
-        }, 3000);
-
-        return () => {
-            if (pollTimer.current) clearInterval(pollTimer.current);
-        };
-    }, [localItem.id, localItem.type, localItem.metadata?.image, localItem.metadata?.title]);
+        setLocalItem(item);
+    }, [item]);
 
     const getImageUrl = () => {
         if (localItem.type === 'image') return localItem.content;

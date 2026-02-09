@@ -112,8 +112,10 @@ interface ItemsState {
     layoutSelectedItems: () => void;
     layoutAllItems: () => void;
     loading: boolean;
+    realtimeStatus: 'connected' | 'disconnected' | 'connecting';
     setLoading: (loading: boolean) => void;
     subscribeToChanges: () => () => void;
+    refreshItem: (id: string) => Promise<void>;
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -121,6 +123,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     folders: [],
     history: { past: [], future: [] },
     loading: false,
+    realtimeStatus: 'disconnected',
 
     setLoading: (loading) => set({ loading }),
 
@@ -146,7 +149,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 supabase.from('folders').select('*')
             ]);
 
-            if (itemsRes.data) set({ items: itemsRes.data as Item[] });
+            if (itemsRes.data) {
+                set(state => {
+                    const localSyncing = state.items.filter(i => i.syncStatus === 'syncing');
+                    const remoteItems = itemsRes.data as Item[];
+                    // Prefer local syncing items over remote if IDs match (shouldn't happen with UUIDs, but just in case)
+                    const filteredRemote = remoteItems.filter(ri => !localSyncing.find(li => li.id === ri.id));
+                    return { items: [...filteredRemote, ...localSyncing] };
+                });
+            }
             if (foldersRes.data) set({ folders: foldersRes.data as Folder[] });
         } catch (err: any) {
             // Silence AbortError as it's typically an intentional cancellation by the browser/Next.js
@@ -865,19 +876,51 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         };
     }),
 
+    refreshItem: async (id: string) => {
+        try {
+            const { data, error } = await supabase.from('items').select('*').eq('id', id).single();
+            if (data && !error) {
+                set(state => ({
+                    items: state.items.map(i => i.id === id ? { ...i, ...data, syncStatus: 'synced' } : i)
+                }));
+            }
+        } catch (e) {
+            console.error('[Store] refreshItem failed:', e);
+        }
+    },
+
     subscribeToChanges: () => {
-        console.log('[Realtime] Initializing subscriptions...');
+        console.log('[Realtime] Initializing unified subscriptions...');
+        set({ realtimeStatus: 'connecting' });
 
         const handleItemChange = (payload: any) => {
-            console.log('[Realtime] Item change received:', payload.eventType, payload.new?.id || payload.old?.id);
+            console.log('[Realtime] 📥 Item Change:', payload.eventType, payload.new?.id || payload.old?.id);
             if (payload.eventType === 'INSERT') {
                 set(state => {
-                    if (state.items.find(i => i.id === payload.new.id)) return state;
-                    return { items: [...state.items, { ...payload.new, syncStatus: 'synced' as const } as Item] };
+                    const exists = state.items.find(i => i.id === payload.new.id);
+                    if (exists) {
+                        // If it exists (created locally), just sync fields
+                        return {
+                            items: state.items.map(i => i.id === payload.new.id ? { ...i, ...payload.new, syncStatus: 'synced' } : i)
+                        };
+                    }
+                    return { items: [...state.items, { ...payload.new, syncStatus: 'synced' } as Item] };
                 });
             } else if (payload.eventType === 'UPDATE') {
                 set(state => ({
-                    items: state.items.map(i => i.id === payload.new.id ? { ...i, ...payload.new, syncStatus: 'synced' as const } : i)
+                    items: state.items.map(i => {
+                        if (i.id !== payload.new.id) return i;
+                        // Deep-ish merge for metadata to avoid losing local properties if DB is behind
+                        return {
+                            ...i,
+                            ...payload.new,
+                            metadata: {
+                                ...i.metadata,
+                                ...payload.new.metadata
+                            },
+                            syncStatus: 'synced'
+                        };
+                    })
                 }));
             } else if (payload.eventType === 'DELETE') {
                 set(state => ({ items: state.items.filter(i => i.id !== payload.old.id) }));
@@ -885,37 +928,33 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         };
 
         const handleFolderChange = (payload: any) => {
-            console.log('[Realtime] Folder change received:', payload.eventType, payload.new?.id || payload.old?.id);
+            console.log('[Realtime] 📁 Folder Change:', payload.eventType, payload.new?.id || payload.old?.id);
             if (payload.eventType === 'INSERT') {
                 set(state => {
                     if (state.folders.find(f => f.id === payload.new.id)) return state;
-                    return { folders: [...state.folders, { ...payload.new, syncStatus: 'synced' as const } as Folder] };
+                    return { folders: [...state.folders, { ...payload.new, syncStatus: 'synced' } as Folder] };
                 });
             } else if (payload.eventType === 'UPDATE') {
                 set(state => ({
-                    folders: state.folders.map(f => f.id === payload.new.id ? { ...f, ...payload.new, syncStatus: 'synced' as const } : f)
+                    folders: state.folders.map(f => f.id === payload.new.id ? { ...f, ...payload.new, syncStatus: 'synced' } : f)
                 }));
             } else if (payload.eventType === 'DELETE') {
                 set(state => ({ folders: state.folders.filter(f => f.id !== payload.old.id) }));
             }
         };
 
-        const itemChannel = supabase.channel('items-realtime')
+        const channel = supabase.channel('db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, handleItemChange)
-            .subscribe((status: string) => {
-                console.log('[Realtime] Items channel status:', status);
-            });
-
-        const folderChannel = supabase.channel('folders-realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, handleFolderChange)
             .subscribe((status: string) => {
-                console.log('[Realtime] Folders channel status:', status);
+                console.log('[Realtime] Channel Status:', status);
+                if (status === 'SUBSCRIBED') set({ realtimeStatus: 'connected' });
+                if (status === 'CLOSED' || status === 'CHANNEL_ERROR') set({ realtimeStatus: 'disconnected' });
             });
 
         return () => {
-            console.log('[Realtime] Cleaning up subscriptions...');
-            supabase.removeChannel(itemChannel);
-            supabase.removeChannel(folderChannel);
+            console.log('[Realtime] Cleaning up unified channel');
+            supabase.removeChannel(channel);
         };
     }
 }));

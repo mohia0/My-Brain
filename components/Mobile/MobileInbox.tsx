@@ -12,7 +12,7 @@ interface MobileInboxProps {
 }
 
 export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: MobileInboxProps) {
-    const { items, fetchData } = useItemsStore();
+    const { items, fetchData, realtimeStatus } = useItemsStore();
     const [refreshing, setRefreshing] = useState(false);
     const [pullDistance, setPullDistance] = useState(0);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -100,7 +100,15 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <InboxIcon size={16} />
-                            <span>{filterStatus === 'archived' ? 'Archived Ideas' : 'Unsorted Ideas'}</span>
+                            <span>{filterStatus === 'archived' ? 'Archived Ideas' : 'Captured Ideas'}</span>
+                            <div style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                backgroundColor: realtimeStatus === 'connected' ? '#4caf50' : (realtimeStatus === 'connecting' ? '#ff9800' : '#f44336'),
+                                marginLeft: 6,
+                                boxShadow: realtimeStatus === 'connected' ? '0 0 8px rgba(76, 175, 80, 0.4)' : 'none'
+                            }} />
                         </div>
                         <div className={styles.list}>
                             {inboxItems.map((item, index) => (

@@ -317,17 +317,38 @@
     border-bottom: 1px solid var(--card-border);
 }
 
+.captureTitleWrapper {
+    cursor: text;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    padding: 4px 0;
+}
+
 .captureTitle {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--foreground);
     line-height: 1.2;
-    cursor: text;
     margin: 0;
+    transition: transform 8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.captureTitle:hover {
+.captureTitleWrapper:hover .captureTitle {
     color: var(--accent);
+}
+
+/* Desktop Hover Motion */
+@media (min-width: 769px) {
+    .captureTitle {
+        white-space: nowrap;
+        width: fit-content;
+        min-width: 100%;
+    }
+
+    .captureTitleWrapper:hover .titleLong {
+        transform: translateX(-30%);
+    }
 }
 
 .titleDisplayText {
@@ -426,20 +447,28 @@
 }
 
 .expandEditorBtn {
-    background: var(--accent-glow);
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .expandEditorBtn:hover {
-    background: var(--accent);
-    color: white;
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+.expandEditorBtn:active {
+    transform: scale(0.95);
 }
 
 .inlineEditorWrapper {
@@ -934,6 +963,18 @@
 
     .descriptionSection {
         margin-bottom: 24px !important;
+    }
+
+    .titleLong {
+        font-size: 1.1rem !important;
+        line-height: 1.3 !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
     }
 }
 

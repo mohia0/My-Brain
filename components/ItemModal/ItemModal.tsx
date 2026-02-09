@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -413,9 +413,19 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             placeholder="Capture Title"
                                         />
                                     ) : (
-                                        <h1 className={styles.captureTitle} onClick={() => setIsEditingTitle(true)}>
-                                            {title || "Untitled Capture"}
-                                        </h1>
+                                        <div
+                                            className={styles.captureTitleWrapper}
+                                            onClick={() => setIsEditingTitle(true)}
+                                        >
+                                            <h1
+                                                className={clsx(
+                                                    styles.captureTitle,
+                                                    title.split(' ').length > 7 && styles.titleLong
+                                                )}
+                                            >
+                                                {title || "Untitled Capture"}
+                                            </h1>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -457,6 +467,15 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                             <div className={clsx(styles.section, styles.descriptionSection)}>
                                 <div className={styles.labelRow}>
                                     <span className={styles.label}>Notes</span>
+                                    <button
+                                        className={styles.expandEditorBtn}
+                                        onClick={() => {
+                                            const textarea = document.querySelector(`.${styles.descriptionInput}`) as HTMLTextAreaElement;
+                                            if (textarea) textarea.focus();
+                                        }}
+                                    >
+                                        <Maximize2 size={12} />
+                                    </button>
                                 </div>
                                 <textarea
                                     className={styles.descriptionInput}

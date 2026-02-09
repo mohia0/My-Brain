@@ -100,14 +100,15 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <InboxIcon size={16} />
-                            <span>{filterStatus === 'archived' ? 'Archived Ideas' : 'Captured Ideas'}</span>
+                            <span style={{ marginLeft: 6 }}>{filterStatus === 'archived' ? 'Archived Ideas' : 'Captured Ideas'}</span>
                             <div style={{
                                 width: 8,
                                 height: 8,
                                 borderRadius: '50%',
                                 backgroundColor: realtimeStatus === 'connected' ? '#4caf50' : (realtimeStatus === 'connecting' ? '#ff9800' : '#f44336'),
-                                marginLeft: 6,
-                                boxShadow: realtimeStatus === 'connected' ? '0 0 8px rgba(76, 175, 80, 0.4)' : 'none'
+                                marginLeft: 'auto',
+                                boxShadow: realtimeStatus === 'connected' ? '0 0 8px rgba(76, 175, 80, 0.4)' : 'none',
+                                flexShrink: 0
                             }} />
                         </div>
                         <div className={styles.list}>

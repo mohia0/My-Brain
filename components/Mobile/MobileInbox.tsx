@@ -92,8 +92,8 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
             {inboxItems.length === 0 ? (
                 <div className={styles.empty}>
                     <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
-                    <h3>{filterStatus === 'archived' ? 'Archive is empty' : 'Inbox is clear'}</h3>
-                    <p>{filterStatus === 'archived' ? 'Items you archive will appear here.' : 'When you share links or ideas to Brainia, they\'ll appear here for organization.'}</p>
+                    <h3>{filterStatus === 'archived' ? 'Archive is empty' : 'Your mind is clear'}</h3>
+                    <p>{filterStatus === 'archived' ? 'Items you archive will appear here.' : 'Ready for your next epiphany? Share links or ideas and they\'ll wait here for you.'}</p>
                 </div>
             ) : (
                 <div className={styles.content}>

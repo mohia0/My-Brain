@@ -20,50 +20,82 @@ const isOverlapping = (r1: { x: number, y: number, w: number, h: number }, r2: {
         r1.y >= r2.y + r2.h);
 };
 
-// Internal helper for non-overlapping placement
+const getItemDimensions = (item: Partial<Item> | Folder) => {
+    const isFolder = 'name' in item;
+    if (isFolder) return { w: 280, h: 120 };
+
+    const type = item.type;
+    const metadata = item.metadata || {};
+    let h = 120; // Default
+
+    if (metadata.width && metadata.height) {
+        // Maintain aspect ratio relative to fixed 280px width
+        const ratio = metadata.height / metadata.width;
+        return { w: 280, h: Math.min(Math.max(280 * ratio, 60), 600) };
+    }
+
+    if (type === 'link') {
+        h = metadata.image ? 100 : 40;
+    } else if (type === 'video' || metadata.isVideo) {
+        h = 220;
+    } else if (type === 'image') {
+        h = 280; // Estimated height for image cards
+    } else if (type === 'text' && (item.content?.length || 0) > 200) {
+        h = 180;
+    }
+
+    return { w: 280, h };
+};
+
 const getSafePosition = (
     id: string,
     targetX: number,
     targetY: number,
-    width: number,
-    height: number,
+    itemOrFolder: Partial<Item> | Folder,
     items: Item[],
     folders: Folder[]
 ) => {
-    const obstacleBuffer = 20; // Extra padding
+    const obstacleBuffer = 40; // Padding for "beside" feel
+    const myDims = getItemDimensions(itemOrFolder);
+
     const obstacles = [
-        ...items.filter(i => i.id !== id && i.status === 'active' && !i.folder_id).map(i => ({ x: i.position_x, y: i.position_y, w: 280, h: 120 })),
+        ...items.filter(i => i.id !== id && i.status === 'active' && !i.folder_id).map(i => {
+            const dims = getItemDimensions(i);
+            return { x: i.position_x, y: i.position_y, w: dims.w, h: dims.h };
+        }),
         ...folders.filter(f => f.id !== id && f.status === 'active' && !f.parent_id).map(f => ({ x: f.position_x, y: f.position_y, w: 280, h: 120 }))
     ];
 
-    let x = targetX;
-    let y = targetY;
+    const isSpotFree = (tx: number, ty: number) => {
+        return !obstacles.some(obs => isOverlapping(
+            { x: tx - obstacleBuffer / 2, y: ty - obstacleBuffer / 2, w: myDims.w + obstacleBuffer, h: myDims.h + obstacleBuffer },
+            obs
+        ));
+    };
 
-    // Grid-based search for a free spot
-    const stepX = 300; // colWidth + gap
-    const stepY = 150; // approx height + gap
-    const maxRings = 20; // Increased for very full canvases
+    // 1. Try moving right (the "beside" preference)
+    const stepX = 320;
+    const stepY = 160;
 
-    for (let ring = 0; ring <= maxRings; ring++) {
+    for (let i = 0; i < 15; i++) {
+        const testX = targetX + (i * stepX);
+        if (isSpotFree(testX, targetY)) return { x: testX, y: targetY };
+    }
+
+    // 2. Fallback to spiral search if horizontal is too crowded
+    const maxRings = 10;
+    for (let ring = 1; ring <= maxRings; ring++) {
         for (let ix = -ring; ix <= ring; ix++) {
             for (let iy = -ring; iy <= ring; iy++) {
-                // We only check the perimeter of the current "ring" to be efficient
                 if (Math.abs(ix) !== ring && Math.abs(iy) !== ring) continue;
-
                 const curX = targetX + ix * stepX;
                 const curY = targetY + iy * stepY;
-
-                const collision = obstacles.find(obs => isOverlapping(
-                    { x: curX - obstacleBuffer, y: curY - obstacleBuffer, w: width + obstacleBuffer * 2, h: height + obstacleBuffer * 2 },
-                    obs
-                ));
-
-                if (!collision) return { x: curX, y: curY };
+                if (isSpotFree(curX, curY)) return { x: curX, y: curY };
             }
         }
     }
 
-    return { x, y };
+    return { x: targetX, y: targetY };
 };
 
 interface ItemsState {
@@ -170,7 +202,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     addItem: async (item) => {
         const state = get();
-        const safePos = getSafePosition(item.id, item.position_x, item.position_y, 280, 120, state.items, state.folders);
+        const safePos = getSafePosition(item.id, item.position_x, item.position_y, item, state.items, state.folders);
         const safeItem = { ...item, position_x: safePos.x, position_y: safePos.y, syncStatus: 'syncing' as const };
 
         set((state) => ({
@@ -372,7 +404,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         if (item && (updates.position_x !== undefined || updates.position_y !== undefined || (updates.status === 'active' && item.status !== 'active'))) {
             const targetX = updates.position_x ?? item.position_x;
             const targetY = updates.position_y ?? item.position_y;
-            const safe = getSafePosition(id, targetX, targetY, 280, 120, state.items, state.folders);
+            const safe = getSafePosition(id, targetX, targetY, { ...item, ...updates }, state.items, state.folders);
             finalUpdates.position_x = safe.x;
             finalUpdates.position_y = safe.y;
         }
@@ -398,7 +430,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         if (!user) return;
 
         const newItemId = generateId();
-        const safePos = getSafePosition(newItemId, item.position_x + 30, item.position_y + 30, 280, 120, state.items, state.folders);
+        const safePos = getSafePosition(newItemId, item.position_x + 30, item.position_y + 30, item, state.items, state.folders);
 
         const newItem = {
             ...item,
@@ -429,7 +461,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         if (!user) return;
 
         const newId = generateId();
-        const safePos = getSafePosition(newId, folder.position_x + 30, folder.position_y + 30, 280, 120, state.items, state.folders);
+        const safePos = getSafePosition(newId, folder.position_x + 30, folder.position_y + 30, folder, state.items, state.folders);
 
         const folderToInsert = {
             ...folder,
@@ -495,7 +527,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     // Folders
     addFolder: async (folder) => {
         const state = get();
-        const safePos = getSafePosition(folder.id, folder.position_x, folder.position_y, 280, 120, state.items, state.folders);
+        const safePos = getSafePosition(folder.id, folder.position_x, folder.position_y, folder, state.items, state.folders);
         const safeFolder = { ...folder, position_x: safePos.x, position_y: safePos.y, syncStatus: 'syncing' as const };
 
         set((state) => ({
@@ -568,12 +600,23 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     updateFolderContent: async (id, updates) => {
+        const state = get();
+        let finalUpdates = { ...updates };
+
+        // Resolve collisions if becoming active
+        const folder = state.folders.find(f => f.id === id);
+        if (folder && (updates.status === 'active' && folder.status !== 'active')) {
+            const safe = getSafePosition(id, folder.position_x, folder.position_y, folder, state.items, state.folders);
+            finalUpdates.position_x = safe.x;
+            finalUpdates.position_y = safe.y;
+        }
+
         set((state) => ({
             folders: state.folders.map((f) =>
-                f.id === id ? { ...f, ...updates, syncStatus: 'syncing' } : f
+                f.id === id ? { ...f, ...finalUpdates, syncStatus: 'syncing' } : f
             )
         }));
-        const { error } = await supabase.from('folders').update(updates).eq('id', id);
+        const { error } = await supabase.from('folders').update(finalUpdates).eq('id', id);
 
         if (error) {
             console.error('[Store] Supabase folder update failed:', JSON.stringify(error, null, 2));
@@ -713,21 +756,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 }
             }
 
-            // Determine height
-            let height = 130; // Default card height
-            if (el.entityType === 'folder') {
-                height = 120; // Folder fixed height from CSS (matches cards)
-            } else {
-                const item = el as any;
-                if (item.type === 'link') {
-                    if (item.metadata?.image) height = 100; // Capture Card
-                    else height = 40; // Link Card
-                } else if (item.type === 'image') {
-                    height = 200;
-                } else {
-                    height = 120; // Text Card min-height from CSS
-                }
-            }
+            // Determine height using unified helper
+            const dims = getItemDimensions(el as any);
+            let height = dims.h;
 
             // Space for date + small extra buffer
             height += 28;
@@ -820,21 +851,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 }
             }
 
-            // Determine height
-            let height = 130;
-            if (el.entityType === 'folder') {
-                height = 120;
-            } else {
-                const item = el as any;
-                if (item.type === 'link') {
-                    if (item.metadata?.image) height = 100;
-                    else height = 40;
-                } else if (item.type === 'image') {
-                    height = 200;
-                } else {
-                    height = 120;
-                }
-            }
+            // Determine height using unified helper
+            const dims = getItemDimensions(el as any);
+            let height = dims.h;
 
             height += 28;
 
@@ -893,33 +912,32 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         const handleItemChange = (payload: any) => {
             console.log('[Realtime] 📥 Item Change:', payload.eventType, payload.new?.id || payload.old?.id);
-            if (payload.eventType === 'INSERT') {
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                const isNew = payload.eventType === 'INSERT';
+                const data = payload.new;
+
                 set(state => {
-                    const exists = state.items.find(i => i.id === payload.new.id);
+                    const exists = state.items.find(i => i.id === data.id);
+                    let finalItem = { ...data, syncStatus: 'synced' as const };
+
+                    // Collision prevention for remote arrivals on canvas
+                    if (data.status === 'active' && !data.folder_id) {
+                        const safe = getSafePosition(data.id, data.position_x, data.position_y, data, state.items, state.folders);
+                        if (safe.x !== data.position_x || safe.y !== data.position_y) {
+                            finalItem.position_x = safe.x;
+                            finalItem.position_y = safe.y;
+                            // Sync the correction back so others see it
+                            supabase.from('items').update({ position_x: safe.x, position_y: safe.y }).eq('id', data.id).then();
+                        }
+                    }
+
                     if (exists) {
-                        // If it exists (created locally), just sync fields
                         return {
-                            items: state.items.map(i => i.id === payload.new.id ? { ...i, ...payload.new, syncStatus: 'synced' } : i)
+                            items: state.items.map(i => i.id === data.id ? { ...i, ...finalItem } : i)
                         };
                     }
-                    return { items: [...state.items, { ...payload.new, syncStatus: 'synced' } as Item] };
+                    return { items: [...state.items, finalItem as Item] };
                 });
-            } else if (payload.eventType === 'UPDATE') {
-                set(state => ({
-                    items: state.items.map(i => {
-                        if (i.id !== payload.new.id) return i;
-                        // Deep-ish merge for metadata to avoid losing local properties if DB is behind
-                        return {
-                            ...i,
-                            ...payload.new,
-                            metadata: {
-                                ...i.metadata,
-                                ...payload.new.metadata
-                            },
-                            syncStatus: 'synced'
-                        };
-                    })
-                }));
             } else if (payload.eventType === 'DELETE') {
                 set(state => ({ items: state.items.filter(i => i.id !== payload.old.id) }));
             }
@@ -927,15 +945,29 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         const handleFolderChange = (payload: any) => {
             console.log('[Realtime] 📁 Folder Change:', payload.eventType, payload.new?.id || payload.old?.id);
-            if (payload.eventType === 'INSERT') {
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                const data = payload.new;
                 set(state => {
-                    if (state.folders.find(f => f.id === payload.new.id)) return state;
-                    return { folders: [...state.folders, { ...payload.new, syncStatus: 'synced' } as Folder] };
+                    const exists = state.folders.find(f => f.id === data.id);
+                    let finalFolder = { ...data, syncStatus: 'synced' as const };
+
+                    // Collision prevention for remote folders
+                    if (data.status === 'active' && !data.parent_id) {
+                        const safe = getSafePosition(data.id, data.position_x, data.position_y, data, state.items, state.folders);
+                        if (safe.x !== data.position_x || safe.y !== data.position_y) {
+                            finalFolder.position_x = safe.x;
+                            finalFolder.position_y = safe.y;
+                            supabase.from('folders').update({ position_x: safe.x, position_y: safe.y }).eq('id', data.id).then();
+                        }
+                    }
+
+                    if (exists) {
+                        return {
+                            folders: state.folders.map(f => f.id === data.id ? { ...f, ...finalFolder } : f)
+                        };
+                    }
+                    return { folders: [...state.folders, finalFolder as Folder] };
                 });
-            } else if (payload.eventType === 'UPDATE') {
-                set(state => ({
-                    folders: state.folders.map(f => f.id === payload.new.id ? { ...f, ...payload.new, syncStatus: 'synced' } : f)
-                }));
             } else if (payload.eventType === 'DELETE') {
                 set(state => ({ folders: state.folders.filter(f => f.id !== payload.old.id) }));
             }

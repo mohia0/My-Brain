@@ -106,7 +106,19 @@ export default function Inbox({ onItemClick }: InboxProps) {
                 <div className={styles.content}>
                     {inboxItems.length === 0 ? (
                         <div className={styles.emptyState}>
-                            {isOver ? "Drop to Move to Inbox" : "No items"}
+                            {isOver ? (
+                                <div className={styles.emptyDropZone}>
+                                    <InboxIcon size={48} />
+                                    <h3>Drop to move to Inbox</h3>
+                                    <p>Release items here to process them later.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
+                                    <h3>Your mind is clear</h3>
+                                    <p>Ready for your next epiphany? Share links or ideas and they'll wait here for you.</p>
+                                </>
+                            )}
                         </div>
                     ) : (
                         inboxItems.map(item => (

@@ -30,7 +30,10 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
 
     // Poll for metadata updates if item is still loading
     React.useEffect(() => {
-        const needsUpdate = localItem.type === 'link' && !localItem.metadata?.image;
+        const isPlaceholder = localItem.metadata?.title === 'Capturing...' ||
+            localItem.metadata?.title === 'Shared Link' ||
+            localItem.metadata?.title === 'sharedlink';
+        const needsUpdate = localItem.type === 'link' && (!localItem.metadata?.image || isPlaceholder);
 
         if (!needsUpdate) {
             if (pollTimer.current) {
@@ -40,11 +43,11 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
             return;
         }
 
-        // Poll every 2 seconds for up to 30 seconds
+        // Poll every 3 seconds for up to 60 seconds
         let attempts = 0;
         pollTimer.current = setInterval(async () => {
             attempts++;
-            if (attempts > 15) {
+            if (attempts > 20) {
                 clearInterval(pollTimer.current!);
                 return;
             }
@@ -57,19 +60,27 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                     .eq('id', localItem.id)
                     .single();
 
-                if (data?.metadata?.image || data?.metadata?.title) {
-                    setLocalItem(prev => ({ ...prev, metadata: data.metadata }));
-                    clearInterval(pollTimer.current!);
+                if (data?.metadata) {
+                    const hasImage = !!data.metadata.image;
+                    const isPlace = !data.metadata.title || /capturing|shared link|sharedlink/i.test(data.metadata.title);
+
+                    if (hasImage || !isPlace || data.metadata.author !== localItem.metadata?.author) {
+                        setLocalItem(prev => ({ ...prev, metadata: data.metadata }));
+                    }
+
+                    if (hasImage) {
+                        clearInterval(pollTimer.current!);
+                    }
                 }
             } catch (err) {
                 console.error('[InboxItem] Poll failed:', err);
             }
-        }, 2000);
+        }, 3000);
 
         return () => {
             if (pollTimer.current) clearInterval(pollTimer.current);
         };
-    }, [localItem.id, localItem.type, localItem.metadata?.image]);
+    }, [localItem.id, localItem.type, localItem.metadata?.image, localItem.metadata?.title]);
 
     const getImageUrl = () => {
         if (localItem.type === 'image') return localItem.content;
@@ -188,18 +199,21 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                                 <SyncIndicator />
                             </div>
                             <div className={styles.subRow}>
-                                {localItem.type === 'link' && hostname(localItem.content) && (
+                                {localItem.type === 'link' && (localItem.metadata?.siteName || hostname(localItem.content)) && (
                                     <div className={styles.faviconRow}>
                                         <img
-                                            src={`https://www.google.com/s2/favicons?domain=${hostname(localItem.content)}&sz=64`}
+                                            src={localItem.metadata?.favicon || `https://www.google.com/s2/favicons?domain=${hostname(localItem.content)}&sz=64`}
                                             className={styles.miniFavicon}
                                             alt=""
                                             onError={(e) => (e.currentTarget.style.display = 'none')}
                                         />
-                                        <span className={styles.sub}>{hostname(localItem.content)}</span>
+                                        <span className={styles.sub}>
+                                            {localItem.metadata?.siteName || hostname(localItem.content)}
+                                            {localItem.metadata?.author && ` • ${localItem.metadata.author}`}
+                                        </span>
                                     </div>
                                 )}
-                                {(localItem.type !== 'link' || !hostname(localItem.content)) && (
+                                {(localItem.type !== 'link' || (!hostname(localItem.content) && !localItem.metadata?.siteName)) && (
                                     <span className={styles.sub}>{localItem.type === 'image' ? 'Image' : 'Idea'}</span>
                                 )}
                             </div>
@@ -219,15 +233,18 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                                 <SyncIndicator />
                             </div>
                             <div className={styles.subRow}>
-                                {localItem.type === 'link' && hostname(localItem.content) ? (
+                                {localItem.type === 'link' && (localItem.metadata?.siteName || hostname(localItem.content)) ? (
                                     <div className={styles.faviconRow}>
                                         <img
-                                            src={`https://www.google.com/s2/favicons?domain=${hostname(localItem.content)}&sz=64`}
+                                            src={localItem.metadata?.favicon || `https://www.google.com/s2/favicons?domain=${hostname(localItem.content)}&sz=64`}
                                             className={styles.miniFavicon}
                                             alt=""
                                             onError={(e) => (e.currentTarget.style.display = 'none')}
                                         />
-                                        <span className={styles.sub}>{hostname(localItem.content)}</span>
+                                        <span className={styles.sub}>
+                                            {localItem.metadata?.siteName || hostname(localItem.content)}
+                                            {localItem.metadata?.author && ` • ${localItem.metadata.author}`}
+                                        </span>
                                     </div>
                                 ) : (
                                     <span className={styles.sub}>

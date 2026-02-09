@@ -8,6 +8,7 @@ import MobileInbox from './MobileInbox';
 import MobileArchive from './MobileArchive';
 import MobileAddButton from './MobileAddButton';
 import ShareProcessingOverlay from './ShareProcessingOverlay';
+import Orb from '../Orb/Orb';
 import ItemModal from '@/components/ItemModal/ItemModal';
 import FolderModal from '@/components/FolderModal/FolderModal';
 import InputModal from '@/components/InputModal/InputModal';
@@ -31,30 +32,26 @@ export default function MobilePageContent({ session }: { session: any }) {
     // Default to Vercel production URL if env var is not set
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://brainia.vercel.app';
 
-    // Helper to get full API URL
     const getApiUrl = (endpoint: string) => {
-        // If we are on a custom domain/IP (Live Reload), use relative paths
-        if (typeof window !== 'undefined' &&
-            window.location.hostname !== 'localhost' &&
-            window.location.hostname !== '127.0.0.1' &&
-            !window.location.hostname.includes('vercel.app')) {
-            // We are likely on a local IP like 192.168.x.x
-            return endpoint;
-        }
-
-        // FAILSAFE: If we are running strictly natively (file:// or localhost on device)
-        // AND we want to debug locally, we need to point to the computer's IP.
-        // However, for now let's point to PROD if we can't detect a local server.
-
-        // Check if we are in extended dev mode (you can set this manually if needed)
-        // const DEV_IP = "http://192.168.1.12:3000"; // UNCOMMENT and set your PC IP to test locally on physical device without Live Reload
+        const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
         if (Capacitor.isNativePlatform()) {
-            // if (DEV_IP) return `${DEV_IP}${endpoint}`; 
-            return `${API_BASE}${endpoint}`;
+            // ON NATIVE: Always use the full explicit URL from environment
+            return `${cleanBase}${cleanEndpoint}`;
         }
 
-        return endpoint;
+        if (typeof window !== 'undefined') {
+            const h = window.location.hostname;
+            const isLocal = h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.') || h.startsWith('10.') || h.startsWith('172.');
+
+            // If we're on a local network (dev), use the current host as base
+            if (isLocal) {
+                return `${window.location.origin}${cleanEndpoint}`;
+            }
+        }
+
+        return cleanEndpoint;
     };
 
     // Modal states
@@ -86,72 +83,64 @@ export default function MobilePageContent({ session }: { session: any }) {
             if (!Capacitor.isNativePlatform()) return;
 
             try {
+                const { registerPlugin } = await import('@capacitor/core');
+
                 // 1. Handle Sharing Intents
                 console.log("[MobileInit] Initializing SendIntent. User:", session?.user?.id);
-
-                // Modern Capacitor 3+ way to register/access plugins
-                const { registerPlugin } = await import('@capacitor/core');
                 const SendIntent = registerPlugin<any>('SendIntent');
 
                 if (SendIntent) {
-                    // Remove existing listeners to avoid duplicates, but only for the App plugin
-                    // For SendIntent, we want to keep the retained event if it's a cold start
-
                     SendIntent.addListener('appSendActionIntent', (data: any) => {
                         console.log("[MobileShare] Listener triggered", !!data);
                         handleSharedContent(data);
                     });
 
-                    // Check for cold start share
-                    // Note: Some versions of the plugin don't support this, so we check existence
                     if (typeof SendIntent.checkSendIntentReceived === 'function') {
                         try {
                             const result = await SendIntent.checkSendIntentReceived();
                             if (result && (result.value || result.extras || result.files)) {
-                                console.log("[MobileShare] Cold start share detected via checkSendIntentReceived");
                                 handleSharedContent(result);
                             }
                         } catch (e) {
-                            console.warn("[MobileShare] checkSendIntentReceived failed or not implemented", e);
+                            console.warn("[MobileShare] checkSendIntentReceived failed", e);
                         }
                     }
                 }
 
                 // 2. Handle System Back Button (Android)
+                // Use the official @capacitor/app plugin name
                 const AppPlugin = registerPlugin<any>('App');
                 if (AppPlugin) {
-                    console.log("[MobileInit] Setting up Back Button listener");
-                    // Important: remove previous listeners for App to avoid multiple fires on re-renders
-                    if (AppPlugin.removeAllListeners) {
-                        try { await AppPlugin.removeAllListeners(); } catch (e) { }
-                    }
+                    console.log("[MobileInit] Setting up App (Back Button) listener");
 
-                    AppPlugin.addListener('backButton', (data: { canGoBack: boolean }) => {
-                        const backEvent = new CustomEvent('systemBack', { cancelable: true });
-                        window.dispatchEvent(backEvent);
+                    // We need to handle this with a delay to ensure it doesn't conflict with initial load
+                    setTimeout(async () => {
+                        try {
+                            // Don't remove all listeners as it might break web-view internal navigation
+                            AppPlugin.addListener('backButton', (data: { canGoBack: boolean }) => {
+                                const backEvent = new CustomEvent('systemBack', { cancelable: true });
+                                window.dispatchEvent(backEvent);
 
-                        if (backEvent.defaultPrevented) {
-                            console.log("Back event handled by component");
-                            return;
+                                if (backEvent.defaultPrevented) return;
+
+                                if (inputModalOpenRef.current) {
+                                    setInputModalConfig(prev => ({ ...prev, isOpen: false }));
+                                } else if (selectedFolderIdRef.current) {
+                                    setSelectedFolderId(null);
+                                } else if (selectedItemIdRef.current) {
+                                    setSelectedItemId(null);
+                                } else if (selectionCountRef.current > 0) {
+                                    clearSelection();
+                                } else if (data.canGoBack) {
+                                    window.history.back();
+                                } else {
+                                    AppPlugin.exitApp();
+                                }
+                            });
+                        } catch (e) {
+                            console.error("[MobileInit] App listener failed:", e);
                         }
-
-                        if (inputModalOpenRef.current) {
-                            setInputModalConfig(prev => ({ ...prev, isOpen: false }));
-                        } else if (selectedFolderIdRef.current) {
-                            setSelectedFolderId(null);
-                        } else if (selectedItemIdRef.current) {
-                            setSelectedItemId(null);
-                        } else if (selectionCountRef.current > 0) {
-                            clearSelection();
-                        } else {
-                            if (data.canGoBack) {
-                                window.history.back();
-                            } else {
-                                console.log("No UI state active, exiting app");
-                                AppPlugin.exitApp();
-                            }
-                        }
-                    });
+                    }, 500);
                 }
             } catch (err) {
                 console.error("Capacitor registration error:", err);
@@ -237,251 +226,192 @@ export default function MobilePageContent({ session }: { session: any }) {
     };
 
     const handleSharedContent = async (data: any) => {
-        if (!data) {
-            console.error("[MobileShare] Received NULL data in handleSharedContent");
-            return;
-        }
-        console.log("[MobileShare] 1. Received RAW Data STRING:", JSON.stringify(data));
-        console.log("[MobileShare] 1. Received RAW Data OBJECT:", data);
+        if (!data) return;
 
-        // Immediately update UI to show processing
+        console.log("[MobileShare] Processing Share Intent:", JSON.stringify(data, null, 1));
+
+        // 1. Initial UI Feedback
         setActiveTab('inbox');
-        setShareState('capturing'); // Start with capturing/processing state
-
-        // Log the API URL being used
-        console.log("[MobileShare] 2. Checking API Configuration...");
-        const metaTestUrl = getApiUrl('/api/metadata');
-        console.log(`[MobileShare] 2. Resolved API Metadata Endpoint: ${metaTestUrl}`);
-        if (typeof window !== 'undefined') {
-            console.log(`[MobileShare] 2. Window Hostname: ${window.location.hostname}`);
-            console.log(`[MobileShare] 2. Window Origin: ${window.location.origin}`);
-        }
-
-        const extras = data.extras || {};
-        const intentTitle = data.title || data.subject || extras['android.intent.extra.SUBJECT'] || "";
-
-        // Comprehensive text extraction
-        const textContent = (
-            extras['android.intent.extra.TEXT'] ||
-            extras['android.intent.extra.PROCESS_TEXT'] ||
-            data.value ||
-            data.text ||
-            data.url ||
-            ""
-        ).toString().trim();
-
-        // Robust file detection
-        let processedFiles = data.files || [];
-
-        // Check for file in extra stream (Standard Android approach)
-        const streamUri = extras['android.intent.extra.STREAM'];
-        const dataUri = data.uri || data.path;
-
-        if (processedFiles.length === 0 && (streamUri || dataUri)) {
-            const finalUris = Array.isArray(streamUri) ? streamUri : [streamUri || dataUri];
-
-            for (const uri of finalUris) {
-                if (!uri) continue;
-                const uriStr = uri.toString();
-                const mime = data.mimeType || data.type || "";
-
-                console.log(`[MobileShare] Processing URI: ${uriStr}, Mime: ${mime}`);
-
-                const definitelyImage = mime.startsWith('image/') ||
-                    /\.(jpg|jpeg|png|gif|webp)$/i.test(uriStr) ||
-                    uriStr.includes('com.google.android.apps.photos.contentprovider') ||
-                    uriStr.startsWith('content://');
-
-                // Basic filter to avoid processing text as file
-                if (definitelyImage || mime.startsWith('video/') || mime === 'application/pdf' || mime === '*/*') {
-                    processedFiles.push({
-                        uri: uriStr,
-                        mimeType: mime || (definitelyImage ? 'image/jpeg' : 'application/octet-stream'),
-                        name: data.name || "Shared Item"
-                    });
-                }
-            }
-        }
-        const hasFiles = processedFiles.length > 0;
-
-        console.log("[MobileShare] Payload Analysis:", {
-            hasFiles,
-            processedCount: processedFiles.length,
-            textContent: textContent ? (textContent.substring(0, 30) + "...") : "NONE",
-            sessionActive: !!session
-        });
-
-        if (!textContent && !hasFiles) {
-            console.warn("[MobileShare] Empty share - ignoring");
-            // Only reset if we really have nothing. 
-            // Sometimes it takes a moment for stream to be ready? No, data should be here.
-            setShareState('idle');
-            return;
-        }
-
-        // Improved URL Detection regex (handles surrounding text better)
-        // Matches http/https URLs, ignores trailing punctuation like . , )
-        const urlRegex = /(https?:\/\/[^\s\.,"'!]+)/i;
-        const urlMatch = textContent.match(urlRegex);
-
-        // Prioritize data.url, then regex match
-        let finalUrl = data.url || (urlMatch ? urlMatch[0] : null);
-
-        // Sanity check URL
-        if (finalUrl && !finalUrl.startsWith('http')) finalUrl = null;
-
-        const isUrl = !!finalUrl;
-
-        // Improve Title extraction
-        let cleanTitle = intentTitle;
-        if (!cleanTitle && textContent) {
-            if (isUrl) {
-                // If it's a URL share, try to remove the URL from text to find a title/caption
-                const candidate = textContent.replace(finalUrl, "").trim();
-                if (candidate.length > 0) {
-                    cleanTitle = candidate.length > 50 ? candidate.substring(0, 47) + "..." : candidate;
-                }
-            } else {
-                cleanTitle = textContent.length > 50 ? textContent.substring(0, 47) + "..." : textContent;
-            }
-        }
-
-        console.log("[MobileShare] Identification:", { isUrl, finalUrl, hasFiles, filesCount: data.files?.length });
-
-        setShareState('saving');
-        setIsOverlayFading(false); // Ensure overlay is visible
+        setShareState('capturing');
+        setIsOverlayFading(false);
 
         try {
             const userId = session?.user?.id || 'unknown';
+            const extras = data.extras || {};
 
-            // 1. Process as URL or Text
-            // We prioritize files if present, but if there is text/URL we also save it (or as metadata)
-            // Strategy: If there are files, save text as description of the first file?
-            // OR: If it is a distinct URL, save it as a separate item?
-            // Current approach: Independent items.
+            // --- DATA EXTRACTION ---
+            // Extract raw text from any possible intent field
+            let rawText = (
+                extras['android.intent.extra.TEXT'] ||
+                extras['android.intent.extra.PROCESS_TEXT'] ||
+                data.value || data.text || data.url || ""
+            ).toString().trim();
 
-            // EXCEPT: If the text is just the URL, and we have a file, ignore the text item?
-            // No, let's capture everything to be safe.
+            // Extract title/subject
+            const intentTitle = (data.title || data.subject || extras['android.intent.extra.SUBJECT'] || "").toString().trim();
 
-            if (!hasFiles || (textContent !== finalUrl)) {
-                const itemId = generateId();
-                await addItem({
-                    id: itemId,
-                    user_id: userId,
-                    type: isUrl ? 'link' : 'text',
-                    content: finalUrl || textContent,
-                    status: 'inbox',
-                    metadata: {
-                        title: cleanTitle || (isUrl ? "Shared Link" : "Idea Note"),
-                        description: textContent !== finalUrl ? textContent : (isUrl ? "Captured from Mobile" : "Shared from Mobile"),
-                        source: 'share'
-                    },
-                    position_x: 0, position_y: 0,
-                    created_at: new Date().toISOString()
-                });
+            // Exhaustive URL Detection: Check text, then data.url, then subject
+            const urlRegex = /(?:https?:\/\/|www\.)[^\s\r\n\(\)\[\]\{\}\>\<\"\'\^]+(?:\.[^\s\r\n\(\)\[\]\{\}\>\<\"\'\^]+)*/gi;
 
-                if (isUrl) {
-                    // Trigger backend processing
-                    const metadataUrl = getApiUrl('/api/metadata');
-                    fetch(metadataUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: finalUrl })
+            const allMatches = [
+                ...(rawText.match(urlRegex) || []),
+                ...(intentTitle.match(urlRegex) || []),
+                ...(data.url ? [data.url] : [])
+            ];
+
+            // Choose the longest URL found (prevents truncated urls from appearing in one field but not another)
+            let urlToProcess = allMatches.sort((a, b) => b.length - a.length)[0] || null;
+
+            let finalUrl = urlToProcess;
+            if (finalUrl) {
+                finalUrl = finalUrl.trim();
+                // Remove trailing dots, commas, or punctuation that might have been caught
+                finalUrl = finalUrl.replace(/[\.\,\?\#\!\;\:]+$/, "");
+                if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
+            }
+
+            // Extract Description (Text minus URL)
+            let description = rawText;
+            if (finalUrl && urlToProcess) {
+                // Remove the EXACT url string matched
+                const escapedUrl = urlToProcess.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                description = rawText.replace(new RegExp(escapedUrl, 'gi'), "").trim();
+
+                // Extra safety: if the remaining text contains bits of the url like ".com/share", try a more aggressive clean
+                if (finalUrl.includes('facebook') || finalUrl.includes('instagram')) {
+                    description = description.replace(/\.com\/[^\s]*/gi, "").trim();
+                }
+
+                // Final descriptive cleaning
+                description = description.replace(/^[:\-–—\s\u2013\u2014]+|[:\-–—\s\u2013\u2014]+$/g, "");
+            }
+
+            // Files handling
+            let processedFiles = data.files || [];
+            const streamUri = extras['android.intent.extra.STREAM'];
+            const dataUri = data.uri || data.path;
+
+            if (processedFiles.length === 0 && (streamUri || dataUri)) {
+                const finalUris = Array.isArray(streamUri) ? streamUri : [streamUri || dataUri];
+                for (const uri of finalUris) {
+                    if (!uri) continue;
+                    const uriStr = uri.toString();
+                    const mime = data.mimeType || data.type || "";
+                    const potentiallyImage = mime.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(uriStr) || uriStr.startsWith('content://');
+                    if (potentiallyImage || mime.startsWith('video/') || mime === 'application/pdf' || mime === '*/*') {
+                        processedFiles.push({
+                            uri: uriStr,
+                            mimeType: mime || (potentiallyImage ? 'image/jpeg' : 'application/octet-stream'),
+                            name: data.name || "Shared Media"
+                        });
+                    }
+                }
+            }
+
+            // --- PROCESSING STRATEGY ---
+            setShareState('saving');
+            const itemId = generateId();
+            let itemType: 'text' | 'link' | 'image' | 'video' = 'text';
+            let itemContent = rawText;
+
+            // Initial Title Logic: Ignore garbage like "Shared Link" from Android
+            let initialTitle = intentTitle;
+            if (!initialTitle || /shared link|sharedlink/i.test(initialTitle)) {
+                initialTitle = finalUrl ? "Capturing..." : "Idea Note";
+            }
+
+            let metadata: any = {
+                title: initialTitle,
+                description: description || rawText,
+                source: 'mobile-share'
+            };
+
+            if (finalUrl) {
+                itemType = 'link';
+                itemContent = finalUrl;
+            }
+
+            // If we have files, handle the first one as primary
+            if (processedFiles.length > 0) {
+                const file = processedFiles[0];
+                const isImage = file.mimeType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.uri);
+                const isVideo = file.mimeType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(file.uri);
+
+                if (isImage || isVideo) {
+                    const uploaded = await uploadMobileFile(file.uri, itemId, userId);
+                    if (uploaded) {
+                        if (finalUrl) {
+                            // Link with a shared image (common for social)
+                            metadata.image = uploaded;
+                            metadata.isVideo = isVideo;
+                        } else {
+                            // Standalone media
+                            itemType = isVideo ? 'video' : 'image';
+                            itemContent = uploaded;
+                            metadata.isVideo = isVideo;
+                        }
+                    }
+                }
+            }
+
+            // 1. CREATE INITIAL ITEM
+            await addItem({
+                id: itemId,
+                user_id: userId,
+                type: itemType,
+                content: itemContent,
+                status: 'inbox',
+                metadata: metadata,
+                position_x: 0, position_y: 0,
+                created_at: new Date().toISOString()
+            });
+
+            // 2. ENRICH IN BACKGROUND (IF LINK)
+            if (finalUrl) {
+                const metaUrl = getApiUrl('/api/metadata');
+                const shotUrl = getApiUrl('/api/screenshot');
+
+                // Fire and forget metadata
+                fetch(metaUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: finalUrl, itemId, userId })
+                })
+                    .then(r => r.json())
+                    .then(newMeta => {
+                        if (!newMeta.error) {
+                            const existing = useItemsStore.getState().items.find(i => i.id === itemId);
+                            updateItemContent(itemId, {
+                                metadata: { ...existing?.metadata, ...newMeta, source: 'mobile-enriched' }
+                            });
+                        }
                     })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.title || data.image) {
-                                updateItemContent(itemId, { metadata: { ...data, source: 'share-og' } });
-                            }
-                        })
-                        .catch(e => console.error("[MobileShare] OG Metadata failed:", e));
+                    .catch(e => console.error("[MobileShare] Metadata error:", e));
 
-                    const screenshotUrl = getApiUrl('/api/screenshot');
-                    fetch(screenshotUrl, {
+                // Trigger screenshot
+                setTimeout(() => {
+                    fetch(shotUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: finalUrl, itemId, userId })
-                    }).catch(err => console.error("[MobileShare] Screenshot trigger failed:", err));
-                }
+                    }).catch(e => console.error("[MobileShare] Screenshot error:", e));
+                }, 1000);
             }
 
-
-            // 2. Process Files
-            if (hasFiles) {
-                for (const file of processedFiles) {
-                    const fileId = generateId();
-                    const mime = file.mimeType || file.type || "";
-                    const fileUri = file.uri || file.path || file.url || "";
-
-                    // Logic to upload file...
-                    const isImage = mime.startsWith('image/') ||
-                        (typeof fileUri === 'string' && (
-                            /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUri) ||
-                            fileUri.startsWith('content://') ||
-                            fileUri.includes('com.google.android.apps.photos.contentprovider')
-                        ));
-                    const isVideo = mime.startsWith('video/') ||
-                        (typeof fileUri === 'string' && /\.(mp4|mov|avi|mkv|webm)$/i.test(fileUri));
-
-                    if (!fileUri) continue;
-
-                    let finalFileContent = "";
-                    let uploadCommit = false;
-
-                    if (isImage || isVideo) {
-                        // Try uploading
-                        const uploaded = await uploadMobileFile(fileUri.toString(), fileId, userId);
-                        if (uploaded) {
-                            finalFileContent = uploaded;
-                            uploadCommit = true;
-                        } else {
-                            console.warn(`[MobileShare] Failed to upload ${mime}, fallback to local URI disabled (unusable remotely)`);
-                            // If upload fails, we skip creating the item to avoid "broken" items in the cloud
-                            // But maybe we should save it with a "failed" status?
-                            // For now, let's skip.
-                            continue;
-                        }
-                    } else {
-                        // Non-media files (skip for now or better handling later)
-                        if (fileUri.toString().startsWith('content://')) continue;
-                        finalFileContent = fileUri.toString();
-                    }
-
-                    await addItem({
-                        id: fileId,
-                        user_id: userId,
-                        type: isVideo ? 'video' : 'image',
-                        content: finalFileContent,
-                        status: 'inbox',
-                        metadata: {
-                            title: file.name || intentTitle || (isImage ? "Idea Capture" : "Video Capture"),
-                            description: textContent || `Shared via mobile`,
-                            isVideo: isVideo,
-                            source: 'share',
-                            originalUri: fileUri.toString() // Debug info
-                        },
-                        position_x: 0, position_y: 0,
-                        created_at: new Date().toISOString()
-                    });
-                }
-            }
-
+            // SUCCESS FLOW
             setShareState('saved');
-
-            // Reduced delay for snappier feel
             setTimeout(() => {
                 setIsOverlayFading(true);
-                // Force a refresh of data to ensure UI is in sync
-                useItemsStore.getState().fetchData();
-
+                // Removed fetchData() as it can cause race conditions overwriting enriched data
                 setTimeout(() => {
                     setShareState('idle');
                     setIsOverlayFading(false);
                 }, 500);
-            }, 1500); // 1.5s display time for success message
+            }, 1000);
 
-        } catch (error) {
-            console.error("[MobileShare] Critical Error:", error);
+        } catch (error: any) {
+            console.error("[MobileShare] Critical Failure:", error);
+            alert(`Brainia Error: ${error.message || "Failed to process share"}`);
             setShareState('idle');
         }
     };
@@ -605,6 +535,28 @@ export default function MobilePageContent({ session }: { session: any }) {
                     onAdd={handleAddClick}
                 />
             )}
+
+            <div style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '120vw',
+                height: '120vw',
+                maxWidth: '600px',
+                maxHeight: '600px',
+                zIndex: -1,
+                opacity: 0.15,
+                filter: 'blur(40px)',
+                pointerEvents: 'none'
+            }}>
+                <Orb
+                    hue={280}
+                    hoverIntensity={0.5}
+                    forceHoverState={true}
+                    backgroundColor="transparent"
+                />
+            </div>
 
             <MobileSelectionBar />
 

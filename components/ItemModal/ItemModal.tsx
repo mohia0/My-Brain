@@ -48,12 +48,22 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     useEffect(() => {
         if (item) {
-            // Only update local state if not currently editing (to avoid jumping)
-            // Or if content was missing and just arrived (for new captures)
-            if (!isEditingTitle && (!title || title === '' || !item.metadata?.title)) {
+            // Update title if:
+            // 1. Local state is empty OR
+            // 2. Local state is just a 'Capturing' placeholder but store has a real title
+            const isLocalPlaceholder = !title || /capturing|shared link|sharedlink/i.test(title);
+            const isStoreBetter = item.metadata?.title && !/capturing|shared link|sharedlink/i.test(item.metadata.title);
+
+            if (!isEditingTitle && (isLocalPlaceholder || title === '')) {
+                if (item.metadata?.title) {
+                    setTitle(item.metadata.title);
+                }
+            } else if (!isEditingTitle && isLocalPlaceholder && isStoreBetter) {
                 setTitle(item.metadata?.title || '');
             }
-            if (!description || description === '' || !item.metadata?.description) {
+
+            // Sync description similarly
+            if (!description || description === '' || (description.startsWith('http') && item.metadata?.description && !item.metadata.description.startsWith('http'))) {
                 setDescription(item.metadata?.description || '');
             }
 
@@ -62,16 +72,29 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             fetchItemTags();
 
             // Polling for metadata if it's a fresh capture missing images/titles
-            if (item.type === 'link' && !item.metadata?.image) {
+            if (item.type === 'link' && (!item.metadata?.image || item.metadata?.title === 'Capturing...' || item.metadata?.title === 'Shared Link')) {
                 let attempts = 0;
                 const poll = setInterval(async () => {
                     attempts++;
-                    if (attempts > 15) { clearInterval(poll); return; }
+                    if (attempts > 20) { clearInterval(poll); return; }
+                    if (attempts > 25) { clearInterval(poll); return; }
 
                     const { data } = await supabase.from('items').select('metadata').eq('id', item.id).single();
-                    if (data?.metadata?.image || data?.metadata?.title) {
-                        updateItemContent(item.id, { metadata: data.metadata });
-                        clearInterval(poll);
+                    const newMeta = data?.metadata;
+
+                    if (newMeta) {
+                        const hasImage = !!newMeta.image;
+                        const isPlaceholder = !newMeta.title || /capturing|shared link|sharedlink/i.test(newMeta.title);
+
+                        // Always update local state if we found something new or better
+                        if (!isPlaceholder || hasImage || newMeta.author !== item.metadata?.author) {
+                            updateItemContent(item.id, { metadata: newMeta });
+                        }
+
+                        // ONLY stop polling if we have the image OR we've exhausted all attempts
+                        if (hasImage) {
+                            clearInterval(poll);
+                        }
                     }
                 }, 3000);
                 return () => clearInterval(poll);
@@ -320,8 +343,12 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             </a>
                                         ) : (
                                             <div className={styles.previewPlaceholder}>
-                                                <ExternalLink size={48} />
-                                                <span>No Snapshot</span>
+                                                <div className={styles.captureSpinner}>
+                                                    <ExternalLink size={32} className={styles.pulseIcon} />
+                                                </div>
+                                                <span className={styles.loadingText}>
+                                                    {isSaving || item.syncStatus === 'syncing' ? 'Analyzing Link...' : 'Capturing Snapshot...'}
+                                                </span>
                                             </div>
                                         )}
                                     </>
@@ -358,9 +385,10 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                         <div className={styles.header}>
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div className={styles.timestamp}>
-                                    {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {item.metadata?.siteName || 'Shared'} • {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                                 {(isSaving || item.syncStatus === 'syncing') && <div className={styles.savingIndicator}>Saving...</div>}
+                                {item.metadata?.author && <div className={styles.authorBadge}>by {item.metadata.author}</div>}
                             </div>
                             <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
                         </div>

@@ -137,6 +137,12 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         };
     }, [title, description, content]);
 
+    const hasChanged = item && (
+        title !== (item.metadata?.title || '') ||
+        description !== (item.metadata?.description || '') ||
+        content !== item.content
+    );
+
     useEffect(() => {
         const checkOverflow = () => {
             if (titleRef.current) {
@@ -448,7 +454,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 </div>
                             </div>
 
-                            <div className={styles.section}>
+                            <div className={clsx(styles.section, styles.descriptionSection)}>
                                 <div className={styles.labelRow}>
                                     <span className={styles.label}>Notes</span>
                                 </div>
@@ -462,11 +468,18 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                         </div>
 
                         <div className={styles.footer}>
-                            <div className={styles.footerLeft}>
-                                <button className={styles.deleteBtn} onClick={handleDelete} onMouseLeave={() => setIsDeleting(false)}>{isDeleting ? "Confirm?" : <Trash2 size={16} />}</button>
-                                <button className={styles.archiveBtn} onClick={handleArchive}><Archive size={16} /></button>
-                            </div>
-                            <button className={styles.saveBtn} onClick={handleSave}><Save size={16} /> Save</button>
+                            <button className={styles.archiveBtn} onClick={handleArchive}>
+                                <Archive size={18} />
+                                <span>Archive</span>
+                            </button>
+                            <button
+                                className={clsx(styles.deleteBtn, isDeleting && styles.confirmDelete)}
+                                onClick={handleDelete}
+                                onMouseLeave={() => setIsDeleting(false)}
+                            >
+                                <Trash2 size={18} />
+                                <span>{isDeleting ? "Confirm?" : "Delete"}</span>
+                            </button>
                         </div>
                     </div>
                 </div>

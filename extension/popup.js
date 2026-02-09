@@ -72,6 +72,7 @@ const tabUrl = document.getElementById('tab-url');
 
 const saveTabBtn = document.getElementById('save-tab-btn');
 const addNoteBtn = document.getElementById('add-note-btn');
+const userEmailDisplay = document.getElementById('user-email');
 const logoutBtn = document.getElementById('logout-btn');
 
 const backBtn = document.getElementById('back-btn');
@@ -128,6 +129,7 @@ async function init() {
         state.user = session.user;
         statusDot.classList.add('connected');
         statusDot.title = "Connected";
+        if (userEmailDisplay) userEmailDisplay.textContent = state.user.email;
         navigate('main');
     } else {
         navigate('auth');
@@ -151,6 +153,9 @@ function navigate(viewName) {
         mainView.classList.remove('hidden');
         saveTabBtn.disabled = false;
         addNoteBtn.disabled = false;
+        if (userEmailDisplay && state.user) {
+            userEmailDisplay.textContent = state.user.email;
+        }
         updateTabInfo(); // Refresh on navigation to main
     }
     if (viewName === 'note') {
@@ -318,7 +323,16 @@ saveTabBtn.addEventListener('click', async () => {
 
 addNoteBtn.addEventListener('click', () => {
     navigate('note');
+    saveNoteBtn.classList.add('inactive'); // Reset to inactive
     setTimeout(() => noteInput.focus(), 100);
+});
+
+noteInput.addEventListener('input', () => {
+    if (noteInput.value.trim().length > 0) {
+        saveNoteBtn.classList.remove('inactive');
+    } else {
+        saveNoteBtn.classList.add('inactive');
+    }
 });
 
 backBtn.addEventListener('click', () => {
@@ -500,4 +514,4 @@ function initOrb(selector, options = {}) {
 // Start
 init();
 initOrb('#orb-bg', { isBackground: true });
-initOrb('.logo-orb-wrapper', { isBackground: false });
+// initOrb('.logo-orb-wrapper', { isBackground: false }); - Removed per request

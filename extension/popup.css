@@ -67,32 +67,15 @@ header {
 .logo {
     display: flex;
     align-items: center;
-    gap: 8px;
-}
-
-.logo-orb-wrapper {
-    width: 24px;
-    height: 24px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: -2px;
-}
-
-.logo-orb-wrapper canvas {
-    width: 100% !important;
-    height: 100% !important;
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    opacity: 1 !important;
-    filter: none !important;
 }
 
 h1 {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 850;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    margin: 0;
+    line-height: 1;
 }
 
 .status-dot {
@@ -187,6 +170,14 @@ button {
     background: #ddd;
 }
 
+button.inactive {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: default;
+    pointer-events: none;
+}
+
 .secondary-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -197,11 +188,19 @@ button {
     background: rgba(255, 255, 255, 0.05);
 }
 
+.user-email {
+    font-size: 11px;
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 12px;
+    opacity: 0.7;
+}
+
 .text-btn {
     background: transparent;
     color: var(--text-muted);
-    font-size: 12px;
-    margin-top: auto;
+    font-size: 11px;
+    margin-top: 2px;
 }
 
 .text-btn:hover {

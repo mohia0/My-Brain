@@ -46,8 +46,8 @@
     letter-spacing: -0.03em;
     font-family: var(--font-outfit), sans-serif;
     transition: all 0.3s ease;
-    transform: translateY(-3.5px);
-    /* Shift text up */
+    transform: translateY(0);
+    /* Removed the shift-up */
 }
 
 .logo:hover h1 {

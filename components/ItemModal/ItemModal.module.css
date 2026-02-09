@@ -45,7 +45,7 @@
 }
 
 .compactModal {
-    height: auto;
+    height: 75vh;
     max-height: 700px;
     width: 1000px;
 }
@@ -294,6 +294,9 @@
     display: flex;
     flex-direction: column;
     background: var(--modal-bg);
+    height: 100%;
+    overflow: hidden;
+    position: relative;
 }
 
 /* --- RIGHT COLUMN SECTIONS --- */
@@ -305,6 +308,7 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
+    flex-shrink: 0;
 }
 
 .captureTitleSection {
@@ -484,8 +488,17 @@
     padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
     padding-bottom: 40px;
+    min-height: 0;
+}
+
+.scrollBody>.section {
+    flex-shrink: 0;
+}
+
+.scrollBody>.descriptionSection {
+    flex-shrink: 1;
 }
 
 /* Vertical Note Layout Styles */
@@ -721,52 +734,31 @@
 /* --- FOOTER --- */
 
 .footer {
-    padding: 24px;
+    padding: 20px 24px;
     border-top: 1px solid var(--border-light);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--modal-bg);
-    backdrop-filter: blur(16px);
-}
-
-.footerLeft {
     display: flex;
     gap: 12px;
     align-items: center;
-}
-
-.convertBtn {
-    background: var(--card-bg);
-    border: 1px solid var(--border-light);
-    color: var(--text-dim);
-    padding: 10px 16px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.convertBtn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--foreground);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: var(--modal-bg);
+    backdrop-filter: blur(16px);
+    flex-shrink: 0;
 }
 
 .deleteBtn {
+    flex: 1;
     background: rgba(225, 29, 72, 0.05);
     color: var(--danger);
     border: 1px solid rgba(225, 29, 72, 0.15);
-    padding: 10px 20px;
+    padding: 12px;
     border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.85rem;
+    font-weight: 650;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
 }
 
 .deleteBtn:hover {
@@ -776,16 +768,20 @@
 }
 
 .archiveBtn {
+    flex: 1;
     background: var(--card-bg);
-    color: var(--text-dim);
+    color: var(--text-muted);
     border: 1px solid var(--border-light);
-    padding: 10px;
+    padding: 12px;
     border-radius: 12px;
+    font-weight: 650;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 10px;
 }
 
 .archiveBtn:hover {
@@ -795,29 +791,10 @@
     box-shadow: 0 0 15px var(--accent-glow);
 }
 
-.saveBtn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 12px 28px;
-    font-weight: 700;
-    border-radius: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 8px 16px var(--accent-glow);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.saveBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px var(--accent-glow);
-    filter: brightness(1.1);
-}
-
-.saveBtn:active {
-    transform: translateY(1px);
+.confirmDelete {
+    background: var(--danger) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3) !important;
 }
 
 /* --- MOBILE & COMPACT OVERRIDES --- */
@@ -953,6 +930,10 @@
 
     .section {
         gap: 4px !important;
+    }
+
+    .descriptionSection {
+        margin-bottom: 24px !important;
     }
 }
 

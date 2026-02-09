@@ -78,7 +78,13 @@ export default function MobilePageContent({ session }: { session: any }) {
     useEffect(() => { inputModalOpenRef.current = inputModalConfig.isOpen; }, [inputModalConfig.isOpen]);
     useEffect(() => { selectionCountRef.current = selectedIds.length; }, [selectedIds.length]);
 
+    // Prevent double-processing of the same intent (common in Capacitor)
+    const processedIntentRef = React.useRef<{ hash: string; time: number } | null>(null);
+    const hasFiredListenerRef = React.useRef<boolean>(false);
+
     useEffect(() => {
+        let intentListener: any = null;
+
         const initCapacitor = async () => {
             if (!Capacitor.isNativePlatform()) return;
 
@@ -86,61 +92,63 @@ export default function MobilePageContent({ session }: { session: any }) {
                 const { registerPlugin } = await import('@capacitor/core');
 
                 // 1. Handle Sharing Intents
-                console.log("[MobileInit] Initializing SendIntent. User:", session?.user?.id);
                 const SendIntent = registerPlugin<any>('SendIntent');
 
                 if (SendIntent) {
-                    SendIntent.addListener('appSendActionIntent', (data: any) => {
-                        console.log("[MobileShare] Listener triggered", !!data);
+                    // Store listener so we can remove it
+                    intentListener = await SendIntent.addListener('appSendActionIntent', (data: any) => {
+                        console.log("[MobileShare] Listener triggered");
+                        hasFiredListenerRef.current = true;
                         handleSharedContent(data);
                     });
 
-                    if (typeof SendIntent.checkSendIntentReceived === 'function') {
-                        try {
-                            const result = await SendIntent.checkSendIntentReceived();
-                            if (result && (result.value || result.extras || result.files)) {
-                                handleSharedContent(result);
-                            }
-                        } catch (e) {
-                            console.warn("[MobileShare] checkSendIntentReceived failed", e);
+                    // Only check on cold start if listener hasn't fired yet
+                    // This prevents double-triggering on splash screen apps
+                    setTimeout(async () => {
+                        if (hasFiredListenerRef.current) {
+                            console.log("[MobileShare] Listener already fired, skipping cold-start check.");
+                            return;
                         }
-                    }
+
+                        if (typeof SendIntent.checkSendIntentReceived === 'function') {
+                            try {
+                                const result = await SendIntent.checkSendIntentReceived();
+                                if (result && (result.value || result.extras || result.files)) {
+                                    console.log("[MobileShare] Cold-start intent detected");
+                                    handleSharedContent(result);
+                                }
+                            } catch (e) {
+                                console.warn("[MobileShare] checkSendIntentReceived failed", e);
+                            }
+                        }
+                    }, 800);
                 }
 
                 // 2. Handle System Back Button (Android)
-                // Use the official @capacitor/app plugin name
                 const AppPlugin = registerPlugin<any>('App');
                 if (AppPlugin) {
                     console.log("[MobileInit] Setting up App (Back Button) listener");
 
-                    // We need to handle this with a delay to ensure it doesn't conflict with initial load
-                    setTimeout(async () => {
-                        try {
-                            // Don't remove all listeners as it might break web-view internal navigation
-                            AppPlugin.addListener('backButton', (data: { canGoBack: boolean }) => {
-                                const backEvent = new CustomEvent('systemBack', { cancelable: true });
-                                window.dispatchEvent(backEvent);
+                    AppPlugin.addListener('backButton', (data: { canGoBack: boolean }) => {
+                        const backEvent = new CustomEvent('systemBack', { cancelable: true });
+                        window.dispatchEvent(backEvent);
 
-                                if (backEvent.defaultPrevented) return;
+                        if (backEvent.defaultPrevented) return;
 
-                                if (inputModalOpenRef.current) {
-                                    setInputModalConfig(prev => ({ ...prev, isOpen: false }));
-                                } else if (selectedFolderIdRef.current) {
-                                    setSelectedFolderId(null);
-                                } else if (selectedItemIdRef.current) {
-                                    setSelectedItemId(null);
-                                } else if (selectionCountRef.current > 0) {
-                                    clearSelection();
-                                } else if (data.canGoBack) {
-                                    window.history.back();
-                                } else {
-                                    AppPlugin.exitApp();
-                                }
-                            });
-                        } catch (e) {
-                            console.error("[MobileInit] App listener failed:", e);
+                        if (inputModalOpenRef.current) {
+                            setInputModalConfig(prev => ({ ...prev, isOpen: false }));
+                        } else if (selectedFolderIdRef.current) {
+                            setSelectedFolderId(null);
+                        } else if (selectedItemIdRef.current) {
+                            setSelectedItemId(null);
+                        } else if (selectionCountRef.current > 0) {
+                            clearSelection();
+                        } else if (data.canGoBack) {
+                            window.history.back();
+                        } else {
+                            AppPlugin.exitApp();
                         }
-                    }, 500);
+                    });
                 }
             } catch (err) {
                 console.error("Capacitor registration error:", err);
@@ -148,9 +156,13 @@ export default function MobilePageContent({ session }: { session: any }) {
         };
 
         initCapacitor();
+
         return () => {
-            const cap = (window as any).Capacitor;
-            if (cap?.Plugins?.App?.removeAllListeners) cap.Plugins.App.removeAllListeners();
+            if (intentListener) intentListener.remove();
+            try {
+                const cap = (window as any).Capacitor;
+                if (cap?.Plugins?.App?.removeAllListeners) cap.Plugins.App.removeAllListeners();
+            } catch (e) { }
         };
     }, []);
 
@@ -225,10 +237,9 @@ export default function MobilePageContent({ session }: { session: any }) {
         }
     };
 
-    const handleSharedContent = async (data: any) => {
-        if (!data) return;
-
-        console.log("[MobileShare] Processing Share Intent:", JSON.stringify(data, null, 1));
+    const handleSharedContent = async (intent: any) => {
+        if (!intent) return;
+        hasFiredListenerRef.current = true; // Signal we are already processing
 
         // 1. Initial UI Feedback
         setActiveTab('inbox');
@@ -236,182 +247,145 @@ export default function MobilePageContent({ session }: { session: any }) {
         setIsOverlayFading(false);
 
         try {
+            const data = intent.value || intent;
+            const extras = intent.extras || {};
             const userId = session?.user?.id || 'unknown';
-            const extras = data.extras || {};
 
-            // --- DATA EXTRACTION ---
-            // Extract raw text from any possible intent field
-            let rawText = (
-                extras['android.intent.extra.TEXT'] ||
-                extras['android.intent.extra.PROCESS_TEXT'] ||
-                data.value || data.text || data.url || ""
-            ).toString().trim();
-
-            // Extract title/subject
+            // --- DATA PRE-EXTRACTION ---
+            let rawText = (extras['android.intent.extra.TEXT'] || extras['android.intent.extra.PROCESS_TEXT'] || data.value || data.text || data.url || "").toString().trim();
             const intentTitle = (data.title || data.subject || extras['android.intent.extra.SUBJECT'] || "").toString().trim();
 
-            // Exhaustive URL Detection: Check text, then data.url, then subject
+            // Extract URLs immediately for deduplication
             const urlRegex = /(?:https?:\/\/|www\.)[^\s\r\n\(\)\[\]\{\}\>\<\"\'\^]+(?:\.[^\s\r\n\(\)\[\]\{\}\>\<\"\'\^]+)*/gi;
+            const allUrlMatches = [...(rawText.match(urlRegex) || []), ...(intentTitle.match(urlRegex) || []), ...(data.url ? [data.url] : [])];
+            const bestUrl = allUrlMatches.sort((a, b) => b.length - a.length)[0] || null;
 
-            const allMatches = [
-                ...(rawText.match(urlRegex) || []),
-                ...(intentTitle.match(urlRegex) || []),
-                ...(data.url ? [data.url] : [])
-            ];
+            // --- DE-DUPLICATION (STABILIZED) ---
+            // Normalize the check string (remove http/www for the hash)
+            const normalizedUrl = bestUrl ? bestUrl.toLowerCase()
+                .replace(/^https?:\/\//, '')
+                .replace(/^www\./, '')
+                .replace(/\/$/, '') : null;
 
-            // Choose the longest URL found (prevents truncated urls from appearing in one field but not another)
-            let urlToProcess = allMatches.sort((a, b) => b.length - a.length)[0] || null;
+            const intentHash = normalizedUrl ? `url:${normalizedUrl}` : `text:${rawText.substring(0, 50)}`;
 
-            let finalUrl = urlToProcess;
+            if (processedIntentRef.current && processedIntentRef.current.hash === intentHash && Date.now() - processedIntentRef.current.time < 5000) {
+                console.log("[MobileShare] Ignoring duplicate intent:", intentHash);
+                setShareState('idle');
+                return;
+            }
+            processedIntentRef.current = { hash: intentHash, time: Date.now() };
+
+            // --- INTEGRITY CHECK (AVOID BROKEN CARDS) ---
+            const processedFiles = data.files || [];
+            const hasEnoughText = rawText.length > 5;
+            if (!bestUrl && processedFiles.length === 0 && !hasEnoughText) {
+                console.log("[MobileShare] Intent integrity too low, ignoring (Broken Card Prevention)");
+                setShareState('idle');
+                return;
+            }
+
+            // --- FINAL URL & DESCRIPTION ---
+            let finalUrl = bestUrl;
             if (finalUrl) {
                 finalUrl = finalUrl.trim();
-                // Remove trailing dots, commas, or punctuation that might have been caught
                 finalUrl = finalUrl.replace(/[\.\,\?\#\!\;\:]+$/, "");
                 if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
             }
 
-            // Extract Description (Text minus URL)
             let description = rawText;
-            if (finalUrl && urlToProcess) {
-                // Remove the EXACT url string matched
-                const escapedUrl = urlToProcess.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (finalUrl && bestUrl) {
+                const escapedUrl = bestUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 description = rawText.replace(new RegExp(escapedUrl, 'gi'), "").trim();
-
-                // Extra safety: if the remaining text contains bits of the url like ".com/share", try a more aggressive clean
                 if (finalUrl.includes('facebook') || finalUrl.includes('instagram')) {
                     description = description.replace(/\.com\/[^\s]*/gi, "").trim();
                 }
-
-                // Final descriptive cleaning
                 description = description.replace(/^[:\-–—\s\u2013\u2014]+|[:\-–—\s\u2013\u2014]+$/g, "");
             }
 
-            // Files handling
-            let processedFiles = data.files || [];
-            const streamUri = extras['android.intent.extra.STREAM'];
-            const dataUri = data.uri || data.path;
-
-            if (processedFiles.length === 0 && (streamUri || dataUri)) {
-                const finalUris = Array.isArray(streamUri) ? streamUri : [streamUri || dataUri];
-                for (const uri of finalUris) {
-                    if (!uri) continue;
-                    const uriStr = uri.toString();
-                    const mime = data.mimeType || data.type || "";
-                    const potentiallyImage = mime.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(uriStr) || uriStr.startsWith('content://');
-                    if (potentiallyImage || mime.startsWith('video/') || mime === 'application/pdf' || mime === '*/*') {
-                        processedFiles.push({
-                            uri: uriStr,
-                            mimeType: mime || (potentiallyImage ? 'image/jpeg' : 'application/octet-stream'),
-                            name: data.name || "Shared Media"
-                        });
+            // --- FILE HANDLING ---
+            if (processedFiles.length === 0) {
+                const streamUri = extras['android.intent.extra.STREAM'] || data.uri || data.path;
+                if (streamUri) {
+                    const finalUris = Array.isArray(streamUri) ? streamUri : [streamUri];
+                    for (const uri of finalUris) {
+                        if (!uri) continue;
+                        const uriStr = uri.toString();
+                        const mime = data.mimeType || data.type || "";
+                        const isImg = mime.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(uriStr) || uriStr.startsWith('content://');
+                        if (isImg || mime.startsWith('video/')) {
+                            processedFiles.push({ uri: uriStr, mimeType: mime || (isImg ? 'image/jpeg' : 'video/mp4') });
+                        }
                     }
                 }
             }
 
-            // --- PROCESSING STRATEGY ---
+            // --- ITEM CREATION ---
             setShareState('saving');
             const itemId = generateId();
-            let itemType: 'text' | 'link' | 'image' | 'video' = 'text';
-            let itemContent = rawText;
+            let itemType: 'text' | 'link' | 'image' | 'video' = finalUrl ? 'link' : 'text';
+            let itemContent = finalUrl || rawText;
 
-            // Initial Title Logic: Ignore garbage like "Shared Link" from Android
             let initialTitle = intentTitle;
             if (!initialTitle || /shared link|sharedlink/i.test(initialTitle)) {
                 initialTitle = finalUrl ? "Capturing..." : "Idea Note";
             }
 
-            let metadata: any = {
-                title: initialTitle,
-                description: description || rawText,
-                source: 'mobile-share'
-            };
+            let metadata: any = { title: initialTitle, description: description || rawText, source: 'mobile-share' };
 
-            if (finalUrl) {
-                itemType = 'link';
-                itemContent = finalUrl;
-            }
-
-            // If we have files, handle the first one as primary
+            // Handle first file as primary if present
             if (processedFiles.length > 0) {
                 const file = processedFiles[0];
-                const isImage = file.mimeType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.uri);
-                const isVideo = file.mimeType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(file.uri);
-
-                if (isImage || isVideo) {
+                const isImg = file.mimeType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.uri);
+                const isVid = file.mimeType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(file.uri);
+                if (isImg || isVid) {
                     const uploaded = await uploadMobileFile(file.uri, itemId, userId);
                     if (uploaded) {
-                        if (finalUrl) {
-                            // Link with a shared image (common for social)
-                            metadata.image = uploaded;
-                            metadata.isVideo = isVideo;
-                        } else {
-                            // Standalone media
-                            itemType = isVideo ? 'video' : 'image';
-                            itemContent = uploaded;
-                            metadata.isVideo = isVideo;
-                        }
+                        if (finalUrl) { metadata.image = uploaded; metadata.isVideo = isVid; }
+                        else { itemType = isVid ? 'video' : 'image'; itemContent = uploaded; metadata.isVideo = isVid; }
                     }
                 }
             }
 
-            // 1. CREATE INITIAL ITEM
             await addItem({
-                id: itemId,
-                user_id: userId,
-                type: itemType,
-                content: itemContent,
-                status: 'inbox',
-                metadata: metadata,
-                position_x: 0, position_y: 0,
+                id: itemId, user_id: userId, type: itemType, content: itemContent,
+                status: 'inbox', metadata: metadata, position_x: 0, position_y: 0,
                 created_at: new Date().toISOString()
             });
 
-            // 2. ENRICH IN BACKGROUND (IF LINK)
+            // --- ENRICHMENT ---
             if (finalUrl) {
                 const metaUrl = getApiUrl('/api/metadata');
                 const shotUrl = getApiUrl('/api/screenshot');
 
-                // Fire and forget metadata
                 fetch(metaUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: finalUrl, itemId, userId })
-                })
-                    .then(r => r.json())
-                    .then(newMeta => {
-                        if (!newMeta.error) {
-                            const existing = useItemsStore.getState().items.find(i => i.id === itemId);
-                            updateItemContent(itemId, {
-                                metadata: { ...existing?.metadata, ...newMeta, source: 'mobile-enriched' }
-                            });
-                        }
-                    })
-                    .catch(e => console.error("[MobileShare] Metadata error:", e));
+                }).then(r => r.json()).then(newM => {
+                    if (newM && !newM.error) {
+                        const existing = useItemsStore.getState().items.find(i => i.id === itemId);
+                        updateItemContent(itemId, { metadata: { ...existing?.metadata, ...newM, source: 'mobile-enriched' } });
+                    }
+                }).catch(e => console.error("[MobileShare] Meta error:", e));
 
-                // Trigger screenshot
                 setTimeout(() => {
                     fetch(shotUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: finalUrl, itemId, userId })
                     }).catch(e => console.error("[MobileShare] Screenshot error:", e));
-                }, 1000);
+                }, 1200);
             }
 
-            // SUCCESS FLOW
             setShareState('saved');
             setTimeout(() => {
                 setIsOverlayFading(true);
-                // Removed fetchData() as it can cause race conditions overwriting enriched data
-                setTimeout(() => {
-                    setShareState('idle');
-                    setIsOverlayFading(false);
-                }, 500);
+                setTimeout(() => { setShareState('idle'); setIsOverlayFading(false); }, 500);
             }, 1000);
 
         } catch (error: any) {
-            console.error("[MobileShare] Critical Failure:", error);
-            alert(`Brainia Error: ${error.message || "Failed to process share"}`);
+            console.error("[MobileShare] Failure:", error);
             setShareState('idle');
         }
     };

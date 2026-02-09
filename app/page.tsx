@@ -24,6 +24,7 @@ import FolderModal from "@/components/FolderModal/FolderModal";
 
 import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
 import MobilePageContent from "@/components/Mobile/MobilePageContent";
+import { useCanvasStore } from "@/lib/store/canvasStore";
 
 export default function Home() {
   const { items, folders, fetchData, subscribeToChanges, clearSelection } = useItemsStore();
@@ -146,6 +147,40 @@ export default function Home() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // View Sync Logic
+  useEffect(() => {
+    if (session?.user?.user_metadata?.canvas_view && !isMobile) {
+      const { scale, x, y } = session.user.user_metadata.canvas_view;
+      useCanvasStore.getState().restoreView(scale, { x, y });
+    }
+  }, [session, isMobile]);
+
+  useEffect(() => {
+    if (!session || isMobile) return;
+
+    let timer: NodeJS.Timeout;
+    const unsubscribe = useCanvasStore.subscribe((state) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        supabase.auth.updateUser({
+          data: {
+            ...session.user.user_metadata,
+            canvas_view: {
+              scale: state.scale,
+              x: state.position.x,
+              y: state.position.y
+            }
+          }
+        });
+      }, 3000);
+    });
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
+  }, [session, isMobile]);
 
   const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived');
   const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');

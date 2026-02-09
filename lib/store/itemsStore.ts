@@ -42,7 +42,7 @@ const getSafePosition = (
     // Grid-based search for a free spot
     const stepX = 300; // colWidth + gap
     const stepY = 150; // approx height + gap
-    const maxRings = 10;
+    const maxRings = 20; // Increased for very full canvases
 
     for (let ring = 0; ring <= maxRings; ring++) {
         for (let ix = -ring; ix <= ring; ix++) {
@@ -367,16 +367,14 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const state = get();
         let finalUpdates = { ...updates };
 
-        // If movement is involved (e.g. from Inbox), resolve collisions
-        if (updates.position_x !== undefined || updates.position_y !== undefined) {
-            const item = state.items.find(i => i.id === id);
-            if (item) {
-                const targetX = updates.position_x ?? item.position_x;
-                const targetY = updates.position_y ?? item.position_y;
-                const safe = getSafePosition(id, targetX, targetY, 280, 120, state.items, state.folders);
-                finalUpdates.position_x = safe.x;
-                finalUpdates.position_y = safe.y;
-            }
+        // If movement is involved (e.g. from Inbox) or item becomes active, resolve collisions
+        const item = state.items.find(i => i.id === id);
+        if (item && (updates.position_x !== undefined || updates.position_y !== undefined || (updates.status === 'active' && item.status !== 'active'))) {
+            const targetX = updates.position_x ?? item.position_x;
+            const targetY = updates.position_y ?? item.position_y;
+            const safe = getSafePosition(id, targetX, targetY, 280, 120, state.items, state.folders);
+            finalUpdates.position_x = safe.x;
+            finalUpdates.position_y = safe.y;
         }
 
         set((state) => ({

@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ogs from 'open-graph-scraper';
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-export async function OPTIONS() {
-    return NextResponse.json({}, { headers: corsHeaders });
-}
-
 const MOBILE_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
 
 export async function POST(req: NextRequest) {
@@ -18,7 +8,7 @@ export async function POST(req: NextRequest) {
         const { url: rawUrl, itemId, userId } = await req.json();
 
         if (!rawUrl) {
-            return NextResponse.json({ error: 'URL is required' }, { status: 400, headers: corsHeaders });
+            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
         // --- Tier 0: URL Cleaning ---
@@ -210,7 +200,7 @@ export async function POST(req: NextRequest) {
             author: metadata.author
         });
 
-        return NextResponse.json(metadata, { headers: corsHeaders });
+        return NextResponse.json(metadata);
 
     } catch (error) {
         console.error('[SmartMetadata] Critical Processing Error:', error);

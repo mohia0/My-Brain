@@ -6,6 +6,7 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "build:mobile": "set IS_CAPACITOR_BUILD=true&& next build",
+    "build:vercel": "next build",
     "start": "next start",
     "lint": "eslint"
   },

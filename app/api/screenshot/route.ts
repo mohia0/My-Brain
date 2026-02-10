@@ -6,6 +6,10 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const MOBILE_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
 
+export async function GET() {
+    return NextResponse.json({ status: 'Screenshot API is active', method: 'GET' });
+}
+
 export async function POST(req: NextRequest) {
     try {
         if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {

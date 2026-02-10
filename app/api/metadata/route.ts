@@ -3,6 +3,10 @@ import ogs from 'open-graph-scraper';
 
 const MOBILE_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
 
+export async function GET() {
+    return NextResponse.json({ status: 'Metadata API is active', method: 'GET' });
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { url: rawUrl, itemId, userId } = await req.json();

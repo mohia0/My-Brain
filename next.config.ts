@@ -1,11 +1,12 @@
 import type { NextConfig } from "next";
 
-const isCapacitorBuild = process.env.IS_CAPACITOR_BUILD?.trim() === 'true';
+const isCapacitorBuild = process.env.IS_CAPACITOR_BUILD?.trim() === 'true' && !process.env.VERCEL;
 
 console.log('--- NEXT CONFIG ---');
-console.log('IS_CAPACITOR_BUILD:', `"${process.env.IS_CAPACITOR_BUILD}"`);
-console.log('isCapacitorBuild (bool):', isCapacitorBuild);
-console.log('Output Mode:', isCapacitorBuild ? 'export' : 'default');
+console.log('IS_CAPACITOR_BUILD (env):', `"${process.env.IS_CAPACITOR_BUILD}"`);
+console.log('VERCEL (env):', process.env.VERCEL);
+console.log('isCapacitorBuild (final bool):', isCapacitorBuild);
+console.log('Output Mode:', isCapacitorBuild ? 'export' : 'default (api supported)');
 console.log('-------------------');
 
 const nextConfig: NextConfig = {

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const isCapacitorBuild = process.env.IS_CAPACITOR_BUILD?.trim() === 'true' && !process.env.VERCEL;
+const isCapacitorBuild = process.env.IS_CAPACITOR_BUILD?.trim() === 'true' && !process.env.VERCEL && !process.env.VERCEL_URL;
 
 console.log('--- NEXT CONFIG ---');
 console.log('IS_CAPACITOR_BUILD (env):', `"${process.env.IS_CAPACITOR_BUILD}"`);

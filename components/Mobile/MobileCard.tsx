@@ -112,6 +112,8 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
         );
     };
 
+    const [imageError, setImageError] = useState(false);
+
     return (
         <div
             className={clsx(
@@ -150,7 +152,18 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                     </div>
                 ) : isImage && imageUrl ? (
                     <div className={styles.imageLayout}>
-                        <img src={imageUrl} alt="" className={styles.thumb} />
+                        {!imageError ? (
+                            <img
+                                src={imageUrl}
+                                alt=""
+                                className={styles.thumb}
+                                onError={() => setImageError(true)}
+                            />
+                        ) : (
+                            <div className={styles.noSnapshotThumb}>
+                                <span>No Snapshot</span>
+                            </div>
+                        )}
                         <div className={styles.info}>
                             <div className={styles.titleRow}>
                                 <div className={styles.title}>{item.metadata?.title || (item.type === 'image' ? 'Image Idea' : 'Shared Idea')}</div>
@@ -243,7 +256,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
 
             <div className={styles.actions} onClick={e => e.stopPropagation()}>
                 <button onClick={handleArchive} className={styles.actionBtn} title="Archive"><Archive size={14} /></button>
-                <button onClick={handleDuplicate} className={styles.actionBtn} title="Duplicate"><Copy size={14} /></button>
+                {!isFolder && <button onClick={handleDuplicate} className={styles.actionBtn} title="Duplicate"><Copy size={14} /></button>}
                 <button
                     onClick={handleDelete}
                     className={clsx(styles.actionBtn, styles.delete, isDeleting && styles.confirmDelete)}

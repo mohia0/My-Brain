@@ -178,7 +178,24 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
             >
-                <img src={localItem.metadata.image} className={styles.captureThumb} draggable={false} />
+                <div className={styles.captureThumbWrapper}>
+                    <img
+                        src={localItem.metadata.image}
+                        className={styles.captureThumb}
+                        draggable={false}
+                        onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                                const placeholder = document.createElement('div');
+                                placeholder.className = styles.noSnapshot;
+                                placeholder.innerText = 'No Snapshot';
+                                parent.appendChild(placeholder);
+                            }
+                        }}
+                    />
+                </div>
                 <div className={styles.captureInfo}>
                     <div className={styles.captureTitle}>{localItem.metadata.title}</div>
                     <div className={styles.captureDomain}>{safeHostname(localItem.content)}</div>
@@ -247,6 +264,17 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         alt="preview"
                         className={styles.imageContent}
                         draggable={false}
+                        onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                                const placeholder = document.createElement('div');
+                                placeholder.className = styles.noSnapshot;
+                                placeholder.innerText = 'No Snapshot';
+                                parent.appendChild(placeholder);
+                            }
+                        }}
                     />
                 ) : (
                     <div style={{ fontSize: '0.8rem', color: '#ccc', maxHeight: 80, overflow: 'hidden', whiteSpace: 'pre-wrap' }}>

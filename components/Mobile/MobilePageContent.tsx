@@ -315,8 +315,15 @@ export default function MobilePageContent({ session }: { session: any }) {
             let itemContent = finalUrl || rawText;
 
             let initialTitle = intentTitle;
-            if (!initialTitle || /shared link|sharedlink/i.test(initialTitle)) {
-                initialTitle = finalUrl ? "Capturing..." : "Idea Note";
+            if (finalUrl && (!initialTitle || /shared link|sharedlink/i.test(initialTitle))) {
+                try {
+                    const domain = new URL(finalUrl).hostname.replace('www.', '').split('.')[0];
+                    initialTitle = domain.charAt(0).toUpperCase() + domain.slice(1);
+                } catch (e) {
+                    initialTitle = "Idea Note";
+                }
+            } else if (!initialTitle) {
+                initialTitle = "Idea Note";
             }
 
             let metadata: any = { title: initialTitle, description: description || rawText, source: 'mobile-share' };
@@ -422,6 +429,15 @@ export default function MobilePageContent({ session }: { session: any }) {
         } else {
             let content = type === 'text' ? '' : value;
             let metadataTitle = type === 'text' ? value : 'New Idea';
+
+            if (type === 'link' && value) {
+                try {
+                    const domain = new URL(value.startsWith('http') ? value : `https://${value}`).hostname.replace('www.', '').split('.')[0];
+                    metadataTitle = domain.charAt(0).toUpperCase() + domain.slice(1);
+                } catch (e) {
+                    metadataTitle = "New Link";
+                }
+            }
 
             if (type === 'image' || type === 'camera') {
                 const uploadedUrl = await uploadMobileFile(value, id, userId);

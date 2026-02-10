@@ -358,23 +358,35 @@ export default function MobilePageContent({ session }: { session: any }) {
                 const metaUrl = getApiUrl('/api/metadata');
                 const shotUrl = getApiUrl('/api/screenshot');
 
-                fetch(metaUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: finalUrl, itemId, userId })
-                }).then(r => r.json()).then(newM => {
-                    if (newM && !newM.error) {
-                        const existing = useItemsStore.getState().items.find(i => i.id === itemId);
-                        updateItemContent(itemId, { metadata: { ...existing?.metadata, ...newM, source: 'mobile-enriched' } });
-                    }
-                }).catch(e => console.error("[MobileShare] Meta error:", e));
-
-                setTimeout(() => {
-                    fetch(shotUrl, {
+                // ENRICHMENT: Metadata
+                try {
+                    fetch(metaUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: finalUrl, itemId, userId })
-                    }).catch(e => console.error("[MobileShare] Screenshot error:", e));
+                    }).then(async r => {
+                        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                        const newM = await r.json();
+                        if (newM && !newM.error) {
+                            const existing = useItemsStore.getState().items.find(i => i.id === itemId);
+                            updateItemContent(itemId, { metadata: { ...existing?.metadata, ...newM, source: 'mobile-enriched' } });
+                        }
+                    }).catch(e => console.warn("[MobileShare] Meta fetch failed (background):", e.message));
+                } catch (e) {
+                    console.warn("[MobileShare] Meta trigger failed:", e);
+                }
+
+                // ENRICHMENT: Screenshot
+                setTimeout(() => {
+                    try {
+                        fetch(shotUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: finalUrl, itemId, userId })
+                        }).catch(e => console.warn("[MobileShare] Screenshot fetch failed (background):", e.message));
+                    } catch (e) {
+                        console.warn("[MobileShare] Screenshot trigger failed:", e);
+                    }
                 }, 1200);
             }
 
@@ -447,19 +459,37 @@ export default function MobilePageContent({ session }: { session: any }) {
                 const userId = session?.user?.id || 'unknown';
                 // Trigger metadata AND screenshot
                 const metadataUrl = getApiUrl('/api/metadata');
-                fetch(metadataUrl, { method: 'POST', body: JSON.stringify({ url: content }) })
-                    .then(res => res.json())
-                    .then(data => updateItemContent(id, { metadata: data }))
-                    .catch(err => {
-                        if (err.name === 'AbortError') return;
-                        console.error("Metadata fetch failed:", err);
-                    });
-
                 const screenshotUrl = getApiUrl('/api/screenshot');
-                fetch(screenshotUrl, {
-                    method: 'POST',
-                    body: JSON.stringify({ url: content, itemId: id, userId })
-                }).catch(err => console.error("Screenshot failed:", err));
+
+                try {
+                    fetch(metadataUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: content })
+                    })
+                        .then(async res => {
+                            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                            return res.json();
+                        })
+                        .then(data => updateItemContent(id, { metadata: data }))
+                        .catch(err => {
+                            console.warn("[MobileAdd] Metadata fetch failed:", err.message);
+                        });
+                } catch (e) {
+                    console.warn("[MobileAdd] Metadata trigger failed:", e);
+                }
+
+                setTimeout(() => {
+                    try {
+                        fetch(screenshotUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: content, itemId: id, userId })
+                        }).catch(err => console.warn("[MobileAdd] Screenshot fetch failed:", err.message));
+                    } catch (e) {
+                        console.warn("[MobileAdd] Screenshot trigger failed:", e);
+                    }
+                }, 800);
             }
         }
     };

@@ -39,6 +39,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const [isOverflowingHeader, setIsOverflowingHeader] = useState(false);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const titleRef = useRef<HTMLDivElement>(null);
+    const titleInputRef = useRef<HTMLInputElement>(null);
     const headerTitleRef = useRef<HTMLDivElement>(null);
     const scrollBodyRef = useRef<HTMLDivElement>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -311,6 +312,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 <div className={styles.noteTitleSection}>
                                     {isEditingTitle ? (
                                         <input
+                                            ref={titleInputRef}
                                             autoFocus
                                             className={styles.noteTitleInput}
                                             value={title}
@@ -320,7 +322,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             placeholder="Idea Title"
                                         />
                                     ) : (
-                                        <div className={styles.noteTitleDisplay} onClick={() => setIsEditingTitle(true)}>
+                                        <div className={styles.noteTitleDisplay} onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}>
                                             {title || "Idea Title"}
                                         </div>
                                     )}
@@ -404,6 +406,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 <div className={styles.captureTitleSection}>
                                     {isEditingTitle ? (
                                         <input
+                                            ref={titleInputRef}
                                             autoFocus
                                             className={styles.titleInputEdit}
                                             value={title}
@@ -415,7 +418,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     ) : (
                                         <div
                                             className={styles.captureTitleWrapper}
-                                            onClick={() => setIsEditingTitle(true)}
+                                            onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}
                                         >
                                             <h1
                                                 className={clsx(

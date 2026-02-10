@@ -10,6 +10,12 @@ export async function GET() {
     return NextResponse.json({ status: 'Screenshot API is active', method: 'GET' });
 }
 
+export async function OPTIONS() {
+    return new NextResponse(null, {
+        status: 204,
+    });
+}
+
 export async function POST(req: NextRequest) {
     try {
         if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {

@@ -110,6 +110,8 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
         );
     };
 
+    const [imageError, setImageError] = React.useState(false);
+
     return (
         <div
             className={clsx(
@@ -143,7 +145,18 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                     </div>
                 ) : isImage && getImageUrl() ? (
                     <div className={styles.verticalImageLayout}>
-                        <img src={getImageUrl()!} alt="" className={styles.fullThumb} />
+                        {!imageError ? (
+                            <img
+                                src={getImageUrl()!}
+                                alt=""
+                                className={styles.fullThumb}
+                                onError={() => setImageError(true)}
+                            />
+                        ) : (
+                            <div className={styles.noSnapshotFull}>
+                                <span>No Snapshot</span>
+                            </div>
+                        )}
                         <div className={styles.info}>
                             <div className={styles.titleRow}>
                                 <div className={styles.title}>{localItem.metadata?.title || (localItem.type === 'image' ? 'Image Idea' : 'Shared Idea')}</div>

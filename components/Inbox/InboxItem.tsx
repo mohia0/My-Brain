@@ -90,6 +90,8 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
         }
     };
 
+    const [imageError, setImageError] = React.useState(false);
+
     return (
         <div
             ref={isOverlay ? undefined : setNodeRef}
@@ -105,12 +107,19 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
         >
             {hasImage ? (
                 <div className={styles.richItem}>
-                    <img
-                        src={getImageUrl()!}
-                        alt=""
-                        className={styles.thumbnail}
-                        draggable={false}
-                    />
+                    {!imageError ? (
+                        <img
+                            src={getImageUrl()!}
+                            alt=""
+                            className={styles.thumbnail}
+                            draggable={false}
+                            onError={() => setImageError(true)}
+                        />
+                    ) : (
+                        <div className={styles.noSnapshotSmall}>
+                            <ImageIcon size={14} />
+                        </div>
+                    )}
                     <div className={styles.meta}>
                         <div className={styles.titleRow}>
                             <div

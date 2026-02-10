@@ -129,7 +129,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 console.error("[LiveSync] Save failed:", err);
             } finally {
                 setTimeout(() => setIsSaving(false), 500);
-                console.log("[LiveSync] Auto-saved item");
+                
             }
         }, 1000); // 1s debounce for better responsiveness
 

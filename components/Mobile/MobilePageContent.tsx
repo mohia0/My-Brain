@@ -33,24 +33,14 @@ export default function MobilePageContent({ session }: { session: any }) {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://brainia.vercel.app';
 
     const getApiUrl = (endpoint: string) => {
-        const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
         const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
         if (Capacitor.isNativePlatform()) {
-            // ON NATIVE: Always use the full explicit URL from environment
+            const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
             return `${cleanBase}${cleanEndpoint}`;
         }
 
-        if (typeof window !== 'undefined') {
-            const h = window.location.hostname;
-            const isLocal = h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.') || h.startsWith('10.') || h.startsWith('172.');
-
-            // If we're on a local network (dev), use the current host as base
-            if (isLocal) {
-                return `${window.location.origin}${cleanEndpoint}`;
-            }
-        }
-
+        // On web/browser, relative paths are safest and handle protocol/origin automatically
         return cleanEndpoint;
     };
 
@@ -97,7 +87,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 if (SendIntent) {
                     // Store listener so we can remove it
                     intentListener = await SendIntent.addListener('appSendActionIntent', (data: any) => {
-                        console.log("[MobileShare] Listener triggered");
+
                         hasFiredListenerRef.current = true;
                         handleSharedContent(data);
                     });
@@ -106,7 +96,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                     // This prevents double-triggering on splash screen apps
                     setTimeout(async () => {
                         if (hasFiredListenerRef.current) {
-                            console.log("[MobileShare] Listener already fired, skipping cold-start check.");
+
                             return;
                         }
 
@@ -114,11 +104,11 @@ export default function MobilePageContent({ session }: { session: any }) {
                             try {
                                 const result = await SendIntent.checkSendIntentReceived();
                                 if (result && (result.value || result.extras || result.files)) {
-                                    console.log("[MobileShare] Cold-start intent detected");
+
                                     handleSharedContent(result);
                                 }
                             } catch (e) {
-                                console.warn("[MobileShare] checkSendIntentReceived failed", e);
+
                             }
                         }
                     }, 800);
@@ -127,7 +117,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 // 2. Handle System Back Button (Android)
                 const AppPlugin = registerPlugin<any>('App');
                 if (AppPlugin) {
-                    console.log("[MobileInit] Setting up App (Back Button) listener");
+
 
                     AppPlugin.addListener('backButton', (data: { canGoBack: boolean }) => {
                         const backEvent = new CustomEvent('systemBack', { cancelable: true });
@@ -168,11 +158,10 @@ export default function MobilePageContent({ session }: { session: any }) {
 
 
     const uploadMobileFile = async (uri: string, itemId: string, userId: string): Promise<string | null> => {
-        console.log(`[MobileUpload] Starting for URI: ${uri}`);
+
         try {
             // Ensure we have a usable URI
             const pocketUri = (uri.startsWith('data:') || uri.startsWith('http')) ? uri : Capacitor.convertFileSrc(uri);
-            console.log(`[MobileUpload] Converted URI: ${pocketUri.substring(0, 50)}...`);
 
             if (!pocketUri || pocketUri === "") {
                 throw new Error("Converted URI is empty");
@@ -188,21 +177,21 @@ export default function MobilePageContent({ session }: { session: any }) {
                     if (response.ok) break;
                 } catch (e) {
                     fetchError = e;
-                    console.warn(`[MobileUpload] Attempt ${i + 1} failed:`, e);
+
                     await new Promise(r => setTimeout(r, 500));
                 }
             }
 
             if (!response || !response.ok) {
-                console.error(`[MobileUpload] Fetch failed after retries: ${response?.statusText || fetchError}`);
-                throw new Error(`Fetch failed: ${response?.statusText || fetchError}`);
+                console.error(`[MobileUpload] Fetch failed after retries: ${response?.statusText || fetchError} `);
+                throw new Error(`Fetch failed: ${response?.statusText || fetchError} `);
             }
 
             const blob = await response.blob();
-            console.log(`[MobileUpload] Blob info: size=${blob.size}, type=${blob.type}`);
+
 
             if (blob.size < 10) {
-                console.warn("[MobileUpload] Blob is suspiciously small, might be empty");
+
             }
 
             // Ensure valid mime type
@@ -210,7 +199,7 @@ export default function MobilePageContent({ session }: { session: any }) {
             const extension = mimeType.split('/')[1] || 'jpg';
             const filename = `${userId}/${itemId}_capture.${extension}`;
 
-            console.log(`[MobileUpload] Attempting Supabase upload to: ${filename}`);
+
             const { error } = await supabase.storage
                 .from('screenshots')
                 .upload(filename, blob, {
@@ -229,7 +218,7 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             if (!publicUrl) throw new Error("Generated public URL is empty");
 
-            console.log(`[MobileUpload] Verify Public URL: ${publicUrl}`);
+
             return publicUrl;
         } catch (err) {
             console.error("[MobileUpload] Critical failure in uploadMobileFile:", err);
@@ -270,7 +259,7 @@ export default function MobilePageContent({ session }: { session: any }) {
             const intentHash = normalizedUrl ? `url:${normalizedUrl}` : `text:${rawText.substring(0, 50)}`;
 
             if (processedIntentRef.current && processedIntentRef.current.hash === intentHash && Date.now() - processedIntentRef.current.time < 5000) {
-                console.log("[MobileShare] Ignoring duplicate intent:", intentHash);
+
                 setShareState('idle');
                 return;
             }
@@ -280,7 +269,6 @@ export default function MobilePageContent({ session }: { session: any }) {
             const processedFiles = data.files || [];
             const hasEnoughText = rawText.length > 5;
             if (!bestUrl && processedFiles.length === 0 && !hasEnoughText) {
-                console.log("[MobileShare] Intent integrity too low, ignoring (Broken Card Prevention)");
                 setShareState('idle');
                 return;
             }
@@ -355,11 +343,9 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             // --- ENRICHMENT ---
             if (finalUrl) {
-                const metaUrl = getApiUrl('/api/metadata');
-                const shotUrl = getApiUrl('/api/screenshot');
-
                 // ENRICHMENT: Metadata
                 try {
+                    const metaUrl = getApiUrl('/api/metadata');
                     fetch(metaUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -371,21 +357,22 @@ export default function MobilePageContent({ session }: { session: any }) {
                             const existing = useItemsStore.getState().items.find(i => i.id === itemId);
                             updateItemContent(itemId, { metadata: { ...existing?.metadata, ...newM, source: 'mobile-enriched' } });
                         }
-                    }).catch(e => console.warn("[MobileShare] Meta fetch failed (background):", e.message));
+                    }).catch(e => console.error(`[MobileShare] Metadata failed (${metaUrl}):`, e.message));
                 } catch (e) {
-                    console.warn("[MobileShare] Meta trigger failed:", e);
+                    console.error("[MobileShare] Metadata trigger error:", e);
                 }
 
                 // ENRICHMENT: Screenshot
                 setTimeout(() => {
                     try {
+                        const shotUrl = getApiUrl('/api/screenshot');
                         fetch(shotUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url: finalUrl, itemId, userId })
-                        }).catch(e => console.warn("[MobileShare] Screenshot fetch failed (background):", e.message));
+                        }).catch(e => console.error(`[MobileShare] Screenshot failed (${shotUrl}):`, e.message));
                     } catch (e) {
-                        console.warn("[MobileShare] Screenshot trigger failed:", e);
+                        console.error("[MobileShare] Screenshot trigger error:", e);
                     }
                 }, 1200);
             }
@@ -456,38 +443,34 @@ export default function MobilePageContent({ session }: { session: any }) {
             });
 
             if (type === 'link') {
-                const userId = session?.user?.id || 'unknown';
                 // Trigger metadata AND screenshot
-                const metadataUrl = getApiUrl('/api/metadata');
-                const screenshotUrl = getApiUrl('/api/screenshot');
-
                 try {
+                    const metadataUrl = getApiUrl('/api/metadata');
                     fetch(metadataUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: content })
+                        body: JSON.stringify({ url: content, itemId: id, userId })
                     })
                         .then(async res => {
                             if (!res.ok) throw new Error(`HTTP ${res.status}`);
                             return res.json();
                         })
                         .then(data => updateItemContent(id, { metadata: data }))
-                        .catch(err => {
-                            console.warn("[MobileAdd] Metadata fetch failed:", err.message);
-                        });
+                        .catch(err => console.error(`[MobileAdd] Metadata failed (${metadataUrl}):`, err));
                 } catch (e) {
-                    console.warn("[MobileAdd] Metadata trigger failed:", e);
+                    console.error("[MobileAdd] Metadata trigger error:", e);
                 }
 
                 setTimeout(() => {
                     try {
+                        const screenshotUrl = getApiUrl('/api/screenshot');
                         fetch(screenshotUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url: content, itemId: id, userId })
-                        }).catch(err => console.warn("[MobileAdd] Screenshot fetch failed:", err.message));
+                        }).catch(err => console.error(`[MobileAdd] Screenshot failed (${screenshotUrl}):`, err));
                     } catch (e) {
-                        console.warn("[MobileAdd] Screenshot trigger failed:", e);
+                        console.error("[MobileAdd] Screenshot trigger error:", e);
                     }
                 }, 800);
             }

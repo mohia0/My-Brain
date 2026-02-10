@@ -45,6 +45,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     listeners
 }, ref) => {
     const [isDeleting, setIsDeleting] = React.useState(false);
+    const [imageError, setImageError] = React.useState(false);
     const [localItem, setLocalItem] = React.useState(item);
     const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -179,22 +180,16 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 onClick={onClick}
             >
                 <div className={styles.captureThumbWrapper}>
-                    <img
-                        src={localItem.metadata.image}
-                        className={styles.captureThumb}
-                        draggable={false}
-                        onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                                const placeholder = document.createElement('div');
-                                placeholder.className = styles.noSnapshot;
-                                placeholder.innerText = 'No Snapshot';
-                                parent.appendChild(placeholder);
-                            }
-                        }}
-                    />
+                    {!imageError ? (
+                        <img
+                            src={localItem.metadata.image}
+                            className={styles.captureThumb}
+                            draggable={false}
+                            onError={() => setImageError(true)}
+                        />
+                    ) : (
+                        <div className={styles.noSnapshot}>No Snapshot</div>
+                    )}
                 </div>
                 <div className={styles.captureInfo}>
                     <div className={styles.captureTitle}>{localItem.metadata.title}</div>
@@ -259,23 +254,17 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             </div>
             <div className={styles.content}>
                 {isImage ? (
-                    <img
-                        src={localItem.content}
-                        alt="preview"
-                        className={styles.imageContent}
-                        draggable={false}
-                        onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                                const placeholder = document.createElement('div');
-                                placeholder.className = styles.noSnapshot;
-                                placeholder.innerText = 'No Snapshot';
-                                parent.appendChild(placeholder);
-                            }
-                        }}
-                    />
+                    !imageError ? (
+                        <img
+                            src={localItem.content}
+                            alt="preview"
+                            className={styles.imageContent}
+                            draggable={false}
+                            onError={() => setImageError(true)}
+                        />
+                    ) : (
+                        <div className={styles.noSnapshot}>No Snapshot</div>
+                    )
                 ) : (
                     <div style={{ fontSize: '0.8rem', color: '#ccc', maxHeight: 80, overflow: 'hidden', whiteSpace: 'pre-wrap' }}>
                         {(() => {

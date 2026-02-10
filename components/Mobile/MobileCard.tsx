@@ -13,7 +13,7 @@ interface MobileCardProps {
 }
 
 export default function MobileCard({ item, onClick }: MobileCardProps) {
-    const { items, duplicateItem, removeItem, archiveItem, selectedIds, toggleSelection } = useItemsStore();
+    const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection } = useItemsStore();
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRemoving, setIsRemoving] = useState(false);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -56,13 +56,24 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (isRemoving) return;
+
         if (!isDeleting) {
             setIsDeleting(true);
             setTimeout(() => setIsDeleting(false), 3000);
             return;
         }
+
         setIsRemoving(true);
-        setTimeout(() => removeItem(item.id), 300);
+        setTimeout(() => {
+            if (isFolder) {
+                console.log('[MobileCard] Removing folder:', item.id);
+                removeFolder(item.id);
+            } else {
+                console.log('[MobileCard] Removing item:', item.id);
+                removeItem(item.id);
+            }
+        }, 500);
     };
 
     const handleTouchStart = () => {

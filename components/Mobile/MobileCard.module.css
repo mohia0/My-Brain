@@ -99,10 +99,19 @@
 
 .card.removing {
     opacity: 0;
-    transform: scale(0.5) translateX(100px) rotate(10deg);
+    transform: scale(0.9) translateY(-10px);
+    max-height: 0 !important;
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-width: 0 !important;
     pointer-events: none;
-    transition: all 0.4s cubic-bezier(0.4, 0, 1, 1);
-    filter: blur(8px);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    filter: blur(10px);
+    overflow: hidden;
+    gap: 0 !important;
 }
 
 .folderCard {

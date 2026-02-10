@@ -120,27 +120,27 @@ export default function Home() {
 
   useEffect(() => {
     const checkMobile = () => {
+      // 1. Force override via URL (debugging)
       const params = new URLSearchParams(window.location.search);
       const viewOverride = params.get('view');
+      if (viewOverride === 'desktop') { setIsMobile(false); return; }
+      if (viewOverride === 'mobile') { setIsMobile(true); return; }
 
-      if (viewOverride === 'desktop') {
-        setIsMobile(false);
-        return;
-      }
-      if (viewOverride === 'mobile') {
+      // 2. Check for Capacitor (Native App) - Primary Check
+      // We check for the Capacitor global or specific native flag
+      const isCapacitor = (
+        typeof window !== 'undefined' &&
+        ((window as any).Capacitor?.isNativePlatform() || (window as any).Capacitor?.isNative)
+      );
+
+      if (isCapacitor) {
         setIsMobile(true);
         return;
       }
 
-      // Check for Capacitor or mobile screen size
-      const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
+      // 3. Fallback to screen size
       const isSmallScreen = window.innerWidth <= 768;
-
-      if (isCapacitor || isSmallScreen) {
-        setIsMobile(true);
-      } else {
-        setIsMobile(false);
-      }
+      setIsMobile(isSmallScreen);
     };
 
     checkMobile();

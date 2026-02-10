@@ -66,8 +66,17 @@ export default function AccountMenu() {
                 <button className={styles.themeToggle} onClick={toggleTheme} aria-label="Toggle Theme">
                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
-                <div className={styles.avatar} onClick={() => setIsOpen(!isOpen)}>
-                    {initial}
+                <div
+                    className={styles.avatar}
+                    onClick={() => setIsOpen(!isOpen)}
+                    style={user.user_metadata?.avatar_url ? {
+                        backgroundImage: `url(${user.user_metadata.avatar_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        color: 'transparent'
+                    } : {}}
+                >
+                    {!user.user_metadata?.avatar_url && initial}
                 </div>
             </div>
 

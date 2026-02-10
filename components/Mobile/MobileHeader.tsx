@@ -40,7 +40,14 @@ export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHe
 
         supabase.auth.getUser().then(({ data: { user } }: { data: { user: any } }) => setUser(user));
 
-        return () => observer.disconnect();
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => {
+            observer.disconnect();
+            subscription.unsubscribe();
+        };
     }, []);
 
     const toggleTheme = () => {
@@ -128,8 +135,17 @@ export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHe
                 </div>
 
                 {user && (
-                    <div className={styles.avatar} onClick={() => setShowAccountMenu(true)}>
-                        {user.email?.[0].toUpperCase()}
+                    <div
+                        className={styles.avatar}
+                        onClick={() => setShowAccountMenu(true)}
+                        style={user.user_metadata?.avatar_url ? {
+                            backgroundImage: `url(${user.user_metadata.avatar_url})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            color: 'transparent'
+                        } : {}}
+                    >
+                        {!user.user_metadata?.avatar_url && user.email?.[0].toUpperCase()}
                     </div>
                 )}
             </header>
@@ -138,7 +154,17 @@ export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHe
                 <div className={styles.menuOverlay} onClick={() => setShowAccountMenu(false)}>
                     <div className={styles.menuContent} onClick={e => e.stopPropagation()}>
                         <div className={styles.menuHeader}>
-                            <div className={styles.menuAvatar}>{user.email?.[0].toUpperCase()}</div>
+                            <div
+                                className={styles.menuAvatar}
+                                style={user.user_metadata?.avatar_url ? {
+                                    backgroundImage: `url(${user.user_metadata.avatar_url})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    color: 'transparent'
+                                } : {}}
+                            >
+                                {!user.user_metadata?.avatar_url && user.email?.[0].toUpperCase()}
+                            </div>
                             <div className={styles.menuEmail}>{user.email}</div>
                         </div>
 

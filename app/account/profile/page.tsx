@@ -33,8 +33,8 @@ export default function ProfilePage() {
 
             const file = event.target.files[0];
             const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `${user.id}/${fileName}`;
 
             // 1. Upload to Supabase Storage
             const { error: uploadError } = await supabase.storage

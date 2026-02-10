@@ -12,6 +12,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [showSuccess, setShowSuccess] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -60,7 +61,8 @@ export default function ProfilePage() {
             }
 
             setAvatarUrl(publicUrl);
-            alert('Profile picture updated!');
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 2000);
 
         } catch (error: any) {
             alert('Error uploading avatar: ' + error.message);
@@ -112,6 +114,27 @@ export default function ProfilePage() {
                     >
                         <Camera size={14} />
                     </button>
+
+                    <div style={{
+                        position: 'absolute',
+                        left: '100%',
+                        top: '50%',
+                        marginLeft: '12px',
+                        background: '#10b981',
+                        color: 'white',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                        opacity: showSuccess ? 1 : 0,
+                        transform: `translateY(-50%) translateX(${showSuccess ? '0' : '-10px'})`,
+                        pointerEvents: 'none',
+                        zIndex: 10
+                    }}>
+                        Updated!
+                    </div>
                 </div>
                 <div>
                     <h3 style={{ fontSize: '18px', fontWeight: 500 }}>{user.email?.split('@')[0]}</h3>

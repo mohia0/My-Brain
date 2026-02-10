@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import ogs from 'open-graph-scraper';
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const MOBILE_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
@@ -18,7 +28,7 @@ export async function POST(req: NextRequest) {
         const { url: rawUrl, itemId, userId } = await req.json();
 
         if (!rawUrl) {
-            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+            return NextResponse.json({ error: 'URL is required' }, { status: 400, headers: corsHeaders });
         }
         if (!itemId || !userId) { // Added back itemId and userId check
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -158,7 +168,7 @@ export async function POST(req: NextRequest) {
             console.error('[LinkTruth] Database update failed:', updateError.message);
         }
 
-        return NextResponse.json({ success: true, metadata: finalMetadata });
+        return NextResponse.json({ success: true, metadata: finalMetadata }, { headers: corsHeaders });
 
     } catch (error: any) {
         console.error('[LinkTruth] Critical Error:', error);

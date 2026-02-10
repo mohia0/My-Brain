@@ -129,7 +129,10 @@ async function init() {
         state.user = session.user;
         statusDot.classList.add('connected');
         statusDot.title = "Connected";
-        if (userEmailDisplay) userEmailDisplay.textContent = state.user.email;
+        if (userEmailDisplay && state.user) {
+            const email = state.user.email || "Unknown User";
+            userEmailDisplay.textContent = `Signed in as: ${email}`;
+        }
         navigate('main');
     } else {
         navigate('auth');
@@ -154,7 +157,8 @@ function navigate(viewName) {
         saveTabBtn.disabled = false;
         addNoteBtn.disabled = false;
         if (userEmailDisplay && state.user) {
-            userEmailDisplay.textContent = state.user.email;
+            const email = state.user.email || "Unknown User";
+            userEmailDisplay.textContent = `Signed in as: ${email}`;
         }
         updateTabInfo(); // Refresh on navigation to main
     }

@@ -32,13 +32,13 @@
 }
 
 .backLink:hover {
-    color: white;
+    color: var(--foreground);
 }
 
 .title {
     font-size: 24px;
     font-weight: 700;
-    color: white;
+    color: var(--foreground);
 }
 
 .nav {
@@ -61,8 +61,8 @@
 }
 
 .navItem:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
+    background: var(--card-hover);
+    color: var(--foreground);
 }
 
 .active {

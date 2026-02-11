@@ -6,10 +6,11 @@ import { Search, Folder as FolderIcon } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import Orb from '../Orb/Orb';
+import clsx from 'clsx';
 
 export default function Header() {
     const { items, folders, setSelection } = useItemsStore();
-    const { setPosition, setScale } = useCanvasStore();
+    const { setPosition, setScale, setOpenFolderId } = useCanvasStore();
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -61,30 +62,50 @@ export default function Header() {
     const handleResultClick = (result: any) => {
         // Center on item at target zoom level
         const targetScale = 1.105;
-        setScale(targetScale);
+        // setScale(targetScale); // WIll do conditionally later
 
         const viewportW = window.innerWidth;
         const viewportH = window.innerHeight;
 
-        // Width/Height offsets to center the card, not the top-left corner
+        let targetX = result.position_x;
+        let targetY = result.position_y;
+        let isInsideFolder = false;
+
+        // Correct position if inside a folder
+        if (result.resultType === 'item' && result.folder_id) {
+            const folder = folders.find(f => f.id === result.folder_id);
+            if (folder) {
+                targetX = folder.position_x;
+                targetY = folder.position_y;
+                isInsideFolder = true;
+                setOpenFolderId(folder.id);
+            }
+        }
+
+        // Width/Height offsets to center the card (or folder)
         let itemW = 200;
         let itemH = 130;
 
-        if (result.resultType === 'folder') {
-            itemW = 200;
-            itemH = 148;
+        if (result.resultType === 'folder' || isInsideFolder) {
+            itemW = 280; // Folder width
+            itemH = 120; // Folder height
         } else if (result.type === 'link' && result.metadata?.image) {
-            itemW = 300; // Capture Card width
-            itemH = 100; // Capture Card height
+            itemW = 300;
+            itemH = 100;
         } else if (result.type === 'link') {
             itemW = 200;
-            itemH = 40; // Link Card height
+            itemH = 40;
         }
 
-        const newX = (viewportW / 2) - (result.position_x + itemW / 2) * targetScale;
-        const newY = (viewportH / 2) - (result.position_y + itemH / 2) * targetScale;
-
-        setPosition(newX, newY);
+        if (!isInsideFolder) {
+            const newX = (viewportW / 2) - (targetX + itemW / 2) * targetScale;
+            const newY = (viewportH / 2) - (targetY + itemH / 2) * targetScale;
+            setPosition(newX, newY);
+            // Only zoom if on canvas
+            setScale(targetScale);
+        } else {
+            // Just open selector. Folder highlights automatically via openFolderId
+        }
 
         // Focus mode: Select the item/folder
         setSelection([result.id]);
@@ -161,10 +182,13 @@ export default function Header() {
                                                 {new Date(result.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                             </div>
                                         </div>
+                                        <div className={styles.resultBadges}>
+                                            <span className={clsx(styles.typeBadge, result.resultType === 'folder' ? styles.badgeFolder : styles.badgeItem)}>
+                                                {result.resultType === 'folder' ? 'Folder' : (result.type === 'link' ? 'Link' : result.type === 'image' ? 'Image' : 'Idea')}
+                                            </span>
+                                        </div>
                                         <div className={styles.resultDescription}>
-                                            {result.resultType === 'folder'
-                                                ? 'Folder'
-                                                : (result.metadata?.description || (result.type === 'image' ? 'Image File' : result.content?.substring(0, 60)))}
+                                            {result.resultType !== 'folder' && (result.metadata?.description || (result.type === 'image' ? '' : result.content?.substring(0, 60)))}
                                             {result.resultType === 'item' && result.type !== 'image' && result.content?.length > 60 && '...'}
                                         </div>
                                         {result.resultType === 'item' && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (

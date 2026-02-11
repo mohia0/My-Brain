@@ -117,8 +117,8 @@ export default function Inbox({ onItemClick }: InboxProps) {
                             ) : (
                                 <>
                                     <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
-                                    <h3>Your mind is clear</h3>
-                                    <p>Ready for your next epiphany? Share links or ideas and they'll wait here for you.</p>
+                                    <h3>Mind cleared.</h3>
+                                    <p>Space for your next big idea.</p>
                                 </>
                             )}
                         </div>

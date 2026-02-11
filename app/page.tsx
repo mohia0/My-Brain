@@ -21,6 +21,7 @@ import ArchiveView from "@/components/ArchiveView/ArchiveView";
 import FloatingBar from "@/components/FloatingBar/FloatingBar";
 import FolderItem from "@/components/Grid/FolderItem";
 import FolderModal from "@/components/FolderModal/FolderModal";
+import ProjectArea from "@/components/ProjectArea/ProjectArea";
 
 import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
 import MobilePageContent from "@/components/Mobile/MobilePageContent";
@@ -28,8 +29,8 @@ import { useCanvasStore } from "@/lib/store/canvasStore";
 
 export default function Home() {
   const { items, folders, fetchData, subscribeToChanges, clearSelection } = useItemsStore();
+  const { openFolderId, setOpenFolderId } = useCanvasStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
   const [session, setSession] = useState<any>(null);
   const [initializing, setInitializing] = useState(true);
@@ -182,7 +183,8 @@ export default function Home() {
     };
   }, [session, isMobile]);
 
-  const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived');
+  const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived' && item.type !== 'project');
+  const projectAreas = items.filter(item => item.type === 'project' && item.status !== 'archived');
   const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
 
   return (
@@ -210,11 +212,14 @@ export default function Home() {
                   <Header />
                   <AccountMenu />
                   <Canvas>
+                    {projectAreas.map(area => (
+                      <ProjectArea key={area.id} item={area} />
+                    ))}
                     {visibleFolders.map(folder => (
                       <FolderItem
                         key={folder.id}
                         folder={folder}
-                        onClick={() => setSelectedFolderId(folder.id)}
+                        onClick={() => setOpenFolderId(folder.id)}
                       />
                     ))}
                     {visibleItems.map(item => (
@@ -242,11 +247,11 @@ export default function Home() {
                       }}
                     />
                   )}
-                  {selectedFolderId && (
+                  {openFolderId && (
                     <FolderModal
-                      folderId={selectedFolderId}
+                      folderId={openFolderId}
                       onClose={() => {
-                        setSelectedFolderId(null);
+                        setOpenFolderId(null);
                         clearSelection();
                       }}
                       onItemClick={(id) => setSelectedItemId(id)}

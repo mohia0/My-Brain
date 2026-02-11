@@ -10,6 +10,20 @@ export default function MiniMap() {
     const { items, layoutAllItems } = useItemsStore(); // Added layoutAllItems
     const { position, scale, setScale } = useCanvasStore();
     const [showHelp, setShowHelp] = React.useState(false);
+    const helpRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (helpRef.current && !helpRef.current.contains(event.target as Node)) {
+                setShowHelp(false);
+            }
+        };
+
+        if (showHelp) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showHelp]);
 
     // ... existing map scale logic ...
     const WORLD_WIDTH = 10000;
@@ -47,7 +61,7 @@ export default function MiniMap() {
     return (
         <div className={styles.wrapper}>
             {showHelp && (
-                <div className={styles.helpModal}>
+                <div className={styles.helpModal} ref={helpRef}>
                     <div className={styles.helpHeader}>
                         <h3>Shortcuts & Tips</h3>
                         <button className={styles.closeHelp} onClick={() => setShowHelp(false)}>
@@ -83,7 +97,7 @@ export default function MiniMap() {
                         <div className={styles.sectionTitle}>Selection</div>
                         <div className={styles.shortcutRow}>
                             <span className={styles.shortcutLabel}>Multi-select</span>
-                            <div className={styles.shortcutKeys}><span className={styles.key}>Shift</span> <span className={styles.key}>Click</span></div>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>Ctrl</span> <span className={styles.key}>Click</span></div>
                         </div>
                         <div className={styles.shortcutRow}>
                             <span className={styles.shortcutLabel}>Box Selection</span>

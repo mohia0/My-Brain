@@ -9,8 +9,10 @@ interface CanvasState {
     zoomIn: () => void;
     zoomOut: () => void;
     zoomAt: (newScale: number, point: { x: number, y: number }) => void;
-    currentTool: 'mouse' | 'hand';
-    setTool: (tool: 'mouse' | 'hand') => void;
+    currentTool: 'mouse' | 'hand' | 'area';
+    setTool: (tool: 'mouse' | 'hand' | 'area') => void;
+    openFolderId: string | null;
+    setOpenFolderId: (id: string | null) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
@@ -29,5 +31,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
         return { scale: safeScale, position: { x: newX, y: newY } };
     }),
     currentTool: 'mouse',
-    setTool: (tool: 'mouse' | 'hand') => set({ currentTool: tool }),
+    setTool: (tool: 'mouse' | 'hand' | 'area') => set({ currentTool: tool }),
+    openFolderId: null,
+    setOpenFolderId: (id) => set({ openFolderId: id }),
 }));

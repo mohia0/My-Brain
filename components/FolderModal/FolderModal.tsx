@@ -2,7 +2,7 @@
 
 import React from 'react';
 import styles from './FolderModal.module.css';
-import { X, FolderOpen, LogOut, Check, CheckCircle2 } from 'lucide-react';
+import { X, FolderOpen, LogOut, Check, CheckCircle2, Archive, Copy, Trash2, ArrowUpRight } from 'lucide-react';
 import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
@@ -12,7 +12,7 @@ import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consist
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
 export default function FolderModal({ folderId: initialFolderId, onClose, onItemClick, onFolderClick }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void, onFolderClick?: (id: string) => void }) {
-    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection } = useItemsStore();
+    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection, duplicateItem, archiveItem, removeItem } = useItemsStore();
     const [currentFolderId, setCurrentFolderId] = React.useState(initialFolderId);
     const folder = folders.find(f => f.id === currentFolderId);
     const folderItems = items.filter(i => i.folder_id === currentFolderId);
@@ -113,7 +113,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const handleRemoveFromFolder = (itemId: string, e: React.MouseEvent) => {
         e.stopPropagation();
         updateItemContent(itemId, {
-            folder_id: undefined,
+            folder_id: null as any, // Explicit null for DB
             position_x: folder.position_x + 50,
             position_y: folder.position_y + 50
         });
@@ -341,14 +341,40 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                     onTouchEnd={handleTouchEnd}
                                     onTouchMove={handleTouchEnd}
                                 >
-                                    <button
-                                        className={styles.removeBtn}
-                                        onClick={(e) => handleRemoveFromFolder(item.id, e)}
-                                        data-tooltip="Move to Ideas"
-                                        data-tooltip-pos="bottom"
-                                    >
-                                        <LogOut size={14} />
-                                    </button>
+                                    <div className={styles.itemActions}>
+                                        <button
+                                            className={styles.itemActionBtn}
+                                            onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}
+                                            data-tooltip="Archive"
+                                            data-tooltip-pos="bottom"
+                                        >
+                                            <Archive size={14} />
+                                        </button>
+                                        <button
+                                            className={styles.itemActionBtn}
+                                            onClick={(e) => { e.stopPropagation(); duplicateItem(item.id); }}
+                                            data-tooltip="Duplicate"
+                                            data-tooltip-pos="bottom"
+                                        >
+                                            <Copy size={14} />
+                                        </button>
+                                        <button
+                                            className={styles.itemActionBtn}
+                                            onClick={(e) => handleRemoveFromFolder(item.id, e)}
+                                            data-tooltip="Move back to Canvas"
+                                            data-tooltip-pos="bottom"
+                                        >
+                                            <ArrowUpRight size={14} />
+                                        </button>
+                                        <button
+                                            className={clsx(styles.itemActionBtn, styles.deleteActionBtn)}
+                                            onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                                            data-tooltip="Delete"
+                                            data-tooltip-pos="bottom"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
 
                                     <div className={styles.itemPreview}>
                                         {item.type === 'image' || item.metadata?.image ? (

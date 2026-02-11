@@ -26,6 +26,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
 
     // State
     const [selectionBox, setSelectionBox] = useState<{ startX: number, startY: number, x: number, y: number, width: number, height: number } | null>(null);
+    const [drawingBox, setDrawingBox] = useState<{ startX: number, startY: number, x: number, y: number, width: number, height: number } | null>(null);
     const [isSpacePressed, setIsSpacePressed] = useState(false);
 
     // Cursor State
@@ -38,6 +39,8 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 setCursor('grabbing');
             } else if (currentTool === 'hand' || isSpacePressed) {
                 setCursor('grab');
+            } else if (currentTool === 'area') {
+                setCursor('crosshair');
             } else {
                 setCursor('default');
             }
@@ -203,6 +206,18 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             if (e.target === containerRef.current || e.target === worldRef.current) {
                 // Background Click
 
+                if (currentTool === 'area') {
+                    // Start Drawing Area
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        setDrawingBox({ startX: x, startY: y, x, y, width: 0, height: 0 });
+                    }
+                    return;
+                }
+
+                // Normal Mouse Tool -> Selection
                 // 1. Clear selection if no modifiers
                 if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
                     clearSelection();
@@ -254,6 +269,23 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
 
             setPosition(newX, newY);
             lastMousePos.current = { x: e.clientX, y: e.clientY };
+            return;
+        }
+
+        // Drawing Box Logic
+        if (drawingBox) {
+            const rect = containerRef.current?.getBoundingClientRect();
+            if (rect) {
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+
+                const x = Math.min(drawingBox.startX, currentX);
+                const y = Math.min(drawingBox.startY, currentY);
+                const width = Math.abs(currentX - drawingBox.startX);
+                const height = Math.abs(currentY - drawingBox.startY);
+
+                setDrawingBox({ ...drawingBox, x, y, width, height });
+            }
             return;
         }
 
@@ -322,6 +354,35 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
     const handleMouseUp = () => {
         setIsPanning(false);
         setSelectionBox(null);
+
+        if (drawingBox) {
+            // Create Project Area
+            if (drawingBox.width > 20 && drawingBox.height > 20) {
+                const worldX = (drawingBox.x - position.x) / scale;
+                const worldY = (drawingBox.y - position.y) / scale;
+                const worldW = drawingBox.width / scale;
+                const worldH = drawingBox.height / scale;
+
+                addItem({
+                    id: generateId(),
+                    user_id: 'unknown',
+                    type: 'project',
+                    content: '',
+                    position_x: worldX,
+                    position_y: worldY,
+                    created_at: new Date().toISOString(),
+                    metadata: {
+                        width: worldW,
+                        height: worldH,
+                        title: 'New Project Area',
+                        color: '#8b5cf6' // Default accent
+                    }
+                });
+                useCanvasStore.getState().setTool('mouse');
+            }
+            setDrawingBox(null);
+        }
+
         if (currentTool === 'hand' || isSpacePressed) {
             setCursor('grab');
         } else {
@@ -417,6 +478,22 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                         width: selectionBox.width,
                         height: selectionBox.height,
                         border: '1px solid var(--accent)',
+                        background: 'rgba(110, 86, 207, 0.1)',
+                        pointerEvents: 'none',
+                        zIndex: 9999
+                    }}
+                />
+            )}
+
+            {drawingBox && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: drawingBox.x,
+                        top: drawingBox.y,
+                        width: drawingBox.width,
+                        height: drawingBox.height,
+                        border: '2px dashed var(--accent)',
                         background: 'rgba(110, 86, 207, 0.1)',
                         pointerEvents: 'none',
                         zIndex: 9999

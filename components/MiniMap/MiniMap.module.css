@@ -146,8 +146,8 @@
 }
 
 .closeHelp:hover {
-    background: var(--card-hover);
     color: var(--text);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .shortcutSection {

@@ -222,13 +222,14 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
             </div>
 
             <div className={styles.itemActions}>
-                <button className={styles.actionBtn} onClick={handleMove} title="Move to Brainia">
+                <button className={styles.actionBtn} onClick={handleMove} data-tooltip="Move to Canvas" data-tooltip-pos="left">
                     <ArrowRight size={18} />
                 </button>
                 <button
                     className={clsx(styles.actionBtn, styles.removeBtn, isDeleting && styles.confirmDelete)}
                     onClick={handleRemove}
-                    title="Remove"
+                    data-tooltip={isDeleting ? "Confirm Delete" : "Remove"}
+                    data-tooltip-pos="left"
                 >
                     {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={18} />}
                 </button>

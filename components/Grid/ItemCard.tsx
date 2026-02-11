@@ -107,11 +107,12 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
     const renderActions = () => (
         <div className={styles.actions}>
-            <button onClick={onArchive} title="Archive"><Archive size={12} /></button>
-            <button onClick={onDuplicate} title="Duplicate"><Copy size={12} /></button>
+            <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
+            <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom"><Copy size={12} /></button>
             <button
                 onClick={handleDeleteClick}
-                title="Delete"
+                data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
+                data-tooltip-pos="bottom"
                 className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
                 onMouseLeave={() => setIsDeleting(false)}
             >
@@ -249,7 +250,28 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         >
             <div className={styles.header}>
                 {getIcon()}
-                <span className={styles.title}>{localItem.metadata?.title || (localItem.type === 'image' ? 'Image' : 'Untitled Idea')}</span>
+                <span className={styles.title}>
+                    {(() => {
+                        if (localItem.metadata?.title) return localItem.metadata.title;
+                        if (localItem.type === 'image') return 'Image';
+
+                        // Fallback: derive title from content
+                        let displayContent = localItem.content;
+                        if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
+                            try {
+                                const blocks = JSON.parse(displayContent);
+                                displayContent = Array.isArray(blocks)
+                                    ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
+                                    : displayContent;
+                            } catch { }
+                        }
+
+                        // Clean up derived title
+                        const clean = displayContent.trim();
+                        if (!clean) return 'Untitled Idea';
+                        return clean.length > 40 ? clean.substring(0, 40) + '...' : clean;
+                    })()}
+                </span>
                 <SyncIndicator />
             </div>
             <div className={styles.content}>

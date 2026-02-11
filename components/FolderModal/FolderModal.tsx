@@ -238,7 +238,6 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                         <span
                                             ref={titleRef}
                                             className={clsx(styles.folderName, isOverflowing && styles.canAnimate)}
-                                            title={folder.name}
                                         >
                                             {folder.name}
                                         </span>
@@ -271,13 +270,16 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                         <button
                             onClick={handleDeleteClick}
                             className={`${styles.deleteBtn} ${isDeleting ? styles.confirmDelete : ''}`}
+                            data-tooltip={isDeleting ? "Confirm Delete" : "Remove Folder"}
+                            data-tooltip-pos="bottom"
                         >
                             {isDeleting ? "Sure?" : "Delete"}
                         </button>
                         <button
                             onClick={() => setManualSelectionMode(!manualSelectionMode)}
                             className={clsx(styles.actionBtn, manualSelectionMode && styles.activeActionBtn)}
-                            title="Select Items"
+                            data-tooltip="Select Items"
+                            data-tooltip-pos="bottom"
                         >
                             <CheckCircle2 size={20} />
                         </button>
@@ -311,6 +313,8 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                     <button
                                         className={styles.removeBtn}
                                         onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
+                                        data-tooltip="Move out of folder"
+                                        data-tooltip-pos="bottom"
                                     >
                                         <LogOut size={14} />
                                     </button>
@@ -340,7 +344,8 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                     <button
                                         className={styles.removeBtn}
                                         onClick={(e) => handleRemoveFromFolder(item.id, e)}
-                                        title="Move to Ideas"
+                                        data-tooltip="Move to Ideas"
+                                        data-tooltip-pos="bottom"
                                     >
                                         <LogOut size={14} />
                                     </button>

@@ -58,6 +58,21 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             if (!isEditingTitle && (isLocalPlaceholder || title === '')) {
                 if (item.metadata?.title) {
                     setTitle(item.metadata.title);
+                } else if (item.type === 'text') {
+                    // Deriving title from content
+                    let displayContent = item.content;
+                    if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
+                        try {
+                            const blocks = JSON.parse(displayContent);
+                            displayContent = Array.isArray(blocks)
+                                ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
+                                : displayContent;
+                        } catch { }
+                    }
+                    const clean = displayContent.trim();
+                    if (clean) {
+                        setTitle(clean.length > 50 ? clean.substring(0, 50) + '...' : clean);
+                    }
                 }
             } else if (!isEditingTitle && isLocalPlaceholder && isStoreBetter) {
                 setTitle(item.metadata?.title || '');
@@ -68,7 +83,9 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 setDescription(item.metadata?.description || '');
             }
 
-            setContent(item.content);
+            if (content !== item.content) {
+                setContent(item.content);
+            }
             if (item.type === 'link') setUrl(item.content);
             fetchItemTags();
 
@@ -101,7 +118,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 return () => clearInterval(poll);
             }
         }
-    }, [item?.id, item?.metadata?.image, item?.metadata?.title]);
+    }, [item?.id, item?.metadata?.image, item?.metadata?.title, item?.content]);
 
     // Live Auto-save Effect
     useEffect(() => {
@@ -129,7 +146,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 console.error("[LiveSync] Save failed:", err);
             } finally {
                 setTimeout(() => setIsSaving(false), 500);
-                
+
             }
         }, 1000); // 1s debounce for better responsiveness
 

@@ -43,7 +43,7 @@ function ArchiveCard({ id, type, title, description, image, color, date, onUnarc
             <div className={styles.cardBody}>
                 <div className={styles.cardInfo}>
                     <div className={styles.cardType}>{type}</div>
-                    <div className={styles.cardTitle} title={title}>{title}</div>
+                    <div className={styles.cardTitle}>{title}</div>
                     {description && <div className={styles.cardDesc}>{description}</div>}
                 </div>
 
@@ -52,14 +52,16 @@ function ArchiveCard({ id, type, title, description, image, color, date, onUnarc
                     <div className={styles.cardActions}>
                         <button
                             className={clsx(styles.actionBtn, styles.restoreBtn)}
-                            title="Restore to Workspace"
+                            data-tooltip="Restore to Workspace"
+                            data-tooltip-pos="left"
                             onClick={onUnarchive}
                         >
                             <RotateCcw size={16} />
                         </button>
                         <button
                             className={clsx(styles.actionBtn, styles.deleteBtn, isDeleting && styles.confirmDelete)}
-                            title="Delete Permanently"
+                            data-tooltip={isDeleting ? "Confirm Permanent Delete" : "Delete Permanently"}
+                            data-tooltip-pos="left"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 if (isDeleting) onDelete();

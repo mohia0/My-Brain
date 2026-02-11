@@ -81,13 +81,14 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
         try {
             const parsed = JSON.parse(initialContent);
             if (Array.isArray(parsed)) return parsed;
+            if (typeof parsed === 'object' && parsed !== null) return [parsed as Block];
             return undefined;
         } catch (e) {
+            // Fallback for plain text
             return [
                 {
-                    id: "initial-block",
                     type: "paragraph",
-                    content: initialContent,
+                    content: [{ type: "text", text: initialContent, styles: {} }],
                 } as any
             ];
         }
@@ -102,6 +103,18 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
         const json = JSON.stringify(editor.document);
         onChange(json);
     };
+
+    // Keep editor in sync if initialContent changes externally, but avoid loops
+    useEffect(() => {
+        if (!initialContent) return;
+        const currentJson = JSON.stringify(editor.document);
+        if (initialContent !== currentJson) {
+            const blocks = getInitialBlocks();
+            if (blocks) {
+                editor.replaceBlocks(editor.document, blocks);
+            }
+        }
+    }, [initialContent]);
 
     return (
         <div style={{
@@ -184,7 +197,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                             e.currentTarget.style.background = 'transparent';
                             e.currentTarget.style.opacity = '0.7';
                         }}
-                        title="Undo (Ctrl+Z)"
+                        data-tooltip="Undo (Ctrl+Z)"
                     >
                         <Undo size={14} />
                     </button>
@@ -212,7 +225,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                             e.currentTarget.style.background = 'transparent';
                             e.currentTarget.style.opacity = '0.7';
                         }}
-                        title="Redo (Ctrl+Shift+Z)"
+                        data-tooltip="Redo (Ctrl+Shift+Z)"
                     >
                         <Redo size={14} />
                     </button>

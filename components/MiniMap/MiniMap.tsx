@@ -4,20 +4,20 @@ import React from 'react';
 import styles from './MiniMap.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { LayoutGrid, ZoomIn, ZoomOut } from 'lucide-react';
+import { LayoutGrid, ZoomIn, ZoomOut, HelpCircle, X } from 'lucide-react';
 
 export default function MiniMap() {
     const { items, layoutAllItems } = useItemsStore(); // Added layoutAllItems
     const { position, scale, setScale } = useCanvasStore();
+    const [showHelp, setShowHelp] = React.useState(false);
 
-    // Constants for map scale
+    // ... existing map scale logic ...
     const WORLD_WIDTH = 10000;
     const WORLD_HEIGHT = 5000;
     const MAP_HEIGHT = 125;
     const RATIO = MAP_HEIGHT / WORLD_HEIGHT; // Unified ratio
     const MAP_WIDTH = WORLD_WIDTH * RATIO;
 
-    // Viewport rect calculation
     // Viewport rect calculation
     const [mount, setMount] = React.useState(false);
 
@@ -46,6 +46,74 @@ export default function MiniMap() {
 
     return (
         <div className={styles.wrapper}>
+            {showHelp && (
+                <div className={styles.helpModal}>
+                    <div className={styles.helpHeader}>
+                        <h3>Shortcuts & Tips</h3>
+                        <button className={styles.closeHelp} onClick={() => setShowHelp(false)}>
+                            <X size={14} />
+                        </button>
+                    </div>
+
+                    <div className={styles.shortcutSection}>
+                        <div className={styles.sectionTitle}>Tools</div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Select Tool</span>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>V</span></div>
+                        </div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Hand / Pan Tool</span>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>H</span></div>
+                        </div>
+                    </div>
+
+                    <div className={styles.shortcutSection}>
+                        <div className={styles.sectionTitle}>Canvas</div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Temporary Pan</span>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>Space</span></div>
+                        </div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Zoom In/Out</span>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>Ctrl</span> <span className={styles.key}>Scroll</span></div>
+                        </div>
+                    </div>
+
+                    <div className={styles.shortcutSection}>
+                        <div className={styles.sectionTitle}>Selection</div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Multi-select</span>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>Shift</span> <span className={styles.key}>Click</span></div>
+                        </div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Box Selection</span>
+                            <span className={styles.shortcutLabel}>Drag on Background</span>
+                        </div>
+                    </div>
+
+                    <div className={styles.shortcutSection}>
+                        <div className={styles.sectionTitle}>History</div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Undo</span>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>Ctrl</span> <span className={styles.key}>Z</span></div>
+                        </div>
+                        <div className={styles.shortcutRow}>
+                            <span className={styles.shortcutLabel}>Redo</span>
+                            <div className={styles.shortcutKeys}><span className={styles.key}>Ctrl</span> <span className={styles.key}>Y</span></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <button
+                className={styles.helpBtn}
+                onClick={() => setShowHelp(!showHelp)}
+                data-tooltip="Shortcuts Help"
+                data-tooltip-pos="right"
+            >
+                <HelpCircle size={18} />
+            </button>
+
             <div className={styles.mapContainer}>
                 <div
                     className={styles.container}

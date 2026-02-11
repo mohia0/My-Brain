@@ -63,7 +63,13 @@ export default function AccountMenu() {
     return (
         <div className={styles.container} ref={containerRef}>
             <div className={styles.controls}>
-                <button className={styles.themeToggle} onClick={toggleTheme} aria-label="Toggle Theme">
+                <button
+                    className={styles.themeToggle}
+                    onClick={toggleTheme}
+                    aria-label="Toggle Theme"
+                    data-tooltip={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                    data-tooltip-pos="left"
+                >
                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
                 <div

@@ -351,11 +351,16 @@ saveNoteBtn.addEventListener('click', async () => {
     saveNoteBtn.disabled = true;
 
     try {
+        const title = text.length > 50 ? text.substring(0, 50) + '...' : text;
+
         const { error } = await supabase.from('items').insert({
             id: crypto.randomUUID(),
             user_id: state.user.id,
             type: 'text',
             content: text,
+            metadata: {
+                title: title
+            },
             status: 'inbox',
             position_x: 0,
             position_y: 0

@@ -84,7 +84,8 @@ export default function MobileSelectionBar() {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'active', folder_id: null }));
                                         clearSelection();
                                     }}
-                                    title="Move to Canvas"
+                                    data-tooltip="Move to Canvas"
+                                    data-tooltip-pos="top"
                                 >
                                     <CircleArrowOutUpRight size={20} />
                                 </button>
@@ -95,7 +96,8 @@ export default function MobileSelectionBar() {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'inbox', folder_id: null }));
                                         clearSelection();
                                     }}
-                                    title="Move to Inbox"
+                                    data-tooltip="Move to Inbox"
+                                    data-tooltip-pos="top"
                                 >
                                     <Inbox size={20} />
                                 </button>
@@ -104,16 +106,16 @@ export default function MobileSelectionBar() {
                         return null;
                     })()}
 
-                    <button className={styles.actionBtn} onClick={handleMoveClick} title="Move to Folder">
+                    <button className={styles.actionBtn} onClick={handleMoveClick} data-tooltip="Move to Folder" data-tooltip-pos="top">
                         <FolderInput size={20} />
                     </button>
-                    <button className={styles.actionBtn} onClick={handleDuplicate} title="Duplicate">
+                    <button className={styles.actionBtn} onClick={handleDuplicate} data-tooltip="Duplicate" data-tooltip-pos="top">
                         <Copy size={20} />
                     </button>
-                    <button className={styles.actionBtn} onClick={handleArchive} title="Archive">
+                    <button className={styles.actionBtn} onClick={handleArchive} data-tooltip="Archive" data-tooltip-pos="top">
                         <Archive size={20} />
                     </button>
-                    <button className={clsx(styles.actionBtn, styles.deleteBtn)} onClick={handleDelete} title="Delete">
+                    <button className={clsx(styles.actionBtn, styles.deleteBtn)} onClick={handleDelete} data-tooltip="Delete" data-tooltip-pos="top">
                         <Trash2 size={20} />
                     </button>
                 </div>

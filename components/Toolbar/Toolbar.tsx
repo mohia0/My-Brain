@@ -92,7 +92,8 @@ export default function Toolbar() {
                     <button
                         className={clsx(styles.toolBtn, currentTool === 'mouse' && styles.active)}
                         onClick={() => setTool('mouse')}
-                        title="Select (V)"
+                        data-tooltip="Select (V)"
+                        data-tooltip-pos="top"
                     >
                         <MousePointer2 size={18} />
                     </button>
@@ -100,7 +101,8 @@ export default function Toolbar() {
                     <button
                         className={clsx(styles.toolBtn, currentTool === 'hand' && styles.active)}
                         onClick={() => setTool('hand')}
-                        title="Pan (H)"
+                        data-tooltip="Pan (H)"
+                        data-tooltip-pos="top"
                     >
                         <Hand size={18} />
                     </button>
@@ -113,7 +115,8 @@ export default function Toolbar() {
                         className={styles.historyBtn}
                         onClick={undo}
                         disabled={history?.past.length === 0}
-                        title="Undo (Ctrl+Z)"
+                        data-tooltip="Undo (Ctrl+Z)"
+                        data-tooltip-pos="top"
                     >
                         <Undo size={16} />
                     </button>
@@ -121,7 +124,8 @@ export default function Toolbar() {
                         className={styles.historyBtn}
                         onClick={redo}
                         disabled={history?.future.length === 0}
-                        title="Redo (Ctrl+Y)"
+                        data-tooltip="Redo (Ctrl+Y)"
+                        data-tooltip-pos="top"
                     >
                         <Redo size={16} />
                     </button>
@@ -131,23 +135,24 @@ export default function Toolbar() {
 
                 <div className={styles.addWrapper}>
                     <div className={clsx(styles.addMenu, isAddOpen && styles.addMenuOpen)}>
-                        <button className={styles.addOption} onClick={() => handleAddItemClick('folder')} title="Folder">
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('folder')} data-tooltip="Folder" data-tooltip-pos="top">
                             <FolderPlus size={16} />
                         </button>
-                        <button className={styles.addOption} onClick={() => handleAddItemClick('image')} title="Image">
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('image')} data-tooltip="Image" data-tooltip-pos="top">
                             <ImageIcon size={16} />
                         </button>
-                        <button className={styles.addOption} onClick={() => handleAddItemClick('link')} title="Link">
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('link')} data-tooltip="Link" data-tooltip-pos="top">
                             <Link size={16} />
                         </button>
-                        <button className={styles.addOption} onClick={() => handleAddItemClick('text')} title="Text">
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('text')} data-tooltip="Text" data-tooltip-pos="top">
                             <Type size={16} />
                         </button>
                     </div>
                     <button
                         className={clsx(styles.toolBtn, isAddOpen && styles.active)}
                         onClick={toggleAddMenu}
-                        title="Add Idea"
+                        data-tooltip="Add Idea"
+                        data-tooltip-pos="top"
                     >
                         <Plus size={18} style={{
                             transform: isAddOpen ? 'rotate(135deg)' : 'none',

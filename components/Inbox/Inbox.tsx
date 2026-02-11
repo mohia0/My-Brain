@@ -56,7 +56,8 @@ export default function Inbox({ onItemClick }: InboxProps) {
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <button
                                 className={styles.refreshBtn}
-                                title="Refresh Inbox"
+                                data-tooltip="Refresh Inbox"
+                                data-tooltip-pos="bottom"
                                 onClick={async (e) => {
                                     e.stopPropagation();
                                     setIsRefreshing(true);
@@ -69,7 +70,8 @@ export default function Inbox({ onItemClick }: InboxProps) {
                             {inboxItems.length > 0 && (
                                 <button
                                     className={clsx(styles.clearBtn, showConfirmClear && styles.confirmClear)}
-                                    title="Clear All Inbox"
+                                    data-tooltip={showConfirmClear ? "Confirm Clear" : "Clear All Inbox"}
+                                    data-tooltip-pos="bottom"
                                     onClick={async (e) => {
                                         e.stopPropagation();
                                         if (showConfirmClear) {

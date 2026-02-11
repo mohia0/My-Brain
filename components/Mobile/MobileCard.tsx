@@ -255,12 +255,13 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
             </div>
 
             <div className={styles.actions} onClick={e => e.stopPropagation()}>
-                <button onClick={handleArchive} className={styles.actionBtn} title="Archive"><Archive size={14} /></button>
-                {!isFolder && <button onClick={handleDuplicate} className={styles.actionBtn} title="Duplicate"><Copy size={14} /></button>}
+                <button onClick={handleArchive} className={styles.actionBtn} data-tooltip="Archive" data-tooltip-pos="left"><Archive size={14} /></button>
+                {!isFolder && <button onClick={handleDuplicate} className={styles.actionBtn} data-tooltip="Duplicate" data-tooltip-pos="left"><Copy size={14} /></button>}
                 <button
                     onClick={handleDelete}
                     className={clsx(styles.actionBtn, styles.delete, isDeleting && styles.confirmDelete)}
-                    title="Delete"
+                    data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
+                    data-tooltip-pos="left"
                 >
                     {isDeleting ? "Sure?" : <Trash2 size={14} />}
                 </button>

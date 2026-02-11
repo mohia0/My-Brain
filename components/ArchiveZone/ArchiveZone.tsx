@@ -17,7 +17,8 @@ export default function ArchiveZone() {
             ref={setNodeRef}
             className={clsx(styles.archiveZone, isOver && styles.isOver)}
             onClick={() => setArchiveOpen(!isArchiveOpen)}
-            title="Drag here to archive, or click to view all archives"
+            data-tooltip="Archive Repository"
+            data-tooltip-pos="left"
         >
             <div className={styles.iconWrapper}>
                 <Archive size={24} color={isOver ? 'white' : 'var(--text-muted)'} />

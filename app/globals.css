@@ -121,6 +121,78 @@ a {
   background: var(--card-hover);
 }
 
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  background: var(--modal-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px var(--shadow-color);
+  letter-spacing: 0.01em;
+
+  /* Delay logic */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0s;
+  /* No delay when hiding */
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-10px);
+  transition-delay: 0.8s;
+  /* 800ms delay on show */
+}
+
+/* Tooltip directions */
+[data-tooltip-pos="bottom"]::after {
+  top: 100%;
+  bottom: auto;
+  transform: translateX(-50%) translateY(2px);
+}
+
+[data-tooltip-pos="bottom"]:hover::after {
+  transform: translateX(-50%) translateY(10px);
+}
+
+[data-tooltip-pos="left"]::after {
+  right: 100%;
+  left: auto;
+  bottom: 50%;
+  transform: translateX(-2px) translateY(50%);
+}
+
+[data-tooltip-pos="left"]:hover::after {
+  transform: translateX(-10px) translateY(50%);
+}
+
+[data-tooltip-pos="right"]::after {
+  left: 100%;
+  right: auto;
+  bottom: 50%;
+  transform: translateX(2px) translateY(50%);
+}
+
+[data-tooltip-pos="right"]:hover::after {
+  transform: translateX(10px) translateY(50%);
+}
+
 .fade-in {
   animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

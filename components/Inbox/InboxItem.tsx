@@ -126,7 +126,24 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                                 ref={titleRef}
                                 className={clsx(styles.title, isOverflowing && styles.canAnimate)}
                             >
-                                {item.metadata?.title || 'Untitled Idea'}
+                                {(() => {
+                                    if (item.metadata?.title) return item.metadata.title;
+
+                                    // Fallback: derive title from content
+                                    let displayContent = item.content;
+                                    if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
+                                        try {
+                                            const blocks = JSON.parse(displayContent);
+                                            displayContent = Array.isArray(blocks)
+                                                ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
+                                                : displayContent;
+                                        } catch { }
+                                    }
+
+                                    const clean = displayContent.trim();
+                                    if (!clean) return 'Untitled Idea';
+                                    return clean.length > 50 ? clean.substring(0, 50) + '...' : clean;
+                                })()}
                             </div>
                         </div>
                         <div className={styles.infoRow}>
@@ -158,7 +175,24 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                                 ref={titleRef}
                                 className={clsx(styles.title, isOverflowing && styles.canAnimate)}
                             >
-                                {item.metadata?.title || item.content}
+                                {(() => {
+                                    if (item.metadata?.title) return item.metadata.title;
+
+                                    // Fallback: derive title from content
+                                    let displayContent = item.content;
+                                    if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
+                                        try {
+                                            const blocks = JSON.parse(displayContent);
+                                            displayContent = Array.isArray(blocks)
+                                                ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
+                                                : displayContent;
+                                        } catch { }
+                                    }
+
+                                    const clean = displayContent.trim();
+                                    if (!clean) return item.type === 'link' ? item.content : 'Untitled Idea';
+                                    return clean.length > 50 ? clean.substring(0, 50) + '...' : clean;
+                                })()}
                             </span>
                         </div>
                         <div className={styles.itemDateSmall}>
@@ -174,7 +208,8 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                     <button
                         className={styles.actionBtn}
                         onClick={handleMoveToCanvas}
-                        title="Move to Brainia"
+                        data-tooltip="Move to Canvas"
+                        data-tooltip-pos="left"
                     >
                         <ArrowRight size={14} />
                     </button>
@@ -182,7 +217,8 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                         className={clsx(styles.actionBtn, styles.removeBtn, isDeleting && styles.confirmDelete)}
                         onClick={handleRemove}
                         onMouseLeave={() => setIsDeleting(false)}
-                        title={isDeleting ? "Confirm Delete" : "Remove"}
+                        data-tooltip={isDeleting ? "Confirm Delete" : "Remove"}
+                        data-tooltip-pos="left"
                     >
                         {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={14} />}
                     </button>

@@ -82,16 +82,16 @@ export default function AddButton() {
         <div className={styles.container}>
             {isOpen && (
                 <div className={styles.options}>
-                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('folder')} title="Folder">
+                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('folder')} data-tooltip="Folder" data-tooltip-pos="top">
                         <FolderPlus size={20} />
                     </button>
-                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('image')} title="Image">
+                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('image')} data-tooltip="Image" data-tooltip-pos="top">
                         <ImageIcon size={20} />
                     </button>
-                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('link')} title="Link">
+                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('link')} data-tooltip="Link" data-tooltip-pos="top">
                         <Link size={20} />
                     </button>
-                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('text')} title="Text">
+                    <button className={styles.optionBtn} onClick={() => handleAddItemClick('text')} data-tooltip="Text" data-tooltip-pos="top">
                         <Type size={20} />
                     </button>
                 </div>

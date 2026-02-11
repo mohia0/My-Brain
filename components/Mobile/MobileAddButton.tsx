@@ -21,19 +21,19 @@ export default function MobileAddButton({ onAdd }: MobileAddButtonProps) {
         <div className={styles.container}>
             {isOpen && (
                 <div className={styles.options}>
-                    <button className={styles.optionBtn} onClick={() => handleAction('folder')} title="Folder">
+                    <button className={styles.optionBtn} onClick={() => handleAction('folder')} data-tooltip="Folder" data-tooltip-pos="top">
                         <FolderPlus size={20} />
                     </button>
-                    <button className={styles.optionBtn} onClick={() => handleAction('image')} title="Gallery">
+                    <button className={styles.optionBtn} onClick={() => handleAction('image')} data-tooltip="Gallery" data-tooltip-pos="top">
                         <ImageIcon size={20} />
                     </button>
-                    <button className={styles.optionBtn} onClick={() => handleAction('camera')} title="Camera">
+                    <button className={styles.optionBtn} onClick={() => handleAction('camera')} data-tooltip="Camera" data-tooltip-pos="top">
                         <Camera size={20} />
                     </button>
-                    <button className={styles.optionBtn} onClick={() => handleAction('link')} title="Link">
+                    <button className={styles.optionBtn} onClick={() => handleAction('link')} data-tooltip="Link" data-tooltip-pos="top">
                         <Link size={20} />
                     </button>
-                    <button className={styles.optionBtn} onClick={() => handleAction('text')} title="Text">
+                    <button className={styles.optionBtn} onClick={() => handleAction('text')} data-tooltip="Text" data-tooltip-pos="top">
                         <Type size={20} />
                     </button>
                 </div>

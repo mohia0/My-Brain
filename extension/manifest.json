@@ -6,8 +6,13 @@
     "permissions": [
         "activeTab",
         "storage",
-        "tabs"
+        "tabs",
+        "contextMenus",
+        "notifications"
     ],
+    "background": {
+        "service_worker": "background.bundle.js"
+    },
     "host_permissions": [
         "https://*.supabase.co/*"
     ],

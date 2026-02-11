@@ -62,6 +62,21 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 e.preventDefault(); // Prevent scrolling
                 setIsSpacePressed(true);
             }
+
+            // Keyboard Shortcuts for Tools
+            const isInput = e.target instanceof HTMLInputElement ||
+                e.target instanceof HTMLTextAreaElement ||
+                (e.target as HTMLElement).isContentEditable;
+
+            if (!isInput) {
+                if (e.key.toLowerCase() === 'v') {
+                    useCanvasStore.getState().setTool('mouse');
+                }
+                if (e.key.toLowerCase() === 'h') {
+                    useCanvasStore.getState().setTool('hand');
+                }
+            }
+
             if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) {
                 const target = e.target as HTMLElement;
                 if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable || target.closest('[contenteditable="true"]')) {

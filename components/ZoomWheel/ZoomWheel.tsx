@@ -67,7 +67,8 @@ export default function ZoomWheel() {
             <button
                 className={styles.resetBtn}
                 onClick={() => handleZoom(0.65)}
-                title="Reset to 100%"
+                data-tooltip="Reset to 100%"
+                data-tooltip-pos="left"
             >
                 <Target size={18} />
             </button>

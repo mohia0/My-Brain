@@ -117,7 +117,8 @@ export default function FloatingBar() {
                 <button
                     className={clsx(styles.actionBtn, isMoveMenuOpen && styles.activeBtn)}
                     onClick={() => setIsMoveMenuOpen(!isMoveMenuOpen)}
-                    title="Move to Folder"
+                    data-tooltip="Move to Folder"
+                    data-tooltip-pos="top"
                 >
                     <FolderPlus size={18} />
                     <ChevronUp size={12} className={clsx(styles.chevron, isMoveMenuOpen && styles.chevronOpen)} />
@@ -168,7 +169,8 @@ export default function FloatingBar() {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'active', folder_id: null })); // Move to root canvas
                                         clearSelection();
                                     }}
-                                    title="Move to Canvas"
+                                    data-tooltip="Move to Canvas"
+                                    data-tooltip-pos="top"
                                 >
                                     <CircleArrowOutUpRight size={18} />
                                     <span className={styles.btnText}>To Canvas</span>
@@ -182,7 +184,8 @@ export default function FloatingBar() {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'inbox', folder_id: null }));
                                         clearSelection();
                                     }}
-                                    title="Move to Inbox"
+                                    data-tooltip="Move to Inbox"
+                                    data-tooltip-pos="top"
                                 >
                                     <Inbox size={18} />
                                     <span className={styles.btnText}>To Inbox</span>
@@ -196,27 +199,28 @@ export default function FloatingBar() {
 
             <div className={styles.divider} />
 
-            <button className={`${styles.actionBtn} ${styles.organizeBtn}`} onClick={layoutSelectedItems} title="Clean up layout">
+            <button className={`${styles.actionBtn} ${styles.organizeBtn}`} onClick={layoutSelectedItems} data-tooltip="Clean up layout" data-tooltip-pos="top">
                 <Sparkles size={18} />
                 <span className={styles.btnText}>Organize</span>
             </button>
 
             <div className={styles.divider} />
 
-            <button className={`${styles.actionBtn} ${styles.archiveBtn}`} onClick={archiveSelected} title="Archive Selection">
+            <button className={`${styles.actionBtn} ${styles.archiveBtn}`} onClick={archiveSelected} data-tooltip="Archive Selection" data-tooltip-pos="top">
                 <Archive size={18} />
             </button>
 
             <button
                 className={`${styles.actionBtn} ${styles.delete} ${isDeleting ? styles.confirmDelete : ''}`}
                 onClick={handleDelete}
-                title="Delete Selection"
+                data-tooltip={isDeleting ? "Confirm Delete" : "Delete Selection"}
+                data-tooltip-pos="top"
                 onMouseLeave={() => setIsDeleting(false)}
             >
                 {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={18} />}
             </button>
 
-            <button className={styles.closeBtn} onClick={clearSelection} title="Clear selection">
+            <button className={styles.closeBtn} onClick={clearSelection} data-tooltip="Clear selection" data-tooltip-pos="top">
                 <X size={16} />
             </button>
 

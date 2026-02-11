@@ -3,7 +3,7 @@ import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { generateId } from '@/lib/utils';
 import styles from './Toolbar.module.css';
-import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, Type, Undo, Redo } from 'lucide-react';
+import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo } from 'lucide-react';
 import clsx from 'clsx';
 import InputModal from '@/components/InputModal/InputModal';
 
@@ -66,7 +66,7 @@ export default function Toolbar() {
             if (type === 'link' && content && !/^https?:\/\//i.test(content)) {
                 content = 'https://' + content;
             }
-            const title = type === 'text' ? value : 'New Idea';
+            const title = type === 'text' ? value : type === 'link' ? 'Capturing Snapshot...' : 'New Idea';
 
             addItem({
                 id, user_id: 'unknown', type: type as any,
@@ -77,9 +77,39 @@ export default function Toolbar() {
             });
 
             if (type === 'link') {
-                fetch('/api/metadata', { method: 'POST', body: JSON.stringify({ url: content }) })
-                    .then(res => res.json())
-                    .then(data => useItemsStore.getState().updateItemContent(id, { metadata: data }));
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s Timeout
+
+                fetch('/api/metadata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: content, itemId: id, skipCapture: true }),
+                    signal: controller.signal
+                })
+                    .then(res => {
+                        clearTimeout(timeoutId);
+                        if (!res.ok) throw new Error('API Error');
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.error) throw new Error(`${data.error}: ${data.details || 'Unknown error'}`);
+                        useItemsStore.getState().updateItemContent(id, { metadata: data, syncStatus: 'synced' });
+                    })
+                    .catch(err => {
+                        clearTimeout(timeoutId);
+                        console.error('Metadata fetch failed:', err);
+
+                        let fallbackTitle = 'Link';
+                        try {
+                            const urlObj = new URL(content);
+                            fallbackTitle = urlObj.hostname.replace('www.', '');
+                        } catch (e) { }
+
+                        useItemsStore.getState().updateItemContent(id, {
+                            metadata: { title: fallbackTitle, description: '', image: '' },
+                            syncStatus: 'synced'
+                        });
+                    });
             }
         }
         setModalConfig({ ...modalConfig, isOpen: false });
@@ -145,13 +175,13 @@ export default function Toolbar() {
                             <Link size={16} />
                         </button>
                         <button className={styles.addOption} onClick={() => handleAddItemClick('text')} data-tooltip="Text" data-tooltip-pos="top">
-                            <Type size={16} />
+                            <FileText size={16} />
                         </button>
                     </div>
                     <button
                         className={clsx(styles.toolBtn, isAddOpen && styles.active)}
                         onClick={toggleAddMenu}
-                        data-tooltip="Add Idea"
+                        data-tooltip={isAddOpen ? undefined : "Add Idea"}
                         data-tooltip-pos="top"
                     >
                         <Plus size={18} style={{

@@ -68,9 +68,9 @@
 }
 
 .helpBtn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
     background: var(--overlay-bg);
     border: 1px solid var(--card-border);
     backdrop-filter: blur(8px);
@@ -91,15 +91,15 @@
 
 .helpModal {
     position: absolute;
-    bottom: 45px;
+    bottom: 38px;
     left: 0;
-    width: 260px;
+    width: 220px;
     background: var(--modal-bg);
     border: 1px solid var(--border-light);
-    border-radius: 12px;
+    border-radius: 10px;
     backdrop-filter: blur(20px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-    padding: 16px;
+    padding: 12px;
     z-index: 1000;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -120,14 +120,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--border-light);
 }
 
 .helpHeader h3 {
     margin: 0;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text);
     letter-spacing: 0.01em;
@@ -151,7 +151,7 @@
 }
 
 .shortcutSection {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .shortcutSection:last-child {
@@ -159,12 +159,12 @@
 }
 
 .sectionTitle {
-    font-size: 10px;
+    font-size: 9px;
     text-transform: uppercase;
     color: var(--text-dim);
     font-weight: 700;
     letter-spacing: 0.05em;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     opacity: 0.6;
 }
 
@@ -176,7 +176,7 @@
 }
 
 .shortcutLabel {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
 }
 

@@ -111,7 +111,7 @@ export default function MiniMap() {
                 data-tooltip="Shortcuts Help"
                 data-tooltip-pos="right"
             >
-                <HelpCircle size={18} />
+                <HelpCircle size={14} />
             </button>
 
             <div className={styles.mapContainer}>

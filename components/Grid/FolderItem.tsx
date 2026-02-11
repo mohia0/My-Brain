@@ -57,7 +57,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
     };
 
     const renderActions = () => (
-        <div className={styles.actions}>
+        <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
             <button
                 onClick={handleDeleteClick}
@@ -95,12 +95,6 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
             style={finalStyle}
         >
             {renderActions()}
-            {isSelected && (
-                <div className={styles.selectionSilhouette}>
-                    <div className={styles.silhouetteTab} style={{ background: folder.color || 'var(--card-bg)' }} />
-                    <div className={styles.silhouetteBody} />
-                </div>
-            )}
             <div className={styles.tab} style={{ background: folder.color || 'var(--card-bg)' }} />
             <div
                 className={styles.mainBody}

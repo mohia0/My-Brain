@@ -15,13 +15,17 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { url: rawUrl, itemId, userId } = await req.json();
+        const body = await req.json();
+        const { url: rawUrl, itemId, userId, skipCapture } = body;
 
         if (!rawUrl) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        // --- Tier 0: URL Cleaning ---
+        if (typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) {
+            return NextResponse.json({ error: 'Valid URL starting with http/https is required' }, { status: 400 });
+        }
+
         let url = rawUrl;
         try {
             const urlObj = new URL(url);
@@ -29,11 +33,13 @@ export async function POST(req: NextRequest) {
                 urlObj.searchParams.delete(param)
             );
             url = urlObj.toString();
-        } catch (e) { }
+        } catch (e) {
+            console.warn('[SmartMetadata] URL parsing failed, but continuing with raw:', url);
+        }
 
         console.log('[SmartMetadata] Revamped Processor starting for:', url);
-
         const isSocial = /instagram\.com|tiktok\.com|facebook\.com|twitter\.com|x\.com|youtube\.com|linkedin\.com/i.test(url);
+        console.log('[SmartMetadata] Tier 1: OGS Starting...');
 
         // --- Tier 1: Optimized OGS Fetch ---
         let result: any = null;
@@ -61,7 +67,7 @@ export async function POST(req: NextRequest) {
             isSocial
         };
 
-        // --- Tier 1.5: Robust Simple Fetch Fallback (for Title) ---
+        console.log('[SmartMetadata] Tier 1.5: Simple Fetch check...');
         if (!metadata.title) {
             try {
                 console.log('[SmartMetadata] Trying Tier 1.5 Simple Fetch...');
@@ -88,17 +94,24 @@ export async function POST(req: NextRequest) {
         }
 
         // --- Tier 2: Microlink Fallback for Social Media or Missing Media ---
+        // Honor skipCapture: if true, we do NOT request screenshot from Microlink
         if ((isSocial || !metadata.image || !metadata.title) && !url.includes('localhost')) {
-            console.log('[SmartMetadata] Triggering Tier 2 Fallback (Microlink)...');
+            console.log(`[SmartMetadata] Tier 2: Microlink Starting... skipCapture: ${skipCapture}`);
             try {
-                const mlRes = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=true`);
+                const mlUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&meta=true${skipCapture ? '' : '&screenshot=true'}`;
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+                const mlRes = await fetch(mlUrl, { signal: controller.signal });
                 const mlData = await mlRes.json();
+                clearTimeout(timeoutId);
 
                 if (mlData.status === 'success') {
                     const data = mlData.data;
                     metadata.title = metadata.title || data.title;
                     metadata.description = metadata.description || data.description;
-                    metadata.image = data.image?.url || data.screenshot?.url || metadata.image;
+                    metadata.image = data.image?.url || (!skipCapture ? data.screenshot?.url : null) || metadata.image;
                     metadata.favicon = metadata.favicon || data.logo?.url;
                     metadata.author = metadata.author || data.author;
                     metadata.siteName = metadata.siteName || data.publisher || data.provider;
@@ -212,8 +225,12 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(metadata);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[SmartMetadata] Critical Processing Error:', error);
-        return NextResponse.json({ error: 'Process failed' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Process failed',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 });
     }
 }

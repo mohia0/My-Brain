@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './AddButton.module.css';
-import { Plus, Type, Link, Image as ImageIcon, FolderPlus, X } from 'lucide-react';
+import { Plus, FileText, Link, Image as ImageIcon, FolderPlus, X } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { generateId } from '@/lib/utils';
@@ -59,7 +59,7 @@ export default function AddButton() {
                 content = 'https://' + content;
             }
 
-            const title = type === 'text' ? value : 'New Item';
+            const title = type === 'text' ? value : type === 'link' ? 'Capturing Snapshot...' : 'New Item';
 
             addItem({
                 id, user_id: 'user-1', type: type as any,
@@ -70,9 +70,39 @@ export default function AddButton() {
             });
 
             if (type === 'link') {
-                fetch('/api/metadata', { method: 'POST', body: JSON.stringify({ url: content }) })
-                    .then(res => res.json())
-                    .then(data => useItemsStore.getState().updateItemContent(id, { metadata: data }));
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s Timeout
+
+                fetch('/api/metadata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: content, itemId: id, skipCapture: true }),
+                    signal: controller.signal
+                })
+                    .then(res => {
+                        clearTimeout(timeoutId);
+                        if (!res.ok) throw new Error('API Error');
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.error) throw new Error(`${data.error}: ${data.details || 'Unknown error'}`);
+                        useItemsStore.getState().updateItemContent(id, { metadata: data, syncStatus: 'synced' });
+                    })
+                    .catch(err => {
+                        clearTimeout(timeoutId);
+                        console.error('Metadata fetch failed:', err);
+
+                        let fallbackTitle = 'Link';
+                        try {
+                            const urlObj = new URL(content);
+                            fallbackTitle = urlObj.hostname.replace('www.', '');
+                        } catch (e) { }
+
+                        useItemsStore.getState().updateItemContent(id, {
+                            metadata: { title: fallbackTitle, description: '', image: '' },
+                            syncStatus: 'synced'
+                        });
+                    });
             }
         }
         setModalConfig({ ...modalConfig, isOpen: false });
@@ -92,7 +122,7 @@ export default function AddButton() {
                         <Link size={20} />
                     </button>
                     <button className={styles.optionBtn} onClick={() => handleAddItemClick('text')} data-tooltip="Text" data-tooltip-pos="top">
-                        <Type size={20} />
+                        <FileText size={20} />
                     </button>
                 </div>
             )}

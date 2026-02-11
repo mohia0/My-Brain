@@ -106,7 +106,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     };
 
     const renderActions = () => (
-        <div className={styles.actions}>
+        <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
             <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom"><Copy size={12} /></button>
             <button

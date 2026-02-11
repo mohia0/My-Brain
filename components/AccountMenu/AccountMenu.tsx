@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import styles from './AccountMenu.module.css';
-import { LogOut, User, Sun, Moon } from 'lucide-react';
+import { LogOut, User, Sun, Moon, Download } from 'lucide-react';
 
 export default function AccountMenu() {
     const [isOpen, setIsOpen] = useState(false);
@@ -96,6 +96,11 @@ export default function AccountMenu() {
                     <Link href="/account" className={styles.menuItem} onClick={() => setIsOpen(false)}>
                         <User size={16} />
                         <span>Account Settings</span>
+                    </Link>
+
+                    <Link href="/account/extensions" className={styles.menuItem} onClick={() => setIsOpen(false)}>
+                        <Download size={16} />
+                        <span>Apps & Downloads</span>
                     </Link>
 
                     <div className={styles.menuItem + ' ' + styles.logout} onClick={handleLogout}>

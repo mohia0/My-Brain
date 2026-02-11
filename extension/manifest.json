@@ -14,7 +14,20 @@
         "service_worker": "background.bundle.js"
     },
     "host_permissions": [
-        "https://*.supabase.co/*"
+        "https://*.supabase.co/*",
+        "https://mybrainia.vercel.app/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://mybrainia.vercel.app/*",
+                "http://localhost:3000/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_start"
+        }
     ],
     "action": {
         "default_popup": "popup.html",

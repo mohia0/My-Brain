@@ -63,6 +63,7 @@ const passwordInput = document.getElementById('password');
 const authError = document.getElementById('auth-error');
 const loginBtn = document.getElementById('login-btn');
 const signupLinkBtn = document.getElementById('signup-link-btn');
+const togglePasswordBtn = document.getElementById('toggle-password');
 
 
 const tabPreview = document.getElementById('tab-preview');
@@ -97,7 +98,7 @@ async function updateTabInfo() {
         console.log("[Extension] No chrome.tabs API found, using mock.");
         state.currentTab = {
             title: "Dev Tab",
-            url: "http://localhost:3000",
+            url: "https://mybrainia.vercel.app",
             favIconUrl: "https://www.google.com/s2/favicons?domain=localhost"
         };
         renderTabInfo();
@@ -220,9 +221,21 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
+togglePasswordBtn.addEventListener('click', () => {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+
+    // Toggle Eye/Eye-Off Icon
+    if (type === 'text') {
+        togglePasswordBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+    } else {
+        togglePasswordBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    }
+});
+
 signupLinkBtn.addEventListener('click', () => {
     // Open the app's signup page specifically
-    chrome.tabs.create({ url: 'http://localhost:3000?signup=true' });
+    chrome.tabs.create({ url: 'https://mybrainia.vercel.app?signup=true' });
 });
 
 

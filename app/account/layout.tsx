@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Shield, ArrowLeft, Brain } from 'lucide-react';
+import { User, Shield, ArrowLeft, Brain, Chrome } from 'lucide-react';
 import styles from './layout.module.css';
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +12,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     const navItems = [
         { name: 'Profile', href: '/account/profile', icon: User },
         { name: 'Security', href: '/account/security', icon: Shield },
+        { name: 'Apps & Extensions', href: '/account/extensions', icon: Chrome },
     ];
 
     return (

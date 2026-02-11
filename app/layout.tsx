@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   description: "Your personal workspace for organizing thoughts, ideas, and projects.",
   keywords: ["productivity", "workspace", "second brain", "notes", "canvas"],
   authors: [{ name: "Mohi Hassan" }],
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export const viewport: Viewport = {

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainia - Powerful Organization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background: #0a0a0c;
+            --foreground: #ededed;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover: rgba(255, 255, 255, 0.06);
+            --accent: #6e56cf;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .project-area {
+            position: relative;
+            width: 500px;
+            height: 350px;
+            border: 1px dashed var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.01);
+            overflow: hidden;
+        }
+
+        .project-area:hover {
+            border-style: solid;
+            background: var(--card-bg);
+        }
+
+        .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--foreground);
+            font-weight: 600;
+            opacity: 0.7;
+            margin-bottom: 20px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .folder-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .folder-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .folder-text {
+            width: 60%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        /* Nested Area Mockup */
+        .nested-area {
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 120px;
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 0.8rem;
+        }
+
+        /* Archive View Hint */
+        .archive-hint {
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+            width: fit-content;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="project-area">
+        <div class="label">Project: Q4 Launch</div>
+
+        <div class="grid-layout">
+            <div class="folder-item">
+                <div class="folder-icon" style="background:var(--accent)"></div>
+                <div class="folder-text"></div>
+            </div>
+            <div class="folder-item">
+                <div class="folder-icon"></div>
+                <div class="folder-text"></div>
+            </div>
+            <div class="folder-item">
+                <div class="folder-icon"></div>
+                <div class="folder-text"></div>
+            </div>
+
+            <div class="nested-area">
+                Nested Group
+            </div>
+
+            <div class="folder-item">
+                <div class="folder-icon"></div>
+                <div class="folder-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="archive-hint">
+        <div style="width:16px;height:16px;background:rgba(255,255,255,0.2);border-radius:2px;"></div>
+        Archive Zone
+    </div>
+
+</body>
+
+</html>

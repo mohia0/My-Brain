@@ -148,6 +148,8 @@ interface ItemsState {
     setLoading: (loading: boolean) => void;
     subscribeToChanges: () => () => void;
     refreshItem: (id: string) => Promise<void>;
+    isLimitExceeded: boolean;
+    setIsLimitExceeded: (val: boolean) => void;
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -158,6 +160,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     realtimeStatus: 'disconnected',
 
     setLoading: (loading) => set({ loading }),
+    isLimitExceeded: false,
+    setIsLimitExceeded: (val) => set({ isLimitExceeded: val }),
 
     setItems: (items) => set({ items }),
 
@@ -221,7 +225,6 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         }
 
         if (finalUserId) {
-            // Explicitly exclude local-only UI state before DB insert
             const { syncStatus, ...dbItem } = safeItem;
 
             const { error } = await supabase.from('items').insert([{
@@ -231,9 +234,18 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
             if (error) {
                 console.error('[Store] Supabase insert failed:', error);
-                set(state => ({
-                    items: state.items.map(i => i.id === safeItem.id ? { ...i, syncStatus: 'error' } : i)
-                }));
+
+                // Check for subscription limit error from PostgreSQL trigger (P0001 is RAISE EXCEPTION)
+                if (error.message?.includes('limit exceeded') || error.code === 'P0001') {
+                    set(state => ({
+                        items: state.items.filter(i => i.id !== safeItem.id),
+                        isLimitExceeded: true
+                    }));
+                } else {
+                    set(state => ({
+                        items: state.items.map(i => i.id === safeItem.id ? { ...i, syncStatus: 'error' } : i)
+                    }));
+                }
             } else {
                 set(state => ({
                     items: state.items.map(i => i.id === safeItem.id ? { ...i, syncStatus: 'synced' } : i)
@@ -241,6 +253,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
         } else {
             console.error('[Store] Cannot persist item: user_id is missing');
+            // Cleanup optimistic update if no user
+            set(state => ({ items: state.items.filter(i => i.id !== safeItem.id) }));
         }
     },
 
@@ -449,7 +463,17 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 future: []
             }
         });
-        await supabase.from('items').insert([newItem]);
+        const { error } = await supabase.from('items').insert([newItem]);
+
+        if (error) {
+            console.error('[Store] duplicateItem failed:', error);
+            if (error.message?.includes('limit exceeded') || error.code === 'P0001') {
+                set(state => ({
+                    items: state.items.filter(i => i.id !== newItemId),
+                    isLimitExceeded: true
+                }));
+            }
+        }
     },
 
     duplicateFolder: async (id) => {
@@ -482,7 +506,25 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 future: []
             }
         });
-        await supabase.from('folders').insert([folderToInsert]);
+        const { error } = await supabase.from('folders').insert([folderToInsert]);
+
+        if (error) {
+            console.error('[Store] duplicateFolder failed:', error);
+            if (error.message?.includes('limit exceeded') || error.code === 'P0001') {
+                set(state => ({
+                    folders: state.folders.filter(f => f.id !== newId),
+                    isLimitExceeded: true
+                }));
+            } else {
+                set(state => ({
+                    folders: state.folders.map(f => f.id === newId ? { ...f, syncStatus: 'error' } : f)
+                }));
+            }
+        } else {
+            set(state => ({
+                folders: state.folders.map(f => f.id === newId ? { ...f, syncStatus: 'synced' } : f)
+            }));
+        }
     },
 
     duplicateSelected: async () => {
@@ -561,15 +603,25 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
             if (error) {
                 console.error('[Store] Supabase folder insert failed:', error);
+                if (error.message?.includes('limit exceeded') || error.code === 'P0001') {
+                    set(state => ({
+                        folders: state.folders.filter(f => f.id !== safeFolder.id),
+                        isLimitExceeded: true
+                    }));
+                } else {
+                    set(state => ({
+                        folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, syncStatus: 'error' } : f)
+                    }));
+                }
+            } else {
+                set(state => ({
+                    folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, syncStatus: 'synced' } : f)
+                }));
             }
-
-            set(state => ({
-                folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)
-            }));
         } else {
             console.error('[Store] Cannot persist folder: user_id is missing');
             set(state => ({
-                folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, syncStatus: 'error' } : f)
+                folders: state.folders.filter(f => f.id !== safeFolder.id)
             }));
         }
     },

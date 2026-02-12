@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainia - Search</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background: #0a0a0c;
+            --foreground: #ededed;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent: #6e56cf;
+            --accent-glow: rgba(110, 86, 207, 0.2);
+            --input-bg: rgba(255, 255, 255, 0.03);
+            --text-muted: #666666;
+            --overlay-bg: rgba(20, 20, 20, 0.9);
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            overflow: hidden;
+            padding-top: 15vh;
+        }
+
+        .search-wrapper {
+            width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .search-bar {
+            height: 56px;
+            background: var(--input-bg);
+            border: 1px solid var(--accent);
+            /* Focused state */
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            color: var(--foreground);
+            font-size: 1.1rem;
+        }
+
+        .search-icon {
+            opacity: 0.5;
+        }
+
+        .cursor {
+            width: 2px;
+            height: 24px;
+            background: var(--accent);
+            animation: blink 1s infinite;
+        }
+
+        /* Results */
+        .results-list {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item.active {
+            background: rgba(255, 255, 255, 0.05);
+            /* Hover state */
+        }
+
+        .icon-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .text-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .text-line {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            width: 40%;
+        }
+
+        .highlight {
+            background: rgba(251, 191, 36, 0.2);
+            /* Highlight color */
+            color: #fbbf24;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="search-wrapper">
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <span>arch</span><span class="cursor"></span>
+        </div>
+
+        <div class="results-list">
+            <div class="result-item active">
+                <div class="icon-box"></div>
+                <div class="text-group">
+                    <div style="font-size: 0.9rem;">My <span style="color:#fbbf24">Arch</span>ive 2024</div>
+                    <div style="font-size: 0.75rem; color: #666;">/Brain/Personal/...</div>
+                </div>
+            </div>
+            <div class="result-item">
+                <div class="icon-box"></div>
+                <div class="text-group">
+                    <div style="font-size: 0.9rem;">System <span style="color:#fbbf24">Arch</span>itecture</div>
+                    <div style="font-size: 0.75rem; color: #666;">/Work/Project Alpha/...</div>
+                </div>
+            </div>
+            <div class="result-item">
+                <div class="icon-box"></div>
+                <div class="text-group">
+                    <div class="text-line"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

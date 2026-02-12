@@ -15,12 +15,12 @@
     },
     "host_permissions": [
         "https://*.supabase.co/*",
-        "https://mybrainia.vercel.app/*"
+        "https://www.brainia.space/*"
     ],
     "content_scripts": [
         {
             "matches": [
-                "https://mybrainia.vercel.app/*",
+                "https://www.brainia.space/*",
                 "http://localhost:3000/*"
             ],
             "js": [

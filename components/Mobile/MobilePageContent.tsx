@@ -30,7 +30,7 @@ export default function MobilePageContent({ session }: { session: any }) {
     // Dynamic API Base URL handling for Capacitor
     // When running as a native app, we need to point to the production API
     // Default to Vercel production URL if env var is not set
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mybrainia.vercel.app';
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://www.brainia.space';
 
     const getApiUrl = (endpoint: string) => {
         const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;

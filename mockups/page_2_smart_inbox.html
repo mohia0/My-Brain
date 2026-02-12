@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainia - Smart Inbox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background: #0a0a0c;
+            --foreground: #ededed;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover: rgba(255, 255, 255, 0.06);
+            --accent: #6e56cf;
+            --accent-glow: rgba(110, 86, 207, 0.4);
+            --text-muted: #666666;
+            --text-dim: #aeaeae;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --modal-bg: #1a1a1a;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--foreground);
+        }
+
+        p.subtitle {
+            color: var(--text-dim);
+            margin-bottom: 3rem;
+        }
+
+        /* INBOX COMPONENT MOCKUP */
+        .inbox-wrapper {
+            width: 340px;
+            background: var(--modal-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            overflow: hidden;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .inbox-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--foreground);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .inbox-content {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .inbox-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            min-height: 68px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .item-icon.skeleton {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .item-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .text-skeleton {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            width: 80%;
+        }
+
+        .text-skeleton.short {
+            width: 40%;
+            opacity: 0.6;
+        }
+
+        /* Visual Stack Effect / Hint */
+        .stack-hint {
+            margin-top: 10px;
+            text-align: center;
+            opacity: 0.4;
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Smart Inbox</h1>
+        <p class="subtitle">Default home for everything.</p>
+
+        <div class="inbox-wrapper">
+            <div class="inbox-header">
+                <div class="header-title">
+                    <span>Inbox</span>
+                    <span
+                        style="background:var(--accent); font-size:10px; padding:2px 6px; border-radius:10px;">3</span>
+                </div>
+            </div>
+            <div class="inbox-content">
+                <!-- Item 1 -->
+                <div class="inbox-item">
+                    <div class="item-icon skeleton"></div>
+                    <div class="item-details">
+                        <div class="text-skeleton"></div>
+                        <div class="text-skeleton short"></div>
+                    </div>
+                </div>
+                <!-- Item 2 -->
+                <div class="inbox-item">
+                    <div class="item-icon skeleton"></div>
+                    <div class="item-details">
+                        <div class="text-skeleton" style="width:60%"></div>
+                        <div class="text-skeleton short" style="width:30%"></div>
+                    </div>
+                </div>
+                <!-- Item 3 -->
+                <div class="inbox-item">
+                    <div class="item-icon skeleton"></div>
+                    <div class="item-details">
+                        <div class="text-skeleton" style="width:90%"></div>
+                        <div class="text-skeleton short"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="inbox-wrapper stack-hint" style="height: 10px; border-top: none;"></div>
+        <div class="inbox-wrapper stack-hint"
+            style="height: 10px; width: 320px; margin-top: -6px; opacity: 0.2; border-top:none;"></div>
+
+    </div>
+
+</body>
+
+</html>

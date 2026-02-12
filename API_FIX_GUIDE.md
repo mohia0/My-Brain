@@ -4,7 +4,7 @@ This document summarizes the technical configuration required to allow the Capac
 
 ## 1. Production API Configuration
 The mobile app must point to the production Vercel URL when running on a native platform.
-- **Environment Variable**: `NEXT_PUBLIC_API_URL` should be set to `https://mybrainia.vercel.app`.
+- **Environment Variable**: `NEXT_PUBLIC_API_URL` should be set to `https://www.brainia.space`.
 - **Fallback Implementation**: In `components/Mobile/MobilePageContent.tsx`, the `API_BASE` defaults to this URL if the env var is missing.
 
 ## 2. Global CORS Strategy (Server-Side)

@@ -28,8 +28,9 @@ function showBrainiaToast(message, type = 'success') {
     host.style.zIndex = '2147483647'; // Max z-index
     host.style.top = '20px';
     host.style.right = '20px';
-    host.style.width = '0'; // Minimize impact
-    host.style.height = '0';
+    host.style.pointerEvents = 'none'; // Click-through
+    // host.style.width = '0'; // REMOVED: Caused toast to overflow to the right (offscreen)
+    // host.style.height = '0';
     document.body.appendChild(host);
 
     const shadow = host.attachShadow({ mode: 'open' });

@@ -102,6 +102,12 @@ export default function PrivacyContent() {
           --privacy-border: rgba(255, 255, 255, 0.08);
         }
 
+        html, 
+        body {
+          overflow: auto !important;
+          height: auto !important;
+        }
+
         .privacy-container {
           min-height: 100vh;
           background-color: var(--privacy-bg);

@@ -193,13 +193,25 @@ function renderTabInfo() {
     }
 }
 
-function showToast(msg, type = 'success') {
+const statusMessage = document.getElementById('status-message');
+
+function showStatus(msg, type = 'success') {
+    if (type === 'success' && statusMessage) {
+        statusMessage.querySelector('.status-text').textContent = msg;
+        statusMessage.classList.remove('hidden');
+        setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+        return;
+    }
+
     console.log(`[Toast] ${type}: ${msg}`);
     toast.textContent = msg;
     toast.classList.remove('hidden');
     toast.style.background = type === 'error' ? 'var(--danger)' : 'var(--success)';
-    setTimeout(() => toast.classList.add('hidden'), 3500); // Longer for errors
+    setTimeout(() => toast.classList.add('hidden'), 3500);
 }
+
+// Update existing calls to use the new name
+const showToast = showStatus;
 
 // --- ACTIONS ---
 

@@ -38,14 +38,14 @@ export default function Header() {
         if (!query) return false;
         const q = query.toLowerCase();
 
-        // Robust checking for optional properties
         const title = (item.metadata?.title || '').toString().toLowerCase();
         const content = (item.content || '').toString().toLowerCase();
         const description = (item.metadata?.description || '').toString().toLowerCase();
 
-        // Ensure tags is actually an array before mapping
+        // Items might have tags in metadata (from shared/extensions) 
+        // OR we might have them fetched. For now search metadata.
         const tags = Array.isArray(item.metadata?.tags)
-            ? item.metadata.tags.map((t: any) => (t || '').toString().toLowerCase())
+            ? item.metadata.tags.map((t: any) => (typeof t === 'string' ? t : t.name).toLowerCase())
             : [];
 
         return title.includes(q) ||
@@ -217,9 +217,10 @@ export default function Header() {
                                             </div>
                                             {result.resultType === 'item' && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
                                                 <div className={styles.resultTags}>
-                                                    {result.metadata.tags.map((tag: string, i: number) => (
-                                                        <span key={i} className={styles.resultTag}>#{tag}</span>
-                                                    ))}
+                                                    {result.metadata.tags.map((tag: any, i: number) => {
+                                                        const tagName = typeof tag === 'string' ? tag : tag.name;
+                                                        return <span key={i} className={styles.resultTag}>#{tagName}</span>;
+                                                    })}
                                                 </div>
                                             )}
                                         </div>

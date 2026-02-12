@@ -50,6 +50,19 @@
     width: 1000px;
 }
 
+.noteModal {
+    width: 950px;
+    height: 85vh;
+}
+
+.noteModal .leftColumn {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.noteModal .modalContent {
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+}
+
 @keyframes slideUp {
     from {
         transform: translateY(20px);
@@ -438,28 +451,7 @@
 }
 
 .expandEditorBtn {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-muted);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.expandEditorBtn:hover {
-    background: var(--accent-glow);
-    color: var(--accent);
-    border-color: var(--accent);
-    transform: scale(1.05);
-}
-
-.expandEditorBtn:active {
-    transform: scale(0.95);
+    display: none;
 }
 
 .inlineEditorWrapper {
@@ -505,10 +497,10 @@
 .scrollBody {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 16px 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     padding-bottom: 40px;
     min-height: 0;
 }
@@ -523,27 +515,34 @@
 
 /* Vertical Note Layout Styles */
 .noteTitleSection {
-    padding: 24px 24px 8px 24px;
-    border-bottom: 1px solid var(--border-light);
+    padding: 32px 32px 12px 32px;
+    background: transparent;
+}
+
+.noteTitleDisplay {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--foreground);
+    cursor: text;
+    padding: 0;
+    transition: color 0.2s;
+    letter-spacing: -0.02em;
+}
+
+.noteTitleDisplay:hover {
+    color: var(--accent);
 }
 
 .noteTitleInput {
     background: transparent;
     border: none;
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.8rem;
+    font-weight: 800;
     color: var(--foreground);
     width: 100%;
     outline: none;
-    padding: 4px 0;
-}
-
-.noteTitleDisplay {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--foreground);
-    cursor: text;
-    padding: 4px 0;
+    padding: 0;
+    letter-spacing: -0.02em;
 }
 
 .editorWrapper {
@@ -700,6 +699,11 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
+    filter: brightness(1.2);
+}
+
+:global([data-theme='light']) .tagDot {
+    filter: brightness(0.9);
 }
 
 .removeTag {
@@ -732,6 +736,9 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .addTagBtn:hover {

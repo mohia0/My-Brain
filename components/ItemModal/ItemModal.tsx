@@ -484,26 +484,19 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 </div>
                             </div>
 
-                            <div className={clsx(styles.section, styles.descriptionSection)}>
-                                <div className={styles.labelRow}>
-                                    <span className={styles.label}>Notes</span>
-                                    <button
-                                        className={styles.expandEditorBtn}
-                                        onClick={() => {
-                                            const textarea = document.querySelector(`.${styles.descriptionInput}`) as HTMLTextAreaElement;
-                                            if (textarea) textarea.focus();
-                                        }}
-                                    >
-                                        <Maximize2 size={12} />
-                                    </button>
+                            {!isNote && (
+                                <div className={clsx(styles.section, styles.descriptionSection)}>
+                                    <div className={styles.labelRow}>
+                                        <span className={styles.label}>Notes</span>
+                                    </div>
+                                    <textarea
+                                        className={styles.descriptionInput}
+                                        value={description}
+                                        onChange={e => setDescription(e.target.value)}
+                                        placeholder="Add thoughts..."
+                                    />
                                 </div>
-                                <textarea
-                                    className={styles.descriptionInput}
-                                    value={description}
-                                    onChange={e => setDescription(e.target.value)}
-                                    placeholder="Add thoughts..."
-                                />
-                            </div>
+                            )}
 
 
                         </div>

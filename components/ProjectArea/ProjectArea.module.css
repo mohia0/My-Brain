@@ -139,3 +139,56 @@
     transform: scale(1.2);
     border-color: rgba(255, 255, 255, 0.8);
 }
+
+.deletePopup {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    width: 200px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    backdrop-filter: blur(12px);
+}
+
+.deletePopupHeader {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.deleteOption {
+    padding: 8px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 0.8rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deleteOption:hover {
+    background: var(--card-hover);
+}
+
+.deleteDestructive {
+    color: var(--danger);
+}
+
+.deleteDestructive:hover {
+    background: var(--danger-glow);
+}

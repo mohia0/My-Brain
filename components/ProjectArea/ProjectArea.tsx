@@ -14,10 +14,11 @@ interface ProjectAreaProps {
 }
 
 export default function ProjectArea({ item }: ProjectAreaProps) {
-    const { updateItemContent, removeItem, selectedIds, selectItem, toggleSelection } = useItemsStore();
+    const { updateItemContent, removeItem, removeFolder, items, folders, selectedIds, selectItem, toggleSelection } = useItemsStore();
     const { scale, currentTool } = useCanvasStore();
     const [isHovered, setIsHovered] = React.useState(false);
     const [showColorPicker, setShowColorPicker] = React.useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: item.id,
@@ -106,13 +107,51 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         updateItemContent(item.id, { metadata: { ...item.metadata, locked: !item.metadata?.locked } });
     };
 
+    const handleDeleteOption = (e: React.MouseEvent, option: 'all' | 'area') => {
+        e.stopPropagation();
+
+        if (option === 'area') {
+            removeItem(item.id);
+        } else {
+            // Delete with contents
+            const areaLeft = item.position_x;
+            const areaRight = item.position_x + (item.metadata?.width || 300);
+            const areaTop = item.position_y;
+            const areaBottom = item.position_y + (item.metadata?.height || 200);
+
+            // Find contained items
+            const itemsToDelete = items.filter(i => {
+                if (i.id === item.id || i.folder_id || i.type === 'project') return false;
+                const iW = i.metadata?.width || 250;
+                const iH = i.metadata?.height || 100;
+                const iCenter = { x: i.position_x + iW / 2, y: i.position_y + iH / 2 };
+                return (iCenter.x > areaLeft && iCenter.x < areaRight && iCenter.y > areaTop && iCenter.y < areaBottom);
+            });
+
+            // Find contained folders
+            const foldersToDelete = folders.filter(f => {
+                if (f.parent_id) return false;
+                const fW = 200;
+                const fH = 100;
+                const fCenter = { x: f.position_x + fW / 2, y: f.position_y + fH / 2 };
+                return (fCenter.x > areaLeft && fCenter.x < areaRight && fCenter.y > areaTop && fCenter.y < areaBottom);
+            });
+
+            // Execute deletions
+            itemsToDelete.forEach(i => removeItem(i.id));
+            foldersToDelete.forEach(f => removeFolder(f.id));
+            removeItem(item.id);
+        }
+        setShowDeleteConfirm(false);
+    };
+
     return (
         <div
             ref={setNodeRef}
             className={clsx(styles.area, isSelected && styles.selected)}
             style={style}
             onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => { setIsHovered(false); setShowColorPicker(false); }}
+            onMouseLeave={() => { setIsHovered(false); setShowColorPicker(false); setShowDeleteConfirm(false); }}
             onClick={handleClick}
             {...listeners}
             {...attributes}
@@ -128,7 +167,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                 />
             </div>
 
-            {isSelected && (
+            {(isSelected || isHovered || showDeleteConfirm) && (
                 <div className={styles.controls}>
                     <div style={{ position: 'relative' }}>
                         <button
@@ -163,13 +202,30 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                     >
                         {item.metadata?.locked ? <Lock size={14} /> : <Unlock size={14} />}
                     </button>
-                    <button
-                        className={clsx(styles.controlBtn, styles.deleteBtn)}
-                        onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                        data-tooltip="Delete Area"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                        <button
+                            className={clsx(styles.controlBtn, styles.deleteBtn)}
+                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(!showDeleteConfirm); }}
+                            data-tooltip="Delete Area"
+                            style={{ color: showDeleteConfirm ? 'var(--danger)' : undefined }}
+                        >
+                            <Trash2 size={14} />
+                        </button>
+
+                        {showDeleteConfirm && (
+                            <div className={styles.deletePopup} onPointerDown={(e) => e.stopPropagation()}>
+                                <div className={styles.deletePopupHeader}>Delete Project Area</div>
+                                <button className={styles.deleteOption} onClick={(e) => handleDeleteOption(e, 'area')}>
+                                    <span>Keep Items</span>
+                                    <span style={{ fontSize: '0.7em', opacity: 0.6 }}>(Remove Area Only)</span>
+                                </button>
+                                <button className={clsx(styles.deleteOption, styles.deleteDestructive)} onClick={(e) => handleDeleteOption(e, 'all')}>
+                                    <Trash2 size={12} />
+                                    <span>Delete With Items</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
             {isSelected && !item.metadata?.locked && (

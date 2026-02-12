@@ -504,6 +504,8 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     placeholder="Add thoughts..."
                                 />
                             </div>
+
+
                         </div>
 
                         <div className={styles.footer}>

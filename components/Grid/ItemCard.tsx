@@ -12,6 +12,7 @@ import clsx from 'clsx';
 
 interface ItemCardProps {
     item: Item;
+    isLocked?: boolean;
     onClick?: () => void;
 }
 
@@ -152,18 +153,23 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
             >
-                <div className={styles.videoHeader}>
-                    <Video size={14} className={styles.videoTagIcon} />
-                    <span>Video</span>
-                </div>
-                <video src={localItem.content} className={styles.videoPreview} muted />
-                <div className={styles.videoOverlay}>
-                    <Play size={24} fill="white" />
-                </div>
-                <div className={styles.captureInfo}>
-                    <div className={styles.captureTitle}>{localItem.metadata?.title || 'Video Idea'}</div>
+                <div className={styles.innerCard}>
+                    <div className={styles.videoHeader}>
+                        <Video size={14} className={styles.videoTagIcon} />
+                        <span>Video</span>
+                    </div>
+                    <video src={localItem.content} className={styles.videoPreview} muted />
+                    <div className={styles.videoOverlay}>
+                        <Play size={24} fill="white" />
+                    </div>
+                    <div className={styles.captureInfo}>
+                        <div className={styles.captureTitle}>{localItem.metadata?.title || 'Video Idea'}</div>
+                    </div>
                 </div>
                 {renderActions()}
+                <div className={styles.outerDate}>
+                    {new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
             </div>
         );
     }
@@ -180,25 +186,30 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
             >
-                <div className={styles.captureThumbWrapper}>
-                    {!imageError ? (
-                        <img
-                            src={localItem.metadata.image}
-                            className={styles.captureThumb}
-                            draggable={false}
-                            onError={() => setImageError(true)}
-                        />
-                    ) : (
-                        <div className={styles.noSnapshot}>No Snapshot</div>
-                    )}
-                </div>
-                <div className={styles.captureInfo}>
-                    <div className={styles.captureTitle}>{localItem.metadata.title}</div>
-                    <div className={styles.captureDomain}>{safeHostname(localItem.content)}</div>
-                    <div className={styles.captureDesc}>{localItem.metadata.description}</div>
-                    <SyncIndicator />
+                <div className={styles.innerCard}>
+                    <div className={styles.captureThumbWrapper}>
+                        {!imageError ? (
+                            <img
+                                src={localItem.metadata.image}
+                                className={styles.captureThumb}
+                                draggable={false}
+                                onError={() => setImageError(true)}
+                            />
+                        ) : (
+                            <div className={styles.noSnapshot}>No Snapshot</div>
+                        )}
+                    </div>
+                    <div className={styles.captureInfo}>
+                        <div className={styles.captureTitle}>{localItem.metadata.title}</div>
+                        <div className={styles.captureDomain}>{safeHostname(localItem.content)}</div>
+                        <div className={styles.captureDesc}>{localItem.metadata.description || "No description"}</div>
+                        <SyncIndicator />
+                    </div>
                 </div>
                 {renderActions()}
+                <div className={styles.outerDate}>
+                    {new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
             </div>
         );
     }
@@ -209,26 +220,39 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <div
                 id={`draggable-item-${localItem.id}`}
                 ref={ref}
-                className={clsx(baseClassName, styles.linkCard)}
+                className={baseClassName}
                 style={finalStyle}
                 {...listeners} {...attributes}
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
             >
-                <div className={styles.header}>
-                    {safeHostname(localItem.content) && (
-                        <img
-                            src={`https://www.google.com/s2/favicons?domain=${safeHostname(localItem.content)}`}
-                            alt=""
-                            width={16}
-                            height={16}
-                            onError={(e) => e.currentTarget.style.display = 'none'}
-                        />
-                    )}
-                    <span className={styles.title}>{localItem.metadata?.title || localItem.content}</span>
-                    <SyncIndicator />
+                <div className={styles.innerCard}>
+                    <div className={styles.header}>
+                        {safeHostname(localItem.content) && (
+                            <img
+                                src={`https://www.google.com/s2/favicons?domain=${safeHostname(localItem.content)}`}
+                                alt=""
+                                width={16}
+                                height={16}
+                                onError={(e) => e.currentTarget.style.display = 'none'}
+                            />
+                        )}
+                        <span className={styles.title}>{localItem.metadata?.title || localItem.content}</span>
+                        <SyncIndicator />
+                    </div>
+                    <div className={styles.content}>
+                        <div className={styles.captureDomain} style={{ marginBottom: 4 }}>
+                            {safeHostname(localItem.content)}
+                        </div>
+                        <div className={styles.captureDesc} style={{ WebkitLineClamp: 3 }}>
+                            {localItem.metadata?.description || "No description"}
+                        </div>
+                    </div>
                 </div>
                 {renderActions()}
+                <div className={styles.outerDate}>
+                    {new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
             </div>
         );
     }
@@ -248,64 +272,66 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             }}
             onClick={onClick}
         >
-            <div className={styles.header}>
-                {getIcon()}
-                <span className={styles.title}>
-                    {(() => {
-                        if (localItem.metadata?.title) return localItem.metadata.title;
-                        if (localItem.type === 'image') return 'Image';
-
-                        // Fallback: derive title from content
-                        let displayContent = localItem.content;
-                        if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
-                            try {
-                                const blocks = JSON.parse(displayContent);
-                                displayContent = Array.isArray(blocks)
-                                    ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
-                                    : displayContent;
-                            } catch { }
-                        }
-
-                        // Clean up derived title
-                        const clean = displayContent.trim();
-                        if (!clean) return 'Untitled Idea';
-                        return clean.length > 40 ? clean.substring(0, 40) + '...' : clean;
-                    })()}
-                </span>
-                <SyncIndicator />
-            </div>
-            <div className={styles.content}>
-                {isImage ? (
-                    !imageError ? (
-                        <img
-                            src={localItem.content}
-                            alt="preview"
-                            className={styles.imageContent}
-                            draggable={false}
-                            onError={() => setImageError(true)}
-                        />
-                    ) : (
-                        <div className={styles.noSnapshot}>No Snapshot</div>
-                    )
-                ) : (
-                    <div style={{ fontSize: '0.8rem', color: '#ccc', maxHeight: 80, overflow: 'hidden', whiteSpace: 'pre-wrap' }}>
+            <div className={styles.innerCard}>
+                <div className={styles.header}>
+                    {getIcon()}
+                    <span className={styles.title}>
                         {(() => {
-                            if (localItem.content.startsWith('[')) {
+                            if (localItem.metadata?.title) return localItem.metadata.title;
+                            if (localItem.type === 'image') return 'Image';
+
+                            // Fallback: derive title from content
+                            let displayContent = localItem.content;
+                            if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
                                 try {
-                                    const blocks = JSON.parse(localItem.content);
-                                    return blocks.map((b: any) =>
-                                        Array.isArray(b.content)
-                                            ? b.content.map((c: any) => c.text).join('')
-                                            : b.content || ''
-                                    ).join('\n') || "Empty Idea";
-                                } catch {
-                                    return "Invalid Content";
-                                }
+                                    const blocks = JSON.parse(displayContent);
+                                    displayContent = Array.isArray(blocks)
+                                        ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
+                                        : displayContent;
+                                } catch { }
                             }
-                            return localItem.content;
+
+                            // Clean up derived title
+                            const clean = displayContent.trim();
+                            if (!clean) return 'Untitled Idea';
+                            return clean.length > 40 ? clean.substring(0, 40) + '...' : clean;
                         })()}
-                    </div>
-                )}
+                    </span>
+                    <SyncIndicator />
+                </div>
+                <div className={isImage ? styles.imageContentWrapper : styles.content}>
+                    {isImage ? (
+                        !imageError ? (
+                            <img
+                                src={localItem.content}
+                                alt="preview"
+                                className={styles.imageContent}
+                                draggable={false}
+                                onError={() => setImageError(true)}
+                            />
+                        ) : (
+                            <div className={styles.noSnapshot}>No Snapshot</div>
+                        )
+                    ) : (
+                        <div style={{ fontSize: '0.8rem', color: '#ccc', maxHeight: 80, overflow: 'hidden', whiteSpace: 'pre-wrap' }}>
+                            {(() => {
+                                if (localItem.content.startsWith('[')) {
+                                    try {
+                                        const blocks = JSON.parse(localItem.content);
+                                        return blocks.map((b: any) =>
+                                            Array.isArray(b.content)
+                                                ? b.content.map((c: any) => c.text).join('')
+                                                : b.content || ''
+                                        ).join('\n') || "Empty Idea";
+                                    } catch {
+                                        return "Invalid Content";
+                                    }
+                                }
+                                return localItem.content;
+                            })()}
+                        </div>
+                    )}
+                </div>
             </div>
             {renderActions()}
             <div className={styles.outerDate}>
@@ -317,7 +343,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
 ItemCardView.displayName = 'ItemCardView';
 
-export default function ItemCard({ item, onClick }: ItemCardProps) {
+export default function ItemCard({ item, isLocked, onClick }: ItemCardProps) {
     const { duplicateItem, removeItem, archiveItem, selectedIds } = useItemsStore();
     const { scale } = useCanvasStore();
 
@@ -326,7 +352,8 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
 
     const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
         id: item.id,
-        data: { ...item, type: 'item' }
+        data: { ...item, type: 'item' },
+        disabled: isLocked
     });
 
     const handleDuplicate = (e: React.MouseEvent) => {
@@ -347,7 +374,8 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
         top: item.position_y,
         opacity: 1,
         zIndex: isDragging ? 1000 : undefined,
-        transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined
+        transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined,
+        cursor: isLocked ? 'default' : (isDragging ? 'grabbing' : 'grab')
     };
 
     const handleClick = (e: React.MouseEvent) => {

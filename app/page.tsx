@@ -45,7 +45,7 @@ export default function Home() {
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const runInit = async () => {
-    const MIN_LOADING_TIME = 1500;
+    const MIN_LOADING_TIME = 500;
 
     setInitializing(true);
     isInitializingRef.current = true;
@@ -187,6 +187,28 @@ export default function Home() {
   const projectAreas = items.filter(item => item.type === 'project' && item.status !== 'archived');
   const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
 
+  const lockedProjectAreas = projectAreas.filter(p => p.metadata?.locked);
+
+  const isInsideLockedArea = (x: number, y: number, w: number, h: number) => {
+    if (lockedProjectAreas.length === 0) return false;
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+
+    for (const area of lockedProjectAreas) {
+      const areaW = area.metadata?.width || 300;
+      const areaH = area.metadata?.height || 200;
+      if (
+        cx >= area.position_x &&
+        cx <= area.position_x + areaW &&
+        cy >= area.position_y &&
+        cy <= area.position_y + areaH
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   return (
     <DragWrapper>
       {/* Loading Screen: Only visible during initial load OR fading out */}
@@ -220,6 +242,7 @@ export default function Home() {
                         key={folder.id}
                         folder={folder}
                         onClick={() => setOpenFolderId(folder.id)}
+                        isLocked={isInsideLockedArea(folder.position_x, folder.position_y, 200, 100)}
                       />
                     ))}
                     {visibleItems.map(item => (
@@ -227,6 +250,7 @@ export default function Home() {
                         key={item.id}
                         item={item}
                         onClick={() => setSelectedItemId(item.id)}
+                        isLocked={isInsideLockedArea(item.position_x, item.position_y, item.metadata?.width || 280, item.metadata?.height || 120)}
                       />
                     ))}
                   </Canvas>

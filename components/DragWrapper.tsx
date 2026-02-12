@@ -216,13 +216,21 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const updates: { id: string, type: 'item' | 'folder', x: number, y: number }[] = [];
         const PADDING = 20;
 
-        const constrainToProjectArea = (x: number, y: number, w: number, h: number) => {
+        // Canvas Boundaries (must match Canvas.tsx)
+        const CANVAS_WIDTH = 10000;
+        const CANVAS_HEIGHT = 5000;
+        const HALF_WIDTH = CANVAS_WIDTH / 2;
+        const HALF_HEIGHT = CANVAS_HEIGHT / 2;
+
+        const calculateConstrainedPosition = (x: number, y: number, w: number, h: number) => {
             const projectAreas = items.filter(i => i.type === 'project');
 
-            // 1. Check for Primary Containment
+            // 1. Check for Primary Containment (Project Areas)
             let primaryContainer = null;
             let maxOverlap = 0;
             const itemArea = w * h;
+            let finalX = x;
+            let finalY = y;
 
             for (const project of projectAreas) {
                 const px = project.position_x;
@@ -256,52 +264,53 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                 const minY = py + PADDING;
                 const maxY = py + ph - PADDING - h;
 
-                let safeX = x;
-                let safeY = y;
+                if (minX <= maxX) finalX = Math.max(minX, Math.min(finalX, maxX));
+                if (minY <= maxY) finalY = Math.max(minY, Math.min(finalY, maxY));
+            } else {
+                // 3. Snap OUTSIDE (Padding Zone Enforced)
+                for (const project of projectAreas) {
+                    const px = project.position_x;
+                    const py = project.position_y;
+                    const pw = project.metadata?.width || 300;
+                    const ph = project.metadata?.height || 200;
 
-                if (minX <= maxX) safeX = Math.max(minX, Math.min(safeX, maxX));
-                if (minY <= maxY) safeY = Math.max(minY, Math.min(safeY, maxY));
+                    const fLeft = px - PADDING;
+                    const fTop = py - PADDING;
+                    const fRight = px + pw + PADDING;
+                    const fBottom = py + ph + PADDING;
 
-                return { x: safeX, y: safeY };
-            }
+                    const iLeft = finalX;
+                    const iTop = finalY;
+                    const iRight = finalX + w;
+                    const iBottom = finalY + h;
 
-            // 3. Snap OUTSIDE (Padding Zone Enforced)
-            let safeX = x;
-            let safeY = y;
+                    if (iRight > fLeft && iLeft < fRight && iBottom > fTop && iTop < fBottom) {
+                        const toLeft = iRight - fLeft;
+                        const toRight = fRight - iLeft;
+                        const toTop = iBottom - fTop;
+                        const toBottom = fBottom - iTop;
 
-            for (const project of projectAreas) {
-                const px = project.position_x;
-                const py = project.position_y;
-                const pw = project.metadata?.width || 300;
-                const ph = project.metadata?.height || 200;
+                        const minDest = Math.min(toLeft, toRight, toTop, toBottom);
 
-                // Expanded "Allowed" Zone is outside this rect
-                // If we intersect [px-pad, py-pad, pw+2pad, ph+2pad], push out.
-                const fLeft = px - PADDING;
-                const fTop = py - PADDING;
-                const fRight = px + pw + PADDING;
-                const fBottom = py + ph + PADDING;
-
-                const iLeft = safeX;
-                const iTop = safeY;
-                const iRight = safeX + w;
-                const iBottom = safeY + h;
-
-                if (iRight > fLeft && iLeft < fRight && iBottom > fTop && iTop < fBottom) {
-                    const toLeft = iRight - fLeft;
-                    const toRight = fRight - iLeft;
-                    const toTop = iBottom - fTop;
-                    const toBottom = fBottom - iTop;
-
-                    const minDest = Math.min(toLeft, toRight, toTop, toBottom);
-
-                    if (minDest === toLeft) safeX -= toLeft;
-                    else if (minDest === toRight) safeX += toRight;
-                    else if (minDest === toTop) safeY -= toTop;
-                    else if (minDest === toBottom) safeY += toBottom;
+                        if (minDest === toLeft) finalX -= toLeft;
+                        else if (minDest === toRight) finalX += toRight;
+                        else if (minDest === toTop) finalY -= toTop;
+                        else if (minDest === toBottom) finalY += toBottom;
+                    }
                 }
             }
-            return { x: safeX, y: safeY };
+
+            // 4. Global Canvas Boundaries
+            const canvasMinX = -HALF_WIDTH + PADDING;
+            const canvasMaxX = HALF_WIDTH - PADDING - w;
+            const canvasMinY = -HALF_HEIGHT + PADDING;
+            const canvasMaxY = HALF_HEIGHT - PADDING - h;
+
+            // Ensure we don't snap out if item is larger than canvas (unlikely but safe)
+            if (canvasMinX <= canvasMaxX) finalX = Math.max(canvasMinX, Math.min(finalX, canvasMaxX));
+            if (canvasMinY <= canvasMaxY) finalY = Math.max(canvasMinY, Math.min(finalY, canvasMaxY));
+
+            return { x: finalX, y: finalY };
         };
 
         const getElementDims = (id: string, isFolder: boolean) => {
@@ -316,14 +325,14 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                 const item = items.find(i => i.id === id);
                 if (item) {
                     const dims = getElementDims(id, false);
-                    const { x, y } = constrainToProjectArea(item.position_x + dx, item.position_y + dy, dims.w, dims.h);
+                    const { x, y } = calculateConstrainedPosition(item.position_x + dx, item.position_y + dy, dims.w, dims.h);
                     updates.push({ id, type: 'item', x, y });
                     return;
                 }
                 const folder = folders.find(f => f.id === id);
                 if (folder) {
                     const dims = getElementDims(id, true);
-                    const { x, y } = constrainToProjectArea(folder.position_x + dx, folder.position_y + dy, dims.w, dims.h);
+                    const { x, y } = calculateConstrainedPosition(folder.position_x + dx, folder.position_y + dy, dims.w, dims.h);
                     updates.push({ id, type: 'folder', x, y });
                 }
             });
@@ -331,31 +340,47 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             // Move Project Area
             const newX = activeData.position_x + dx;
             const newY = activeData.position_y + dy;
-            updates.push({ id: active.id as string, type: 'item', x: newX, y: newY });
+
+            // Constrain project area itself to canvas
+            const pw = activeData.metadata?.width || 300;
+            const ph = activeData.metadata?.height || 200;
+            const canvasMinX = -HALF_WIDTH + PADDING;
+            const canvasMaxX = HALF_WIDTH - PADDING - pw;
+            const canvasMinY = -HALF_HEIGHT + PADDING;
+            const canvasMaxY = HALF_HEIGHT - PADDING - ph;
+
+            let safeX = newX;
+            let safeY = newY;
+            if (canvasMinX <= canvasMaxX) safeX = Math.max(canvasMinX, Math.min(safeX, canvasMaxX));
+            if (canvasMinY <= canvasMaxY) safeY = Math.max(canvasMinY, Math.min(safeY, canvasMaxY));
+
+            updates.push({ id: active.id as string, type: 'item', x: safeX, y: safeY });
+
+            // Calculate shift for contained items
+            const shiftX = safeX - activeData.position_x;
+            const shiftY = safeY - activeData.position_y;
 
             // Move Contained Items
             draggedProjectContents.forEach(id => {
                 if (currentSelectedIds.includes(id as string)) return; // Already moved by selection block
                 const item = items.find(i => i.id === id);
                 if (item) {
-                    // Contained items move WITH the project area, so they don't need re-constraining relative to it.
-                    // (They maintain relative position).
-                    updates.push({ id, type: 'item', x: item.position_x + dx, y: item.position_y + dy });
+                    updates.push({ id, type: 'item', x: item.position_x + shiftX, y: item.position_y + shiftY });
                     return;
                 }
                 const folder = folders.find(f => f.id === id);
                 if (folder) {
-                    updates.push({ id, type: 'folder', x: folder.position_x + dx, y: folder.position_y + dy });
+                    updates.push({ id, type: 'folder', x: folder.position_x + shiftX, y: folder.position_y + shiftY });
                 }
             });
         } else {
             if (activeData.type === 'folder') {
                 const dims = getElementDims(active.id as string, true);
-                const { x, y } = constrainToProjectArea(activeData.position_x + dx, activeData.position_y + dy, dims.w, dims.h);
+                const { x, y } = calculateConstrainedPosition(activeData.position_x + dx, activeData.position_y + dy, dims.w, dims.h);
                 updates.push({ id: active.id as string, type: 'folder', x, y });
             } else {
                 const dims = getElementDims(active.id as string, false);
-                const { x, y } = constrainToProjectArea(activeData.position_x + dx, activeData.position_y + dy, dims.w, dims.h);
+                const { x, y } = calculateConstrainedPosition(activeData.position_x + dx, activeData.position_y + dy, dims.w, dims.h);
                 updates.push({ id: active.id as string, type: 'item', x, y });
             }
         }

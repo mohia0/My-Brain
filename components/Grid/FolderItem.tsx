@@ -11,6 +11,7 @@ import clsx from 'clsx';
 
 interface FolderItemProps {
     folder: Folder;
+    isLocked?: boolean;
     onClick?: () => void;
 }
 
@@ -165,7 +166,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
 
 FolderItemView.displayName = 'FolderItemView';
 
-export default function FolderItem({ folder, onClick }: FolderItemProps) {
+export default function FolderItem({ folder, isLocked, onClick }: FolderItemProps) {
     const { items, selectedIds, archiveFolder, removeFolder } = useItemsStore();
     const { scale } = useCanvasStore(); // Need scale for transform
     const folderItems = items.filter(i => i.folder_id === folder.id);
@@ -175,7 +176,8 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
 
     const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
         id: folder.id,
-        data: { ...folder, type: 'folder' }
+        data: { ...folder, type: 'folder' },
+        disabled: isLocked,
     });
 
     const { setNodeRef: setDroppableRef } = useDroppable({
@@ -188,7 +190,8 @@ export default function FolderItem({ folder, onClick }: FolderItemProps) {
         top: folder.position_y,
         opacity: 1, // Always visible
         zIndex: isDragging ? 1000 : undefined,
-        transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined
+        transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined,
+        cursor: isLocked ? 'default' : (isDragging ? 'grabbing' : 'grab')
     };
 
     const handleClick = (e: React.MouseEvent) => {

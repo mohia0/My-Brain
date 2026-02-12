@@ -30,26 +30,16 @@ const uploadFile = async (file: File) => {
     });
 };
 
-// Custom Slash Menu Item Reordering
+// Custom Slash Menu Item Filtering
 const getCustomSlashMenuItems = (editor: BlockNoteEditor) => {
     const items = getDefaultReactSlashMenuItems(editor);
 
-    // Find headings
-    const h1 = items.find(i => i.title === "Heading 1");
-    const h2 = items.find(i => i.title === "Heading 2");
-    const h3 = items.find(i => i.title === "Heading 3");
-
-    // Filter out headings from the main list to re-insert them
-    const filtered = items.filter(i => !["Heading 1", "Heading 2", "Heading 3"].includes(i.title));
-
-    // Group them: Text, H1, H2, H3, others...
-    const result = [
-        filtered[0], // Usually Paragraph
-        h1, h2, h3,
-        ...filtered.slice(1)
-    ].filter(Boolean) as any;
-
-    return result;
+    // Filter out unwanted media items (Video, Audio, File)
+    // We keep "Image" and other basic blocks
+    // We do NOT reorder items to avoid breaking Group keys (e.g. splitting "Basic blocks" group)
+    return items.filter(item =>
+        !["Video", "Audio", "File"].includes(item.title)
+    );
 };
 
 export default function BlockEditor({ initialContent, onChange, editable = true }: BlockEditorProps) {

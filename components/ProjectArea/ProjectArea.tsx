@@ -124,7 +124,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                     onChange={handleLabelChange}
                     onKeyDown={e => e.stopPropagation()}
                     onPointerDown={e => e.stopPropagation()}
-                    style={{ color: item.metadata?.color || 'var(--foreground)' }}
+                    style={{ color: (item.metadata?.color && item.metadata.color !== 'default') ? item.metadata.color : 'var(--foreground)' }}
                 />
             </div>
 
@@ -134,7 +134,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                         <button
                             className={styles.controlBtn}
                             onClick={toggleColorPicker}
-                            style={{ color: item.metadata?.color || 'var(--foreground)' }}
+                            style={{ color: (item.metadata?.color && item.metadata.color !== 'default') ? item.metadata.color : 'var(--foreground)' }}
                             data-tooltip="Color"
                         >
                             <Palette size={14} />

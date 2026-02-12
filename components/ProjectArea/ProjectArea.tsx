@@ -228,7 +228,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                     </div>
                 </div>
             )}
-            {isSelected && !item.metadata?.locked && (
+            {(isSelected || isHovered) && !item.metadata?.locked && (
                 <div
                     className={styles.resizeHandle}
                     onPointerDown={(e) => handleResizeStart(e, 'se')}

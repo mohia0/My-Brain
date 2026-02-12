@@ -91,10 +91,8 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     background: var(--card-bg);
-    /* Use a solid color variable if possible, or rgba with higher opacity */
-    background-color: rgba(20, 20, 20, 0.95);
-    /* darker background for contrast */
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: var(--overlay-bg);
+    border: 1px solid var(--card-border);
     outline: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -119,8 +117,8 @@
     /* Wider than input */
     max-height: 400px;
     overflow-y: auto;
-    background: rgba(20, 20, 20, 0.98);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--overlay-bg);
+    border: 1px solid var(--border-light);
     border: 1px solid var(--card-border);
     border-radius: 12px;
     margin-top: 8px;
@@ -204,9 +202,9 @@
 }
 
 .badgeFolder {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-bright);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--card-hover);
+    color: var(--text-muted);
+    border: 1px solid var(--card-border);
 }
 
 .badgeItem {

@@ -79,8 +79,14 @@ const logoutBtn = document.getElementById('logout-btn');
 const backBtn = document.getElementById('back-btn');
 const noteInput = document.getElementById('note-input');
 const saveNoteBtn = document.getElementById('save-note-btn');
+const dashboardBtn = document.getElementById('dashboard-btn');
 
 const toast = document.getElementById('toast');
+
+// --- DASHBOARD LINK ---
+dashboardBtn.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://mybrainia.vercel.app' });
+});
 
 // --- TAB DETECTION ---
 async function updateTabInfo() {

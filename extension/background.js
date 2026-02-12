@@ -44,7 +44,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "capture-text",
-        title: "Capture to Brainia",
+        title: "Save to Brainia",
         contexts: ["selection"]
     });
 });
@@ -91,13 +91,32 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
             console.log("[Background] Successfully captured note to inbox.");
 
-            chrome.notifications.create({
-                type: 'basic',
-                iconUrl: 'Icon.png',
-                title: 'Captured to Brainia',
-                message: 'Text saved to your inbox.',
-                priority: 2
-            });
+            // Try to notify the tab
+            function notifyTab(tabId) {
+                chrome.tabs.sendMessage(tabId, {
+                    action: "SHOW_BRAINIA_TOAST",
+                    type: 'success',
+                    message: 'Text saved to your second brain'
+                }).catch((err) => {
+                    console.log("[Background] Toast failed, attempting injection:", err);
+                    // Fallback: Inject the toaster logic if it's missing (e.g. page not reloaded)
+                    chrome.scripting.executeScript({
+                        target: { tabId: tabId },
+                        files: ['content.js']
+                    }).then(() => {
+                        // Retry sending message after injection
+                        setTimeout(() => {
+                            chrome.tabs.sendMessage(tabId, {
+                                action: "SHOW_BRAINIA_TOAST",
+                                type: 'success',
+                                message: 'Text saved to your second brain'
+                            }).catch(e => console.error("Double fail on toast:", e));
+                        }, 200);
+                    }).catch(scriptErr => console.error("Could not inject toaster:", scriptErr));
+                });
+            }
+
+            if (tab?.id) notifyTab(tab.id);
 
         } catch (err) {
             console.error("[Background] Error capturing text:", err);

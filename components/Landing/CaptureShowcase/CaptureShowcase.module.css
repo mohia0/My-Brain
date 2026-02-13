@@ -1,0 +1,752 @@
+.section {
+    padding: 4rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.intro {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.badge {
+    padding: 0.35rem 0.875rem;
+    background: rgba(110, 86, 207, 0.1);
+    border: 1px solid rgba(110, 86, 207, 0.2);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.25rem;
+    display: inline-block;
+}
+
+.title {
+    font-size: clamp(1.875rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.02em;
+}
+
+.paragraph {
+    font-size: 1rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+/* Demo Container */
+.demoContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.tabs {
+    display: flex;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    background: transparent;
+    color: var(--text-dim);
+    font-weight: 600;
+    transition: all 0.3s;
+    cursor: pointer;
+    border: none;
+}
+
+.tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(110, 86, 207, 0.3);
+}
+
+/* Visual Demo Area */
+.visual {
+    width: 100%;
+    max-width: 800px;
+    min-height: 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Extension Demo */
+.extensionDemo {
+    width: 100%;
+}
+
+.browserWindow {
+    background: #1a1a1f;
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.browserChrome {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.browserDots {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.browserDots div {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.browserUrl {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-dim);
+}
+
+.browserExtension {
+    width: 36px;
+    height: 36px;
+    background: rgba(110, 86, 207, 0.1);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(110, 86, 207, 0.2);
+    transition: all 0.3s;
+}
+
+.browserExtension:hover {
+    background: rgba(110, 86, 207, 0.2);
+    transform: scale(1.05);
+}
+
+.browserContent {
+    padding: 2rem;
+    position: relative;
+    min-height: 320px;
+}
+
+.articleMock {
+    max-width: 500px;
+}
+
+.articleTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    position: relative;
+    display: inline-block;
+    line-height: 1.3;
+}
+
+.highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(110, 86, 207, 0.2);
+    border-radius: 4px;
+    z-index: -1;
+}
+
+.articleText {
+    color: var(--text-dim);
+    line-height: 1.8;
+    font-size: 0.95rem;
+}
+
+.contextMenu {
+    position: absolute;
+    top: 120px;
+    left: 200px;
+    background: rgba(20, 20, 25, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.menuItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menuItem:hover {
+    background: rgba(110, 86, 207, 0.2);
+}
+
+.toast {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    background: rgba(20, 20, 25, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(110, 86, 207, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 10px 30px rgba(110, 86, 207, 0.3);
+    font-weight: 600;
+}
+
+/* Mobile Demo */
+.mobileDemo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mobileFrame {
+    width: 300px;
+    height: 600px;
+    background: #1a1a1f;
+    border-radius: 2.5rem;
+    border: 8px solid #0a0a0c;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.mobileNotch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 24px;
+    background: #0a0a0c;
+    border-radius: 0 0 1rem 1rem;
+    z-index: 10;
+}
+
+.mobileScreen {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    position: relative;
+    overflow: hidden;
+}
+
+.mobileContent {
+    padding: 2rem 1.5rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobileCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.cardImage {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, rgba(110, 86, 207, 0.2), rgba(110, 86, 207, 0.05));
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.cardTitle {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+    color: white;
+}
+
+.cardMeta {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.shareSheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 15, 20, 0.98);
+    backdrop-filter: blur(30px);
+    border-radius: 2rem 2rem 0 0;
+    padding: 2.5rem 1.5rem 3.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.sheetHandle {
+    width: 50px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    margin: 0 auto 2rem;
+}
+
+.sheetTitle {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+    color: white;
+    text-align: center;
+}
+
+.sheetApps {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.appIconWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.appIconWrapper span {
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 600;
+}
+
+.appIcon {
+    width: 90px;
+    height: 90px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    border: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.brainiaIcon {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 12px 32px rgba(110, 86, 207, 0.5);
+}
+
+.mobileToast {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 25, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(110, 86, 207, 0.3);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 10px 30px rgba(110, 86, 207, 0.3);
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 20;
+}
+
+/* Mobile Header */
+.mobileHeader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(10, 10, 12, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    padding-top: 24px;
+    z-index: 10;
+}
+
+.headerLeft,
+.headerRight {
+    width: 40px;
+}
+
+.menuIcon {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.menuIcon div {
+    width: 18px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+}
+
+.headerTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+}
+
+/* Mobile Bottom Nav */
+.mobileNav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: rgba(10, 10, 12, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 2rem;
+    z-index: 10;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.navIcon {
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+}
+
+.navActive .navIcon {
+    background: var(--accent);
+}
+
+/* Hand Cursor */
+.handCursor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 100;
+    filter: drop-shadow(0 4px 12px rgba(110, 86, 207, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transform-origin: center;
+}
+
+/* Step Indicators */
+.steps {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.stepIndicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-dim);
+    transition: color 0.3s;
+}
+
+.stepIndicator.stepActive {
+    color: white;
+}
+
+.stepNumber {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+
+.stepActive .stepNumber {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(110, 86, 207, 0.5);
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 4rem 1rem;
+    }
+
+    .intro {
+        margin-bottom: 2rem;
+    }
+
+    .title {
+        font-size: clamp(1.75rem, 8vw, 2.5rem);
+        margin-bottom: 1rem;
+    }
+
+    .paragraph {
+        font-size: 1rem;
+    }
+
+    .container {
+        gap: 2rem;
+    }
+
+    .tabs {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .tab {
+        justify-content: center;
+        width: 100%;
+        padding: 0.875rem 1.25rem;
+    }
+
+    .visual {
+        min-height: 350px;
+        padding: 0;
+    }
+
+    /* Browser Demo Mobile */
+    .browserWindow {
+        border-radius: 0.75rem;
+    }
+
+    .browserChrome {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .browserDots div {
+        width: 10px;
+        height: 10px;
+    }
+
+    .browserUrl {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .browserContent {
+        padding: 1.5rem 1rem;
+        min-height: 300px;
+    }
+
+    .articleTitle {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .articleText {
+        font-size: 0.875rem;
+    }
+
+    .contextMenu {
+        left: 50%;
+        transform: translateX(-50%);
+        top: 100px;
+    }
+
+    .menuItem {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+    }
+
+    .toast {
+        bottom: 1rem;
+        right: 1rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .handCursor {
+        font-size: 1.5rem;
+    }
+
+    /* Mobile Demo Mobile */
+    .mobileFrame {
+        width: 280px;
+        height: 560px;
+        border-width: 6px;
+        border-radius: 2rem;
+    }
+
+    .mobileNotch {
+        width: 100px;
+        height: 20px;
+    }
+
+    .mobileHeader {
+        height: 50px;
+        padding-top: 20px;
+    }
+
+    .headerTitle {
+        font-size: 0.9rem;
+    }
+
+    .menuIcon div {
+        width: 16px;
+    }
+
+    .mobileContent {
+        padding: 4rem 1rem 4.5rem;
+    }
+
+    .mobileCard {
+        padding: 0.875rem;
+    }
+
+    .cardImage {
+        height: 100px;
+    }
+
+    .cardTitle {
+        font-size: 0.875rem;
+    }
+
+    .shareSheet {
+        padding: 1.25rem;
+    }
+
+    .sheetTitle {
+        font-size: 0.875rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .sheetApps {
+        gap: 1.5rem;
+    }
+
+    .appIcon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .appIconWrapper span {
+        font-size: 0.7rem;
+    }
+
+    .mobileNav {
+        height: 60px;
+        padding: 0 1.5rem;
+    }
+
+    .navIcon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mobileToast {
+        top: 3.5rem;
+        padding: 0.625rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    /* Step Indicators */
+    .steps {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .stepIndicator {
+        width: 100%;
+        font-size: 0.9rem;
+    }
+
+    .stepNumber {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .section {
+        padding: 3rem 1rem;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .paragraph {
+        font-size: 0.95rem;
+    }
+
+    .visual {
+        min-height: 300px;
+    }
+
+    .browserContent {
+        padding: 1rem;
+        min-height: 250px;
+    }
+
+    .articleTitle {
+        font-size: 1.1rem;
+    }
+
+    .mobileFrame {
+        width: 260px;
+        height: 520px;
+    }
+
+    .handCursor {
+        font-size: 1.25rem;
+    }
+}

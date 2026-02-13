@@ -67,16 +67,14 @@ export default function Pricing() {
                                 animate={{ x: billingCycle === 'monthly' ? 4 : 28 }}
                             />
                         </div>
-                        <div className="flex flex-col items-start translate-y-[-2px]">
-                            <span className={clsx(styles.toggleLabel, billingCycle === 'yearly' && styles.activeLabel)}>Yearly</span>
-                            <motion.span
-                                animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1, 0.95] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                className={styles.saveBadge}
-                            >
-                                2 MONTHS FREE ✨
-                            </motion.span>
-                        </div>
+                        <span className={clsx(styles.toggleLabel, billingCycle === 'yearly' && styles.activeLabel)}>Yearly</span>
+                        <motion.span
+                            animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1, 0.95] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className={styles.saveBadge}
+                        >
+                            2 MONTHS FREE ✨
+                        </motion.span>
                     </div>
                 </motion.div>
 

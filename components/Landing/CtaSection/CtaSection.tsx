@@ -40,7 +40,7 @@ export default function CtaSection() {
                     </p>
 
                     <Link
-                        href="https://app.brainia.space"
+                        href="/"
                         className={styles.button}
                     >
                         Get Started Now

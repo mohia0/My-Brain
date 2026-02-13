@@ -187,7 +187,7 @@
 /* Canvas Area */
 .canvasWrapper {
     position: relative;
-    background: radial-gradient(circle at 50% 50%, rgba(110, 86, 207, 0.05), transparent 70%);
+    background: transparent;
 }
 
 .canvasGrid {
@@ -476,5 +476,196 @@
     .stepItem.active {
         border-bottom-color: var(--accent);
         transform: translateY(-5px);
+    }
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 4rem 1rem;
+        gap: 3rem;
+    }
+
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.35rem 0.875rem;
+    }
+
+    .title {
+        font-size: clamp(1.75rem, 7vw, 2.5rem);
+        margin-bottom: 1rem;
+    }
+
+    .paragraph {
+        font-size: 1rem;
+    }
+
+    .steps {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .stepItem {
+        padding: 1rem;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        border-left: none;
+        text-align: left;
+    }
+
+    .stepItem.active {
+        border-bottom-color: var(--accent);
+        transform: none;
+    }
+
+    .visualContainer {
+        height: 500px;
+        border-radius: 1rem;
+    }
+
+    .inboxWrapper {
+        width: 200px;
+        padding: 1rem;
+    }
+
+    .inboxHeader {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .count {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+    }
+
+    .inboxItem {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .itemIcon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .itemTitle {
+        font-size: 0.8rem;
+    }
+
+    .itemDate {
+        font-size: 0.65rem;
+    }
+
+    .canvasArea {
+        padding: 1.5rem;
+    }
+
+    .draggedCard,
+    .staticCard {
+        width: 140px;
+        padding: 0.75rem;
+    }
+
+    .cardHeader {
+        padding: 0.5rem;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .mockToolbar {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .mockTool {
+        width: 28px;
+        height: 28px;
+    }
+
+    .mockWheel {
+        width: 50px;
+        height: 50px;
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .mockSearchOverlay {
+        width: 90%;
+        max-width: 300px;
+    }
+
+    .mockSearchBar {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .mockResult {
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .section {
+        padding: 3rem 1rem;
+        gap: 2rem;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .paragraph {
+        font-size: 0.95rem;
+    }
+
+    .visualContainer {
+        height: 400px;
+    }
+
+    .inboxWrapper {
+        width: 160px;
+        padding: 0.75rem;
+    }
+
+    .inboxHeader {
+        padding: 0.625rem;
+        font-size: 0.8rem;
+    }
+
+    .inboxItem {
+        padding: 0.625rem;
+        gap: 0.5rem;
+    }
+
+    .itemIcon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .itemTitle {
+        font-size: 0.75rem;
+    }
+
+    .canvasArea {
+        padding: 1rem;
+    }
+
+    .draggedCard,
+    .staticCard {
+        width: 120px;
+        padding: 0.625rem;
+    }
+
+    .mockToolbar {
+        padding: 0.4rem;
+    }
+
+    .mockTool {
+        width: 24px;
+        height: 24px;
+    }
+
+    .mockWheel {
+        width: 45px;
+        height: 45px;
     }
 }

@@ -9,38 +9,51 @@ import { useState, useEffect } from 'react';
 export default function SearchMind() {
     const [searchTerm, setSearchTerm] = useState("");
     const [termIndex, setTermIndex] = useState(0);
-    const searchTerms = ["architecture", "research notes", "design system", "brainia core"];
+    const [isTypingComplete, setIsTypingComplete] = useState(false);
+    const searchTerms = ["outfit ideas", "book quotes", "healthy recipes", "workout routine"];
 
     const allData = [
         {
-            title: "Architecture Design Principles",
-            meta: "Projects / Brainia / Core",
-            keyword: "architecture",
+            title: "Casual Outfit Ideas for Fall",
+            meta: "Fashion / Wardrobe",
+            keyword: "outfit ideas",
             icon: <Bookmark size={20} />
         },
         {
-            title: "Research Notes Q4",
-            meta: "Personal / Notes",
-            keyword: "research notes",
+            title: "Inspiring Book Quotes",
+            meta: "Reading / Collection",
+            keyword: "book quotes",
             icon: <FileText size={20} />
         },
         {
-            title: "Design System v2",
-            meta: "Projects / Design",
-            keyword: "design system",
+            title: "Healthy Breakfast Recipes",
+            meta: "Cooking / Meal Prep",
+            keyword: "healthy recipes",
             icon: <LinkIcon size={20} />
         },
         {
-            title: "Brainia Core Logic",
-            meta: "Projects / Brainia / Tech",
-            keyword: "brainia core",
+            title: "Morning Workout Routine",
+            meta: "Fitness / Daily",
+            keyword: "workout routine",
             icon: <ImageIcon size={20} />
         },
         {
-            title: "System Abstract",
-            meta: "Archive / 2024",
-            keyword: "architecture",
+            title: "Winter Style Guide",
+            meta: "Fashion / 2024",
+            keyword: "outfit ideas",
             icon: <Bookmark size={20} />
+        },
+        {
+            title: "Motivational Quotes",
+            meta: "Personal / Inspiration",
+            keyword: "book quotes",
+            icon: <FileText size={20} />
+        },
+        {
+            title: "Quick Dinner Ideas",
+            meta: "Cooking / Weeknight",
+            keyword: "healthy recipes",
+            icon: <LinkIcon size={20} />
         }
     ];
 
@@ -52,15 +65,21 @@ export default function SearchMind() {
         const type = () => {
             if (!isDeleting && charIndex <= currentTerm.length) {
                 setSearchTerm(currentTerm.substring(0, charIndex));
+                if (charIndex === currentTerm.length) {
+                    setIsTypingComplete(true);
+                }
                 charIndex++;
                 setTimeout(type, 80);
             } else if (isDeleting && charIndex >= 0) {
+                if (charIndex === currentTerm.length) {
+                    setIsTypingComplete(false);
+                }
                 setSearchTerm(currentTerm.substring(0, charIndex));
                 charIndex--;
                 setTimeout(type, 40);
             } else if (!isDeleting && charIndex > currentTerm.length) {
                 isDeleting = true;
-                setTimeout(type, 2500); // Pause on full word
+                setTimeout(type, 4000); // Pause on full word with results visible
             } else {
                 setTermIndex((prev) => (prev + 1) % searchTerms.length);
             }
@@ -70,9 +89,11 @@ export default function SearchMind() {
         return () => clearTimeout(timeout);
     }, [termIndex]);
 
-    const filteredResults = allData.filter(item =>
-        item.keyword === searchTerms[termIndex]
-    ).slice(0, 3);
+    // Only show results when typing is complete
+    const currentTargetTerm = searchTerms[termIndex];
+    const filteredResults = isTypingComplete
+        ? allData.filter(item => item.keyword === currentTargetTerm).slice(0, 3)
+        : [];
 
     return (
         <section id="search" className={styles.section}>
@@ -123,16 +144,27 @@ export default function SearchMind() {
 
                     <div className={styles.results}>
                         <div className={styles.resultsInner}>
-                            <AnimatePresence mode="popLayout" initial={false}>
+                            <AnimatePresence mode="sync" initial={false}>
                                 {filteredResults.map((result, i) => (
                                     <motion.div
                                         key={result.title}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        transition={{
-                                            duration: 0.3,
-                                            ease: "easeOut"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{
+                                            opacity: 1,
+                                            y: 0,
+                                            transition: {
+                                                delay: i * 0.1,
+                                                duration: 0.3,
+                                                ease: "easeOut"
+                                            }
+                                        }}
+                                        exit={{
+                                            opacity: 0,
+                                            y: -10,
+                                            transition: {
+                                                duration: 0.2,
+                                                ease: "easeIn"
+                                            }
                                         }}
                                         className={clsx(styles.resultItem, i === 0 && styles.active)}
                                     >

@@ -3,6 +3,7 @@
 import Hero from '@/components/Landing/Hero/Hero';
 import FeatureGrid from '@/components/Landing/FeatureGrid/FeatureGrid';
 import WorkflowShowcase from '@/components/Landing/WorkflowShowcase/WorkflowShowcase';
+import CaptureShowcase from '@/components/Landing/CaptureShowcase/CaptureShowcase';
 import SearchMind from '@/components/Landing/SearchMind/SearchMind';
 import Pricing from '@/components/Landing/Pricing/Pricing';
 import Downloads from '@/components/Landing/Downloads/Downloads';
@@ -17,6 +18,12 @@ export default function LandingPage() {
                matching the premium sign-in experience.
             */}
             <Hero />
+
+            {/* 
+               Universal Capture: Browser Extension & Mobile App
+               Interactive demos showing how to capture from anywhere
+            */}
+            <CaptureShowcase />
 
             {/* 
                The Concept: From Capture to Canvas. 

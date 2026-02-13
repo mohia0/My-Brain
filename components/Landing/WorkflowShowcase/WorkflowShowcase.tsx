@@ -16,9 +16,9 @@ export default function WorkflowShowcase() {
     }, []);
 
     const inboxItems = [
-        { id: 1, type: "link", title: "Quantum Physics Research", date: "Oct 12", color: "var(--accent)" },
-        { id: 2, type: "text", title: "Newsletter Draft v2", date: "Oct 11", color: "#3296fa" },
-        { id: 3, type: "image", title: "Product Moodboard", date: "Oct 10", color: "#fa6464" },
+        { id: 1, type: "link", title: "Summer Fashion Trends", date: "Oct 12", color: "var(--accent)" },
+        { id: 2, type: "text", title: "Favorite Quotes Collection", date: "Oct 11", color: "#3296fa" },
+        { id: 3, type: "image", title: "Travel Inspiration Board", date: "Oct 10", color: "#fa6464" },
     ];
 
     return (
@@ -83,15 +83,28 @@ export default function WorkflowShowcase() {
                             <motion.div
                                 key={item.id}
                                 className={styles.inboxItem}
+                                initial={step === 0 && i === 0 ? { opacity: 0, x: -20 } : {}}
                                 animate={{
-                                    opacity: step === 1 && i === 0 ? 0 : 1,
-                                    x: step === 1 && i === 0 ? 50 : 0
+                                    opacity: step >= 1 && i === 0 ? 0 : 1,
+                                    x: step >= 1 && i === 0 ? 50 : 0,
+                                    y: step >= 1 && i > 0 ? -60 : 0
+                                }}
+                                transition={{
+                                    duration: 0.5,
+                                    ease: [0.22, 1, 0.36, 1]
                                 }}
                             >
-                                <div className={styles.itemIcon}>
-                                    {item.type === 'link' && <Link size={12} />}
-                                    {item.type === 'text' && <FileText size={12} />}
-                                    {item.type === 'image' && <ImageIcon size={12} />}
+                                <div className={styles.itemIcon} style={{
+                                    background: item.type === 'link' ? 'rgba(50, 150, 250, 0.1)' :
+                                        item.type === 'text' ? 'rgba(110, 86, 207, 0.1)' :
+                                            'rgba(250, 100, 100, 0.1)',
+                                    color: item.type === 'link' ? '#3296fa' :
+                                        item.type === 'text' ? 'var(--accent)' :
+                                            '#fa6464'
+                                }}>
+                                    {item.type === 'link' && <Link size={14} />}
+                                    {item.type === 'text' && <FileText size={14} />}
+                                    {item.type === 'image' && <ImageIcon size={14} />}
                                 </div>
                                 <div className={styles.itemMeta}>
                                     <div className={styles.itemTitle}>{item.title}</div>
@@ -116,7 +129,7 @@ export default function WorkflowShowcase() {
                             >
                                 <div className={styles.cardHeader}>
                                     <Link size={12} className="text-accent" />
-                                    <span className={styles.cardTitle}>Physics Research</span>
+                                    <span className={styles.cardTitle}>Summer Fashion Trends</span>
                                 </div>
                                 <div className={styles.cardBody}>
                                     <div className={styles.skeletonImage} />
@@ -134,19 +147,33 @@ export default function WorkflowShowcase() {
                     </AnimatePresence>
 
                     {/* Global Canvas Cursor */}
-                    {(step === 1 || step === 2) && (
-                        <motion.div
-                            initial={{ opacity: 0, x: 50, y: 50 }}
-                            animate={{
-                                opacity: 1,
-                                x: step === 1 ? 250 : 400,
-                                y: step === 1 ? 180 : 100
-                            }}
-                            className={styles.cursor}
-                        >
-                            <MousePointer2 size={18} fill="var(--accent)" />
-                        </motion.div>
-                    )}
+                    <AnimatePresence>
+                        {(step === 1 || step === 2) && (
+                            <motion.div
+                                key="cursor"
+                                initial={{ opacity: 0, x: 50, y: 50 }}
+                                animate={{
+                                    opacity: 1,
+                                    x: step === 1 ? [50, 180, 250] : [250, 320, 400],
+                                    y: step === 1 ? [50, 140, 180] : [180, 120, 100]
+                                }}
+                                exit={{
+                                    opacity: 0,
+                                    x: 80,
+                                    y: 70,
+                                    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+                                }}
+                                transition={{
+                                    duration: 1.2,
+                                    ease: [0.16, 1, 0.3, 1],
+                                    times: [0, 0.5, 1]
+                                }}
+                                className={styles.cursor}
+                            >
+                                <MousePointer2 size={18} fill="var(--accent)" />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Background nodes already on canvas */}
                     <motion.div
@@ -187,12 +214,12 @@ export default function WorkflowShowcase() {
                         >
                             <div className={styles.mockSearchBar}>
                                 <Search size={10} className="text-accent" />
-                                <span>quant</span>
+                                <span>outfit</span>
                                 <div className={styles.mockSearchCursor} />
                             </div>
                             <div className={styles.mockSearchResults}>
-                                <div className={styles.mockResult}>Quantum Physics...</div>
-                                <div className={styles.mockResult}>Quantum Computing...</div>
+                                <div className={styles.mockResult}>Casual Outfit Ideas...</div>
+                                <div className={styles.mockResult}>Winter Style Guide...</div>
                             </div>
                         </motion.div>
                     )}

@@ -64,11 +64,16 @@
 }
 
 .saveBadge {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     font-weight: 800;
     color: var(--accent);
     letter-spacing: 0.05em;
-    margin-top: -2px;
+    padding: 0.25rem 0.75rem;
+    background: rgba(110, 86, 207, 0.1);
+    border-radius: 999px;
+    border: 1px solid rgba(110, 86, 207, 0.3);
+    white-space: nowrap;
+    margin-left: 0.75rem;
 }
 
 .toggle {

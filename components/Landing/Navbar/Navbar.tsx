@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import styles from './Navbar.module.css';
 import Orb from '@/components/Orb/Orb';
 import clsx from 'clsx';
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
+    const { scrollY } = useScroll();
+
+    // Smooth scroll-based transforms
+    const navWidth = useTransform(scrollY, [0, 100], ["100%", "fit-content"]);
+    const navMarginTop = useTransform(scrollY, [0, 100], ["0rem", "1rem"]);
+    const navPadding = useTransform(scrollY, [0, 100], ["1.25rem 3rem", "0.75rem 2rem"]);
+    const logoScale = useTransform(scrollY, [0, 100], [1, 0.9]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -18,54 +25,103 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+        e.preventDefault();
+        const element = document.querySelector(href);
+        if (element) {
+            const offset = 80; // Account for fixed navbar
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     return (
         <div className={clsx(styles.navWrapper, scrolled && styles.scrolledWrapper)}>
-            <div className={clsx(styles.topFade, scrolled && styles.visible)} />
+            <motion.div
+                className={clsx(styles.topFade, scrolled && styles.visible)}
+                animate={{ opacity: scrolled ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+            />
             <motion.nav
                 className={styles.nav}
                 initial={{ y: -100 }}
-                animate={{
-                    y: 0,
-                    width: scrolled ? "fit-content" : "100%",
-                    marginTop: scrolled ? "1rem" : "0px",
+                animate={{ y: 0 }}
+                style={{
+                    width: navWidth,
+                    marginTop: navMarginTop,
+                    padding: navPadding
                 }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                transition={{
+                    type: "spring",
+                    stiffness: 100,
+                    damping: 20,
+                    mass: 0.8
+                }}
             >
                 <div className={styles.container}>
                     {/* Brand */}
-                    <Link href="/" className={styles.brand}>
-                        <h1 className={styles.logoText}>
+                    <Link href="/home" className={styles.brand}>
+                        <motion.h1
+                            className={styles.logoText}
+                            style={{ scale: logoScale }}
+                        >
                             Brainia
-                        </h1>
+                        </motion.h1>
                     </Link>
 
                     {/* Navigation */}
                     <div className={styles.links}>
-                        {['Features', 'Workflow', 'Search', 'Pricing'].map((item) => (
-                            <Link
-                                key={item}
-                                href={`#${item.toLowerCase()}`}
+                        {[
+                            { label: 'Capture', id: '#capture' },
+                            { label: 'Workflow', id: '#workflow' },
+                            { label: 'Features', id: '#features' },
+                            { label: 'Search', id: '#search' },
+                            { label: 'Pricing', id: '#pricing' }
+                        ].map((item) => (
+                            <motion.a
+                                key={item.id}
+                                href={item.id}
+                                onClick={(e) => handleNavClick(e, item.id)}
                                 className={styles.link}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                {item}
-                            </Link>
+                                {item.label}
+                            </motion.a>
                         ))}
                     </div>
 
                     {/* Actions */}
                     <div className={styles.actions}>
-                        <Link
-                            href="https://app.brainia.space"
-                            className={styles.cta}
-                        >
-                            <motion.span
-                                animate={{
-                                    padding: scrolled ? "0.4rem 1.25rem" : "0.5rem 1.75rem",
-                                    fontSize: scrolled ? "0.75rem" : "0.875rem"
+                        <Link href="/" className={styles.ctaWrapper}>
+                            <motion.div
+                                className={styles.cta}
+                                whileHover={{
+                                    scale: 1.05,
+                                    boxShadow: "0 0 30px rgba(110, 86, 207, 0.6)"
                                 }}
+                                whileTap={{ scale: 0.95 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
                             >
-                                Launch
-                            </motion.span>
+                                <motion.span
+                                    animate={{
+                                        fontSize: scrolled ? "0.75rem" : "0.875rem"
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    Launch App
+                                </motion.span>
+                                <motion.div
+                                    className={styles.ctaGlow}
+                                    initial={{ opacity: 0 }}
+                                    whileHover={{ opacity: 1 }}
+                                />
+                            </motion.div>
                         </Link>
                     </div>
                 </div>

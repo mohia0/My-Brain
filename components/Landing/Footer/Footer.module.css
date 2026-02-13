@@ -22,18 +22,17 @@
 .brand {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     margin-bottom: 1rem;
     color: var(--foreground);
-    font-weight: 700;
+    font-weight: 800;
 }
 
-.brandIcon {
-    width: 1.5rem;
-    height: 1.5rem;
-    background: var(--accent);
-    border-radius: 50%;
-    opacity: 0.5;
+.logoText {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--foreground);
+    letter-spacing: -0.03em;
+    font-family: var(--font-outfit), sans-serif;
 }
 
 .copy {

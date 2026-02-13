@@ -67,13 +67,25 @@ export default function FeatureGrid() {
             );
         }
         if (type === 'minimap') {
+            // Fixed positions to avoid hydration mismatch
+            const dotPositions = [
+                { top: '15%', left: '20%' },
+                { top: '45%', left: '65%' },
+                { top: '70%', left: '35%' },
+                { top: '25%', left: '75%' },
+                { top: '60%', left: '15%' },
+                { top: '35%', left: '50%' },
+                { top: '80%', left: '70%' },
+                { top: '50%', left: '40%' }
+            ];
+
             return (
                 <div className={styles.minimapSkeleton}>
                     <div className={styles.minimapActiveZone} />
                     <div className={styles.minimapDots}>
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        {dotPositions.map((pos, i) => (
                             <div key={i} className={styles.minimapDot}
-                                style={{ top: `${Math.random() * 80}%`, left: `${Math.random() * 80}%` }}
+                                style={{ top: pos.top, left: pos.left }}
                             />
                         ))}
                     </div>

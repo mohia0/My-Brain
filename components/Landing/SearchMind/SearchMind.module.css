@@ -85,17 +85,16 @@
     overflow: hidden;
     backdrop-filter: blur(20px);
     box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
-    height: 300px;
-    /* Fixed height to prevent section jump */
+    min-height: 240px;
 }
 
 .resultsInner {
-    position: relative;
+    display: flex;
+    flex-direction: column;
     width: 100%;
 }
 
 .resultItem {
-    position: absolute;
     width: 100%;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -103,15 +102,6 @@
     align-items: center;
     gap: 1.5rem;
     box-sizing: border-box;
-}
-
-/* Position based on index to keep layout structure */
-.resultItem:nth-child(2) {
-    transform: translateY(80px);
-}
-
-.resultItem:nth-child(3) {
-    transform: translateY(160px);
 }
 
 .active {

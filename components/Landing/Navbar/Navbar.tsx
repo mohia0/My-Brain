@@ -33,7 +33,7 @@ export default function Navbar() {
             >
                 <div className={styles.container}>
                     {/* Brand */}
-                    <Link href="/home" className={styles.brand}>
+                    <Link href="/" className={styles.brand}>
                         <h1 className={styles.logoText}>
                             Brainia
                         </h1>

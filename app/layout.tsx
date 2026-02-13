@@ -19,7 +19,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Brainia - Your AI-Powered Spatial Second Brain",
+  title: "Brainia - Second Brain",
   description: "Organize your thoughts, ideas, and projects on an infinite spatial canvas. Brainia is the ultimate productivity workspace for visual thinkers, mimicking how your mind actually works.",
   keywords: ["productivity", "spatial workspace", "second brain", "mind mapping", "visual notes", "knowledge management", "infinite canvas"],
   authors: [{ name: "Mohi Hassan" }],

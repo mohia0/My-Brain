@@ -460,11 +460,18 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     height: CANVAS_HEIGHT,
                     backgroundColor: 'var(--background)', // Keep board original color
                     border: '1px solid var(--card-border)',
-                    backgroundImage: 'radial-gradient(var(--grid-dot) 1px, transparent 1px)',
-                    backgroundSize: '40px 40px',
                     pointerEvents: 'none',
                     zIndex: -1
-                }} />
+                }}>
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: `radial-gradient(circle, var(--grid-dot) ${Math.max(0.4, 0.8 / scale)}px, transparent 0)`,
+                        backgroundSize: '40px 40px',
+                        opacity: scale < 0.4 ? Math.max(0, (scale - 0.1) / 0.3) : 1,
+                        transition: 'opacity 0.2s ease'
+                    }} />
+                </div>
 
                 {children}
             </div>

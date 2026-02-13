@@ -164,12 +164,13 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     </div>
                     <div className={styles.captureInfo}>
                         <div className={styles.captureTitle}>{localItem.metadata?.title || 'Video Idea'}</div>
+                        <div className={styles.captureFooter}>
+                            <span className={styles.cardDate}>{new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <SyncIndicator />
+                        </div>
                     </div>
                 </div>
                 {renderActions()}
-                <div className={styles.outerDate}>
-                    {new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                </div>
             </div>
         );
     }
@@ -203,13 +204,13 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         <div className={styles.captureTitle}>{localItem.metadata.title}</div>
                         <div className={styles.captureDomain}>{safeHostname(localItem.content)}</div>
                         <div className={styles.captureDesc}>{localItem.metadata.description || "No description"}</div>
-                        <SyncIndicator />
+                        <div className={styles.captureFooter}>
+                            <span className={styles.cardDate}>{new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <SyncIndicator />
+                        </div>
                     </div>
                 </div>
                 {renderActions()}
-                <div className={styles.outerDate}>
-                    {new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                </div>
             </div>
         );
     }
@@ -238,7 +239,6 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             />
                         )}
                         <span className={styles.title}>{localItem.metadata?.title || localItem.content}</span>
-                        <SyncIndicator />
                     </div>
                     <div className={styles.content}>
                         <div className={styles.captureDomain} style={{ marginBottom: 4 }}>
@@ -247,12 +247,13 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         <div className={styles.captureDesc} style={{ WebkitLineClamp: 3 }}>
                             {localItem.metadata?.description || "No description"}
                         </div>
+                        <div className={styles.captureFooter}>
+                            <span className={styles.cardDate}>{new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <SyncIndicator />
+                        </div>
                     </div>
                 </div>
                 {renderActions()}
-                <div className={styles.outerDate}>
-                    {new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                </div>
             </div>
         );
     }
@@ -297,7 +298,6 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             return clean.length > 40 ? clean.substring(0, 40) + '...' : clean;
                         })()}
                     </span>
-                    <SyncIndicator />
                 </div>
                 <div className={isImage ? styles.imageContentWrapper : styles.content}>
                     {isImage ? (
@@ -313,7 +313,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             <div className={styles.noSnapshot}>No Snapshot</div>
                         )
                     ) : (
-                        <div style={{ fontSize: '0.8rem', color: '#ccc', maxHeight: 80, overflow: 'hidden', whiteSpace: 'pre-wrap' }}>
+                        <div className={styles.textContent}>
                             {(() => {
                                 if (localItem.content.startsWith('[')) {
                                     try {
@@ -331,12 +331,13 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             })()}
                         </div>
                     )}
+                    <div className={styles.captureFooter} style={{ padding: isImage ? '8px 12px' : '4px 0 0 0' }}>
+                        <span className={styles.cardDate}>{new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <SyncIndicator />
+                    </div>
                 </div>
             </div>
             {renderActions()}
-            <div className={styles.outerDate}>
-                {new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-            </div>
         </div>
     );
 });

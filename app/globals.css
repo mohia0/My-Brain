@@ -29,7 +29,7 @@
   --border-light: rgba(255, 255, 255, 0.1);
   --shadow-color: rgba(0, 0, 0, 0.4);
   --modal-bg: #1a1a1a;
-  --grid-dot: #333333;
+  --grid-dot: rgba(255, 255, 255, 0.08);
   --canvas-gutter: #0f0f11;
 
   /* Zoom/Pan Context */
@@ -63,7 +63,7 @@
   --border-light: rgba(0, 0, 0, 0.05);
   --shadow-color: rgba(0, 0, 0, 0.05);
   --modal-bg: #ffffff;
-  --grid-dot: #d1d1d6;
+  --grid-dot: rgba(0, 0, 0, 0.12);
   --canvas-gutter: #e5e5ea;
 }
 

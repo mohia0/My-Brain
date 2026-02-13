@@ -14,6 +14,12 @@
     cursor: grab;
     box-shadow: 0 4px 12px var(--shadow-color);
     z-index: 10;
+    /* Browser stability for scaled elements */
+    background-clip: padding-box;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    outline: 1px solid transparent;
 }
 
 .innerCard {
@@ -25,15 +31,7 @@
 }
 
 .outerDate {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 8px;
-    font-size: 9px;
-    color: var(--text-muted);
-    opacity: 0.7;
-    font-weight: 500;
-    pointer-events: none;
-    letter-spacing: 0.02em;
+    display: none;
 }
 
 .card.dimmed {
@@ -79,6 +77,18 @@
     font-size: 0.9rem;
     color: var(--foreground);
     word-break: break-word;
+    position: relative;
+}
+
+.textContent {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    max-height: 80px;
+    overflow: hidden;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
 
 .imageContent {
@@ -245,6 +255,20 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.3;
+}
+
+.captureFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: auto;
+}
+
+.cardDate {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-weight: 600;
+    opacity: 0.8;
 }
 
 /* Video Card Variant */

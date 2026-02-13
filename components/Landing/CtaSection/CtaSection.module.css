@@ -1,5 +1,5 @@
 .ctaSection {
-    margin: 12rem auto;
+    margin: 12rem auto 0;
     max-width: 1400px;
     padding: 0 2rem;
     text-align: center;
@@ -10,7 +10,7 @@
     backdrop-filter: blur(40px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 3rem;
-    padding: 8rem 2rem;
+    padding: 3rem 2rem;
     position: relative;
     overflow: hidden;
     box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);

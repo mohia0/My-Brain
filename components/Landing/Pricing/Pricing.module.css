@@ -1,5 +1,5 @@
 .section {
-    padding: 6rem 2rem;
+    padding: 3rem 2rem;
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -123,6 +123,44 @@
     z-index: 10;
 }
 
+.lifetime {
+    border: 2px solid transparent;
+    background: linear-gradient(rgba(20, 20, 25, 0.6), rgba(20, 20, 25, 0.6)) padding-box,
+        linear-gradient(135deg, #d4af37, #f4e5a1, #d4af37, #c5a028) border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+.lifetime::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15), transparent 70%);
+    pointer-events: none;
+}
+
+.lifetime .planName,
+.lifetime .priceValue {
+    color: #f4e5a1;
+    text-shadow: 0 2px 8px rgba(212, 175, 55, 0.5);
+}
+
+.lifetime .priceSymbol,
+.lifetime .pricePeriod {
+    color: #d4af37;
+}
+
+.lifetime .planDesc,
+.lifetime .featureItem {
+    color: rgba(244, 229, 161, 0.9);
+}
+
+.lifetime .cardBadge {
+    background: linear-gradient(135deg, #d4af37, #f4e5a1);
+    color: #1a1a1f;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+}
+
 .card:hover {
     border-color: rgba(255, 255, 255, 0.1);
     transform: translateY(-8px);
@@ -130,6 +168,11 @@
 
 .highlight:hover {
     transform: scale(1.05) translateY(-8px);
+}
+
+.lifetime:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3);
 }
 
 .cardBadge {

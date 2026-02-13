@@ -83,15 +83,23 @@ export default function WorkflowShowcase() {
                             <motion.div
                                 key={item.id}
                                 className={styles.inboxItem}
-                                initial={step === 0 && i === 0 ? { opacity: 0, x: -20 } : {}}
+                                initial={step === 0 && i === 0 ? { opacity: 0, x: -20, scale: 0.95 } : {}}
                                 animate={{
                                     opacity: step >= 1 && i === 0 ? 0 : 1,
                                     x: step >= 1 && i === 0 ? 50 : 0,
-                                    y: step >= 1 && i > 0 ? -60 : 0
+                                    y: step >= 1 && i > 0 ? -60 : 0,
+                                    scale: 1,
+                                    backgroundColor: step === 0 && i === 0 ?
+                                        ['rgba(110, 86, 207, 0)', 'rgba(110, 86, 207, 0.15)', 'rgba(110, 86, 207, 0)'] :
+                                        'rgba(110, 86, 207, 0)'
                                 }}
                                 transition={{
                                     duration: 0.5,
-                                    ease: [0.22, 1, 0.36, 1]
+                                    ease: [0.22, 1, 0.36, 1],
+                                    backgroundColor: {
+                                        duration: 1.5,
+                                        times: [0, 0.5, 1]
+                                    }
                                 }}
                             >
                                 <div className={styles.itemIcon} style={{

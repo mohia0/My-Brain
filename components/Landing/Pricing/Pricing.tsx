@@ -16,7 +16,7 @@ export default function Pricing() {
             price: "$0",
             period: "forever",
             desc: "Perfect for personal quick capture.",
-            features: ["1,000 Items", "Infinite Canvas", "Browser Extension", "Standard Sync"],
+            features: ["65 Cards", "4 Folders", "2 Project Areas", "Infinite Canvas", "Browser Extension"],
             btnText: "Get Started",
             highlight: false
         },
@@ -32,12 +32,14 @@ export default function Pricing() {
         },
         {
             name: "Lifetime",
-            price: "$149",
+            price: "$199",
             period: "one-time",
             desc: "Secure your legacy forever.",
             features: ["Everything in Pro", "Lifetime Updates", "Early Beta Access", "Exclusive Founder Badge"],
             btnText: "Buy Once",
-            highlight: false
+            highlight: false,
+            lifetime: true,
+            badge: "FOUNDER"
         }
     ];
 
@@ -86,7 +88,7 @@ export default function Pricing() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
-                            className={clsx(styles.card, plan.highlight && styles.highlight)}
+                            className={clsx(styles.card, plan.highlight && styles.highlight, plan.lifetime && styles.lifetime)}
                         >
                             {plan.badge && <div className={styles.cardBadge}>{plan.badge}</div>}
                             <div className={styles.cardHeader}>

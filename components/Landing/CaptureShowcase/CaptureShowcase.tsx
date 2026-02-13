@@ -40,6 +40,16 @@ export default function CaptureShowcase() {
                     <p className={styles.paragraph}>
                         Browser extension and mobile app work seamlessly to capture your thoughts, links, and ideas instantly.
                     </p>
+                    <motion.button
+                        className={styles.ctaButton}
+                        onClick={() => {
+                            document.getElementById('download')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        Get the Extension
+                    </motion.button>
                 </motion.div>
 
                 <div className={styles.demoContainer}>
@@ -136,8 +146,19 @@ function ExtensionDemo({ step }: { step: number }) {
                             <motion.div
                                 className={styles.contextMenu}
                                 initial={{ opacity: 0, scale: 0.9, y: -10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                animate={{
+                                    opacity: 1,
+                                    scale: step === 1 ? [1, 0.95, 1] : 1,
+                                    y: 0
+                                }}
                                 exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{
+                                    scale: {
+                                        duration: 0.3,
+                                        times: [0, 0.5, 1],
+                                        delay: step === 1 ? 0.5 : 0
+                                    }
+                                }}
                             >
                                 <div className={styles.menuItem}>
                                     <ImageIcon size={14} />
@@ -161,26 +182,6 @@ function ExtensionDemo({ step }: { step: number }) {
                             </motion.div>
                         )}
                     </AnimatePresence>
-
-                    {/* Animated Cursor */}
-                    <motion.div
-                        className={styles.handCursor}
-                        animate={{
-                            x: step === 0 ? [50, 100, 150] : step === 1 ? [150, 180] : [180, 200],
-                            y: step === 0 ? [80, 95, 110] : step === 1 ? [110, 140] : [140, 30],
-                            opacity: step <= 1 ? 1 : 0
-                        }}
-                        transition={{
-                            duration: step === 0 ? 1.8 : step === 1 ? 0.8 : 0.6,
-                            ease: [0.22, 1, 0.36, 1],
-                            times: step === 0 ? [0, 0.5, 1] : undefined
-                        }}
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M10 3C10 2.44772 10.4477 2 11 2C11.5523 2 12 2.44772 12 3V10H19C19.5523 10 20 10.4477 20 11C20 11.5523 19.5523 12 19 12H12V19C12 19.5523 11.5523 20 11 20C10.4477 20 10 19.5523 10 19V12H3C2.44772 12 2 11.5523 2 11C2 10.4477 2.44772 10 3 10H10V3Z" fill="var(--accent)" />
-                            <circle cx="11" cy="11" r="2" fill="white" />
-                        </svg>
-                    </motion.div>
                 </div>
             </div>
         </motion.div>
@@ -264,26 +265,6 @@ function MobileDemo({ step }: { step: number }) {
                             </motion.div>
                         )}
                     </AnimatePresence>
-
-                    {/* Animated Hand Cursor */}
-                    <motion.div
-                        className={styles.handCursor}
-                        animate={{
-                            x: step === 0 ? [80, 60] : step === 1 ? [60, 50] : [50, 50],
-                            y: step === 0 ? [300, 200] : step === 1 ? [200, 420] : [420, 440],
-                            opacity: step <= 1 ? 1 : 0
-                        }}
-                        transition={{
-                            duration: step === 0 ? 1.5 : 1.2,
-                            ease: [0.22, 1, 0.36, 1],
-                            times: step === 0 ? [0, 1] : undefined
-                        }}
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path d="M10 3C10 2.44772 10.4477 2 11 2C11.5523 2 12 2.44772 12 3V10H19C19.5523 10 20 10.4477 20 11C20 11.5523 19.5523 12 19 12H12V19C12 19.5523 11.5523 20 11 20C10.4477 20 10 19.5523 10 19V12H3C2.44772 12 2 11.5523 2 11C2 10.4477 2.44772 10 3 10H10V3Z" fill="var(--accent)" />
-                            <circle cx="11" cy="11" r="2" fill="white" />
-                        </svg>
-                    </motion.div>
                 </div>
             </div>
         </motion.div>

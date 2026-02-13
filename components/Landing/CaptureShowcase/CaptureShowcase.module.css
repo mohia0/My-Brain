@@ -42,6 +42,39 @@
     font-size: 1rem;
     color: var(--text-dim);
     line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.ctaButton {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 8px 24px rgba(110, 86, 207, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.ctaButton::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.ctaButton:hover::before {
+    transform: translateX(100%);
+}
+
+.ctaButton:hover {
+    box-shadow: 0 12px 32px rgba(110, 86, 207, 0.6);
 }
 
 /* Demo Container */
@@ -379,9 +412,9 @@
 
 .mobileToast {
     position: absolute;
-    top: 50%;
+    bottom: 280px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     background: rgba(20, 20, 25, 0.95);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(110, 86, 207, 0.3);

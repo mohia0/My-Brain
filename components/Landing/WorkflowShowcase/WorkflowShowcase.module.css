@@ -120,11 +120,6 @@
     color: var(--accent);
 }
 
-.inboxIconImg {
-    width: 14px;
-    height: 14px;
-    object-fit: contain;
-}
 
 .inboxList {
     display: flex;
@@ -176,9 +171,11 @@
     margin-bottom: 0.15rem;
 }
 
-.itemDate {
-    font-size: 0.7rem;
-    color: var(--text-muted);
+.itemDateSkeleton {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
 }
 
 .count {

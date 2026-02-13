@@ -73,7 +73,7 @@ export default function WorkflowShowcase() {
                 <div className={styles.inboxWrapper}>
                     <div className={styles.inboxHeader}>
                         <div className="flex items-center gap-2">
-                            <span>INBOX</span>
+                            <span>Inbox</span>
                         </div>
                         <span className={styles.count}>{step >= 1 ? 2 : 3}</span>
                     </div>
@@ -115,7 +115,7 @@ export default function WorkflowShowcase() {
                                 </div>
                                 <div className={styles.itemMeta}>
                                     <div className={styles.itemTitle}>{item.title}</div>
-                                    <div className={styles.itemDate}>{item.date}</div>
+                                    <div className={styles.itemDateSkeleton} />
                                 </div>
                             </motion.div>
                         ))}
@@ -242,8 +242,6 @@ export default function WorkflowShowcase() {
                             <div className={styles.mockTool}><Plus size={12} /></div>
                         </div>
                     </div>
-
-
                 </div>
             </div>
         </section>

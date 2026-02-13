@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import styles from './CaptureShowcase.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Chrome, Smartphone, Link, FileText, Image as ImageIcon, Check } from 'lucide-react';
+import { Chrome, Smartphone, Share, FileText, Image as ImageIcon, Check } from 'lucide-react';
 
-// Animation Timing Constants
-const UI_DELAY = 0.6;
-const CLICK_DELAY = 0.3; // Time to wait after UI appears before clicking
-const STEP_INTERVAL = 2500; // Total time per step in ms
+const BROWSER_STEP_INTERVAL = 3000;
+const MOBILE_STEP_INTERVAL = 2200;
+const CLICK_DELAY = 0.2;
 
 export default function CaptureShowcase() {
     const [activeDemo, setActiveDemo] = useState<'extension' | 'mobile'>('extension');
@@ -17,16 +16,17 @@ export default function CaptureShowcase() {
     useEffect(() => {
         const interval = setInterval(() => {
             setCaptureStep((prev) => {
-                if (prev >= 3) { // 0: Idle, 1: Selection, 2: Action, 3: Saved
+                const maxStep = 3;
+                if (prev >= maxStep) {
                     setActiveDemo(current => current === 'extension' ? 'mobile' : 'extension');
                     return 0;
                 }
                 return prev + 1;
             });
-        }, STEP_INTERVAL);
+        }, activeDemo === 'extension' ? BROWSER_STEP_INTERVAL : MOBILE_STEP_INTERVAL);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [activeDemo]);
 
     return (
         <section id="capture" className={styles.section}>
@@ -89,8 +89,11 @@ export default function CaptureShowcase() {
                             )}
                         </AnimatePresence>
 
-                        {/* Realistic Hand Cursor */}
-                        <HandCursor demo={activeDemo} step={captureStep} />
+                        {/* Realistic Hand Cursor - Only for Browser */}
+                        {activeDemo === 'extension' && <HandCursor demo="extension" step={captureStep} />}
+
+                        {/* Touch Indicator - Only for Mobile */}
+                        {activeDemo === 'mobile' && <TouchRipple step={captureStep} />}
                     </div>
 
                     {/* Step Indicators */}
@@ -152,7 +155,7 @@ function ExtensionDemo({ step }: { step: number }) {
                                     className={styles.highlight}
                                     initial={{ width: 0 }}
                                     animate={{ width: step >= 1 ? '100%' : 0 }}
-                                    transition={{ delay: UI_DELAY }}
+                                    transition={{ delay: 1.0 }}
                                 />
                                 10 Minimalist Wardrobe Essentials
                             </div>
@@ -193,14 +196,21 @@ function ExtensionDemo({ step }: { step: number }) {
                                 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 transition={{
-                                    delay: UI_DELAY,
+                                    delay: 0.2,
                                     duration: 0.2
                                 }}
                             >
-                                <div className={styles.menuItem}>
+                                <motion.div
+                                    className={styles.menuItem}
+                                    animate={{ scale: step === 2 ? [1, 0.96, 1] : 1 }}
+                                    transition={{
+                                        delay: 0.2 + 1.0, // Matching Hand impact (0.8 + 0.4)
+                                        duration: 0.2
+                                    }}
+                                >
                                     <div className={styles.miniOrbSmall} />
                                     <span>Save to Brainia</span>
-                                </div>
+                                </motion.div>
                                 <div className={styles.menuDivider} />
                                 <div className={styles.menuItemDisabled}>Copy link address</div>
                                 <div className={styles.menuItemDisabled}>Search Google for image</div>
@@ -216,7 +226,7 @@ function ExtensionDemo({ step }: { step: number }) {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                transition={{ delay: UI_DELAY }}
+                                transition={{ delay: 0.2 }}
                             >
                                 <img src="/Icon.png" alt="" className={styles.miniOrbSmallImg} />
                                 <span>Saved to Inbox</span>
@@ -244,7 +254,7 @@ function MobileDemo({ step }: { step: number }) {
                 <div className={styles.mobileScreen}>
                     {/* Simplified Mobile Content */}
                     <AnimatePresence mode="wait">
-                        {step === 0 && (
+                        {step <= 1 && (
                             <motion.div
                                 key="content"
                                 className={styles.mobileContent}
@@ -252,13 +262,30 @@ function MobileDemo({ step }: { step: number }) {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                             >
-                                <div className={styles.mobileCard}>
+                                <motion.div
+                                    className={styles.mobileCard}
+                                    animate={{
+                                        scale: step === 1 ? [1, 0.94, 1] : 1
+                                    }}
+                                    transition={{
+                                        duration: 0.3,
+                                        times: [0, 0.5, 1],
+                                        delay: 0.5 + CLICK_DELAY
+                                    }}
+                                >
                                     <div className={styles.cardImage} />
                                     <div className={styles.cardTitle}>Weekend Style Guide</div>
                                     <div className={styles.cardMeta}>3 min read</div>
                                     <div className={styles.cardSkeletonText} />
                                     <div className={styles.cardSkeletonText} style={{ width: '60%' }} />
-                                </div>
+                                    <div className={styles.cardFooter}>
+                                        <div className={styles.skeletonAction} />
+                                        <div className={styles.shareIconBtn}>
+                                            <Share size={14} />
+                                            <span>Share</span>
+                                        </div>
+                                    </div>
+                                </motion.div>
                             </motion.div>
                         )}
 
@@ -271,7 +298,7 @@ function MobileDemo({ step }: { step: number }) {
                                 exit={{ y: '100%' }}
                                 transition={{
                                     type: 'spring', damping: 30, stiffness: 300,
-                                    delay: UI_DELAY
+                                    delay: 0.1
                                 }}
                             >
                                 <div className={styles.sheetHandle} />
@@ -290,12 +317,12 @@ function MobileDemo({ step }: { step: number }) {
                                     <motion.div
                                         className={styles.appIconWrapper}
                                         animate={{
-                                            scale: step === 1 ? [1, 0.9, 1] : 1
+                                            scale: step === 2 ? [1, 0.9, 1] : 1
                                         }}
                                         transition={{
                                             duration: 0.3,
                                             times: [0, 0.5, 1],
-                                            delay: UI_DELAY + CLICK_DELAY
+                                            delay: 0.8 + CLICK_DELAY
                                         }}
                                     >
                                         <div className={`${styles.appIcon} ${styles.brainiaIcon}`}>
@@ -326,7 +353,7 @@ function MobileDemo({ step }: { step: number }) {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                transition={{ delay: UI_DELAY }}
+                                transition={{ delay: 0.2 }}
                             >
                                 <div className={styles.overlayOrb} />
                                 <div className={styles.overlayContent}>
@@ -363,39 +390,40 @@ function MobileDemo({ step }: { step: number }) {
         </motion.div>
     );
 }
-function HandCursor({ demo, step }: { demo: 'extension' | 'mobile', step: number }) {
+
+function HandCursor({ demo, step }: { demo: 'extension', step: number }) {
     if (step === 0) return null;
 
     const getPos = () => {
-        if (demo === 'extension') {
-            if (step === 1) return { x: 310, y: 155 }; // Click article text
-            if (step === 2) return { x: 342, y: 122 }; // Click "Save to Brainia"
-            if (step === 3) return { x: 680, y: 55 };  // Point at success toast
-            return { x: 400, y: 200 };
-        } else {
-            if (step === 1) return { x: 395, y: 240 }; // Click mobile card
-            if (step === 2) return { x: 428, y: 445 }; // Click Brainia icon in sheet
-            if (step === 3) return { x: 428, y: 300 }; // Hover over success
-            return { x: 400, y: 300 };
-        }
+        if (step === 1) return { x: 310, y: 155 }; // Click article text
+        if (step === 2) return { x: 342, y: 122 }; // Click "Save to Brainia"
+        if (step === 3) return { x: 680, y: 55 };  // Point at success toast
+        return { x: 400, y: 200 };
     };
 
     const pos = getPos();
-    const isBrowserStep3 = demo === 'extension' && step === 3;
+    const getHandTiming = () => {
+        if (step === 1) return { ui: 0.8, wait: 0.2 }; // Reach at 0.8s, click at 1.0s
+        return { ui: 0.8, wait: 0.4 }; // Reach at 0.8s, click at 1.2s (after menu appears at 0.2s)
+    };
 
-    // Logical Animation Timing
-    const DURATION = 2.0;
-    const tMove = UI_DELAY / DURATION; // Time to arrive at destination
-    const tImpact = (UI_DELAY + CLICK_DELAY) / DURATION; // Time of the "press"
-    const tRelease = (UI_DELAY + CLICK_DELAY + 0.2) / DURATION; // Time of the "release"
+    const timing = getHandTiming();
+    const currentUIWait = timing.ui;
+    const clickWait = timing.wait;
+    const DURATION = BROWSER_STEP_INTERVAL / 1000;
+    const isBrowserStep3 = step === 3;
+
+    const tMove = currentUIWait / DURATION;
+    const tImpact = (currentUIWait + clickWait) / DURATION;
+    const tRelease = (currentUIWait + clickWait + 0.2) / DURATION;
 
     return (
         <motion.div
-            key={`${demo}-${step}`}
+            key={`extension-${step}`}
             className={styles.handCursor}
             initial={{ opacity: 0, x: pos.x + 80, y: pos.y + 80, scale: 1.2 }}
             animate={{
-                opacity: (step <= 2 || isBrowserStep3) ? [0, 1, 1, 1, isBrowserStep3 ? 1 : 0] : 0,
+                opacity: (step <= 2 && !isBrowserStep3) ? [0, 1, 1, 1, 0] : 0,
                 x: [pos.x + 80, pos.x, pos.x, pos.x, pos.x],
                 y: [pos.y + 80, pos.y, pos.y, pos.y, pos.y],
                 scale: [1.2, 1.05, 1.05, 0.8, 1.05],
@@ -423,3 +451,35 @@ function HandCursor({ demo, step }: { demo: 'extension' | 'mobile', step: number
         </motion.div>
     );
 }
+
+function TouchRipple({ step }: { step: number }) {
+    if (step === 0 || step === 3) return null;
+
+    const getPos = () => {
+        if (step === 1) return { x: 435, y: 345 }; // Share Button touch inside card
+        return { x: 385, y: 320 }; // Brainia App Icon touch in share menu
+    };
+
+    const pos = getPos();
+    const delay = step === 1 ? 0.7 : 1.0; // 0.5 + 0.2 or 0.8 + 0.2
+
+    return (
+        <motion.div
+            key={`touch-${step}`}
+            className={styles.touchRipple}
+            style={{ left: pos.x, top: pos.y }}
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{
+                scale: [0.5, 1, 1.5],
+                opacity: [0, 1, 0],
+                borderWidth: ['4px', '2px', '0px']
+            }}
+            transition={{
+                duration: 0.4,
+                delay: delay,
+                ease: "easeOut"
+            }}
+        />
+    );
+}
+

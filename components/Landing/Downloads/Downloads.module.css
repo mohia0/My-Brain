@@ -1,69 +1,101 @@
 .section {
-    width: 100%;
-    max-width: 1200px;
-    margin: 8rem auto;
-    padding: 0 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    padding: 6rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-top: 4rem;
+.container {
     width: 100%;
 }
 
-.box {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 2rem;
-    padding: 4rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    transition: all 0.3s;
-    cursor: pointer;
-}
-
-.box:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--accent);
-    transform: translateY(-4px);
-}
-
-.icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 1.5rem;
-    background: var(--accent-glow);
+.banner {
+    background: linear-gradient(90deg, rgba(110, 86, 207, 0.05) 0%, rgba(20, 20, 25, 0.4) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 3rem;
+    padding: 3rem 4rem;
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    gap: 4rem;
+}
+
+.textContent {
+    flex: 1;
 }
 
 .title {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
 }
 
 .desc {
+    font-size: 1.1rem;
     color: var(--text-dim);
-    font-size: 0.95rem;
-    max-width: 300px;
+    max-width: 450px;
 }
 
-@media (max-width: 768px) {
-    .grid {
-        grid-template-columns: 1fr;
+.platforms {
+    display: flex;
+    gap: 1rem;
+}
+
+.platformCard {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1.25rem;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 200px;
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(110, 86, 207, 0.1);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+}
+
+.platformInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+}
+
+.status {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 1200px) {
+    .banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 3rem 2rem;
+        gap: 3rem;
     }
 
-    .box {
-        padding: 3rem;
+    .desc {
+        margin: 0 auto;
+    }
+
+    .platforms {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 }

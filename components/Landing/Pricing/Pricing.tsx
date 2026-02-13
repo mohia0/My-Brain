@@ -5,79 +5,120 @@ import { Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function Pricing() {
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
     const plans = [
         {
-            name: "Starter",
+            name: "Free",
             price: "$0",
-            features: ["500 Items", "Infinite Canvas", "Chrome Extension", "Basic Sync"],
-            popular: false
+            period: "forever",
+            desc: "Perfect for personal quick capture.",
+            features: ["1,000 Items", "Infinite Canvas", "Browser Extension", "Standard Sync"],
+            btnText: "Get Started",
+            highlight: false
         },
         {
-            name: "Brainia+",
-            price: "$8",
-            features: ["Unlimited Items", "Nested Projects", "Advanced AI Capture", "Real-time Mobile Sync"],
-            popular: true
+            name: "Pro",
+            price: billingCycle === 'monthly' ? "$12" : "$10",
+            period: "per month",
+            desc: "For power users building deep knowledge.",
+            features: ["Unlimited Items", "Nested Projects", "Advanced AI Extraction", "Priority Cloud Sync", "Custom Theme Engine"],
+            btnText: "Start Free Trial",
+            highlight: true,
+            badge: billingCycle === 'yearly' ? "2 Months Free" : null
         },
         {
-            name: "Team",
-            price: "$20",
-            features: ["Shared Canvases", "Role Permissions", "Admin Console", "Priority Support"],
-            popular: false
+            name: "Lifetime",
+            price: "$149",
+            period: "one-time",
+            desc: "Secure your legacy forever.",
+            features: ["Everything in Pro", "Lifetime Updates", "Early Beta Access", "Exclusive Founder Badge"],
+            btnText: "Buy Once",
+            highlight: false
         }
     ];
 
     return (
         <section id="pricing" className={styles.section}>
-            <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-4xl md:text-5xl font-bold mb-4"
-            >
-                Simple, transparent pricing
-            </motion.h2>
-            <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                className="text-dim max-w-lg mx-auto mb-16"
-            >
-                Choose the plan that fits your mental workspace.
-            </motion.p>
+            <div className={styles.container}>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className={styles.intro}
+                >
+                    <div className={styles.badge}>Pricing</div>
+                    <h2 className={styles.title}>Invest in your Mind</h2>
+                    <p className={styles.paragraph}>
+                        Start for free and upgrade as your thoughts grow.
+                    </p>
 
-            <div className={styles.grid}>
-                {plans.map((plan, i) => (
-                    <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.1 }}
-                        className={clsx(styles.card, plan.popular && styles.popular)}
-                    >
-                        <div className={styles.planTitle}>{plan.name}</div>
-                        <div className={styles.price}>{plan.price}<span>/mo</span></div>
-
-                        <div className={styles.features}>
-                            {plan.features.map((f, fi) => (
-                                <div key={fi} className={styles.feature}>
-                                    <Check size={16} className="text-accent" />
-                                    <span>{f}</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        <Link
-                            href="https://app.brainia.space"
-                            className={clsx(styles.btn, plan.popular ? styles.btnPrimary : styles.btnSecondary)}
+                    <div className={styles.toggleContainer}>
+                        <span className={clsx(styles.toggleLabel, billingCycle === 'monthly' && styles.activeLabel)}>Monthly</span>
+                        <div
+                            className={styles.toggle}
+                            onClick={() => setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly')}
                         >
-                            Get Started
-                        </Link>
-                    </motion.div>
-                ))}
+                            <motion.div
+                                className={styles.toggleHandle}
+                                animate={{ x: billingCycle === 'monthly' ? 4 : 28 }}
+                            />
+                        </div>
+                        <div className="flex flex-col items-start translate-y-[-2px]">
+                            <span className={clsx(styles.toggleLabel, billingCycle === 'yearly' && styles.activeLabel)}>Yearly</span>
+                            <motion.span
+                                animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1, 0.95] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className={styles.saveBadge}
+                            >
+                                2 MONTHS FREE ✨
+                            </motion.span>
+                        </div>
+                    </div>
+                </motion.div>
+
+                <div className={styles.grid}>
+                    {plans.map((plan, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: i * 0.1 }}
+                            className={clsx(styles.card, plan.highlight && styles.highlight)}
+                        >
+                            {plan.badge && <div className={styles.cardBadge}>{plan.badge}</div>}
+                            <div className={styles.cardHeader}>
+                                <h3 className={styles.planName}>{plan.name}</h3>
+                                <div className={styles.priceContainer}>
+                                    <span className={styles.priceSymbol}>$</span>
+                                    <span className={styles.priceValue}>{plan.price.replace('$', '')}</span>
+                                    <span className={styles.pricePeriod}>/{plan.period}</span>
+                                </div>
+                                <p className={styles.planDesc}>{plan.desc}</p>
+                            </div>
+
+                            <div className={styles.featuresList}>
+                                {plan.features.map((feature, fi) => (
+                                    <div key={fi} className={styles.featureItem}>
+                                        <Check size={18} className="text-accent" strokeWidth={3} />
+                                        <span>{feature}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <Link
+                                href="https://app.brainia.space"
+                                className={clsx(styles.cta, plan.highlight ? styles.ctaPrimary : styles.ctaSecondary)}
+                            >
+                                {plan.btnText}
+                            </Link>
+                        </motion.div>
+                    ))}
+                </div>
             </div>
         </section>
     );

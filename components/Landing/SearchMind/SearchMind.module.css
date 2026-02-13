@@ -2,104 +2,169 @@
     width: 100%;
     background: #000;
     padding: 10rem 2rem;
-    display: flex;
-    flex-direction: column;
+    overflow: hidden;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 6rem;
     align-items: center;
-    text-align: center;
+}
+
+.textContent {
+    text-align: left;
+}
+
+.badge {
+    padding: 0.4rem 1rem;
+    background: rgba(110, 86, 207, 0.1);
+    border: 1px solid rgba(110, 86, 207, 0.2);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    width: fit-content;
+}
+
+.title {
+    font-size: clamp(3rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 2rem;
+    letter-spacing: -0.03em;
+}
+
+.paragraph {
+    font-size: 1.25rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 500px;
 }
 
 .wrapper {
     width: 100%;
-    max-width: 700px;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    position: relative;
+    perspective: 1000px;
+    transform: rotateY(-5deg) rotateX(5deg);
 }
 
 .searchBar {
-    height: 72px;
-    background: var(--card-bg);
-    border: 2px solid var(--accent);
+    height: 80px;
+    background: #111;
+    border: 1px solid rgba(110, 86, 207, 0.5);
     border-radius: 1.5rem;
-    box-shadow: 0 0 40px -10px var(--accent-glow);
     display: flex;
     align-items: center;
-    padding: 0 1.5rem;
-    gap: 1rem;
+    padding: 0 2rem;
+    gap: 1.5rem;
     font-size: 1.5rem;
-    color: var(--foreground);
-    position: relative;
-    overflow: hidden;
+    color: white;
+    backdrop-filter: blur(20px);
 }
 
 .cursor {
     width: 2px;
-    height: 32px;
+    height: 28px;
     background: var(--accent);
-    animation: blink 1s infinite;
-}
-
-@keyframes blink {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0;
-    }
+    margin-left: 2px;
 }
 
 .results {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 1.5rem;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    text-align: left;
     backdrop-filter: blur(20px);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+    height: 300px;
+    /* Fixed height to prevent section jump */
+}
+
+.resultsInner {
+    position: relative;
+    width: 100%;
 }
 
 .resultItem {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--card-border);
+    position: absolute;
+    width: 100%;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
-    gap: 1rem;
-    transition: background 0.2s;
+    gap: 1.5rem;
+    box-sizing: border-box;
 }
 
-.resultItem:last-child {
-    border-bottom: none;
+/* Position based on index to keep layout structure */
+.resultItem:nth-child(2) {
+    transform: translateY(80px);
+}
+
+.resultItem:nth-child(3) {
+    transform: translateY(160px);
 }
 
 .active {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(110, 86, 207, 0.1);
 }
 
-.icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
+.resultIcon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--accent);
 }
 
 .details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0.25rem;
+}
+
+.resultTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
 }
 
 .highlight {
-    color: #fbbf24;
+    color: var(--accent);
 }
 
 .meta {
-    font-size: 0.8rem;
-    color: var(--text-dim);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 1100px) {
+    .container {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 4rem;
+    }
+
+    .textContent {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .wrapper {
+        transform: none;
+    }
 }

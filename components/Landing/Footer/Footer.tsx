@@ -15,8 +15,7 @@ export default function Footer() {
             >
                 <div className={styles.brandColumn}>
                     <div className={styles.brand}>
-                        <div className={styles.brandIcon} />
-                        <span>Brainia</span>
+                        <h1 className={styles.logoText}>Brainia</h1>
                     </div>
                     <p>
                         Your second brain, spatially organized. Built for thinkers, creators, and builders.

@@ -1,7 +1,7 @@
 "use client";
 
 import styles from './WorkflowShowcase.module.css';
-import { MousePointer2, Inbox, LayoutGrid } from 'lucide-react';
+import { MousePointer2, Inbox, LayoutGrid, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
@@ -10,8 +10,8 @@ export default function WorkflowShowcase() {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setStep(prev => (prev === 0 ? 1 : 0));
-        }, 3000);
+            setStep(prev => (prev + 1) % 3);
+        }, 3500);
         return () => clearInterval(interval);
     }, []);
 
@@ -25,12 +25,12 @@ export default function WorkflowShowcase() {
         <section id="workflow" className={styles.section}>
             <div className={styles.content}>
                 <motion.div
-                    initial={{ opacity: 0, x: -30 }}
+                    initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    className="flex items-center gap-2 text-accent font-semibold mb-2"
+                    className={styles.workflowBadge}
                 >
-                    <LayoutGrid size={20} />
+                    <LayoutGrid size={16} />
                     <span>Spatial Workflow</span>
                 </motion.div>
                 <motion.h2
@@ -43,25 +43,27 @@ export default function WorkflowShowcase() {
                     Capture to Canvas.<br />
                     <span className={styles.accentText}>Simple as that.</span>
                 </motion.h2>
-                <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.3 }}
-                    className={styles.desc}
-                >
-                    Brainia turns your cluttered links and notes into a visual mind map.
-                    Just save, drag, and organize your thoughts in space.
-                </motion.p>
-
                 <div className={styles.steps}>
-                    <div className={clsx(styles.stepItem, step === 0 && styles.active)}>
+                    <div
+                        className={clsx(styles.stepItem, step === 0 && styles.active)}
+                        onClick={() => setStep(0)}
+                    >
                         <strong>1. Capture</strong>
                         <p>Save anything instantly into your Inbox.</p>
                     </div>
-                    <div className={clsx(styles.stepItem, step === 1 && styles.active)}>
+                    <div
+                        className={clsx(styles.stepItem, step === 1 && styles.active)}
+                        onClick={() => setStep(1)}
+                    >
                         <strong>2. Organize</strong>
                         <p>Drag items onto the canvas to create your map.</p>
+                    </div>
+                    <div
+                        className={clsx(styles.stepItem, step === 2 && styles.active)}
+                        onClick={() => setStep(2)}
+                    >
+                        <strong>3. Search</strong>
+                        <p>Find anything across your workspace instantly.</p>
                     </div>
                 </div>
             </div>
@@ -105,7 +107,7 @@ export default function WorkflowShowcase() {
                     <div className={styles.canvasGrid} />
 
                     <AnimatePresence>
-                        {step === 1 && (
+                        {(step === 1 || step === 2) && (
                             <motion.div
                                 initial={{ x: -150, y: -50, scale: 0.8, opacity: 0 }}
                                 animate={{ x: 60, y: 60, scale: 1, opacity: 1 }}
@@ -126,40 +128,79 @@ export default function WorkflowShowcase() {
                                     <div className={styles.actionCircle} />
                                     <div className={styles.actionCircle} />
                                 </div>
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className={styles.cursor}
-                                >
-                                    <MousePointer2 size={16} fill="var(--accent)" />
-                                </motion.div>
+                                {/* Cursor was moved outside to be globally on top */}
                             </motion.div>
                         )}
                     </AnimatePresence>
 
+                    {/* Global Canvas Cursor */}
+                    {(step === 1 || step === 2) && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 50, y: 50 }}
+                            animate={{
+                                opacity: 1,
+                                x: step === 1 ? 250 : 400,
+                                y: step === 1 ? 180 : 100
+                            }}
+                            className={styles.cursor}
+                        >
+                            <MousePointer2 size={18} fill="var(--accent)" />
+                        </motion.div>
+                    )}
+
                     {/* Background nodes already on canvas */}
-                    <div className={styles.staticCard} style={{ top: '25%', right: '15%' }}>
+                    <motion.div
+                        className={styles.staticCard}
+                        style={{ top: '22%', right: '12%' }}
+                        animate={{ opacity: step === 2 ? 0.8 : 0.4 }}
+                    >
                         <div className={styles.cardHeader}>
-                            <FileText size={12} />
-                            <span className={styles.cardTitle}>Notes</span>
+                            <FileText size={12} style={{ color: '#3296fa' }} />
+                            <span className={styles.cardTitle}>Abstract Logic</span>
                         </div>
-                    </div>
+                        <div className={styles.cardBody}>
+                            <div className={styles.skeletonLine} />
+                            <div className={styles.skeletonLine} style={{ width: '80%' }} />
+                        </div>
+                    </motion.div>
 
-                    <div className={styles.staticCard} style={{ bottom: '25%', right: '35%' }}>
+                    <motion.div
+                        className={styles.staticCard}
+                        style={{ bottom: '25%', right: '35%' }}
+                        animate={{ opacity: step === 2 ? 0.8 : 0.4 }}
+                    >
                         <div className={styles.cardHeader}>
-                            <ImageIcon size={12} />
-                            <span className={styles.cardTitle}>Reference</span>
+                            <ImageIcon size={12} style={{ color: '#fa6464' }} />
+                            <span className={styles.cardTitle}>Reference 01</span>
                         </div>
-                    </div>
+                        <div className={styles.cardBody}>
+                            <div className={styles.skeletonImage} style={{ height: '40px' }} />
+                        </div>
+                    </motion.div>
 
-                    <svg className={styles.connection}>
-                        <line x1="100%" y1="0%" x2="0%" y2="100%" />
-                    </svg>
+                    {/* Step 3: Search Interaction */}
+                    {step === 2 && (
+                        <motion.div
+                            className={styles.mockSearchOverlay}
+                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                        >
+                            <div className={styles.mockSearchBar}>
+                                <Search size={10} className="text-accent" />
+                                <span>quant</span>
+                                <div className={styles.mockSearchCursor} />
+                            </div>
+                            <div className={styles.mockSearchResults}>
+                                <div className={styles.mockResult}>Quantum Physics...</div>
+                                <div className={styles.mockResult}>Quantum Computing...</div>
+                            </div>
+                        </motion.div>
+                    )}
 
                     {/* App Toolbar Skeleton */}
                     <div className={styles.mockToolbar}>
                         <div className={styles.toolbarSection}>
-                            <div className={styles.mockTool}><MousePointer2 size={12} /></div>
+                            <div className={clsx(styles.mockTool, step !== 0 && styles.toolActive)}><MousePointer2 size={12} /></div>
                             <div className={styles.mockTool}><Hand size={12} /></div>
                         </div>
                         <div className={styles.mockDivider} />
@@ -171,7 +212,10 @@ export default function WorkflowShowcase() {
                     {/* Zoom Wheel Skeleton */}
                     <div className={styles.mockWheel}>
                         <div className={styles.wheelInner}>
-                            <div className={styles.wheelHinge} />
+                            <motion.div
+                                className={styles.wheelHinge}
+                                animate={{ rotate: step === 1 ? 45 : 0 }}
+                            />
                         </div>
                     </div>
                 </div>

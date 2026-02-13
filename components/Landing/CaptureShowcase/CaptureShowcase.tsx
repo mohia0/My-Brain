@@ -128,7 +128,7 @@ function ExtensionDemo({ step }: { step: number }) {
                     </div>
                     <div className={styles.browserUrl}>https://magazine.design/minimalist-essentials</div>
                     <div className={styles.browserExtensionRight}>
-                        <img src="/Icon.png" alt="Brainia" className={styles.browserIconImg} />
+                        <img src="/icon.png" alt="Brainia" className={styles.browserIconImg} />
                     </div>
                     <div className={styles.browserActions}>
                         <div className={styles.browserDot} />
@@ -226,7 +226,7 @@ function ExtensionDemo({ step }: { step: number }) {
                                 exit={{ opacity: 0, x: 20 }}
                                 transition={{ delay: 0.2 }}
                             >
-                                <img src="/Icon.png" alt="" className={styles.miniOrbSmallImg} />
+                                <img src="/icon.png" alt="" className={styles.miniOrbSmallImg} />
                                 <span>Saved to Inbox</span>
                                 <Check size={14} className="text-accent" style={{ marginLeft: 'auto' }} />
                             </motion.div>
@@ -324,7 +324,7 @@ function MobileDemo({ step }: { step: number }) {
                                         }}
                                     >
                                         <div className={`${styles.appIcon} ${styles.brainiaIcon}`}>
-                                            <img src="/Icon.png" alt="Brainia" className={styles.miniOrbMobileImg} />
+                                            <img src="/icon.png" alt="Brainia" className={styles.miniOrbMobileImg} />
                                         </div>
                                         <span>Brainia</span>
                                     </motion.div>

@@ -78,9 +78,11 @@
 html,
 body {
 
-  max-width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100vh;
+  /* overflow: hidden; Removed to allow scrolling on marketing pages */
+  margin: 0;
+  padding: 0;
   /* Critical for Zoomable Canvas */
   background-color: var(--background);
   color: var(--foreground);

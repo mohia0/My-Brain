@@ -228,7 +228,7 @@ export default function Home() {
                 <MobilePageContent session={session} />
               ) : (
                 <main className={clsx(
-                  'desktop-version',
+                  'desktop-version w-screen h-screen overflow-hidden',
                   isFading ? 'fade-in' : 'opacity-100'
                 )}>
                   <Header />

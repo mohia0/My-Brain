@@ -1,29 +1,83 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import styles from './Navbar.module.css';
+import Orb from '@/components/Orb/Orb';
+import clsx from 'clsx';
 
 export default function Navbar() {
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     return (
-        <nav className={styles.nav}>
-            {/* Brand */}
-            <Link href="/" className={styles.brand}>
-                <div className={styles.brandIcon} />
-                <span>Brainia</span>
-            </Link>
-
-            {/* Navigation (Hidden on Mobile) */}
-            <div className={styles.links}>
-                <Link href="#features" className={styles.link}>Features</Link>
-                <Link href="#use-cases" className={styles.link}>Use Cases</Link>
-                <Link href="#" className={styles.link}>Pricing</Link>
-            </div>
-
-            {/* Actions */}
-            <Link
-                href="https://app.brainia.space"
-                className={styles.cta}
+        <div className={clsx(styles.navWrapper, scrolled && styles.scrolledWrapper)}>
+            <div className={clsx(styles.topFade, scrolled && styles.visible)} />
+            <motion.nav
+                className={styles.nav}
+                initial={{ y: -100 }}
+                animate={{
+                    y: 0,
+                    width: scrolled ? "fit-content" : "100%",
+                    marginTop: scrolled ? "1rem" : "0px",
+                }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
-                Launch App
-            </Link>
-        </nav>
+                <div className={styles.container}>
+                    {/* Brand */}
+                    <Link href="/home" className={styles.brand}>
+                        <div className={styles.logoDotWrapper}>
+                            <img src="/icon.png" alt="Brainia Logo" className={styles.logoIcon} />
+                        </div>
+                        <motion.div
+                            className={styles.logoText}
+                            animate={{
+                                fontSize: scrolled ? "1rem" : "1.25rem",
+                            }}
+                        >
+                            Brainia
+                        </motion.div>
+                    </Link>
+
+                    {/* Navigation */}
+                    <div className={styles.links}>
+                        {['Features', 'Workflow', 'Search', 'Pricing'].map((item) => (
+                            <Link
+                                key={item}
+                                href={`#${item.toLowerCase()}`}
+                                className={styles.link}
+                            >
+                                {item}
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* Actions */}
+                    <div className={styles.actions}>
+                        <Link
+                            href="https://app.brainia.space"
+                            className={styles.cta}
+                        >
+                            <motion.span
+                                animate={{
+                                    padding: scrolled ? "0.4rem 1.25rem" : "0.5rem 1.75rem",
+                                    fontSize: scrolled ? "0.75rem" : "0.875rem"
+                                }}
+                            >
+                                Launch
+                            </motion.span>
+                        </Link>
+                    </div>
+                </div>
+            </motion.nav>
+        </div>
     );
 }

@@ -11,6 +11,7 @@ interface OrbProps {
   rotateOnHover?: boolean;
   forceHoverState?: boolean;
   backgroundColor?: string;
+  externalRotate?: number;
 }
 
 export default function Orb({
@@ -18,10 +19,17 @@ export default function Orb({
   hoverIntensity = 0.2,
   rotateOnHover = true,
   forceHoverState = false,
-  backgroundColor = '#000000'
+  backgroundColor = '#000000',
+  externalRotate = 0
 }: OrbProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
+
+  // Use Ref to handle fast-changing externalRotate without re-running useEffect
+  const extRotRef = useRef(externalRotate);
+  useEffect(() => {
+    extRotRef.current = externalRotate;
+  }, [externalRotate]);
 
   const vert = /* glsl */ `
     precision highp float;
@@ -297,7 +305,10 @@ export default function Orb({
       if (rotateOnHover && effectiveHover > 0.5) {
         currentRot += dt * rotationSpeed;
       }
-      program.uniforms.rot.value = currentRot;
+
+      // Add Scroll-based rotation natively (can be combined with externalRotate prop)
+      const scrollRotation = typeof window !== 'undefined' ? window.scrollY * 0.002 : 0;
+      program.uniforms.rot.value = currentRot + scrollRotation + extRotRef.current;
 
       renderer.render({ scene: mesh });
     };
@@ -309,7 +320,7 @@ export default function Orb({
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
-      container.removeChild(gl.canvas);
+      if (container.contains(gl.canvas)) container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

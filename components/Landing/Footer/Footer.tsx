@@ -1,11 +1,18 @@
+"use client";
+
 import Link from 'next/link';
 import styles from './Footer.module.css';
+import { motion } from 'framer-motion';
 
 export default function Footer() {
     return (
         <footer className={styles.footer}>
-            <div className={styles.container}>
-
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className={styles.container}
+            >
                 <div className={styles.brandColumn}>
                     <div className={styles.brand}>
                         <div className={styles.brandIcon} />
@@ -21,9 +28,9 @@ export default function Footer() {
 
                 <div className={styles.linksColumn}>
                     <span className={styles.columnTitle}>Product</span>
-                    <Link href="#" className={styles.link}>Features</Link>
-                    <Link href="#" className={styles.link}>Pricing</Link>
-                    <Link href="#" className={styles.link}>Download Extension</Link>
+                    <Link href="#features" className={styles.link}>Features</Link>
+                    <Link href="#pricing" className={styles.link}>Pricing</Link>
+                    <Link href="#download" className={styles.link}>Download Extension</Link>
                 </div>
 
                 <div className={styles.linksColumn}>
@@ -39,7 +46,7 @@ export default function Footer() {
                     <Link href="#" className={styles.link}>Terms of Service</Link>
                 </div>
 
-            </div>
+            </motion.div>
         </footer>
     );
 }

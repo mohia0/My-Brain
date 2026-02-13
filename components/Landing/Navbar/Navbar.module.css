@@ -1,36 +1,96 @@
-.nav {
+.navWrapper {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    padding: 1rem 1.5rem;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.topFade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(to bottom, black 0%, transparent 100%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.topFade.visible {
+    opacity: 0.9;
+}
+
+.nav {
+    display: flex;
+    justify-content: center;
+    background: transparent;
+    transition: background 0.4s ease, backdrop-filter 0.4s ease, border 0.4s ease, box-shadow 0.4s ease;
+    pointer-events: auto;
+}
+
+.scrolled .nav {
+    background: rgba(10, 10, 12, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 1.5rem 2.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    z-index: 50;
-    background: rgba(10, 10, 12, 0.8);
-    /* fallback if no backdrop-filter */
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 3rem;
+}
+
+.scrolled .container {
+    padding: 0.5rem 1rem 0.5rem 2rem;
+    max-width: 700px;
+    /* Shrink width on scroll */
+    gap: 2rem;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     color: var(--foreground);
     text-decoration: none;
-    font-weight: 700;
-    font-size: 1.25rem;
+    font-weight: 800;
+    flex-shrink: 0;
 }
 
-.brandIcon {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    background: var(--accent);
+.logoDotWrapper {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
     position: relative;
-    box-shadow: 0 0 15px var(--accent-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logoIcon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.logoText {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: linear-gradient(180deg, #fff 0%, #aaa 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .links {
@@ -39,35 +99,50 @@
 }
 
 .link {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: color 0.2s;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: color 0.2s, transform 0.2s;
 }
 
 .link:hover {
     color: var(--accent);
 }
 
+.actions {
+    flex-shrink: 0;
+}
+
 .cta {
-    padding: 0.5rem 1.25rem;
-    background: var(--accent);
+    display: block;
     color: white;
-    /* Always white on accent */
+    background: var(--accent);
     border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight: 700;
     box-shadow: 0 0 20px -5px var(--accent-glow);
+    text-decoration: none;
+    overflow: hidden;
+}
+
+.cta span {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .cta:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px -5px var(--accent-glow);
+    box-shadow: 0 0 40px -5px var(--accent-glow);
+    transform: translateY(-1px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .links {
         display: none;
+    }
+
+    .scrolled .container {
+        max-width: 90vw;
     }
 }

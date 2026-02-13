@@ -1,0 +1,216 @@
+.section {
+    width: 100%;
+    max-width: 1300px;
+    margin: 12rem auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: 450px 1fr;
+    gap: 6rem;
+    align-items: center;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+}
+
+.title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 2rem;
+    letter-spacing: -0.02em;
+}
+
+.accentText {
+    background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.desc {
+    font-size: 1.25rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 3rem;
+}
+
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.stepItem {
+    padding-left: 2rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.5s ease;
+    opacity: 0.4;
+}
+
+.stepItem.active {
+    opacity: 1;
+    border-left-color: var(--accent);
+    transform: translateX(10px);
+}
+
+.stepItem strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    color: white;
+}
+
+.stepItem p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+/* Visual Container */
+.visualContainer {
+    position: relative;
+    height: 600px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 3rem;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    overflow: hidden;
+    box-shadow: 0 60px 120px rgba(0, 0, 0, 0.4);
+}
+
+/* Inbox Sidebar */
+.inboxWrapper {
+    background: rgba(255, 255, 255, 0.02);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.inboxHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+
+.inboxList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.inboxItem {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.line {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+/* Canvas Area */
+.canvasWrapper {
+    position: relative;
+    background: radial-gradient(circle at 50% 50%, rgba(110, 86, 207, 0.05), transparent 70%);
+}
+
+.canvasGrid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+}
+
+.canvasNode {
+    position: absolute;
+    width: 200px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.nodeHeader {
+    height: 10px;
+    width: 40px;
+    background: var(--accent);
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.nodeLine {
+    height: 6px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+}
+
+.cursor {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+}
+
+.staticNode {
+    position: absolute;
+    width: 120px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    opacity: 0.5;
+}
+
+@media (max-width: 1100px) {
+    .section {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 4rem;
+    }
+
+    .content {
+        align-items: center;
+    }
+
+    .steps {
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    .stepItem {
+        padding: 1rem;
+        border-left: none;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stepItem.active {
+        border-bottom-color: var(--accent);
+        transform: translateY(-5px);
+    }
+}

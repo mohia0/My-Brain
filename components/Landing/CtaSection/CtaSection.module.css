@@ -1,31 +1,32 @@
 .ctaSection {
-    margin: 8rem auto;
-    max-width: 1000px;
-    padding: 0 1rem;
+    margin: 12rem auto;
+    max-width: 1100px;
+    padding: 0 2rem;
     text-align: center;
 }
 
 .box {
-    background: linear-gradient(180deg, rgba(20, 20, 20, 0.5) 0%, #000 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 2rem;
-    padding: 6rem 2rem;
+    background: rgba(20, 20, 25, 0.4);
+    backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3rem;
+    padding: 8rem 2rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
 }
 
-.glow {
+.orbWrapper {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 60%;
-    height: 60%;
-    background: var(--accent);
-    filter: blur(150px);
-    opacity: 0.15;
     transform: translate(-50%, -50%);
+    width: 1400px;
+    /* SAME HUGE SIZE AS HERO */
+    height: 1400px;
     z-index: 0;
+    pointer-events: none;
+    mask-image: radial-gradient(circle at 50% 50%, black, transparent 70%);
 }
 
 .content {
@@ -34,50 +35,54 @@
 }
 
 .title {
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 800;
+    margin-bottom: 1.5rem;
     color: white;
+    letter-spacing: -0.02em;
 }
 
 .subtitle {
-    color: var(--text-muted);
+    color: var(--text-dim);
     font-size: 1.25rem;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+    line-height: 1.6;
 }
 
 .button {
     display: inline-block;
-    padding: 1rem 2.5rem;
+    padding: 1.25rem 3rem;
     background: var(--accent);
     color: white;
     font-weight: 700;
     border-radius: 9999px;
     font-size: 1.125rem;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 0 30px -5px var(--accent-glow);
+    text-decoration: none;
 }
 
 .button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 50px -5px var(--accent-glow);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 0 60px -5px var(--accent-glow);
 }
 
 .note {
-    margin-top: 1.5rem;
-    font-size: 0.875rem;
-    color: var(--text-dim);
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
 }
 
 @media (max-width: 768px) {
-    .title {
-        font-size: 2rem;
+    .ctaSection {
+        margin: 6rem auto;
     }
 
     .box {
-        padding: 4rem 1.5rem;
+        padding: 5rem 1.5rem;
     }
 }

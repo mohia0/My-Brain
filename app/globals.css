@@ -195,6 +195,25 @@ a {
   transform: translateX(10px) translateY(50%);
 }
 
+[data-tooltip-pos="top-right"]::after {
+  left: 0;
+  transform: translateY(-2px);
+}
+
+[data-tooltip-pos="top-right"]:hover::after {
+  transform: translateY(-10px);
+}
+
+[data-tooltip-pos="top-left"]::after {
+  left: auto;
+  right: 0;
+  transform: translateY(-2px);
+}
+
+[data-tooltip-pos="top-left"]:hover::after {
+  transform: translateY(-10px);
+}
+
 .fade-in {
   animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

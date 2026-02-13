@@ -4,7 +4,8 @@ import React from 'react';
 import styles from './MiniMap.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { LayoutGrid, ZoomIn, ZoomOut, HelpCircle, X } from 'lucide-react';
+import { Map as MapIcon, Minimize2, HelpCircle, X } from 'lucide-react';
+import clsx from 'clsx';
 
 export default function MiniMap() {
     const { items, layoutAllItems } = useItemsStore(); // Added layoutAllItems
@@ -34,6 +35,7 @@ export default function MiniMap() {
 
     // Viewport rect calculation
     const [mount, setMount] = React.useState(false);
+    const [isCollapsed, setIsCollapsed] = React.useState(false);
 
     React.useEffect(() => {
         setMount(true);
@@ -59,7 +61,7 @@ export default function MiniMap() {
     };
 
     return (
-        <div className={styles.wrapper}>
+        <div className={clsx(styles.wrapper, isCollapsed && styles.isCollapsed)}>
             {showHelp && (
                 <div className={styles.helpModal} ref={helpRef}>
                     <div className={styles.helpHeader}>
@@ -119,71 +121,80 @@ export default function MiniMap() {
                 </div>
             )}
 
-            <button
-                className={styles.helpBtn}
-                onClick={() => setShowHelp(!showHelp)}
-                data-tooltip="Shortcuts Help"
-                data-tooltip-pos="right"
-            >
-                <HelpCircle size={14} />
-            </button>
-
-            <div className={styles.mapContainer}>
-                <div
-                    className={styles.container}
-                    style={{ width: MAP_WIDTH, height: MAP_HEIGHT, cursor: 'crosshair' }}
-                    onMouseDown={(e) => {
-                        isDragging.current = true;
-                        handleMapMove(e.clientX, e.clientY, e.currentTarget);
-                    }}
-                    onMouseMove={(e) => {
-                        if (isDragging.current) {
-                            handleMapMove(e.clientX, e.clientY, e.currentTarget);
-                        }
-                    }}
-                    onMouseUp={() => isDragging.current = false}
-                    onMouseLeave={() => isDragging.current = false}
+            <div className={styles.controls}>
+                <button
+                    className={styles.toggleBtn}
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    data-tooltip={isCollapsed ? "Open MiniMap" : "Close MiniMap"}
+                    data-tooltip-pos="top-right"
                 >
-                    <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
+                    {isCollapsed ? <MapIcon size={14} strokeWidth={2.5} /> : <Minimize2 size={14} strokeWidth={2.5} />}
+                </button>
 
-                    {items.filter(i => !i.folder_id && i.status !== 'inbox').map(item => (
-                        <div
-                            key={item.id}
-                            className={styles.dot}
-                            style={{
-                                left: (item.position_x + (WORLD_WIDTH / 2)) * RATIO,
-                                top: (item.position_y + (WORLD_HEIGHT / 2)) * RATIO,
-                                backgroundColor: 'var(--accent)'
-                            }}
-                        />
-                    ))}
+                <button
+                    className={styles.helpBtn}
+                    onClick={() => setShowHelp(!showHelp)}
+                    data-tooltip="Shortcuts Help"
+                    data-tooltip-pos="top"
+                >
+                    <HelpCircle size={14} />
+                </button>
+            </div>
 
-                    {/* Folders as small white dots */}
-                    {useItemsStore.getState().folders.filter(f => !f.parent_id).map(folder => (
-                        <div
-                            key={folder.id}
-                            className={styles.dot}
-                            style={{
-                                left: (folder.position_x + (WORLD_WIDTH / 2)) * RATIO,
-                                top: (folder.position_y + (WORLD_HEIGHT / 2)) * RATIO,
-                                backgroundColor: 'white',
-                                opacity: 0.6,
-                                width: 3,
-                                height: 3
-                            }}
-                        />
-                    ))}
+            <div
+                className={styles.container}
+                style={{ width: MAP_WIDTH, height: MAP_HEIGHT, cursor: 'crosshair' }}
+                onMouseDown={(e) => {
+                    isDragging.current = true;
+                    handleMapMove(e.clientX, e.clientY, e.currentTarget);
+                }}
+                onMouseMove={(e) => {
+                    if (isDragging.current) {
+                        handleMapMove(e.clientX, e.clientY, e.currentTarget);
+                    }
+                }}
+                onMouseUp={() => isDragging.current = false}
+                onMouseLeave={() => isDragging.current = false}
+            >
+                <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
 
+                {items.filter(i => !i.folder_id && i.status !== 'inbox').map(item => (
                     <div
-                        className={styles.viewport}
+                        key={item.id}
+                        className={styles.dot}
                         style={{
-                            left: ((-position.x / scale) + (WORLD_WIDTH / 2)) * RATIO,
-                            top: ((-position.y / scale) + (WORLD_HEIGHT / 2)) * RATIO,
-                            width: viewportW * RATIO,
-                            height: viewportH * RATIO
+                            left: (item.position_x + (WORLD_WIDTH / 2)) * RATIO,
+                            top: (item.position_y + (WORLD_HEIGHT / 2)) * RATIO,
+                            backgroundColor: 'var(--accent)'
                         }}
                     />
-                </div>
+                ))}
+
+                {/* Folders as small white dots */}
+                {useItemsStore.getState().folders.filter(f => !f.parent_id).map(folder => (
+                    <div
+                        key={folder.id}
+                        className={styles.dot}
+                        style={{
+                            left: (folder.position_x + (WORLD_WIDTH / 2)) * RATIO,
+                            top: (folder.position_y + (WORLD_HEIGHT / 2)) * RATIO,
+                            backgroundColor: 'white',
+                            opacity: 0.6,
+                            width: 3,
+                            height: 3
+                        }}
+                    />
+                ))}
+
+                <div
+                    className={styles.viewport}
+                    style={{
+                        left: ((-position.x / scale) + (WORLD_WIDTH / 2)) * RATIO,
+                        top: ((-position.y / scale) + (WORLD_HEIGHT / 2)) * RATIO,
+                        width: viewportW * RATIO,
+                        height: viewportH * RATIO
+                    }}
+                />
             </div>
         </div>
     );

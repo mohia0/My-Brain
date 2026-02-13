@@ -143,93 +143,91 @@ export default function Header() {
                         setShowResults(true);
                     }}
                     onFocus={() => setShowResults(true)}
-                    onBlur={() => setTimeout(() => setShowResults(false), 200)}
+                    onBlur={() => setTimeout(() => setShowResults(false), 400)}
                 />
-                {showResults && query && (
-                    <div className={styles.searchResults}>
-                        {allResults.length === 0 ? (
-                            <div className={styles.noResults}>No matches found. Try searching for tags or text.</div>
-                        ) : (
-                            allResults.map((result: any) => {
-                                const projectAreas = items.filter(i => i.type === 'project');
-                                let insideProject = null;
+                <div className={clsx(styles.searchResults, (showResults && query) && styles.resultsOpen)}>
+                    {allResults.length === 0 ? (
+                        <div className={styles.noResults}>No matches found. Try searching for tags or text.</div>
+                    ) : (
+                        allResults.map((result: any) => {
+                            const projectAreas = items.filter(i => i.type === 'project');
+                            let insideProject = null;
 
-                                if (result.resultType === 'item' && result.type !== 'project') {
-                                    // Calculate center of item
-                                    const iW = result.metadata?.width || 200;
-                                    const iH = result.metadata?.height || 130;
-                                    const cx = result.position_x + iW / 2;
-                                    const cy = result.position_y + iH / 2;
+                            if (result.resultType === 'item' && result.type !== 'project') {
+                                // Calculate center of item
+                                const iW = result.metadata?.width || 200;
+                                const iH = result.metadata?.height || 130;
+                                const cx = result.position_x + iW / 2;
+                                const cy = result.position_y + iH / 2;
 
-                                    insideProject = projectAreas.find(p => {
-                                        const pW = p.metadata?.width || 300;
-                                        const pH = p.metadata?.height || 200;
-                                        return cx > p.position_x && cx < p.position_x + pW &&
-                                            cy > p.position_y && cy < p.position_y + pH;
-                                    });
-                                }
+                                insideProject = projectAreas.find(p => {
+                                    const pW = p.metadata?.width || 300;
+                                    const pH = p.metadata?.height || 200;
+                                    return cx > p.position_x && cx < p.position_x + pW &&
+                                        cy > p.position_y && cy < p.position_y + pH;
+                                });
+                            }
 
-                                return (
-                                    <div key={result.id} className={styles.searchResultItem} onClick={() => handleResultClick(result)}>
-                                        {result.resultType === 'folder' ? (
-                                            <div className={styles.resultIcon}>
-                                                <FolderIcon
-                                                    size={16}
-                                                    fill={result.color ? `${result.color}22` : undefined}
-                                                    color={result.color || "var(--accent)"}
-                                                />
-                                            </div>
+                            return (
+                                <div key={result.id} className={styles.searchResultItem} onClick={() => handleResultClick(result)}>
+                                    {result.resultType === 'folder' ? (
+                                        <div className={styles.resultIcon}>
+                                            <FolderIcon
+                                                size={16}
+                                                fill={result.color ? `${result.color}22` : undefined}
+                                                color={result.color || "var(--accent)"}
+                                            />
+                                        </div>
+                                    ) : (
+                                        (result.type === 'image' || (result.type === 'link' && result.metadata?.image)) ? (
+                                            <img
+                                                src={result.type === 'image' ? result.content : result.metadata?.image}
+                                                alt=""
+                                                className={styles.resultImg}
+                                            />
                                         ) : (
-                                            (result.type === 'image' || (result.type === 'link' && result.metadata?.image)) ? (
-                                                <img
-                                                    src={result.type === 'image' ? result.content : result.metadata?.image}
-                                                    alt=""
-                                                    className={styles.resultImg}
-                                                />
-                                            ) : (
-                                                <div className={styles.resultIcon}>
-                                                    {result.type === 'link' ? '🔗' : '📄'}
-                                                </div>
-                                            )
-                                        )}
-                                        <div className={styles.resultText}>
-                                            <div className={styles.resultTitleRow}>
-                                                <div className={styles.resultTitle}>
-                                                    {result.resultType === 'folder' ? result.name : (result.metadata?.title || 'Untitled')}
-                                                </div>
-                                                <div className={styles.resultDate}>
-                                                    {new Date(result.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                                </div>
+                                            <div className={styles.resultIcon}>
+                                                {result.type === 'link' ? '🔗' : '📄'}
                                             </div>
-                                            <div className={styles.resultBadges}>
-                                                <span className={clsx(styles.typeBadge, result.resultType === 'folder' ? styles.badgeFolder : styles.badgeItem)}>
-                                                    {result.resultType === 'folder' ? 'Folder' : (result.type === 'link' ? 'Link' : result.type === 'image' ? 'Image' : 'Idea')}
+                                        )
+                                    )}
+                                    <div className={styles.resultText}>
+                                        <div className={styles.resultTitleRow}>
+                                            <div className={styles.resultTitle}>
+                                                {result.resultType === 'folder' ? result.name : (result.metadata?.title || 'Untitled')}
+                                            </div>
+                                            <div className={styles.resultDate}>
+                                                {new Date(result.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </div>
+                                        </div>
+                                        <div className={styles.resultBadges}>
+                                            <span className={clsx(styles.typeBadge, result.resultType === 'folder' ? styles.badgeFolder : styles.badgeItem)}>
+                                                {result.resultType === 'folder' ? 'Folder' : (result.type === 'link' ? 'Link' : result.type === 'image' ? 'Image' : 'Idea')}
+                                            </span>
+                                            {insideProject && (
+                                                <span className={clsx(styles.typeBadge, styles.badgeProject)}>
+                                                    in {insideProject.metadata?.title || 'Project'}
                                                 </span>
-                                                {insideProject && (
-                                                    <span className={clsx(styles.typeBadge, styles.badgeProject)}>
-                                                        in {insideProject.metadata?.title || 'Project'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className={styles.resultDescription}>
-                                                {result.resultType !== 'folder' && (result.metadata?.description || (result.type === 'image' ? '' : result.content?.substring(0, 60)))}
-                                                {result.resultType === 'item' && result.type !== 'image' && result.content?.length > 60 && '...'}
-                                            </div>
-                                            {result.resultType === 'item' && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
-                                                <div className={styles.resultTags}>
-                                                    {result.metadata.tags.map((tag: any, i: number) => {
-                                                        const tagName = typeof tag === 'string' ? tag : tag.name;
-                                                        return <span key={i} className={styles.resultTag}>#{tagName}</span>;
-                                                    })}
-                                                </div>
                                             )}
                                         </div>
+                                        <div className={styles.resultDescription}>
+                                            {result.resultType !== 'folder' && (result.metadata?.description || (result.type === 'image' ? '' : result.content?.substring(0, 60)))}
+                                            {result.resultType === 'item' && result.type !== 'image' && result.content?.length > 60 && '...'}
+                                        </div>
+                                        {result.resultType === 'item' && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
+                                            <div className={styles.resultTags}>
+                                                {result.metadata.tags.map((tag: any, i: number) => {
+                                                    const tagName = typeof tag === 'string' ? tag : tag.name;
+                                                    return <span key={i} className={styles.resultTag}>#{tagName}</span>;
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
-                                )
-                            })
-                        )}
-                    </div>
-                )}
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
             </div>
         </header>
     );

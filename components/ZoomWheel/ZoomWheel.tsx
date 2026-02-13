@@ -40,9 +40,6 @@ export default function ZoomWheel() {
 
             <div className={styles.wheelContainer}>
                 <div className={styles.sliderTrack}>
-                    <div className={styles.fill} style={{ height: `${toSlider(scale)}%` }} />
-                    <div className={styles.thumb} style={{ bottom: `${toSlider(scale)}%` }} />
-
                     <input
                         type="range"
                         min="0"
@@ -53,10 +50,12 @@ export default function ZoomWheel() {
                         className={styles.rangeInput}
                         style={{ appearance: 'slider-vertical' } as any}
                     />
-                </div>
-
-                <div className={styles.label}>
-                    {Math.round((scale / BASE_SCALE) * 100)}%
+                    <div className={styles.fill} style={{ height: `${toSlider(scale)}%` }} />
+                    <div className={styles.thumb} style={{ bottom: `${toSlider(scale)}%` }}>
+                        <div className={styles.label}>
+                            {Math.round((scale / BASE_SCALE) * 100)}%
+                        </div>
+                    </div>
                 </div>
             </div>
 

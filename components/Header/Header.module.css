@@ -98,7 +98,7 @@
 }
 
 .searchInput:focus {
-    width: 320px;
+    width: 450px;
     background: var(--card-hover);
     border-color: var(--accent);
     box-shadow: 0 0 0 4px var(--accent-glow), 0 8px 16px rgba(0, 0, 0, 0.2);
@@ -113,19 +113,39 @@
     position: absolute;
     top: 100%;
     left: 0;
-    width: 300px;
-    /* Wider than input */
-    max-height: 400px;
-    overflow-y: auto;
+    width: 280px;
+    /* Default narrow width matching small search bar */
+    max-height: 0;
+    /* Hidden by default */
+    overflow: hidden;
     background: var(--overlay-bg);
-    border: 1px solid var(--border-light);
     border: 1px solid var(--card-border);
     border-radius: 12px;
     margin-top: 8px;
-    padding: 8px;
+    padding: 0 8px;
     box-shadow: 0 8px 24px var(--shadow-color);
     backdrop-filter: blur(10px);
     z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: top center;
+    transform: translateY(-10px) scale(0.95);
+}
+
+/* Width is tied to input focus state for perfect sync */
+.searchInput:focus~.searchResults {
+    width: 450px;
+}
+
+.resultsOpen {
+    /* width: 450px; -- Removed from here to allow syncing with input focus back to 280px */
+    max-height: 400px;
+    padding: 8px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    overflow-y: auto;
 }
 
 .noResults {

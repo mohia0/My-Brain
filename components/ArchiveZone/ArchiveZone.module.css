@@ -2,8 +2,8 @@
     position: fixed;
     bottom: 24px;
     right: 24px;
-    width: 60px;
-    height: 60px;
+    width: 51px;
+    height: 51px;
     background: var(--modal-bg);
     border: 1px solid var(--card-border);
     border-radius: 6px;
@@ -18,9 +18,11 @@
 }
 
 .archiveZone:hover {
-    transform: scale(1.1) translateY(-4px);
-    border-color: var(--accent);
-    box-shadow: 0 15px 35px var(--accent-glow);
+    background: var(--card-hover);
+    transform: scale(1.05);
+    /* Match Inbox scale feel */
+    border-color: var(--border-light);
+    box-shadow: 0 12px 30px var(--shadow-color);
 }
 
 .iconWrapper {

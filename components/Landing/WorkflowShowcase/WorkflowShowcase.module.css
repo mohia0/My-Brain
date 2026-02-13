@@ -120,6 +120,12 @@
     color: var(--accent);
 }
 
+.inboxIconImg {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+}
+
 .inboxList {
     display: flex;
     flex-direction: column;
@@ -344,40 +350,7 @@
     background: rgba(110, 86, 207, 0.1);
 }
 
-.mockWheel {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    width: 50px;
-    height: 50px;
-    background: rgba(30, 30, 35, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-}
 
-.wheelInner {
-    width: 70%;
-    height: 70%;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    position: relative;
-}
-
-.wheelHinge {
-    width: 2px;
-    height: 100%;
-    background: var(--accent);
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    box-shadow: 0 0 10px var(--accent);
-}
 
 .mockSearchOverlay {
     position: absolute;

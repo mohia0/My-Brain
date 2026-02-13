@@ -73,10 +73,9 @@ export default function WorkflowShowcase() {
                 <div className={styles.inboxWrapper}>
                     <div className={styles.inboxHeader}>
                         <div className="flex items-center gap-2">
-                            <Inbox size={14} />
-                            <span>Inbox</span>
+                            <span>INBOX</span>
                         </div>
-                        <span className={styles.count}>3</span>
+                        <span className={styles.count}>{step >= 1 ? 2 : 3}</span>
                     </div>
                     <div className={styles.inboxList}>
                         {inboxItems.map((item, i) => (
@@ -244,15 +243,7 @@ export default function WorkflowShowcase() {
                         </div>
                     </div>
 
-                    {/* Zoom Wheel Skeleton */}
-                    <div className={styles.mockWheel}>
-                        <div className={styles.wheelInner}>
-                            <motion.div
-                                className={styles.wheelHinge}
-                                animate={{ rotate: step === 1 ? 45 : 0 }}
-                            />
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </section>

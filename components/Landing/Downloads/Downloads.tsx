@@ -12,8 +12,8 @@ export default function Downloads() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
             >
-                <h2 className="text-4xl font-bold mb-4">Take your brain anywhere</h2>
-                <p className="text-dim">Available on all your favorite devices.</p>
+                <h2 className="text-4xl font-bold mb-4">Your Mind, Everywhere</h2>
+                <p className="text-dim">Brainia syncs across all your devices so your second brain is always with you.</p>
             </motion.div>
 
             <div className={styles.grid}>

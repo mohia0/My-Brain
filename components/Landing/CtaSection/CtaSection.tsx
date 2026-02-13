@@ -32,7 +32,7 @@ export default function CtaSection() {
 
                 <div className={styles.content}>
                     <h2 className={styles.title}>
-                        Ready to upgrade your mind?
+                        Start Building Your Second Brain Today
                     </h2>
                     <p className={styles.subtitle}>
                         Join thousands of thinkers who have switched to a spatial workflow.

@@ -44,18 +44,19 @@
 
 .container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
+    /* Use the new global max-width */
     padding: 1.5rem 2.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 3rem;
+    transition: padding 0.8s cubic-bezier(0.22, 1, 0.36, 1), max-width 0.8s cubic-bezier(0.22, 1, 0.36, 1), gap 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .scrolled .container {
-    padding: 0.5rem 1rem 0.5rem 2rem;
-    max-width: 700px;
-    /* Shrink width on scroll */
+    padding: 0.75rem 1.5rem 0.75rem 2rem;
+    max-width: 800px;
     gap: 2rem;
 }
 
@@ -66,6 +67,12 @@
     text-decoration: none;
     font-weight: 800;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.brand:hover .logoText {
+    color: var(--text-bright);
+    letter-spacing: -0.01em;
 }
 
 .logoDotWrapper {
@@ -85,12 +92,12 @@
 }
 
 .logoText {
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    background: linear-gradient(180deg, #fff 0%, #aaa 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--foreground);
+    letter-spacing: -0.03em;
+    font-family: var(--font-outfit), sans-serif;
+    transition: all 0.3s ease;
 }
 
 .links {

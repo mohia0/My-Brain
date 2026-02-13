@@ -40,8 +40,8 @@ export default function WorkflowShowcase() {
                     transition={{ delay: 0.2 }}
                     className={styles.title}
                 >
-                    From messy inbox<br />
-                    <span className={styles.accentText}>to spatial clarity.</span>
+                    Capture to Canvas.<br />
+                    <span className={styles.accentText}>Simple as that.</span>
                 </motion.h2>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}
@@ -50,18 +50,18 @@ export default function WorkflowShowcase() {
                     transition={{ delay: 0.3 }}
                     className={styles.desc}
                 >
-                    Brainia isn't just a list. It's a canvas where you can build mental models.
-                    Drag your captures anywhere, link them, and see the big picture.
+                    Brainia turns your cluttered links and notes into a visual mind map.
+                    Just save, drag, and organize your thoughts in space.
                 </motion.p>
 
                 <div className={styles.steps}>
                     <div className={clsx(styles.stepItem, step === 0 && styles.active)}>
                         <strong>1. Capture</strong>
-                        <p>Everything lands in your Inbox.</p>
+                        <p>Save anything instantly into your Inbox.</p>
                     </div>
                     <div className={clsx(styles.stepItem, step === 1 && styles.active)}>
-                        <strong>2. Spatialize</strong>
-                        <p>Drag items onto the canvas.</p>
+                        <strong>2. Organize</strong>
+                        <p>Drag items onto the canvas to create your map.</p>
                     </div>
                 </div>
             </div>
@@ -123,10 +123,23 @@ export default function WorkflowShowcase() {
                     <svg className={styles.connection}>
                         <line x1="100%" y1="0%" x2="0%" y2="100%" />
                     </svg>
+
+                    {/* Mock App UI Elements */}
+                    <div className={styles.mockToolbar}>
+                        <div className={styles.mockTool}><MousePointer2 size={12} /></div>
+                        <div className={styles.mockTool}><Plus size={12} /></div>
+                        <div className={styles.mockTool}><LayoutGrid size={12} /></div>
+                    </div>
+
+                    <div className={styles.mockWheel}>
+                        <div className={styles.wheelInner}>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
     );
 }
 
+import { Plus } from 'lucide-react';
 import clsx from 'clsx';

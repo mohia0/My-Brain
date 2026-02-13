@@ -29,22 +29,14 @@ export default function Navbar() {
                     width: scrolled ? "fit-content" : "100%",
                     marginTop: scrolled ? "1rem" : "0px",
                 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
                 <div className={styles.container}>
                     {/* Brand */}
                     <Link href="/home" className={styles.brand}>
-                        <div className={styles.logoDotWrapper}>
-                            <img src="/icon.png" alt="Brainia Logo" className={styles.logoIcon} />
-                        </div>
-                        <motion.div
-                            className={styles.logoText}
-                            animate={{
-                                fontSize: scrolled ? "1rem" : "1.25rem",
-                            }}
-                        >
+                        <h1 className={styles.logoText}>
                             Brainia
-                        </motion.div>
+                        </h1>
                     </Link>
 
                     {/* Navigation */}

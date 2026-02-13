@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import styles from './Hero.module.css';
 import Orb from '@/components/Orb/Orb';
+import TextType from '@/components/ui/TextType';
 
 export default function Hero() {
     const containerRef = useRef(null);
@@ -42,7 +43,7 @@ export default function Hero() {
                     className={styles.badge}
                 >
                     <span className={styles.badgeDot} />
-                    Spatial Mind Mapping v1.0
+                    Digital Second Brain
                 </motion.div>
 
                 <div className={styles.titleWrapper}>
@@ -52,8 +53,19 @@ export default function Hero() {
                         transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                         className={styles.title}
                     >
-                        Your thoughts,<br />
-                        <span className={styles.gradientText}>organized spatially.</span>
+                        Capture Now.<br />
+                        <span className={styles.gradientText}>
+                            <TextType
+                                text={["Find Anytime.", "Organize Brain.", "Map Thoughts."]}
+                                as="span"
+                                typingSpeed={75}
+                                pauseDuration={1500}
+                                showCursor
+                                cursorCharacter="|"
+                                deletingSpeed={50}
+                                loop={true}
+                            />
+                        </span>
                     </motion.h1>
                 </div>
 
@@ -63,7 +75,7 @@ export default function Hero() {
                     transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
                     className={styles.subtitle}
                 >
-                    Brainia is a second brain that mimics your mind. Use an infinite canvas to map ideas, links, and media exactly how you think.
+                    Save links, notes, and ideas instantly. Everything organized. Always searchable.
                 </motion.p>
 
                 <motion.div

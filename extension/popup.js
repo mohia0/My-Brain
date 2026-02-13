@@ -382,13 +382,28 @@ saveNoteBtn.addEventListener('click', async () => {
     saveNoteBtn.disabled = true;
 
     try {
-        const title = text.length > 50 ? text.substring(0, 50) + '...' : text;
+        const words = text.split(/\s+/);
+        const title = words.slice(0, 4).join(' ') + (words.length > 4 ? '...' : '');
+
+        // Content as BlockNote JSON structure
+        const contentBlock = [
+            {
+                type: "paragraph",
+                content: [
+                    {
+                        type: "text",
+                        text: text,
+                        styles: {}
+                    }
+                ]
+            }
+        ];
 
         const { error } = await supabase.from('items').insert({
             id: crypto.randomUUID(),
             user_id: state.user.id,
             type: 'text',
-            content: text,
+            content: JSON.stringify(contentBlock),
             metadata: {
                 title: title
             },

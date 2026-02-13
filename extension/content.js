@@ -7,14 +7,187 @@
     window.dispatchEvent(new CustomEvent('BrainiaInstalled'));
 
     console.log("[Brainia] Presence detected by host.");
+
+    // Track last right-clicked element for smart extraction
+    let lastRightClickElement = null;
+    document.addEventListener('contextmenu', (e) => {
+        lastRightClickElement = e.target;
+    }, true);
+
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === "SHOW_BRAINIA_TOAST") {
+            showBrainiaToast(request.message, request.type);
+        }
+
+        if (request.action === "GET_SELECTION_BLOCKS") {
+            const blocks = parseSelectionToBlocks();
+            sendResponse({ blocks: blocks });
+        }
+
+        if (request.action === "GET_CAPTURE_DATA") {
+            let imageUrl = null;
+            let title = null;
+            let description = null;
+
+            // Pinterest specific extraction
+            if (window.location.hostname.includes('pinterest')) {
+                // Try to find the main pin container or the one under the mouse
+                const pinContainer = lastRightClickElement?.closest('[data-test-id="pin"]') ||
+                    lastRightClickElement?.closest('[data-test-id="visual-content-container"]') ||
+                    document.querySelector('[data-test-id="visual-content-container"]') ||
+                    document.querySelector('main');
+
+                let pinImg = null;
+                if (pinContainer) {
+                    pinImg = pinContainer.querySelector('img');
+
+                    // 1. High-res Image Extraction
+                    if (pinImg) {
+                        if (pinImg.srcset) {
+                            const sources = pinImg.srcset.split(',');
+                            imageUrl = sources[sources.length - 1].trim().split(' ')[0];
+                        } else {
+                            imageUrl = pinImg.src;
+                        }
+                    }
+
+                    // 2. Title Extraction (Multiple selectors for different layout versions)
+                    title = pinContainer.querySelector('[data-test-id="pinTitle"] h1')?.textContent ||
+                        pinContainer.querySelector('[data-test-id="pin-title"]')?.textContent ||
+                        document.querySelector('[data-test-id="pinTitle"] h1')?.textContent ||
+                        document.querySelector('h1')?.textContent ||
+                        pinImg?.alt;
+
+                    // 3. Description Extraction
+                    description = pinContainer.querySelector('[data-test-id="main-pin-description-text"]')?.textContent ||
+                        pinContainer.querySelector('[data-test-id="pin-description"]')?.textContent ||
+                        document.querySelector('[data-test-id="main-pin-description-text"]')?.textContent;
+                }
+
+                // Final cleanup for Pinterest titles (remove branding)
+                if (title) title = title.replace(" - Pinterest", "").trim();
+            }
+
+            // Generic fallback
+            if (!imageUrl && lastRightClickElement) {
+                if (lastRightClickElement.tagName === 'IMG') {
+                    imageUrl = lastRightClickElement.src;
+                    title = lastRightClickElement.alt;
+                } else {
+                    const img = lastRightClickElement.querySelector('img');
+                    if (img) {
+                        imageUrl = img.src;
+                        title = img.alt;
+                    }
+                }
+            }
+
+            // Final fallback to page meta
+            if (!imageUrl) imageUrl = document.querySelector('meta[property="og:image"]')?.content;
+            if (!title) title = document.querySelector('meta[property="og:title"]')?.content || document.title;
+            if (!description) description = document.querySelector('meta[property="og:description"]')?.content;
+
+            sendResponse({ imageUrl, title, description });
+        }
+    });
 })();
 
 // --- Toast Notification Logic ---
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "SHOW_BRAINIA_TOAST") {
-        showBrainiaToast(request.message, request.type);
+function parseSelectionToBlocks() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+    const container = document.createElement("div");
+    container.appendChild(range.cloneContents());
+
+    const blocks = [];
+
+    function processInline(node, styles = {}, activeLink = null) {
+        let content = [];
+        node.childNodes.forEach(child => {
+            const currentLink = activeLink || (child.tagName === "A" ? child.href : null);
+
+            if (child.nodeType === Node.TEXT_NODE) {
+                if (child.textContent) {
+                    content.push({
+                        type: "text",
+                        text: child.textContent,
+                        styles: { ...styles },
+                        ...(currentLink ? { href: currentLink } : {})
+                    });
+                }
+            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                const newStyles = { ...styles };
+                const tagName = child.tagName.toUpperCase();
+
+                if (tagName === "B" || tagName === "STRONG") newStyles.bold = true;
+                if (tagName === "I" || tagName === "EM") newStyles.italic = true;
+                if (tagName === "U") newStyles.underline = true;
+                if (tagName === "CODE") newStyles.code = true;
+
+                let linkToPass = currentLink;
+                if (tagName === "A") {
+                    linkToPass = child.href;
+                    newStyles.textColor = "blue";
+                }
+
+                content = content.concat(processInline(child, newStyles, linkToPass));
+            }
+        });
+        return content;
     }
-});
+
+    // Top-level block detection
+    const blockElements = ['P', 'H1', 'H2', 'H3', 'LI', 'DIV', 'BLOCKQUOTE', 'PRE'];
+
+    // If the selection is just one level deep or partial, we might not have clear block elements
+    let currentBlockContent = [];
+
+    container.childNodes.forEach(node => {
+        const tagName = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toUpperCase() : null;
+
+        if (tagName && blockElements.includes(tagName)) {
+            // Flush any pending inline content into a paragraph first
+            if (currentBlockContent.length > 0) {
+                blocks.push({ type: "paragraph", content: currentBlockContent });
+                currentBlockContent = [];
+            }
+
+            let type = "paragraph";
+            let props = {};
+            if (tagName === "H1") { type = "heading"; props = { level: 1 }; }
+            else if (tagName === "H2") { type = "heading"; props = { level: 2 }; }
+            else if (tagName === "H3") { type = "heading"; props = { level: 3 }; }
+
+            blocks.push({
+                type,
+                ...(Object.keys(props).length ? { props } : {}),
+                content: processInline(node)
+            });
+        } else {
+            // Inline or non-block element
+            if (node.nodeType === Node.TEXT_NODE) {
+                if (node.textContent) {
+                    currentBlockContent.push({
+                        type: "text",
+                        text: node.textContent,
+                        styles: {}
+                    });
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                currentBlockContent = currentBlockContent.concat(processInline(node));
+            }
+        }
+    });
+
+    // Final flush
+    if (currentBlockContent.length > 0) {
+        blocks.push({ type: "paragraph", content: currentBlockContent });
+    }
+
+    return blocks.length > 0 ? blocks : null;
+}
 
 function showBrainiaToast(message, type = 'success') {
     // Remove existing toast if present

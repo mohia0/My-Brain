@@ -78,8 +78,8 @@ function createMenus() {
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({
             id: "save-to-brainia",
-            title: "Save to Brainia",
-            contexts: ["selection", "image", "link", "page"]
+            title: ". Save to Brainia",
+            contexts: ["selection", "image", "link", "page", "action", "editable"]
         });
     });
 }
@@ -109,15 +109,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
             const user = session.user;
 
-            // Initialize capture data with basic info
+            // Initialize capture data
             let captureData = {
                 imageUrl: info.srcUrl,
                 title: null,
-                description: null,
-                blocks: null // For text selection
+                description: null
             };
 
-            // If it's a smart capture context (page, link, or image)
+            // Smart extraction for Pinterest and others
             if (tab?.id) {
                 try {
                     await chrome.scripting.executeScript({
@@ -140,17 +139,24 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 }
             }
 
-            // 1. Handle IMAGE capture
-            if (captureData.imageUrl) {
-                console.log("[Background] Capturing image item:", captureData.imageUrl);
+            // HANDLE IMAGE/LINK CAPTURE (SMART MODE)
+            // If we have an image URL, we treat it as a rich link or an image
+            if (captureData.imageUrl || info.mediaType === 'image') {
+                const imgUrl = captureData.imageUrl || info.srcUrl;
+
+                // If we have a title or it's Pinterest, save as a 'link' item to preserve context
+                // This makes it a "Smart Capture" with image + data
+                const isRichCapture = !!(captureData.title || captureData.description || window.location.hostname.includes('pinterest'));
+
                 const { error } = await supabase.from('items').insert({
                     id: crypto.randomUUID(),
                     user_id: user.id,
-                    type: 'image',
-                    content: captureData.imageUrl,
+                    type: isRichCapture ? 'link' : 'image',
+                    content: isRichCapture ? (tab?.url || imgUrl) : imgUrl,
                     metadata: {
                         title: captureData.title || tab?.title || "Captured Image",
-                        description: captureData.description || "Saved from Web",
+                        description: captureData.description || "",
+                        image: imgUrl, // This acts as the preview image for the link
                         url: tab?.url,
                         source: "Extension Smart Capture"
                     },
@@ -164,7 +170,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 return;
             }
 
-            // 2. HANDLE TEXT SELECTION
+            // HANDLE TEXT SELECTION (Fallback or intentional)
             if (info.selectionText) {
                 console.log("[Background] Capturing selection:", info.selectionText);
                 let blocks = null;

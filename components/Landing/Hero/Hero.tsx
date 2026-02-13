@@ -60,8 +60,7 @@ export default function Hero() {
                                 as="span"
                                 typingSpeed={75}
                                 pauseDuration={1500}
-                                showCursor
-                                cursorCharacter="|"
+                                showCursor={false}
                                 deletingSpeed={50}
                                 loop={true}
                             />
@@ -84,9 +83,13 @@ export default function Hero() {
                     transition={{ duration: 0.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     className={styles.actions}
                 >
-                    <Link href="/" className={styles.primary}>
+                    <button
+                        disabled
+                        className={styles.primary}
+                        title="Shhh... Coming Soon! 🤫"
+                    >
                         Open Your Brainia
-                    </Link>
+                    </button>
                     <a
                         href="#workflow"
                         className={styles.secondary}

@@ -143,6 +143,28 @@
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: none;
+}
+
+.cta:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cta:disabled:hover {
+    animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(0.95);
+    }
 }
 
 .cta span {
@@ -171,6 +193,10 @@
     opacity: 1;
 }
 
+.cta:disabled:hover .ctaGlow {
+    opacity: 0;
+}
+
 .cta::before {
     content: '';
     position: absolute;
@@ -185,6 +211,10 @@
 
 .cta:hover::before {
     opacity: 1;
+}
+
+.cta:disabled:hover::before {
+    opacity: 0;
 }
 
 @media (max-width: 900px) {

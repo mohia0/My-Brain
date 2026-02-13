@@ -110,12 +110,17 @@ export default function Pricing() {
                                 ))}
                             </div>
 
-                            <Link
-                                href="https://app.brainia.space"
+                            <button
+                                disabled
                                 className={clsx(styles.cta, plan.highlight ? styles.ctaPrimary : styles.ctaSecondary)}
+                                title={
+                                    plan.name === 'Free' ? "Hold your horses! 🐴" :
+                                        plan.name === 'Pro' ? "Not so fast, speedy! 🏃‍♂️💨" :
+                                            "Whoa there, big spender! 💰"
+                                }
                             >
                                 {plan.btnText}
-                            </Link>
+                            </button>
                         </motion.div>
                     ))}
                 </div>

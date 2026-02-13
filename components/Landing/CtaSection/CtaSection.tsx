@@ -39,12 +39,13 @@ export default function CtaSection() {
                         Free to start, powerful enough to grow with you.
                     </p>
 
-                    <Link
-                        href="/"
+                    <button
+                        disabled
                         className={styles.button}
+                        title="Patience, young grasshopper... 🥋"
                     >
                         Get Started Now
-                    </Link>
+                    </button>
 
                     <p className={styles.note}>
                         No credit card required • Free plan available

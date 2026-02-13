@@ -98,31 +98,31 @@ export default function Navbar() {
 
                     {/* Actions */}
                     <div className={styles.actions}>
-                        <Link href="/" className={styles.ctaWrapper}>
-                            <motion.div
-                                className={styles.cta}
-                                whileHover={{
-                                    scale: 1.05,
-                                    boxShadow: "0 0 30px rgba(110, 86, 207, 0.6)"
+                        <motion.button
+                            disabled
+                            className={styles.cta}
+                            title="Easy there, tiger! 🐅"
+                            whileHover={{
+                                scale: 1.05,
+                                boxShadow: "0 0 30px rgba(110, 86, 207, 0.6)"
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        >
+                            <motion.span
+                                animate={{
+                                    fontSize: scrolled ? "0.75rem" : "0.875rem"
                                 }}
-                                whileTap={{ scale: 0.95 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                transition={{ duration: 0.3 }}
                             >
-                                <motion.span
-                                    animate={{
-                                        fontSize: scrolled ? "0.75rem" : "0.875rem"
-                                    }}
-                                    transition={{ duration: 0.3 }}
-                                >
-                                    Launch App
-                                </motion.span>
-                                <motion.div
-                                    className={styles.ctaGlow}
-                                    initial={{ opacity: 0 }}
-                                    whileHover={{ opacity: 1 }}
-                                />
-                            </motion.div>
-                        </Link>
+                                Launch App
+                            </motion.span>
+                            <motion.div
+                                className={styles.ctaGlow}
+                                initial={{ opacity: 0 }}
+                                whileHover={{ opacity: 1 }}
+                            />
+                        </motion.button>
                     </div>
                 </div>
             </motion.nav>

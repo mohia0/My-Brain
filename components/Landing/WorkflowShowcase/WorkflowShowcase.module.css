@@ -109,26 +109,55 @@
 }
 
 .inboxItem {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-}
-
-.line {
-    flex: 1;
-    height: 6px;
+.itemIcon {
+    width: 28px;
+    height: 28px;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+}
+
+.itemMeta {
+    flex: 1;
+    min-width: 0;
+}
+
+.itemTitle {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.15rem;
+}
+
+.itemDate {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.count {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.65rem;
+    color: var(--text-muted);
 }
 
 /* Canvas Area */
@@ -144,32 +173,75 @@
     background-size: 30px 30px;
 }
 
-.canvasNode {
+.canvasCard,
+.staticCard {
     position: absolute;
-    width: 200px;
-    background: rgba(255, 255, 255, 0.05);
+    width: 220px;
+    background: rgba(30, 30, 35, 0.7);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 0;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
     z-index: 10;
+    overflow: hidden;
 }
 
-.nodeHeader {
-    height: 10px;
-    width: 40px;
-    background: var(--accent);
-    border-radius: 5px;
-    margin-bottom: 1rem;
+.staticCard {
+    opacity: 0.4;
+    scale: 0.95;
+    z-index: 5;
 }
 
-.nodeLine {
-    height: 6px;
+.cardHeader {
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.cardTitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #eee;
+    white-space: nowrap;
+}
+
+.cardBody {
+    padding: 1rem;
+}
+
+.skeletonImage {
     width: 100%;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-    margin-bottom: 0.5rem;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.skeletonLine {
+    height: 5px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    margin-bottom: 0.4rem;
+}
+
+.cardActions {
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    gap: 0.4rem;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.actionCircle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .cursor {
@@ -201,17 +273,31 @@
 /* Mock UI Styles */
 .mockToolbar {
     position: absolute;
-    bottom: 2rem;
+    bottom: 1.5rem;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(30, 30, 35, 0.8);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 1rem;
-    padding: 0.5rem;
+    border-radius: 100px;
+    padding: 0.4rem 0.8rem;
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.4rem;
     z-index: 20;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.toolbarSection {
+    display: flex;
+    gap: 0.2rem;
+}
+
+.mockDivider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 0.2rem;
 }
 
 .mockTool {
@@ -220,18 +306,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 0.5rem;
+    color: #888;
+    background: transparent;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.mockTool:first-child {
+    color: var(--accent);
+    background: rgba(110, 86, 207, 0.1);
 }
 
 .mockWheel {
     position: absolute;
-    top: 2rem;
-    right: 2rem;
-    width: 60px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.05);
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 50px;
+    height: 50px;
+    background: rgba(30, 30, 35, 0.8);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
@@ -239,16 +331,25 @@
     align-items: center;
     justify-content: center;
     z-index: 20;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
 .wheelInner {
-    width: 80%;
-    height: 80%;
-    border: 2px solid var(--accent);
+    width: 70%;
+    height: 70%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
+}
+
+.wheelHinge {
+    width: 2px;
+    height: 100%;
+    background: var(--accent);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 10px var(--accent);
 }
 
 .wheelLabel {

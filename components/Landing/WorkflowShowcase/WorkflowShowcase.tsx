@@ -16,9 +16,9 @@ export default function WorkflowShowcase() {
     }, []);
 
     const inboxItems = [
-        { id: 1, title: "Quantum Physics Notes", color: "var(--accent)" },
-        { id: 2, title: "Newsletter Design", color: "#3296fa" },
-        { id: 3, title: "Investment Strategy", color: "#fa6464" },
+        { id: 1, type: "link", title: "Quantum Physics Research", date: "Oct 12", color: "var(--accent)" },
+        { id: 2, type: "text", title: "Newsletter Draft v2", date: "Oct 11", color: "#3296fa" },
+        { id: 3, type: "image", title: "Product Moodboard", date: "Oct 10", color: "#fa6464" },
     ];
 
     return (
@@ -67,10 +67,14 @@ export default function WorkflowShowcase() {
             </div>
 
             <div className={styles.visualContainer}>
-                {/* Inbox Area */}
+                {/* Inbox Area (Skeleton Sidebar) */}
                 <div className={styles.inboxWrapper}>
                     <div className={styles.inboxHeader}>
-                        <Inbox size={14} /> Inbox
+                        <div className="flex items-center gap-2">
+                            <Inbox size={14} />
+                            <span>Inbox</span>
+                        </div>
+                        <span className={styles.count}>3</span>
                     </div>
                     <div className={styles.inboxList}>
                         {inboxItems.map((item, i) => (
@@ -82,29 +86,45 @@ export default function WorkflowShowcase() {
                                     x: step === 1 && i === 0 ? 50 : 0
                                 }}
                             >
-                                <div className={styles.dot} style={{ background: item.color }} />
-                                <div className={styles.line} />
+                                <div className={styles.itemIcon}>
+                                    {item.type === 'link' && <Link size={12} />}
+                                    {item.type === 'text' && <FileText size={12} />}
+                                    {item.type === 'image' && <ImageIcon size={12} />}
+                                </div>
+                                <div className={styles.itemMeta}>
+                                    <div className={styles.itemTitle}>{item.title}</div>
+                                    <div className={styles.itemDate}>{item.date}</div>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
                 </div>
 
-                {/* Canvas Area */}
+                {/* Canvas Area (Skeleton Board) */}
                 <div className={styles.canvasWrapper}>
                     <div className={styles.canvasGrid} />
 
                     <AnimatePresence>
                         {step === 1 && (
                             <motion.div
-                                initial={{ x: -100, y: 0, scale: 0.8, opacity: 0 }}
-                                animate={{ x: 40, y: 40, scale: 1, opacity: 1 }}
+                                initial={{ x: -150, y: -50, scale: 0.8, opacity: 0 }}
+                                animate={{ x: 60, y: 60, scale: 1, opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className={styles.canvasNode}
+                                className={styles.canvasCard}
                             >
-                                <div className={styles.nodeHeader} />
-                                <div className={styles.nodeBody}>
-                                    <div className={styles.nodeLine} />
-                                    <div className={styles.nodeLine} style={{ width: '60%' }} />
+                                <div className={styles.cardHeader}>
+                                    <Link size={12} className="text-accent" />
+                                    <span className={styles.cardTitle}>Physics Research</span>
+                                </div>
+                                <div className={styles.cardBody}>
+                                    <div className={styles.skeletonImage} />
+                                    <div className={styles.skeletonLine} />
+                                    <div className={styles.skeletonLine} style={{ width: '60%' }} />
+                                </div>
+                                <div className={styles.cardActions}>
+                                    <div className={styles.actionCircle} />
+                                    <div className={styles.actionCircle} />
+                                    <div className={styles.actionCircle} />
                                 </div>
                                 <motion.div
                                     initial={{ opacity: 0 }}
@@ -118,21 +138,40 @@ export default function WorkflowShowcase() {
                     </AnimatePresence>
 
                     {/* Background nodes already on canvas */}
-                    <div className={styles.staticNode} style={{ top: '20%', right: '20%' }} />
-                    <div className={styles.staticNode} style={{ bottom: '30%', right: '40%' }} />
+                    <div className={styles.staticCard} style={{ top: '25%', right: '15%' }}>
+                        <div className={styles.cardHeader}>
+                            <FileText size={12} />
+                            <span className={styles.cardTitle}>Notes</span>
+                        </div>
+                    </div>
+
+                    <div className={styles.staticCard} style={{ bottom: '25%', right: '35%' }}>
+                        <div className={styles.cardHeader}>
+                            <ImageIcon size={12} />
+                            <span className={styles.cardTitle}>Reference</span>
+                        </div>
+                    </div>
+
                     <svg className={styles.connection}>
                         <line x1="100%" y1="0%" x2="0%" y2="100%" />
                     </svg>
 
-                    {/* Mock App UI Elements */}
+                    {/* App Toolbar Skeleton */}
                     <div className={styles.mockToolbar}>
-                        <div className={styles.mockTool}><MousePointer2 size={12} /></div>
-                        <div className={styles.mockTool}><Plus size={12} /></div>
-                        <div className={styles.mockTool}><LayoutGrid size={12} /></div>
+                        <div className={styles.toolbarSection}>
+                            <div className={styles.mockTool}><MousePointer2 size={12} /></div>
+                            <div className={styles.mockTool}><Hand size={12} /></div>
+                        </div>
+                        <div className={styles.mockDivider} />
+                        <div className={styles.toolbarSection}>
+                            <div className={styles.mockTool}><Plus size={12} /></div>
+                        </div>
                     </div>
 
+                    {/* Zoom Wheel Skeleton */}
                     <div className={styles.mockWheel}>
                         <div className={styles.wheelInner}>
+                            <div className={styles.wheelHinge} />
                         </div>
                     </div>
                 </div>
@@ -141,5 +180,5 @@ export default function WorkflowShowcase() {
     );
 }
 
-import { Plus } from 'lucide-react';
+import { Plus, Hand, FileText, Link, Image as ImageIcon } from 'lucide-react';
 import clsx from 'clsx';

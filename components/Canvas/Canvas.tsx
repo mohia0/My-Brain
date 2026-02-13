@@ -61,15 +61,15 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
     // Global Event Listeners for Spacebar
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.code === 'Space' && !e.repeat && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+            const isInput = e.target instanceof HTMLInputElement ||
+                e.target instanceof HTMLTextAreaElement ||
+                (e.target as HTMLElement).isContentEditable ||
+                (e.target as HTMLElement).closest('[contenteditable="true"]');
+
+            if (e.code === 'Space' && !e.repeat && !isInput) {
                 e.preventDefault(); // Prevent scrolling
                 setIsSpacePressed(true);
             }
-
-            // Keyboard Shortcuts for Tools
-            const isInput = e.target instanceof HTMLInputElement ||
-                e.target instanceof HTMLTextAreaElement ||
-                (e.target as HTMLElement).isContentEditable;
 
             if (!isInput) {
                 if (e.key.toLowerCase() === 'v') {

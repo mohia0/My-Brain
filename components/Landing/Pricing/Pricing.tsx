@@ -39,7 +39,8 @@ export default function Pricing() {
             btnText: "Buy Once",
             highlight: false,
             lifetime: true,
-            badge: "FOUNDER"
+            badge: "FOUNDER",
+            subBadge: "Limited Time"
         }
     ];
 
@@ -93,6 +94,7 @@ export default function Pricing() {
                             {plan.badge && <div className={styles.cardBadge}>{plan.badge}</div>}
                             <div className={styles.cardHeader}>
                                 <h3 className={styles.planName}>{plan.name}</h3>
+                                {plan.subBadge && <div className={styles.subBadge}>{plan.subBadge}</div>}
                                 <div className={styles.priceContainer}>
                                     <span className={styles.priceSymbol}>$</span>
                                     <span className={styles.priceValue}>{plan.price.replace('$', '')}</span>

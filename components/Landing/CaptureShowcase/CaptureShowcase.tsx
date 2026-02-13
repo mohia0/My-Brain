@@ -92,8 +92,6 @@ export default function CaptureShowcase() {
                         {/* Realistic Hand Cursor - Only for Browser */}
                         {activeDemo === 'extension' && <HandCursor demo="extension" step={captureStep} />}
 
-                        {/* Touch Indicator - Only for Mobile */}
-                        {activeDemo === 'mobile' && <TouchRipple step={captureStep} />}
                     </div>
 
                     {/* Step Indicators */}
@@ -385,6 +383,9 @@ function MobileDemo({ step }: { step: number }) {
                             </motion.div>
                         )}
                     </AnimatePresence>
+
+                    {/* Touch Indicator moved inside the screen for absolute positioning */}
+                    <TouchRipple step={step} />
                 </div>
             </div>
         </motion.div>
@@ -456,12 +457,13 @@ function TouchRipple({ step }: { step: number }) {
     if (step === 0 || step === 3) return null;
 
     const getPos = () => {
-        if (step === 1) return { x: 435, y: 345 }; // Share Button touch inside card
-        return { x: 385, y: 320 }; // Brainia App Icon touch in share menu
+        // Now relative to mobile screen (percentages)
+        if (step === 1) return { x: '72%', y: '61%' }; // Share Button (hits the icon precisely)
+        return { x: '62.5%', y: '58%' }; // Brainia App Icon (hits the icon in the sheet)
     };
 
     const pos = getPos();
-    const delay = step === 1 ? 0.7 : 1.0; // 0.5 + 0.2 or 0.8 + 0.2
+    const delay = step === 1 ? 0.7 : 1.0;
 
     return (
         <motion.div

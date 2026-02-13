@@ -108,7 +108,7 @@
 
 @media (max-width: 768px) {
     .ctaSection {
-        margin: 6rem auto;
+        margin: 6rem auto 0;
     }
 
     .box {

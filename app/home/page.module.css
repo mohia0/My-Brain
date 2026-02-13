@@ -6,3 +6,10 @@
     /* Space between sections */
     padding-bottom: 8rem;
 }
+
+@media (max-width: 768px) {
+    .container {
+        gap: 4rem;
+        padding-bottom: 0;
+    }
+}

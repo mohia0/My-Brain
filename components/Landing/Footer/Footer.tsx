@@ -21,8 +21,8 @@ export default function Footer() {
                         <Link href="#features" className={styles.link}>Features</Link>
                         <Link href="#pricing" className={styles.link}>Pricing</Link>
                         <Link href="#download" className={styles.link}>Download</Link>
-                        <Link href="#" className={styles.link}>Privacy</Link>
-                        <Link href="#" className={styles.link}>Terms</Link>
+                        <Link href="/privacy" className={styles.link}>Privacy</Link>
+                        <Link href="/terms" className={styles.link}>Terms</Link>
                     </div>
                 </div>
                 <div className={styles.bottomRow}>

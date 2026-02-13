@@ -8,7 +8,8 @@
         "storage",
         "tabs",
         "contextMenus",
-        "notifications"
+        "notifications",
+        "scripting"
     ],
     "background": {
         "service_worker": "background.bundle.js"
@@ -20,8 +21,7 @@
     "content_scripts": [
         {
             "matches": [
-                "https://www.brainia.space/*",
-                "http://localhost:3000/*"
+                "<all_urls>"
             ],
             "js": [
                 "content.js"

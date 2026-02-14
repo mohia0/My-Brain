@@ -205,7 +205,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
                 </button>
             )}
             <div className={styles.outerDate}>
-                {folder.updated_at ? 'Edited: ' : 'Created: '}
+                {folder.updated_at && folder.updated_at !== folder.created_at ? 'Edited: ' : 'Created: '}
                 {new Date(folder.updated_at || folder.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
         </div>

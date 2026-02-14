@@ -328,14 +328,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             id, type: 'item', x, y, prevX: item.position_x, prevY: item.position_y
         };
 
+        const now = new Date().toISOString();
         set((state) => ({
-            items: state.items.map((i) => i.id === id ? { ...i, position_x: x, position_y: y, syncStatus: 'syncing' } : i),
+            items: state.items.map((i) => i.id === id ? { ...i, position_x: x, position_y: y, updated_at: now, syncStatus: 'syncing' } : i),
             history: {
                 past: [...state.history.past, { type: 'MOVE', updates: [update] }],
                 future: []
             }
         }));
-        const { error } = await supabase.from('items').update({ position_x: x, position_y: y }).eq('id', id);
+        const { error } = await supabase.from('items').update({ position_x: x, position_y: y, updated_at: now }).eq('id', id);
 
         set(state => ({
             items: state.items.map(i => i.id === id ? { ...i, syncStatus: error ? 'error' : 'synced' } : i)
@@ -361,14 +362,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         if (historyUpdates.length === 0) return;
 
+        const now = new Date().toISOString();
         set((state) => ({
             items: state.items.map(item => {
                 const u = processedUpdates.find(up => up.id === item.id && up.type === 'item');
-                return u ? { ...item, position_x: u.x, position_y: u.y } : item;
+                return u ? { ...item, position_x: u.x, position_y: u.y, updated_at: now } : item;
             }),
             folders: state.folders.map(folder => {
                 const u = processedUpdates.find(up => up.id === folder.id && up.type === 'folder');
-                return u ? { ...folder, position_x: u.x, position_y: u.y } : folder;
+                return u ? { ...folder, position_x: u.x, position_y: u.y, updated_at: now } : folder;
             }),
             history: {
                 past: [...state.history.past, { type: 'MOVE', updates: historyUpdates }],
@@ -378,9 +380,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         processedUpdates.forEach(u => {
             if (u.type === 'item') {
-                supabase.from('items').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then();
+                supabase.from('items').update({ position_x: u.x, position_y: u.y, updated_at: now }).eq('id', u.id).then();
             } else {
-                supabase.from('folders').update({ position_x: u.x, position_y: u.y }).eq('id', u.id).then();
+                supabase.from('folders').update({ position_x: u.x, position_y: u.y, updated_at: now }).eq('id', u.id).then();
             }
         });
     },
@@ -720,16 +722,17 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             id, type: 'folder', x, y, prevX: folder.position_x, prevY: folder.position_y
         };
 
+        const now = new Date().toISOString();
         set((state) => ({
             folders: state.folders.map((f) =>
-                f.id === id ? { ...f, position_x: x, position_y: y, syncStatus: 'syncing' } : f
+                f.id === id ? { ...f, position_x: x, position_y: y, updated_at: now, syncStatus: 'syncing' } : f
             ),
             history: {
                 past: [...state.history.past, { type: 'MOVE', updates: [update] }],
                 future: []
             }
         }));
-        const { error } = await supabase.from('folders').update({ position_x: x, position_y: y }).eq('id', id);
+        const { error } = await supabase.from('folders').update({ position_x: x, position_y: y, updated_at: now }).eq('id', id);
 
         set(state => ({
             folders: state.folders.map(f => f.id === id ? { ...f, syncStatus: error ? 'error' : 'synced' } : f)

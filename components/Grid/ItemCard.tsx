@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import styles from './ItemCard.module.css';
 import { Item } from '@/types';
-import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorOpen, ArrowRight, Unlock, Edit3 } from 'lucide-react';
+import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorOpen, ArrowRight, Unlock, Edit3, Check } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
@@ -561,11 +561,24 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                                                 const text = Array.isArray(b.content)
                                                     ? b.content.map((c: any) => c.text).join('')
                                                     : b.content || '';
-                                                if (!text) return null;
-                                                return <p key={i} className={clsx(
-                                                    "text-[13px] leading-relaxed mb-1",
-                                                    b.type === 'heading' ? "font-bold text-white/90" : "text-zinc-400"
-                                                )}>{text}</p>
+
+                                                const isCheckList = b.type === 'checkListItem';
+                                                if (!text && !isCheckList) return null;
+
+                                                return <div key={i} className={clsx(
+                                                    styles.previewLine,
+                                                    b.type === 'heading' && styles.previewHeading
+                                                )}>
+                                                    {isCheckList && (
+                                                        <div className={clsx(
+                                                            styles.previewCheckbox,
+                                                            b.props?.checked && styles.previewCheckboxChecked
+                                                        )}>
+                                                            {b.props?.checked && <Check size={8} color="white" strokeWidth={4} />}
+                                                        </div>
+                                                    )}
+                                                    <p className={styles.previewText}>{text}</p>
+                                                </div>
                                             })}
                                             {blocks.length > 3 && <div className="text-[10px] text-zinc-600 mt-1 italic">... more</div>}
                                         </div>
@@ -580,7 +593,10 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
 
                     <div className={styles.captureFooter} style={{ padding: isImage ? '8px 12px' : '4px 0 0 0' }}>
-                        <span className={styles.cardDate}>{new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span className={styles.cardDate}>
+                            {localItem.updated_at && localItem.updated_at !== localItem.created_at ? 'Edited ' : 'Created '}
+                            {new Date(localItem.updated_at || localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
                         <SyncIndicator />
                     </div>
                 </div>

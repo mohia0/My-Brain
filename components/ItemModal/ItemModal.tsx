@@ -417,6 +417,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 <div className={styles.timestamp}>
                                     {item.metadata?.siteName || 'Shared'} • {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
+                                {item.updated_at && item.updated_at !== item.created_at && (
+                                    <div className={styles.timestamp} style={{ opacity: 0.6, fontSize: '0.7rem', marginTop: '2px' }}>
+                                        Updated {new Date(item.updated_at).toLocaleDateString()} at {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                )}
                                 {(isSaving || item.syncStatus === 'syncing') && <div className={styles.savingIndicator}>Saving...</div>}
                                 {item.metadata?.author && <div className={styles.authorBadge}>by {item.metadata.author}</div>}
                             </div>

@@ -489,9 +489,50 @@
 
 
 
-.richPreview p {
-    margin: 0;
-    max-width: 100%;
+.richPreview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.previewLine {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-dim);
+}
+
+.previewHeading {
+    font-weight: 700;
+    color: var(--foreground);
+    opacity: 0.9;
+}
+
+.previewCheckbox {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.previewCheckboxChecked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.previewText {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .roomCardOuter {

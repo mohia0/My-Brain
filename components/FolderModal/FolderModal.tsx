@@ -263,6 +263,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                             </div>
                             <span className={styles.itemMetaHeader}>
                                 {folderItems.length} ideas • Created {getRelativeTime(folder.created_at)}
+                                {folder.updated_at && folder.updated_at !== folder.created_at && ` • Updated ${getRelativeTime(folder.updated_at)}`}
                             </span>
                         </div>
                     </div>

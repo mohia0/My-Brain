@@ -52,46 +52,42 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         setActiveId(id);
         setActiveItem(data);
 
-        // If dragging a Project Area, identify contained items
-        if (data.type === 'project') {
-            const area = items.find(i => i.id === id);
-            if (area) {
-                const areaLeft = area.position_x;
-                const areaRight = area.position_x + (area.metadata.width || 300);
-                const areaTop = area.position_y;
-                const areaBottom = area.position_y + (area.metadata.height || 200);
+        const currentSelectedIds = useItemsStore.getState().selectedIds;
+        const dragIds = currentSelectedIds.includes(id as string) ? currentSelectedIds : [id as string];
 
+        const allContainedIds: string[] = [];
+
+        // Find contents for ALL dragged project areas
+        dragIds.forEach(dragId => {
+            const item = items.find(i => i.id === dragId);
+            if (item && item.type === 'project') {
+                const areaLeft = item.position_x;
+                const areaRight = item.position_x + (item.metadata.width || 300);
+                const areaTop = item.position_y;
+                const areaBottom = item.position_y + (item.metadata.height || 200);
+
+                // Find items inside this project area
                 const contained = items.filter(i => {
-                    if (i.id === id || i.folder_id || i.type === 'project') return false;
-
-                    // Simple Overlap Check
+                    if (i.id === item.id || i.folder_id || i.type === 'project') return false;
                     const itemW = i.metadata?.width || 250;
                     const itemH = i.metadata?.height || 100;
-                    const iLeft = i.position_x;
-                    const iRight = i.position_x + itemW;
-                    const iTop = i.position_y;
-                    const iBottom = i.position_y + itemH;
-
-                    return (areaLeft < iRight && areaRight > iLeft && areaTop < iBottom && areaBottom > iTop);
+                    return (areaLeft < i.position_x + itemW && areaRight > i.position_x && areaTop < i.position_y + itemH && areaBottom > i.position_y);
                 }).map(i => i.id);
 
+                // Find folders inside this project area
                 const containedFolders = folders.filter(f => {
                     if (f.parent_id) return false;
                     const fW = 200;
                     const fH = 100;
-                    const fLeft = f.position_x;
-                    const fRight = f.position_x + fW;
-                    const fTop = f.position_y;
-                    const fBottom = f.position_y + fH;
-
-                    return (areaLeft < fRight && areaRight > fLeft && areaTop < fBottom && areaBottom > fTop);
+                    return (areaLeft < f.position_x + fW && areaRight > f.position_x && areaTop < f.position_y + fH && areaBottom > f.position_y);
                 }).map(f => f.id);
 
-                setDraggedProjectContents([...contained, ...containedFolders]);
+                allContainedIds.push(...contained, ...containedFolders);
             }
-        } else {
-            setDraggedProjectContents([]);
-        }
+        });
+
+        // Deduplicate
+        setDraggedProjectContents([...new Set(allContainedIds)]);
     };
 
     const handleDragMove = (event: DragMoveEvent) => {
@@ -99,33 +95,29 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const currentScale = useCanvasStore.getState().scale;
         const currentSelectedIds = useItemsStore.getState().selectedIds;
 
-        // If dragging an item that is part of selection, move others too
+        const moveElement = (id: string) => {
+            const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
+            if (el) {
+                el.style.transform = `translate3d(${delta.x / currentScale}px, ${delta.y / currentScale}px, 0)`;
+                el.style.zIndex = '1000';
+            }
+        };
+
+        // Move Selected Items
         if (currentSelectedIds.includes(active.id as string)) {
             currentSelectedIds.forEach(id => {
-                if (id === active.id) return; // dnd-kit handles this one via Overlay (visually)
-
-                // Try finding item or folder
-                const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
-                if (el) {
-                    el.style.transform = `translate3d(${delta.x / currentScale}px, ${delta.y / currentScale}px, 0)`;
-                    el.style.zIndex = '1000'; // Lift up while dragging
-                }
+                if (id === active.id) return; // Handled by overlay if active, but wait... dnd-kit usually handles active via transform. 
+                // Actually dnd-kit modifies the `transform` prop passed to useDraggable. 
+                // For multi-drag, we manually move the OTHERS.
+                moveElement(id);
             });
         }
 
-        // If dragging a Project Area, move contained items
-        if (active.data.current?.type === 'project') {
-            draggedProjectContents.forEach(id => {
-                // Prevent double-movement: If item is selected, it's already moved by the block above
-                if (currentSelectedIds.includes(id as string)) return;
-
-                const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
-                if (el) {
-                    el.style.transform = `translate3d(${delta.x / currentScale}px, ${delta.y / currentScale}px, 0)`;
-                    el.style.zIndex = '1000'; // Lift up while dragging to match project area
-                }
-            });
-        }
+        // Move Contained Items (that aren't already selected)
+        draggedProjectContents.forEach(id => {
+            if (currentSelectedIds.includes(id as string)) return; // Already moved above
+            moveElement(id);
+        });
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -133,29 +125,19 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const currentScale = useCanvasStore.getState().scale;
         const currentSelectedIds = useItemsStore.getState().selectedIds;
 
-        // Clear manual transforms for Selection
-        if (currentSelectedIds.includes(active.id as string)) {
-            currentSelectedIds.forEach(id => {
-                if (id === active.id) return;
-                const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
-                if (el) {
-                    el.style.transform = '';
-                    el.style.zIndex = '';
-                }
-            });
-        }
+        // Cleanup transforms
+        const clearTransform = (id: string) => {
+            const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
+            if (el) {
+                el.style.transform = '';
+                el.style.zIndex = '';
+            }
+        };
 
-        // Clear manual transforms for Project Contents
-        if (active.data.current?.type === 'project') {
-            draggedProjectContents.forEach(id => {
-                if (currentSelectedIds.includes(id as string)) return;
-                const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
-                if (el) {
-                    el.style.transform = '';
-                    el.style.zIndex = '';
-                }
-            });
+        if (currentSelectedIds.includes(active.id as string)) {
+            currentSelectedIds.forEach(id => { if (id !== active.id) clearTransform(id); });
         }
+        draggedProjectContents.forEach(id => { if (!currentSelectedIds.includes(id as string)) clearTransform(id); });
 
         setActiveId(null);
         setActiveItem(null);
@@ -216,6 +198,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const dy = delta.y / currentScale;
 
         const updates: { id: string, type: 'item' | 'folder', x: number, y: number }[] = [];
+        const processedIds = new Set<string>();
         const PADDING = 20;
 
         // Canvas Boundaries (must match Canvas.tsx)
@@ -321,71 +304,91 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             return { w: isFolder ? 200 : 280, h: 100 }; // Fallbacks
         };
 
-        // Check if the dragged item is part of the current selection
-        if (currentSelectedIds.includes(active.id as string)) {
-            currentSelectedIds.forEach(id => {
-                const item = items.find(i => i.id === id);
-                if (item) {
-                    const dims = getElementDims(id, false);
-                    const { x, y } = calculateConstrainedPosition(item.position_x + dx, item.position_y + dy, dims.w, dims.h);
-                    updates.push({ id, type: 'item', x, y });
-                    return;
-                }
-                const folder = folders.find(f => f.id === id);
-                if (folder) {
-                    const dims = getElementDims(id, true);
-                    const { x, y } = calculateConstrainedPosition(folder.position_x + dx, folder.position_y + dy, dims.w, dims.h);
-                    updates.push({ id, type: 'folder', x, y });
-                }
-            });
-        } else if (activeData.type === 'project') {
-            // Move Project Area
-            const newX = activeData.position_x + dx;
-            const newY = activeData.position_y + dy;
+        const movingIds = currentSelectedIds.includes(active.id as string)
+            ? currentSelectedIds
+            : [active.id as string];
 
-            // Constrain project area itself to canvas
-            const pw = activeData.metadata?.width || 300;
-            const ph = activeData.metadata?.height || 200;
-            const canvasMinX = -HALF_WIDTH + PADDING;
-            const canvasMaxX = HALF_WIDTH - PADDING - pw;
-            const canvasMinY = -HALF_HEIGHT + PADDING;
-            const canvasMaxY = HALF_HEIGHT - PADDING - ph;
+        // Identify "Root" movers - items that are NOT implicitly moved by a selected project area
+        const rootIds = movingIds.filter(id => !draggedProjectContents.includes(id));
 
-            let safeX = newX;
-            let safeY = newY;
-            if (canvasMinX <= canvasMaxX) safeX = Math.max(canvasMinX, Math.min(safeX, canvasMaxX));
-            if (canvasMinY <= canvasMaxY) safeY = Math.max(canvasMinY, Math.min(safeY, canvasMaxY));
+        rootIds.forEach(id => {
+            if (processedIds.has(id)) return;
 
-            updates.push({ id: active.id as string, type: 'item', x: safeX, y: safeY });
+            const item = items.find(i => i.id === id);
+            const folder = folders.find(f => f.id === id);
 
-            // Calculate shift for contained items
-            const shiftX = safeX - activeData.position_x;
-            const shiftY = safeY - activeData.position_y;
+            if (item && item.type === 'project') {
+                // Handle Project Area Movement (Constrained to Canvas only)
+                const pw = item.metadata?.width || 300;
+                const ph = item.metadata?.height || 200;
+                const canvasMinX = -HALF_WIDTH + PADDING;
+                const canvasMaxX = HALF_WIDTH - PADDING - pw;
+                const canvasMinY = -HALF_HEIGHT + PADDING;
+                const canvasMaxY = HALF_HEIGHT - PADDING - ph;
 
-            // Move Contained Items
-            draggedProjectContents.forEach(id => {
-                if (currentSelectedIds.includes(id as string)) return; // Already moved by selection block
-                const item = items.find(i => i.id === id);
-                if (item) {
-                    updates.push({ id, type: 'item', x: item.position_x + shiftX, y: item.position_y + shiftY });
-                    return;
-                }
-                const folder = folders.find(f => f.id === id);
-                if (folder) {
-                    updates.push({ id, type: 'folder', x: folder.position_x + shiftX, y: folder.position_y + shiftY });
-                }
-            });
-        } else {
-            if (activeData.type === 'folder') {
-                const dims = getElementDims(active.id as string, true);
-                const { x, y } = calculateConstrainedPosition(activeData.position_x + dx, activeData.position_y + dy, dims.w, dims.h);
-                updates.push({ id: active.id as string, type: 'folder', x, y });
+                let safeX = item.position_x + dx;
+                let safeY = item.position_y + dy;
+                if (canvasMinX <= canvasMaxX) safeX = Math.max(canvasMinX, Math.min(safeX, canvasMaxX));
+                if (canvasMinY <= canvasMaxY) safeY = Math.max(canvasMinY, Math.min(safeY, canvasMaxY));
+
+                updates.push({ id, type: 'item', x: safeX, y: safeY });
+                processedIds.add(id);
+
+                // Calculate actual shift
+                const shiftX = safeX - item.position_x;
+                const shiftY = safeY - item.position_y;
+
+                // Move Contents Rigidly
+                // We need to re-find contents for THIS specific project to apply the shift
+                // (Since draggedProjectContents is global for all selected projects)
+                const areaLeft = item.position_x;
+                const areaRight = item.position_x + (item.metadata.width || 300);
+                const areaTop = item.position_y;
+                const areaBottom = item.position_y + (item.metadata.height || 200);
+
+                const contents = items.filter(i => {
+                    if (i.id === item.id || i.folder_id || i.type === 'project') return false;
+                    const itemW = i.metadata?.width || 250;
+                    const itemH = i.metadata?.height || 100;
+                    return (areaLeft < i.position_x + itemW && areaRight > i.position_x && areaTop < i.position_y + itemH && areaBottom > i.position_y);
+                });
+
+                const contentFolders = folders.filter(f => {
+                    if (f.parent_id) return false;
+                    const fW = 200;
+                    const fH = 100;
+                    return (areaLeft < f.position_x + fW && areaRight > f.position_x && areaTop < f.position_y + fH && areaBottom > f.position_y);
+                });
+
+                [...contents, ...contentFolders].forEach(c => {
+                    if (!processedIds.has(c.id)) {
+                        updates.push({
+                            id: c.id,
+                            type: 'parent_id' in c ? 'folder' : 'item',
+                            x: c.position_x + shiftX,
+                            y: c.position_y + shiftY
+                        });
+                        processedIds.add(c.id);
+                    }
+                });
+
             } else {
-                const dims = getElementDims(active.id as string, false);
-                const { x, y } = calculateConstrainedPosition(activeData.position_x + dx, activeData.position_y + dy, dims.w, dims.h);
-                updates.push({ id: active.id as string, type: 'item', x, y });
+                // Handle Normal Item/Folder Movement (Constrained/Snapped)
+                const dims = getElementDims(id, !!folder);
+                const startX = item ? item.position_x : folder!.position_x;
+                const startY = item ? item.position_y : folder!.position_y;
+
+                const { x, y } = calculateConstrainedPosition(startX + dx, startY + dy, dims.w, dims.h);
+
+                updates.push({
+                    id,
+                    type: item ? 'item' : 'folder',
+                    x,
+                    y
+                });
+                processedIds.add(id);
             }
-        }
+        });
 
         if (updates.length > 0) {
             updatePositions(updates);

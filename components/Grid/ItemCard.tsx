@@ -135,7 +135,6 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         e.stopPropagation();
         lockItem(localItem.id);
         reLockVaulted(localItem.id);
-        lock(); // Ensure vault is locked when specifically re-locking an item
     };
 
     const handleTitleSave = (e?: React.FormEvent) => {
@@ -193,12 +192,14 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <button
                 onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     if (isVaulted && !isObscured) {
                         handleLockItem(e);
                     } else if (!isVaulted) {
-                        handleVaultToggle(e);
+                        handleVaultToggle(e); // This now opens the modal if needed
                     }
                 }}
+                onPointerDown={e => e.stopPropagation()}
                 data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
                 data-tooltip-pos="bottom"
             >
@@ -421,10 +422,14 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     }}
                     onClick={(e) => {
                         e.stopPropagation();
+                        // If it's locked (obscured), do NOTHING on the card click itself.
+                        // The user must click the dedicated Unlock button or context menu.
                         if (isObscured) return;
 
+                        // Enter Room
                         useItemsStore.getState().setCurrentRoomId(localItem.id);
-                        useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                        // Reset view for new room
+                        useCanvasStore.getState().setPosition(0, 0);
                         useCanvasStore.getState().setScale(1);
                     }}
                 >

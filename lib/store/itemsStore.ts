@@ -157,6 +157,9 @@ interface ItemsState {
     refreshItem: (id: string) => Promise<void>;
     isLimitExceeded: boolean;
     setIsLimitExceeded: (val: boolean) => void;
+    vaultedItemsRevealed: string[]; // IDs of items currently "peeked" with password
+    revealVaulted: (id: string) => Promise<void>;
+    reLockVaulted: (id: string) => void;
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -171,6 +174,27 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     setLoading: (loading) => set({ loading }),
     isLimitExceeded: false,
     setIsLimitExceeded: (val) => set({ isLimitExceeded: val }),
+    vaultedItemsRevealed: [],
+
+    revealVaulted: async (id: string) => {
+        try {
+            const { data, error } = await supabase.from('items').select('content').eq('id', id).single();
+            if (data && !error) {
+                set(state => ({
+                    vaultedItemsRevealed: [...state.vaultedItemsRevealed, id],
+                    items: state.items.map(i => i.id === id ? { ...i, content: data.content } : i)
+                }));
+            }
+        } catch (e) {
+            console.error('[Store] revealVaulted failed:', e);
+        }
+    },
+
+    reLockVaulted: (id: string) => {
+        set(state => ({
+            vaultedItemsRevealed: state.vaultedItemsRevealed.filter(i => i !== id)
+        }));
+    },
 
     setItems: (items) => set({ items }),
 
@@ -189,20 +213,27 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             }
 
             const currentRoomId = get().currentRoomId;
+            const revealedItems = get().vaultedItemsRevealed;
+
+            // Get persisted vault state from the OTHER store
+            const vaultStore = (window as any).__VAULT_STORE__ || null;
+            const persistedUnlockedIds = vaultStore?.getState()?.unlockedIds || [];
+            const isVaultLockedGlobal = vaultStore?.getState()?.isVaultLocked ?? true;
 
             // Parallel fetch for speed
-            // If in a room, only fetch items for that room. 
+            // If in a room, only fetch items for that room.
             // If not, fetch items where room_id IS NULL or not set.
             let dbItemsReq = supabase.from('items').select('*');
             let dbFoldersReq = supabase.from('folders').select('*');
 
             if (currentRoomId) {
-                dbItemsReq = dbItemsReq.eq('room_id', currentRoomId);
-                dbFoldersReq = dbFoldersReq.eq('room_id', currentRoomId);
+                // Fetch items for this room OR global items (inbox/archived)
+                dbItemsReq = dbItemsReq.or(`room_id.eq.${currentRoomId},status.eq.inbox,status.eq.archived`);
+                dbFoldersReq = dbFoldersReq.or(`room_id.eq.${currentRoomId},status.eq.archived`);
             } else {
-                // Main canvas: items where room_id is NULL
-                dbItemsReq = dbItemsReq.is('room_id', null);
-                dbFoldersReq = dbFoldersReq.is('room_id', null);
+                // Main canvas: items where room_id is NULL or global items
+                dbItemsReq = dbItemsReq.or(`room_id.is.null,status.eq.inbox,status.eq.archived`);
+                dbFoldersReq = dbFoldersReq.or(`room_id.is.null,status.eq.archived`);
             }
 
             const [itemsRes, foldersRes] = await Promise.all([dbItemsReq, dbFoldersReq]);
@@ -211,7 +242,6 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 set(state => {
                     const localSyncing = state.items.filter(i => i.syncStatus === 'syncing');
                     const remoteItems = itemsRes.data as Item[];
-                    // Prefer local syncing items over remote if IDs match (shouldn't happen with UUIDs, but just in case)
                     const filteredRemote = remoteItems.filter(ri => !localSyncing.find(li => li.id === ri.id));
                     return { items: [...filteredRemote, ...localSyncing] };
                 });
@@ -1047,6 +1077,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                             items: state.items.map(i => i.id === data.id ? { ...i, ...finalItem } : i)
                         };
                     }
+
                     return { items: [...state.items, finalItem as Item] };
                 });
             } else if (payload.eventType === 'DELETE') {

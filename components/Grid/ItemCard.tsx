@@ -53,7 +53,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const [localItem, setLocalItem] = React.useState(item);
     const pollTimer = React.useRef<any>(null);
     const { isVaultLocked, setModalOpen, hasPassword, lock, unlockedIds, lockItem } = useVaultStore();
-    const { toggleVaultItem, duplicateItem, removeItem, archiveItem } = useItemsStore();
+    const { toggleVaultItem, duplicateItem, removeItem, archiveItem, vaultedItemsRevealed, reLockVaulted } = useItemsStore();
     const { scale } = useCanvasStore();
 
     React.useEffect(() => {
@@ -113,7 +113,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     };
 
     const isVaulted = localItem.is_vaulted;
-    const isObscured = isVaulted && !unlockedIds.includes(localItem.id);
+    const isObscured = isVaulted && isVaultLocked && !unlockedIds.includes(localItem.id) && !vaultedItemsRevealed.includes(localItem.id);
 
     const handleVaultToggle = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -134,6 +134,8 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const handleLockItem = (e: React.MouseEvent) => {
         e.stopPropagation();
         lockItem(localItem.id);
+        reLockVaulted(localItem.id);
+        lock(); // Ensure vault is locked when specifically re-locking an item
     };
 
     const handleTitleSave = (e?: React.FormEvent) => {
@@ -151,15 +153,16 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <button
                 onClick={(e) => {
                     e.stopPropagation();
-                    if (isVaulted && !isObscured) handleLockItem(e);
-                    else if (isObscured) setModalOpen(true, item.id);
-                    else handleVaultToggle(e);
+                    if (isVaulted && !isObscured) {
+                        handleLockItem(e);
+                    } else if (!isVaulted) {
+                        handleVaultToggle(e);
+                    }
                 }}
-                data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Idea" : "Lock in Vault"))}
+                data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
                 data-tooltip-pos="bottom"
-                className={clsx(isVaulted && styles.vaultedAction)}
             >
-                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <LockIcon size={12} style={{ color: 'var(--accent)' }} /> : (isVaulted ? <LockIcon size={12} className="text-secondary" style={{ color: 'var(--accent)' }} /> : <LockIcon size={12} />))}
+                <LockIcon size={12} />
             </button>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
             <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom"><Copy size={12} /></button>
@@ -190,15 +193,16 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <button
                 onClick={(e) => {
                     e.stopPropagation();
-                    if (isVaulted && !isObscured) handleLockItem(e);
-                    else if (isObscured) setModalOpen(true, localItem.id);
-                    else handleVaultToggle(e);
+                    if (isVaulted && !isObscured) {
+                        handleLockItem(e);
+                    } else if (!isVaulted) {
+                        handleVaultToggle(e);
+                    }
                 }}
-                data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Idea" : "Lock in Vault"))}
+                data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
                 data-tooltip-pos="bottom"
-                className={clsx(isVaulted && styles.vaultedAction)}
             >
-                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <LockIcon size={12} style={{ color: 'var(--accent)' }} /> : (isVaulted ? <LockIcon size={12} className="text-secondary" style={{ color: 'var(--accent)' }} /> : <LockIcon size={12} />))}
+                <LockIcon size={12} />
             </button>
             <button
                 onClick={handleDeleteClick}
@@ -244,6 +248,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 {...listeners} {...attributes}
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
+                onContextMenu={isObscured ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
             >
                 <div className={styles.innerCard}>
                     <div className={styles.videoHeader}>
@@ -289,6 +294,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 {...listeners} {...attributes}
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
+                onContextMenu={isObscured ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
             >
                 <div className={styles.innerCard}>
                     <div className={styles.captureThumbWrapper}>
@@ -346,6 +352,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 {...listeners} {...attributes}
                 onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onClick={onClick}
+                onContextMenu={isObscured ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
             >
                 <div className={styles.innerCard}>
                     <div className={styles.header}>
@@ -404,6 +411,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 style={finalStyle}
                 {...listeners}
                 {...attributes}
+                onContextMenu={isObscured ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
             >
                 <div
                     className={styles.portalCard}
@@ -413,17 +421,15 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     }}
                     onClick={(e) => {
                         e.stopPropagation();
-                        if (isObscured) {
-                            setModalOpen(true, localItem.id);
-                        } else {
-                            useItemsStore.getState().setCurrentRoomId(localItem.id);
-                            useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                            useCanvasStore.getState().setScale(1);
-                        }
+                        if (isObscured) return;
+
+                        useItemsStore.getState().setCurrentRoomId(localItem.id);
+                        useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                        useCanvasStore.getState().setScale(1);
                     }}
                 >
                     {/* The Inside (Revealed when door opens) */}
-                    <div className={clsx(styles.roomInside, isObscured && styles.obscuredInside)}>
+                    <div className={styles.roomInside}>
                         <div className={styles.roomInsideGlow}>
                             <DoorOpen size={32} className="mb-2" />
                             <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Enter Room</span>
@@ -500,6 +506,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 listeners?.onPointerDown?.(e);
             }}
             onClick={onClick}
+            onContextMenu={isObscured ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
         >
             <div className={styles.innerCard}>
                 <div className={styles.header}>
@@ -543,10 +550,12 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     ) : (
                         <div className={clsx(styles.textContent, isObscured && "select-none")}>
                             {(() => {
+                                if (!localItem.content) return <span className="opacity-30">No content yet</span>;
+
                                 if (localItem.content.startsWith('[')) {
                                     try {
                                         const blocks = JSON.parse(localItem.content);
-                                        // Richer preview: map blocks and render simple HTML snippets or joining text
+                                        // Richer preview
                                         return <div className={styles.richPreview}>
                                             {blocks.slice(0, 3).map((b: any, i: number) => {
                                                 const text = Array.isArray(b.content)
@@ -561,13 +570,15 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                                             {blocks.length > 3 && <div className="text-[10px] text-zinc-600 mt-1 italic">... more</div>}
                                         </div>
                                     } catch {
-                                        return "Invalid Content";
+                                        return localItem.content; // Fallback to raw text if it's not JSON
                                     }
                                 }
                                 return localItem.content;
                             })()}
                         </div>
                     )}
+
+
                     <div className={styles.captureFooter} style={{ padding: isImage ? '8px 12px' : '4px 0 0 0' }}>
                         <span className={styles.cardDate}>{new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         <SyncIndicator />

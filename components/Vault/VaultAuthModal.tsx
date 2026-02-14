@@ -26,6 +26,8 @@ interface VaultState {
     setIsVaultLocked: (isLocked: boolean) => void;
     changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
     removePassword: (password: string) => Promise<boolean>;
+    _hasHydrated: boolean;
+    setHasHydrated: (val: boolean) => void;
 }
 
 export const useVaultStore = create<VaultState>()(
@@ -39,6 +41,9 @@ export const useVaultStore = create<VaultState>()(
 
             setModalOpen: (open: boolean, targetId: string | null = null) =>
                 set({ isModalOpen: open, modalTargetId: targetId }),
+
+            _hasHydrated: false,
+            setHasHydrated: (val) => set({ _hasHydrated: val }),
 
             checkVaultStatus: async () => {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -133,9 +138,17 @@ export const useVaultStore = create<VaultState>()(
         {
             name: 'vault-storage',
             partialize: (state) => ({ unlockedIds: state.unlockedIds, isVaultLocked: state.isVaultLocked }),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            }
         }
     )
 );
+
+// Expose store for cross-store logic (Plan A Security)
+if (typeof window !== 'undefined') {
+    (window as any).__VAULT_STORE__ = useVaultStore;
+}
 
 async function sha256(message: string) {
     const msgBuffer = new TextEncoder().encode(message);
@@ -185,7 +198,13 @@ export default function VaultAuthModal({ onClose, onSuccess }: { onClose: () => 
             }
 
             if (success) {
-                // toast.success(modalTargetId ? "Item unlocked" : "Vault unlocked");
+                // Plan A: Trigger store to fetch real content for the target
+                if (modalTargetId) {
+                    await useItemsStore.getState().revealVaulted(modalTargetId);
+                } else {
+                    // Refreshing the data if the whole vault is unlocked
+                    await useItemsStore.getState().fetchData();
+                }
                 onSuccess?.();
                 onClose();
             } else {

@@ -64,7 +64,7 @@ export default function AccountMenu() {
     return (
         <div className={styles.container} ref={containerRef}>
             <div className={styles.controls}>
-                <NotificationCenter />
+
                 <button
                     className={styles.themeToggle}
                     onClick={toggleTheme}

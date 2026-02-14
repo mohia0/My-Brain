@@ -553,6 +553,59 @@
     min-height: 400px;
     display: flex;
     flex-direction: column;
+    position: relative;
+}
+
+.lockedEditorOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--modal-bg);
+    z-index: 100;
+    text-align: center;
+    padding: 40px;
+    gap: 16px;
+    backdrop-filter: blur(8px);
+}
+
+.lockedIconLarge {
+    color: var(--accent);
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 20px var(--accent-glow));
+}
+
+.lockedEditorOverlay h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-bright);
+}
+
+.lockedEditorOverlay p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+.unlockModalBtn {
+    margin-top: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.unlockModalBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--accent-glow);
 }
 
 .editorWrapper>div {

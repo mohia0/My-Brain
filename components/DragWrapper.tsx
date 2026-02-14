@@ -167,7 +167,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         if (activeData.type !== 'folder' && over && over.data.current?.type === 'folder' && activeData.type !== 'inbox-item') {
             updateItemContent(active.id as string, {
                 folder_id: over.id as string,
-                status: 'active'
+                status: 'active',
+                room_id: over.data.current?.room_id || null
             });
             return;
         }
@@ -185,7 +186,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             updateItemContent(active.id as string, {
                 position_x: dropX,
                 position_y: dropY,
-                status: 'active'
+                status: 'active',
+                room_id: useItemsStore.getState().currentRoomId || null
             });
             return;
         }

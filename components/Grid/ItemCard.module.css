@@ -366,7 +366,6 @@
 }
 
 .obscured {
-    position: relative;
     overflow: hidden;
 }
 
@@ -403,28 +402,27 @@
     transform: rotateY(0) !important;
 }
 
-.obscuredInside>* {
-    display: none !important;
-}
-
 .obscured .header,
 .obscured .videoHeader,
 .obscured .roomInfo,
 .obscured .captureTitle,
 .obscured .title,
 .obscured .doorTitle {
-    opacity: 1 !important;
     filter: none !important;
-    z-index: 20;
-    position: relative;
+    opacity: 0.8 !important;
+    pointer-events: none !important;
+    color: var(--text-dim) !important;
 }
 
-.obscured .captureInfo>*:not(.captureTitle),
-.obscured .captureFooter,
+.obscured .captureInfo {
+    filter: none !important;
+}
+
 .obscured .captureDesc,
-.obscured .captureDomain {
-    filter: blur(10px);
-    opacity: 0.3;
+.obscured .captureDomain,
+.obscured .captureFooter {
+    filter: blur(12px);
+    opacity: 0.2;
 }
 
 .obscured .doorLock {
@@ -489,10 +487,7 @@
     transform: translate(-50%, -50%) scale(0.95);
 }
 
-.vaultedAction {
-    background: var(--accent-glow) !important;
-    color: var(--accent) !important;
-}
+
 
 .richPreview p {
     margin: 0;

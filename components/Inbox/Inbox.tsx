@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Inbox as InboxIcon, ChevronRight, ChevronLeft, RefreshCw, Trash2 } from 'lucide-react';
+import { Inbox as InboxIcon, ChevronRight, ChevronLeft } from 'lucide-react';
 import styles from './Inbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useDroppable } from '@dnd-kit/core';
@@ -11,9 +11,7 @@ interface InboxProps {
 }
 
 export default function Inbox({ onItemClick }: InboxProps) {
-    const { items, fetchData, clearInbox } = useItemsStore();
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [showConfirmClear, setShowConfirmClear] = useState(false);
+    const { items } = useItemsStore();
     const inboxItems = items.filter(i => i.status === 'inbox')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -22,15 +20,16 @@ export default function Inbox({ onItemClick }: InboxProps) {
         data: { type: 'inbox-drop-zone' }
     });
 
-    const [isCollapsed, setIsCollapsed] = useState(false);
-
-    // Auto-hide confirm after delay
-    useEffect(() => {
-        if (showConfirmClear) {
-            const timer = setTimeout(() => setShowConfirmClear(false), 3000);
-            return () => clearTimeout(timer);
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('inbox-collapsed') === 'true';
         }
-    }, [showConfirmClear]);
+        return false;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('inbox-collapsed', isCollapsed.toString());
+    }, [isCollapsed]);
 
     return (
         <div
@@ -52,45 +51,6 @@ export default function Inbox({ onItemClick }: InboxProps) {
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
                     </button>
-                    {!isCollapsed && (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                                className={styles.refreshBtn}
-                                data-tooltip="Refresh Inbox"
-                                data-tooltip-pos="bottom"
-                                onClick={async (e) => {
-                                    e.stopPropagation();
-                                    setIsRefreshing(true);
-                                    await fetchData();
-                                    setTimeout(() => setIsRefreshing(false), 600);
-                                }}
-                            >
-                                <RefreshCw size={14} className={clsx(isRefreshing && styles.spinning)} />
-                            </button>
-                            {inboxItems.length > 0 && (
-                                <button
-                                    className={clsx(styles.clearBtn, showConfirmClear && styles.confirmClear)}
-                                    data-tooltip={showConfirmClear ? "Confirm Clear" : "Clear All Inbox"}
-                                    data-tooltip-pos="bottom"
-                                    onClick={async (e) => {
-                                        e.stopPropagation();
-                                        if (showConfirmClear) {
-                                            await clearInbox();
-                                            setShowConfirmClear(false);
-                                        } else {
-                                            setShowConfirmClear(true);
-                                        }
-                                    }}
-                                >
-                                    {showConfirmClear ? (
-                                        <span className={styles.sureText}>Sure?</span>
-                                    ) : (
-                                        <Trash2 size={14} />
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                    )}
                 </div>
                 <div className={styles.headerTitle}>
                     <div style={{ position: 'relative', display: 'flex' }}>

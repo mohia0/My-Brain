@@ -127,11 +127,13 @@ export default function Home() {
     }
   }, [session, showLoading, initializing]);
 
+  const _hasHydrated = useVaultStore(state => state._hasHydrated);
+
   useEffect(() => {
-    if (session && !isInitializingRef.current) {
+    if (session && !isInitializingRef.current && _hasHydrated) {
       fetchData();
     }
-  }, [currentRoomId, session, fetchData]);
+  }, [currentRoomId, session, fetchData, _hasHydrated]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -285,7 +287,16 @@ export default function Home() {
                       <ItemCard
                         key={item.id}
                         item={item}
-                        onClick={item.type === 'room' ? undefined : () => setSelectedItemId(item.id)}
+                        onClick={item.type === 'room' ? undefined : () => {
+                          const isRevealedLocal = useItemsStore.getState().vaultedItemsRevealed.includes(item.id);
+                          const isUnlockedGlobal = !useVaultStore.getState().isVaultLocked;
+                          const isUnlockedIndividual = useVaultStore.getState().unlockedIds.includes(item.id);
+                          const isObscured = item.is_vaulted && !isRevealedLocal && !isUnlockedGlobal && !isUnlockedIndividual;
+
+                          if (!isObscured) {
+                            setSelectedItemId(item.id);
+                          }
+                        }}
                         isLocked={isInsideLockedArea(item.position_x, item.position_y, item.metadata?.width || 280, item.metadata?.height || (item.type === 'room' ? 280 : 120))}
                       />
                     ))}

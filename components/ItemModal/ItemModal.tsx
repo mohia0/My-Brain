@@ -136,6 +136,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
         saveTimeoutRef.current = setTimeout(async () => {
+            // Plan A Security: NEVER save if the content is currently the protection placeholder
+            if (content.includes('[PROTECTED CONTENT]')) {
+                return;
+            }
+
             setIsSaving(true);
             try {
                 await updateItemContent(item.id, {

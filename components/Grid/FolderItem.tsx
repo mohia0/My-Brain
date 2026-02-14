@@ -53,7 +53,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
     const { toggleVaultFolder } = useItemsStore();
 
     const isVaulted = folder.is_vaulted;
-    const isObscured = isVaulted && !unlockedIds.includes(folder.id);
+    const isObscured = isVaulted && isVaultLocked && !unlockedIds.includes(folder.id);
 
     const handleDeleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -90,9 +90,8 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
                 onClick={isVaulted && !isObscured ? handleLockFolder : (isObscured ? (e) => { e.stopPropagation(); setModalOpen(true, folder.id); } : handleVaultToggle)}
                 data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Folder" : "Lock Folder"))}
                 data-tooltip-pos="bottom"
-                className={clsx(isVaulted && styles.vaultedAction)}
             >
-                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <FolderIcon size={12} style={{ color: 'var(--accent)' }} /> : (isVaulted ? <FolderIcon size={12} style={{ color: 'var(--accent)' }} /> : <Lock size={12} />))}
+                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <FolderIcon size={12} /> : (isVaulted ? <FolderIcon size={12} /> : <Lock size={12} />))}
             </button>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
             <button

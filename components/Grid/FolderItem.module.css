@@ -289,8 +289,3 @@
 .folder.obscured:hover {
     box-shadow: none;
 }
-
-.vaultedAction {
-    background: var(--accent-glow) !important;
-    color: var(--accent) !important;
-}

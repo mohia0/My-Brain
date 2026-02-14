@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import styles from './AccountMenu.module.css';
 import { LogOut, User, Sun, Moon, Download } from 'lucide-react';
+import NotificationCenter from './NotificationCenter';
 
 export default function AccountMenu() {
     const [isOpen, setIsOpen] = useState(false);
@@ -63,6 +64,7 @@ export default function AccountMenu() {
     return (
         <div className={styles.container} ref={containerRef}>
             <div className={styles.controls}>
+                <NotificationCenter />
                 <button
                     className={styles.themeToggle}
                     onClick={toggleTheme}

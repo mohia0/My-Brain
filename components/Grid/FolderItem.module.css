@@ -245,3 +245,52 @@
     font-size: 0.75rem;
     font-weight: 500;
 }
+
+.obscured .mainBody,
+.obscured .tab {
+    filter: blur(12px) grayscale(0.4);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.obscured .header {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+.revealButton {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--accent);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px var(--accent-glow);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.revealButton:hover {
+    transform: translate(-50%, -50%) scale(1.05);
+    background: var(--accent-light);
+    box-shadow: 0 6px 16px var(--accent-glow);
+}
+
+.folder.obscured:hover {
+    box-shadow: none;
+}
+
+.vaultedAction {
+    background: var(--accent-glow) !important;
+    color: var(--accent) !important;
+}

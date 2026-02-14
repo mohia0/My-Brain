@@ -3,11 +3,12 @@
 import React, { forwardRef } from 'react';
 import styles from './ItemCard.module.css';
 import { Item } from '@/types';
-import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play } from 'lucide-react';
+import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorOpen, ArrowRight, Unlock, Edit3 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { supabase } from '@/lib/supabase';
+import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
 
 interface ItemCardProps {
@@ -46,9 +47,14 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     listeners
 }, ref) => {
     const [isDeleting, setIsDeleting] = React.useState(false);
+    const [isEditingTitle, setIsEditingTitle] = React.useState(false);
+    const [tempTitle, setTempTitle] = React.useState(item.metadata?.title || '');
     const [imageError, setImageError] = React.useState(false);
     const [localItem, setLocalItem] = React.useState(item);
-    const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
+    const pollTimer = React.useRef<any>(null);
+    const { isVaultLocked, setModalOpen, hasPassword, lock, unlockedIds, lockItem } = useVaultStore();
+    const { toggleVaultItem, duplicateItem, removeItem, archiveItem } = useItemsStore();
+    const { scale } = useCanvasStore();
 
     React.useEffect(() => {
         setLocalItem(item);
@@ -106,8 +112,55 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         );
     };
 
+    const isVaulted = localItem.is_vaulted;
+    const isObscured = isVaulted && !unlockedIds.includes(localItem.id);
+
+    const handleVaultToggle = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        if (hasPassword !== true && !isVaulted) {
+            setModalOpen(true);
+            return;
+        }
+
+        await toggleVaultItem(localItem.id);
+
+        if (!isVaulted) {
+            // If we just vaulted it, make sure it stays blurred (locked) 
+            // for the individual view. The state change triggers a re-render.
+        }
+    };
+
+    const handleLockItem = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        lockItem(localItem.id);
+    };
+
+    const handleTitleSave = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (tempTitle.trim()) {
+            useItemsStore.getState().updateItemContent(item.id, {
+                metadata: { ...item.metadata, title: tempTitle.trim() }
+            });
+        }
+        setIsEditingTitle(false);
+    };
+
     const renderActions = () => (
         <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (isVaulted && !isObscured) handleLockItem(e);
+                    else if (isObscured) setModalOpen(true, item.id);
+                    else handleVaultToggle(e);
+                }}
+                data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Idea" : "Lock in Vault"))}
+                data-tooltip-pos="bottom"
+                className={clsx(isVaulted && styles.vaultedAction)}
+            >
+                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <LockIcon size={12} style={{ color: 'var(--accent)' }} /> : (isVaulted ? <LockIcon size={12} className="text-secondary" style={{ color: 'var(--accent)' }} /> : <LockIcon size={12} />))}
+            </button>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
             <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom"><Copy size={12} /></button>
             <button
@@ -122,6 +175,44 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         </div>
     );
 
+    const renderRoomActions = () => (
+        <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingTitle(true);
+                }}
+                data-tooltip="Rename"
+                data-tooltip-pos="bottom"
+            >
+                <Edit3 size={12} />
+            </button>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (isVaulted && !isObscured) handleLockItem(e);
+                    else if (isObscured) setModalOpen(true, localItem.id);
+                    else handleVaultToggle(e);
+                }}
+                data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Idea" : "Lock in Vault"))}
+                data-tooltip-pos="bottom"
+                className={clsx(isVaulted && styles.vaultedAction)}
+            >
+                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <LockIcon size={12} style={{ color: 'var(--accent)' }} /> : (isVaulted ? <LockIcon size={12} className="text-secondary" style={{ color: 'var(--accent)' }} /> : <LockIcon size={12} />))}
+            </button>
+            <button
+                onClick={handleDeleteClick}
+                data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
+                data-tooltip-pos="bottom"
+                className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
+                onMouseLeave={() => setIsDeleting(false)}
+            >
+                {isDeleting ? "Sure?" : <Trash2 size={12} />}
+            </button>
+        </div>
+    );
+
+
     const safeHostname = (url: string) => {
         if (!url || !url.startsWith('http')) return null;
         try { return new URL(url).hostname; } catch { return null; }
@@ -130,7 +221,8 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const baseClassName = clsx(
         styles.card,
         isSelected && styles.selected,
-        isDimmed && styles.dimmed
+        isDimmed && styles.dimmed,
+        isObscured && styles.obscured
     );
 
     const finalStyle = isOverlay ? {
@@ -170,7 +262,18 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         </div>
                     </div>
                 </div>
-                {renderActions()}
+                {isObscured && (
+                    <button
+                        className={styles.revealButton}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalOpen(true, localItem.id);
+                        }}
+                    >
+                        <Unlock size={14} /> UNLOCK
+                    </button>
+                )}
+                {!isObscured && renderActions()}
             </div>
         );
     }
@@ -210,10 +313,27 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         </div>
                     </div>
                 </div>
-                {renderActions()}
+                {isObscured && (
+                    <button
+                        className={styles.revealButton}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalOpen(true, localItem.id);
+                        }}
+                    >
+                        <Unlock size={14} /> UNLOCK
+                    </button>
+                )}
+                {!isObscured && renderActions()}
             </div>
         );
     }
+
+    // Room Portal (Grid)
+
+    // Vault Locked State
+    // We assume useVaultStore usage will be passed down or accessed via component but since ItemCardView is pure UI mostly,
+    // let's just handle visual blurring if is_vaulted prop is true (we will update ItemCard properties)
 
     // Simple Link (No Image)
     if (localItem.type === 'link') {
@@ -248,17 +368,132 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             {localItem.metadata?.description || "No description"}
                         </div>
                         <div className={styles.captureFooter}>
-                            <span className={styles.cardDate}>{new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <span className={styles.cardDate}>
+                                {localItem.updated_at
+                                    ? `Edited ${new Date(localItem.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+                                    : new Date(localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                                }
+                            </span>
                             <SyncIndicator />
                         </div>
                     </div>
                 </div>
-                {renderActions()}
+                {isObscured && (
+                    <button
+                        className={styles.revealButton}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalOpen(true, localItem.id);
+                        }}
+                    >
+                        <Unlock size={14} /> UNLOCK
+                    </button>
+                )}
+                {!isObscured && renderActions()}
             </div>
         );
     }
 
-    // Default (Image or Text Idea)
+    // Default (Image or Text Idea) or Room Door Visual
+    if ((localItem.type as string) === 'room') {
+        return (
+            <div
+                id={`draggable-item-${localItem.id}`}
+                ref={ref}
+                className={clsx(baseClassName, styles.roomCardOuter)}
+                style={finalStyle}
+                {...listeners}
+                {...attributes}
+            >
+                {/* External Actions - Moved to bottom */}
+                {!isObscured && (
+                    <div
+                        className={styles.roomActionsWrapper}
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {renderRoomActions()}
+                    </div>
+                )}
+
+                <div className={styles.portalCard}>
+                    {/* The Inside (Revealed when door opens) */}
+                    <div className={styles.roomInside} onPointerDown={e => e.stopPropagation()}>
+                        <div className={styles.roomInsideGlow}>
+                            <DoorOpen size={32} className="text-purple-400 mb-2" />
+                            <span className="text-[10px] font-bold text-purple-200 tracking-[0.2em] uppercase">Enter Room</span>
+                        </div>
+                        {/* Click Zone to Enter */}
+                        <button
+                            className="absolute inset-0 w-full h-full z-[100] cursor-pointer"
+                            onPointerDown={e => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                console.log("Enter room clicked");
+                                if (isObscured) {
+                                    setModalOpen(true, localItem.id);
+                                } else {
+                                    useItemsStore.getState().setCurrentRoomId(localItem.id);
+                                    useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                                    useCanvasStore.getState().setScale(1);
+                                }
+                            }}
+                        />
+                    </div>
+
+                    {/* The Door (Rotates) */}
+                    <div
+                        className={styles.roomDoor}
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={(e) => {
+                            // Clicking the door also enters
+                            e.stopPropagation();
+                            if (!isObscured) {
+                                useItemsStore.getState().setCurrentRoomId(localItem.id);
+                                useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                                useCanvasStore.getState().setScale(1);
+                            } else {
+                                setModalOpen(true, localItem.id);
+                            }
+                        }}
+                    >
+                        <div className={styles.doorPanel}>
+                            <div className={styles.doorFrameDesign} />
+                            <div className={styles.doorHandle} />
+
+                            {isEditingTitle ? (
+                                <form onSubmit={handleTitleSave} onClick={e => e.stopPropagation()} className="mt-8 z-20 w-full px-2">
+                                    <input
+                                        autoFocus
+                                        className="bg-black/50 border border-purple-500/50 rounded px-2 py-1 text-white text-center w-full outline-none text-xs"
+                                        value={tempTitle}
+                                        onChange={e => setTempTitle(e.target.value)}
+                                        onBlur={() => handleTitleSave()}
+                                    />
+                                </form>
+                            ) : (
+                                <h3
+                                    className={styles.doorTitle}
+                                    onDoubleClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditingTitle(true);
+                                    }}
+                                >
+                                    {localItem.metadata?.title || 'Mind Room'}
+                                </h3>
+                            )}
+                            <p className={styles.doorSubtitle}>MIND ROOM</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Floor Shadow */}
+                <div className={styles.doorShadow} />
+            </div>
+        );
+    }
+
     return (
         <div
             id={`draggable-item-${localItem.id}`}
@@ -313,16 +548,25 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             <div className={styles.noSnapshot}>No Snapshot</div>
                         )
                     ) : (
-                        <div className={styles.textContent}>
+                        <div className={clsx(styles.textContent, isObscured && "select-none")}>
                             {(() => {
                                 if (localItem.content.startsWith('[')) {
                                     try {
                                         const blocks = JSON.parse(localItem.content);
-                                        return blocks.map((b: any) =>
-                                            Array.isArray(b.content)
-                                                ? b.content.map((c: any) => c.text).join('')
-                                                : b.content || ''
-                                        ).join('\n') || "Empty Idea";
+                                        // Richer preview: map blocks and render simple HTML snippets or joining text
+                                        return <div className={styles.richPreview}>
+                                            {blocks.slice(0, 3).map((b: any, i: number) => {
+                                                const text = Array.isArray(b.content)
+                                                    ? b.content.map((c: any) => c.text).join('')
+                                                    : b.content || '';
+                                                if (!text) return null;
+                                                return <p key={i} className={clsx(
+                                                    "text-[13px] leading-relaxed mb-1",
+                                                    b.type === 'heading' ? "font-bold text-white/90" : "text-zinc-400"
+                                                )}>{text}</p>
+                                            })}
+                                            {blocks.length > 3 && <div className="text-[10px] text-zinc-600 mt-1 italic">... more</div>}
+                                        </div>
                                     } catch {
                                         return "Invalid Content";
                                     }
@@ -337,7 +581,18 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     </div>
                 </div>
             </div>
-            {renderActions()}
+            {isObscured && (
+                <button
+                    className={styles.revealButton}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setModalOpen(true, localItem.id);
+                    }}
+                >
+                    <Unlock size={14} /> UNLOCK
+                </button>
+            )}
+            {!isObscured && renderActions()}
         </div>
     );
 });

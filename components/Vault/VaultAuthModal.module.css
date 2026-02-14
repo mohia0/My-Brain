@@ -1,0 +1,224 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal {
+    background: rgba(13, 13, 15, 0.8);
+    backdrop-filter: blur(32px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 400px;
+    padding: 32px;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.iconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(168, 85, 247, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+    color: var(--accent);
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #71717a;
+    font-weight: 700;
+    margin: 2px 0 0 0;
+}
+
+.closeButton {
+    background: transparent;
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    color: #71717a;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.closeButton:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.description {
+    font-size: 0.875rem;
+    color: #a1a1aa;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+}
+
+.inputWrapper {
+    position: relative;
+}
+
+.input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px 50px 16px 20px;
+    color: white;
+    outline: none;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+
+.eyeButton {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #71717a;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.eyeButton:hover {
+    color: white;
+}
+
+.input:focus {
+    border-color: rgba(168, 85, 247, 0.5);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.error {
+    color: #f87171;
+    font-size: 0.75rem;
+    margin-top: 12px;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.error::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #f87171;
+    border-radius: 50%;
+}
+
+.footer {
+    display: flex;
+    gap: 12px;
+    padding-top: 8px;
+}
+
+.cancelButton {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #a1a1aa;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancelButton:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.submitButton {
+    flex: 2;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: white;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 8px 16px rgba(168, 85, 247, 0.2);
+}
+
+.submitButton:hover {
+    background: #9333ea;
+}
+
+.submitButton:active {
+    transform: scale(0.98);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

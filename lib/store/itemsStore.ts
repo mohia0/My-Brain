@@ -99,8 +99,12 @@ const getSafePosition = (
 };
 
 interface ItemsState {
+    // State
     items: Item[];
     folders: Folder[];
+    currentRoomId: string | null;  // New
+    setCurrentRoomId: (id: string | null) => void; // New
+
     setItems: (items: Item[]) => void;
     fetchData: (user?: any) => Promise<void>;
 
@@ -127,6 +131,9 @@ interface ItemsState {
     archiveSelected: () => void;
     isArchiveOpen: boolean;
     setArchiveOpen: (open: boolean) => void;
+
+    toggleVaultItem: (id: string) => Promise<void>;
+    toggleVaultFolder: (id: string) => Promise<void>;
 
     // Batch & History
     updatePositions: (updates: { id: string, type: 'item' | 'folder', x: number, y: number }[]) => void;
@@ -155,6 +162,8 @@ interface ItemsState {
 export const useItemsStore = create<ItemsState>((set, get) => ({
     items: [],
     folders: [],
+    currentRoomId: null,
+    setCurrentRoomId: (id) => set({ currentRoomId: id }),
     history: { past: [], future: [] },
     loading: false,
     realtimeStatus: 'disconnected',
@@ -179,11 +188,19 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 return;
             }
 
+            const currentRoomId = get().currentRoomId;
+
             // Parallel fetch for speed
-            const [itemsRes, foldersRes] = await Promise.all([
-                supabase.from('items').select('*'),
-                supabase.from('folders').select('*')
-            ]);
+            // If in a room, only fetch items for that room. If not, fetch items where room_id IS NULL
+            const dbItemsReq = currentRoomId
+                ? supabase.from('items').select('*').eq('room_id', currentRoomId)
+                : supabase.from('items').select('*').is('room_id', null);
+
+            const dbFoldersReq = currentRoomId
+                ? supabase.from('folders').select('*').eq('room_id', currentRoomId)
+                : supabase.from('folders').select('*').is('room_id', null);
+
+            const [itemsRes, foldersRes] = await Promise.all([dbItemsReq, dbFoldersReq]);
 
             if (itemsRes.data) {
                 set(state => {
@@ -207,25 +224,34 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     addItem: async (item) => {
         const state = get();
         const safePos = getSafePosition(item.id, item.position_x, item.position_y, item, state.items, state.folders);
-        const safeItem = { ...item, position_x: safePos.x, position_y: safePos.y, syncStatus: 'syncing' as const };
+
+        // Inject current room context
+        const finalItem = {
+            ...item,
+            position_x: safePos.x,
+            position_y: safePos.y,
+            syncStatus: 'syncing' as const,
+            room_id: state.currentRoomId || null, // Default to null if not in room
+            is_vaulted: item.is_vaulted || false,
+        };
 
         set((state) => ({
-            items: [...state.items, safeItem],
+            items: [...state.items, finalItem],
             history: {
-                past: [...state.history.past, { type: 'ADD_ITEM', item: safeItem }],
+                past: [...state.history.past, { type: 'ADD_ITEM', item: finalItem }],
                 future: []
             }
         }));
 
         // Use the ID provided in the item (e.g. from sharing) or fetch current user
-        let finalUserId = safeItem.user_id;
+        let finalUserId = finalItem.user_id;
         if (!finalUserId || finalUserId === 'unknown') {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) finalUserId = user.id;
         }
 
         if (finalUserId) {
-            const { syncStatus, ...dbItem } = safeItem;
+            const { syncStatus, ...dbItem } = finalItem;
 
             const { error } = await supabase.from('items').insert([{
                 ...dbItem,
@@ -238,23 +264,23 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 // Check for subscription limit error from PostgreSQL trigger (P0001 is RAISE EXCEPTION)
                 if (error.message?.includes('limit exceeded') || error.code === 'P0001') {
                     set(state => ({
-                        items: state.items.filter(i => i.id !== safeItem.id),
+                        items: state.items.filter(i => i.id !== finalItem.id),
                         isLimitExceeded: true
                     }));
                 } else {
                     set(state => ({
-                        items: state.items.map(i => i.id === safeItem.id ? { ...i, syncStatus: 'error' } : i)
+                        items: state.items.map(i => i.id === finalItem.id ? { ...i, syncStatus: 'error' } : i)
                     }));
                 }
             } else {
                 set(state => ({
-                    items: state.items.map(i => i.id === safeItem.id ? { ...i, syncStatus: 'synced' } : i)
+                    items: state.items.map(i => i.id === finalItem.id ? { ...i, syncStatus: 'synced' } : i)
                 }));
             }
         } else {
             console.error('[Store] Cannot persist item: user_id is missing');
             // Cleanup optimistic update if no user
-            set(state => ({ items: state.items.filter(i => i.id !== safeItem.id) }));
+            set(state => ({ items: state.items.filter(i => i.id !== finalItem.id) }));
         }
     },
 
@@ -411,7 +437,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     updateItemContent: async (id, updates) => {
         const state = get();
-        let finalUpdates = { ...updates };
+        // Add updated_at to track last edit
+        let finalUpdates = {
+            ...updates,
+            updated_at: new Date().toISOString()
+        };
 
         // If movement is involved (e.g. from Inbox) or item becomes active, resolve collisions
         const item = state.items.find(i => i.id === id);
@@ -433,6 +463,18 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         set(state => ({
             items: state.items.map(i => i.id === id ? { ...i, syncStatus: error ? 'error' : 'synced' } : i)
         }));
+    },
+
+    toggleVaultItem: async (id) => {
+        const item = get().items.find(i => i.id === id);
+        if (!item) return;
+        await get().updateItemContent(id, { is_vaulted: !item.is_vaulted });
+    },
+
+    toggleVaultFolder: async (id) => {
+        const folder = get().folders.find(f => f.id === id);
+        if (!folder) return;
+        await get().updateFolderContent(id, { is_vaulted: !folder.is_vaulted });
     },
 
     duplicateItem: async (id) => {
@@ -570,7 +612,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     addFolder: async (folder) => {
         const state = get();
         const safePos = getSafePosition(folder.id, folder.position_x, folder.position_y, folder, state.items, state.folders);
-        const safeFolder = { ...folder, position_x: safePos.x, position_y: safePos.y, syncStatus: 'syncing' as const };
+
+        const safeFolder = {
+            ...folder,
+            position_x: safePos.x,
+            position_y: safePos.y,
+            syncStatus: 'syncing' as const,
+            room_id: state.currentRoomId || null,
+            is_vaulted: folder.is_vaulted || false,
+        };
 
         set((state) => ({
             folders: [...state.folders, safeFolder],
@@ -653,7 +703,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     updateFolderContent: async (id, updates) => {
         const state = get();
-        let finalUpdates = { ...updates };
+        // Add updated_at for tracking last edit
+        let finalUpdates = {
+            ...updates,
+            updated_at: new Date().toISOString()
+        };
 
         // Resolve collisions if becoming active
         const folder = state.folders.find(f => f.id === id);

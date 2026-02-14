@@ -280,3 +280,32 @@
     text-transform: uppercase;
     display: inline-block;
 }
+
+.vaultToggle {
+    margin-left: 8px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.vaultToggle:hover {
+    background: var(--card-hover);
+    color: var(--foreground);
+    transform: scale(1.05);
+}
+
+.vaultUnlocked {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-glow);
+}

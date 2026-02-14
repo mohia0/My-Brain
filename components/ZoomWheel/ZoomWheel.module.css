@@ -61,7 +61,7 @@
     transform: translateX(-50%);
     width: 10px;
     height: 10px;
-    background: #000;
+    background: white;
     border-radius: 50%;
     box-shadow: 0 0 10px var(--accent-glow);
     pointer-events: none;

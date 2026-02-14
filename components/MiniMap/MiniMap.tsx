@@ -157,7 +157,7 @@ export default function MiniMap() {
             >
                 <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
 
-                {items.filter(i => !i.folder_id && i.status !== 'inbox').map(item => (
+                {items.filter(i => !i.folder_id && i.status !== 'inbox' && i.type !== 'project').map(item => (
                     <div
                         key={item.id}
                         className={styles.dot}

@@ -1,6 +1,8 @@
 "use client";
 
 import Canvas from "@/components/Canvas/Canvas";
+import { RoomBackButton } from "@/components/Canvas/RoomPortal";
+
 import Inbox from "@/components/Inbox/Inbox";
 import DragWrapper from "@/components/DragWrapper";
 import ItemCard from "@/components/Grid/ItemCard";
@@ -26,11 +28,17 @@ import ProjectArea from "@/components/ProjectArea/ProjectArea";
 import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
 import MobilePageContent from "@/components/Mobile/MobilePageContent";
 import { useCanvasStore } from "@/lib/store/canvasStore";
+import VaultAuthModal, { useVaultStore } from "@/components/Vault/VaultAuthModal";
 
 export default function Home() {
-  const { items, folders, fetchData, subscribeToChanges, clearSelection } = useItemsStore();
+  const { items, folders, fetchData, subscribeToChanges, clearSelection, currentRoomId } = useItemsStore();
   const { openFolderId, setOpenFolderId } = useCanvasStore();
+  const { isModalOpen, setModalOpen, checkVaultStatus } = useVaultStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkVaultStatus();
+  }, []);
 
   const [session, setSession] = useState<any>(null);
   const [initializing, setInitializing] = useState(true);
@@ -187,9 +195,25 @@ export default function Home() {
     };
   }, [session, isMobile]);
 
-  const visibleItems = items.filter(item => !item.folder_id && item.status !== 'inbox' && item.status !== 'archived' && item.type !== 'project');
-  const projectAreas = items.filter(item => item.type === 'project' && item.status !== 'archived');
-  const visibleFolders = folders.filter(folder => !folder.parent_id && folder.status !== 'archived');
+  const visibleItems = items.filter(item =>
+    item.room_id === currentRoomId &&
+    !item.folder_id &&
+    item.status !== 'inbox' &&
+    item.status !== 'archived' &&
+    item.type !== 'project'
+  );
+
+  const projectAreas = items.filter(item =>
+    item.room_id === currentRoomId &&
+    item.type === 'project' &&
+    item.status !== 'archived'
+  );
+
+  const visibleFolders = folders.filter(folder =>
+    folder.room_id === currentRoomId &&
+    !folder.parent_id &&
+    folder.status !== 'archived'
+  );
 
   const lockedProjectAreas = projectAreas.filter(p => p.metadata?.locked);
 
@@ -237,7 +261,9 @@ export default function Home() {
                 )}>
                   <Header />
                   <AccountMenu />
+                  <Inbox />
                   <Canvas>
+
                     {projectAreas.map(area => (
                       <ProjectArea key={area.id} item={area} />
                     ))}
@@ -253,15 +279,15 @@ export default function Home() {
                       <ItemCard
                         key={item.id}
                         item={item}
-                        onClick={() => setSelectedItemId(item.id)}
-                        isLocked={isInsideLockedArea(item.position_x, item.position_y, item.metadata?.width || 280, item.metadata?.height || 120)}
+                        onClick={item.type === 'room' ? undefined : () => setSelectedItemId(item.id)}
+                        isLocked={isInsideLockedArea(item.position_x, item.position_y, item.metadata?.width || 280, item.metadata?.height || (item.type === 'room' ? 280 : 120))}
                       />
                     ))}
                   </Canvas>
+                  <RoomBackButton />
                   <MiniMap />
                   <Toolbar />
                   <ZoomWheel />
-                  <Inbox onItemClick={setSelectedItemId} />
                   <FloatingBar />
                   <ArchiveZone />
                   <ArchiveView />
@@ -290,6 +316,13 @@ export default function Home() {
             </>
           )}
         </>
+      )}
+
+      {isModalOpen && (
+        <VaultAuthModal
+          onClose={() => setModalOpen(false)}
+          onSuccess={() => setModalOpen(false)}
+        />
       )}
     </DragWrapper>
   );

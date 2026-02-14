@@ -2,11 +2,12 @@
 
 import React, { forwardRef } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { Folder as FolderIcon, Archive, Copy, Trash2 } from 'lucide-react';
+import { Folder as FolderIcon, Archive, Copy, Trash2, Lock, Unlock } from 'lucide-react';
 import { Folder } from '@/types';
 import styles from './FolderItem.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
+import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
 
 interface FolderItemProps {
@@ -48,6 +49,12 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
 }, ref) => {
     const [isDeleting, setIsDeleting] = React.useState(false);
 
+    const { isVaultLocked, setModalOpen, hasPassword, lock, unlockedIds, lockItem } = useVaultStore();
+    const { toggleVaultFolder } = useItemsStore();
+
+    const isVaulted = folder.is_vaulted;
+    const isObscured = isVaulted && !unlockedIds.includes(folder.id);
+
     const handleDeleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!isDeleting) {
@@ -57,8 +64,36 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
         onDelete(e);
     };
 
+    const handleVaultToggle = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        if (hasPassword !== true && !isVaulted) {
+            setModalOpen(true);
+            return;
+        }
+
+        await toggleVaultFolder(folder.id);
+
+        if (!isVaulted) {
+            // Let individual re-lock handle it
+        }
+    };
+
+    const handleLockFolder = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        lockItem(folder.id);
+    };
+
     const renderActions = () => (
         <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+            <button
+                onClick={isVaulted && !isObscured ? handleLockFolder : (isObscured ? (e) => { e.stopPropagation(); setModalOpen(true, folder.id); } : handleVaultToggle)}
+                data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Folder" : "Lock Folder"))}
+                data-tooltip-pos="bottom"
+                className={clsx(isVaulted && styles.vaultedAction)}
+            >
+                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <FolderIcon size={12} style={{ color: 'var(--accent)' }} /> : (isVaulted ? <FolderIcon size={12} style={{ color: 'var(--accent)' }} /> : <Lock size={12} />))}
+            </button>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
             <button
                 onClick={handleDeleteClick}
@@ -72,11 +107,13 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
         </div>
     );
 
+
     // Base class name
     const baseClassName = clsx(
         styles.folder,
         isSelected && styles.selected,
-        isDimmed && styles.dimmed
+        isDimmed && styles.dimmed,
+        isObscured && styles.obscured
     );
 
     // Style adjustments for overlay (fixed type error)
@@ -95,7 +132,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
             className={baseClassName}
             style={finalStyle}
         >
-            {renderActions()}
+            {!isObscured && renderActions()}
             <div className={styles.tab} style={{ background: folder.color || 'var(--card-bg)' }} />
             <div
                 className={styles.mainBody}
@@ -157,8 +194,20 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
                 </div>
                 <div className={styles.bottomAccent} style={{ background: folder.color || 'var(--accent)' }} />
             </div>
+            {isObscured && (
+                <button
+                    className={styles.revealButton}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setModalOpen(true, folder.id);
+                    }}
+                >
+                    <Unlock size={14} /> UNLOCK
+                </button>
+            )}
             <div className={styles.outerDate}>
-                {new Date(folder.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                {folder.updated_at ? 'Edited: ' : 'Created: '}
+                {new Date(folder.updated_at || folder.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
         </div>
     );

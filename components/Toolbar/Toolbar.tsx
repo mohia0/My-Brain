@@ -3,7 +3,7 @@ import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { generateId } from '@/lib/utils';
 import styles from './Toolbar.module.css';
-import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame } from 'lucide-react';
+import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame, DoorOpen } from 'lucide-react';
 import clsx from 'clsx';
 import InputModal from '@/components/InputModal/InputModal';
 
@@ -15,7 +15,7 @@ export default function Toolbar() {
     const [isRendered, setIsRendered] = useState(false);
     const [modalConfig, setModalConfig] = useState<{
         isOpen: boolean;
-        type: 'text' | 'link' | 'image' | 'folder' | null;
+        type: 'text' | 'link' | 'image' | 'folder' | 'room' | null;
         title: string;
         placeholder: string;
         mode?: 'text' | 'file';
@@ -31,20 +31,19 @@ export default function Toolbar() {
         setIsAddOpen(!isAddOpen);
     };
 
-    const handleAddItemClick = (type: 'text' | 'link' | 'image' | 'folder') => {
+    const handleAddItemClick = (type: 'text' | 'link' | 'image' | 'folder' | 'room') => {
         setIsAddOpen(false);
 
         setModalConfig({
             isOpen: true,
             type,
-            title: type === 'folder' ? 'Create Folder' : `Add ${type === 'image' ? 'Image' : type === 'link' ? 'Link URL' : 'Idea'}`,
-            placeholder: type === 'folder' ? 'Folder Name' : type === 'text' ? 'Idea Title' : 'example.com',
+            title: type === 'folder' ? 'Create Folder' : type === 'room' ? 'New Mind Room' : `Add ${type === 'image' ? 'Image' : type === 'link' ? 'Link URL' : 'Idea'}`,
+            placeholder: type === 'folder' ? 'Folder Name' : type === 'room' ? 'Room Name' : type === 'text' ? 'Idea Title' : 'example.com',
             mode: type === 'image' ? 'file' : 'text'
         });
     };
 
     const handleModalSubmit = (value: string) => {
-        // ... previous logic remains unchanged ...
         const { type } = modalConfig;
         if (!type) return;
 
@@ -59,7 +58,17 @@ export default function Toolbar() {
             addFolder({
                 id, user_id: 'unknown', name: value,
                 position_x: centerX, position_y: centerY,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                status: 'active'
+            });
+        } else if (type === 'room') {
+            addItem({
+                id, user_id: 'unknown', type: 'room',
+                content: '',
+                position_x: centerX, position_y: centerY,
+                created_at: new Date().toISOString(),
+                status: 'active',
+                metadata: { title: value }
             });
         } else {
             let content = type === 'text' ? '' : value;
@@ -73,8 +82,10 @@ export default function Toolbar() {
                 content: content,
                 position_x: centerX, position_y: centerY,
                 created_at: new Date().toISOString(),
+                status: 'active',
                 metadata: { title }
             });
+
 
             if (type === 'link') {
                 const controller = new AbortController();
@@ -165,6 +176,9 @@ export default function Toolbar() {
 
                 <div className={styles.addWrapper}>
                     <div className={clsx(styles.addMenu, isAddOpen && styles.addMenuOpen)}>
+                        <button className={styles.addOption} onClick={() => handleAddItemClick('room')} data-tooltip="Mind Room" data-tooltip-pos="top">
+                            <DoorOpen size={16} />
+                        </button>
                         <button className={styles.addOption} onClick={() => handleAddItemClick('folder')} data-tooltip="Folder" data-tooltip-pos="top">
                             <FolderPlus size={16} />
                         </button>

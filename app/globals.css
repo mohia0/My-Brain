@@ -1,9 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Premium Dark Palette */
-  --background: #0a0a0c;
+  --background: #09090b;
+  /* Changed from #0a0a0c */
   --foreground: #ededed;
 
-  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-bg: rgba(22, 22, 24, 0.7);
+  /* Changed from rgba(255, 255, 255, 0.03) */
   --card-border: rgba(255, 255, 255, 0.08);
   --card-hover: rgba(255, 255, 255, 0.06);
 
@@ -227,5 +233,25 @@ a {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.blur-content {
+  filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.text-accent {
+  color: var(--accent) !important;
+}
+
+@keyframes scan {
+  0% {
+    top: 0;
+  }
+
+  100% {
+    top: 100%;
   }
 }

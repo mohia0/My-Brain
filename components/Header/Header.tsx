@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './Header.module.css';
-import { Search, Folder as FolderIcon } from 'lucide-react';
+import { Search, Folder as FolderIcon, DoorOpen, Lock, Unlock } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import Orb from '../Orb/Orb';
@@ -132,6 +132,7 @@ export default function Header() {
             </div>
 
             <div className={styles.searchWrapper}>
+
                 <Search size={16} className={styles.searchIcon} />
                 <input
                     type="text"
@@ -145,6 +146,7 @@ export default function Header() {
                     onFocus={() => setShowResults(true)}
                     onBlur={() => setTimeout(() => setShowResults(false), 400)}
                 />
+
                 <div className={clsx(styles.searchResults, (showResults && query) && styles.resultsOpen)}>
                     {allResults.length === 0 ? (
                         <div className={styles.noResults}>No matches found. Try searching for tags or text.</div>
@@ -187,7 +189,7 @@ export default function Header() {
                                             />
                                         ) : (
                                             <div className={styles.resultIcon}>
-                                                {result.type === 'link' ? '🔗' : '📄'}
+                                                {result.type === 'room' ? <DoorOpen size={16} /> : (result.type === 'link' ? '🔗' : '📄')}
                                             </div>
                                         )
                                     )}
@@ -197,12 +199,13 @@ export default function Header() {
                                                 {result.resultType === 'folder' ? result.name : (result.metadata?.title || 'Untitled')}
                                             </div>
                                             <div className={styles.resultDate}>
-                                                {new Date(result.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                {result.updated_at ? 'Ed: ' : ''}
+                                                {new Date(result.updated_at || result.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                             </div>
                                         </div>
                                         <div className={styles.resultBadges}>
                                             <span className={clsx(styles.typeBadge, result.resultType === 'folder' ? styles.badgeFolder : styles.badgeItem)}>
-                                                {result.resultType === 'folder' ? 'Folder' : (result.type === 'link' ? 'Link' : result.type === 'image' ? 'Image' : 'Idea')}
+                                                {result.resultType === 'folder' ? 'Folder' : (result.type === 'room' ? 'Mind Room' : (result.type === 'link' ? 'Link' : result.type === 'image' ? 'Image' : 'Idea'))}
                                             </span>
                                             {insideProject && (
                                                 <span className={clsx(styles.typeBadge, styles.badgeProject)}>
@@ -224,7 +227,7 @@ export default function Header() {
                                         )}
                                     </div>
                                 </div>
-                            )
+                            );
                         })
                     )}
                 </div>

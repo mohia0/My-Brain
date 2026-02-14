@@ -127,16 +127,9 @@ export default function FloatingBar() {
 
                 {isMoveMenuOpen && (
                     <div className={styles.moveMenu}>
-                        <div className={styles.menuHeader}>Move to...</div>
-                        <button
-                            className={styles.menuOption}
-                            onClick={() => { setIsMoveMenuOpen(false); setIsGroupModalOpen(true); }}
-                        >
-                            <FolderPlus size={14} />
-                            <span>New Folder</span>
-                        </button>
 
-                        {folders.length > 0 && <div className={styles.menuDivider} />}
+                        <div className={styles.menuHeader}>Move to...</div>
+
 
                         <div className={styles.folderList}>
                             {folders.map(folder => (

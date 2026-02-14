@@ -317,6 +317,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     // Filter by room and hierarchy
                     if (item.status === 'inbox' || item.folder_id) return false;
                     if ((item.room_id || null) !== currentRoomId) return false;
+                    if (item.type === 'room') return false;
 
                     return (
                         item.position_x < worldX + worldW &&

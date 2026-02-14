@@ -4,11 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import styles from './AccountMenu.module.css';
-import { LogOut, User, Sun, Moon, Download } from 'lucide-react';
+import { LogOut, User, Sun, Moon, Download, AlertTriangle } from 'lucide-react';
 import NotificationCenter from './NotificationCenter';
+import ReportBugModal from '@/components/ReportBugModal/ReportBugModal';
 
 export default function AccountMenu() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isBugModalOpen, setIsBugModalOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const containerRef = useRef<HTMLDivElement>(null);
@@ -105,12 +107,29 @@ export default function AccountMenu() {
                         <span>Apps & Downloads</span>
                     </Link>
 
+                    <button
+                        className={styles.menuItem}
+                        onClick={() => {
+                            setIsOpen(false);
+                            setIsBugModalOpen(true);
+                        }}
+                    >
+                        <AlertTriangle size={16} />
+                        <span>Report Bug</span>
+                    </button>
+
                     <div className={styles.menuItem + ' ' + styles.logout} onClick={handleLogout}>
                         <LogOut size={16} />
                         <span>Sign Out</span>
                     </div>
                 </div>
             )}
+
+            <ReportBugModal
+                isOpen={isBugModalOpen}
+                onClose={() => setIsBugModalOpen(false)}
+                userEmail={user.email}
+            />
         </div>
     );
 }

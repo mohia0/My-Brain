@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!metadata.title || /((https?:\/\/)|(www\.))[^\s]+/i.test(metadata.title) ||
-            /capturing|shared link|sharedlink/i.test(metadata.title)) {
+            /capturing|shared|moment/i.test(metadata.title)) {
             metadata.title = metadata.siteName || "Captured Link";
         }
 

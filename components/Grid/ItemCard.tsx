@@ -62,16 +62,26 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
     // Metadata polling for links (like Instagram) that take time to capture
     React.useEffect(() => {
-        const needsUpdate = localItem.type === 'link' && !localItem.metadata?.image;
+        const isPlaceholder = !localItem.metadata?.title || /capturing|shared|moment/i.test(localItem.metadata.title);
+        const needsUpdate = localItem.type === 'link' && (!localItem.metadata?.image || isPlaceholder) && localItem.status === 'active';
         if (!needsUpdate) return;
 
         let attempts = 0;
         pollTimer.current = setInterval(async () => {
             attempts++;
-            if (attempts > 10) { clearInterval(pollTimer.current!); return; }
+            if (attempts > 10) {
+                clearInterval(pollTimer.current!);
+                // Fallback if still capturing
+                if (isPlaceholder) {
+                    let fb = 'Link';
+                    try { fb = new URL(localItem.content).hostname.replace('www.', ''); } catch { }
+                    useItemsStore.getState().updateItemContent(localItem.id, { metadata: { ...localItem.metadata, title: fb } });
+                }
+                return;
+            }
 
             const { data } = await supabase.from('items').select('metadata').eq('id', localItem.id).single();
-            if (data?.metadata?.image || data?.metadata?.title) {
+            if (data?.metadata?.image || (data?.metadata?.title && !/capturing|shared|moment/i.test(data.metadata.title))) {
                 useItemsStore.getState().updateItemContent(localItem.id, { metadata: data.metadata });
                 setLocalItem(prev => ({ ...prev, metadata: data.metadata }));
                 clearInterval(pollTimer.current!);
@@ -79,7 +89,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         }, 3000);
 
         return () => { if (pollTimer.current) clearInterval(pollTimer.current); };
-    }, [localItem.id, localItem.type, localItem.metadata?.image]);
+    }, [localItem.id, localItem.type, localItem.metadata?.image, localItem.metadata?.title]);
 
     const isVideo = localItem.type === 'video' || localItem.metadata?.isVideo;
     const isCapture = localItem.type === 'link' && localItem.metadata?.image;

@@ -212,6 +212,10 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 return;
             }
 
+            if (typeof window !== 'undefined') {
+                (window as any).__USER_ID__ = targetUser.id;
+            }
+
             const currentRoomId = get().currentRoomId;
             const revealedItems = get().vaultedItemsRevealed;
 
@@ -309,7 +313,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 }
             } else {
                 set(state => ({
-                    items: state.items.map(i => i.id === finalItem.id ? { ...i, syncStatus: 'synced' } : i)
+                    items: state.items.map(i => i.id === finalItem.id ? { ...i, user_id: finalUserId, syncStatus: 'synced' } : i)
                 }));
             }
         } else {
@@ -495,7 +499,10 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 item.id === id ? { ...item, ...finalUpdates, syncStatus: 'syncing' } : item
             )
         }));
-        const { error } = await supabase.from('items').update(finalUpdates).eq('id', id);
+
+        // DB safety: remove local-only properties before sync
+        const { syncStatus: _, ...dbUpdates } = finalUpdates as any;
+        const { error } = await supabase.from('items').update(dbUpdates).eq('id', id);
 
         set(state => ({
             items: state.items.map(i => i.id === id ? { ...i, syncStatus: error ? 'error' : 'synced' } : i)
@@ -702,7 +709,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 }
             } else {
                 set(state => ({
-                    folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, syncStatus: 'synced' } : f)
+                    folders: state.folders.map(f => f.id === safeFolder.id ? { ...f, user_id: finalUserId, syncStatus: 'synced' } : f)
                 }));
             }
         } else {
@@ -760,7 +767,10 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 f.id === id ? { ...f, ...finalUpdates, syncStatus: 'syncing' } : f
             )
         }));
-        const { error } = await supabase.from('folders').update(finalUpdates).eq('id', id);
+
+        // DB safety: remove local-only properties before sync
+        const { syncStatus: _, ...dbUpdates } = finalUpdates as any;
+        const { error } = await supabase.from('folders').update(dbUpdates).eq('id', id);
 
         if (error) {
             console.error('[Store] Supabase folder update failed:', JSON.stringify(error, null, 2));

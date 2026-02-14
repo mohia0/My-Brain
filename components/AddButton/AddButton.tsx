@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import styles from './AddButton.module.css';
 import { Plus, FileText, Link, Image as ImageIcon, FolderPlus, X } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { supabase } from '@/lib/supabase';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { generateId } from '@/lib/utils';
 
@@ -46,10 +47,11 @@ export default function AddButton() {
 
         if (type === 'folder') {
             addFolder({
-                id, user_id: 'user-1', name: value,
+                id, name: value,
+                status: 'active',
                 position_x: centerX, position_y: centerY,
                 created_at: new Date().toISOString()
-            });
+            } as any);
         } else {
             // For text, value is title. For link/image, value is content
             let content = type === 'text' ? '' : value;
@@ -59,50 +61,57 @@ export default function AddButton() {
                 content = 'https://' + content;
             }
 
-            const title = type === 'text' ? value : type === 'link' ? 'Capturing Snapshot...' : 'New Item';
+            const title = type === 'text' ? value : type === 'link' ? 'Capturing...' : 'New Item';
 
             addItem({
-                id, user_id: 'user-1', type: type as any,
+                id, type: type as any,
                 content: content,
+                status: 'active',
                 position_x: centerX, position_y: centerY,
                 created_at: new Date().toISOString(),
                 metadata: { title }
-            });
+            } as any);
 
             if (type === 'link') {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s Timeout
 
-                fetch('/api/metadata', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: content, itemId: id, skipCapture: true }),
-                    signal: controller.signal
-                })
-                    .then(res => {
-                        clearTimeout(timeoutId);
-                        if (!res.ok) throw new Error('API Error');
-                        return res.json();
-                    })
-                    .then(data => {
-                        if (data.error) throw new Error(`${data.error}: ${data.details || 'Unknown error'}`);
-                        useItemsStore.getState().updateItemContent(id, { metadata: data, syncStatus: 'synced' });
-                    })
-                    .catch(err => {
-                        clearTimeout(timeoutId);
-                        console.error('Metadata fetch failed:', err);
+                // Get current user for background API sync (Directly from Supabase for efficiency)
+                supabase.auth.getSession().then(({ data: { session } }: any) => {
+                    const userId = session?.user?.id || 'unknown';
 
-                        let fallbackTitle = 'Link';
-                        try {
-                            const urlObj = new URL(content);
-                            fallbackTitle = urlObj.hostname.replace('www.', '');
-                        } catch (e) { }
+                    fetch('/api/metadata', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: content, itemId: id, userId, skipCapture: true }),
+                        signal: controller.signal
+                    })
+                        .then(res => {
+                            clearTimeout(timeoutId);
+                            if (!res.ok) throw new Error('API Error');
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.error) throw new Error(`${data.error}: ${data.details || 'Unknown error'}`);
+                            useItemsStore.getState().updateItemContent(id, { metadata: data, syncStatus: 'synced' });
+                        })
+                        .catch(err => {
+                            clearTimeout(timeoutId);
+                            if (err.name === 'AbortError') return; // Silent for timeouts
+                            console.error('Metadata fetch failed:', err);
 
-                        useItemsStore.getState().updateItemContent(id, {
-                            metadata: { title: fallbackTitle, description: '', image: '' },
-                            syncStatus: 'synced'
+                            let fallbackTitle = 'Link';
+                            try {
+                                const urlObj = new URL(content);
+                                fallbackTitle = urlObj.hostname.replace('www.', '');
+                            } catch (e) { }
+
+                            useItemsStore.getState().updateItemContent(id, {
+                                metadata: { title: fallbackTitle, description: '', image: '' },
+                                syncStatus: 'synced'
+                            });
                         });
-                    });
+                });
             }
         }
         setModalConfig({ ...modalConfig, isOpen: false });

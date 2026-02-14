@@ -309,3 +309,52 @@
     border-color: var(--accent);
     background: var(--accent-glow);
 }
+
+.resultTitleRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Changed from baseline for lock icon alignment */
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.resultObscured {
+    opacity: 0.8;
+}
+
+.resultImgWrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.blurred {
+    filter: blur(8px) grayscale(0.5);
+    opacity: 0.5;
+}
+
+.blurredText {
+    filter: blur(6px);
+    opacity: 0.3;
+    user-select: none;
+}
+
+.lockIconInline {
+    color: var(--accent);
+    margin-left: 6px;
+    opacity: 0.8;
+}
+
+.badgeLocked {
+    background: rgba(0, 0, 0, 0.4);
+    color: #aeaeae;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme='light']) .badgeLocked {
+    background: rgba(0, 0, 0, 0.05);
+    color: #444;
+}

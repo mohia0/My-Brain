@@ -2,15 +2,37 @@
 
 import React, { useState } from 'react';
 import styles from './Header.module.css';
-import { Search, Folder as FolderIcon, DoorOpen, Lock, Unlock } from 'lucide-react';
+import { Search, Folder as FolderIcon, DoorOpen, Lock, Unlock, ShieldAlert, Link, FileText, Image as ImageIcon, Video } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
+import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import Orb from '../Orb/Orb';
 import clsx from 'clsx';
 
+// Helper to extract text from rich JSON content (TipTap format)
+const getPlainText = (content: string) => {
+    if (!content) return '';
+    if (!content.startsWith('[')) return content;
+    try {
+        const blocks = JSON.parse(content);
+        if (Array.isArray(blocks)) {
+            return blocks.map((b: any) => {
+                if (Array.isArray(b.content)) {
+                    return b.content.map((c: any) => c.text).join('');
+                }
+                return b.content || '';
+            }).join(' ');
+        }
+        return content;
+    } catch {
+        return content;
+    }
+};
+
 export default function Header() {
-    const { items, folders, setSelection } = useItemsStore();
+    const { items, folders, setSelection, vaultedItemsRevealed } = useItemsStore();
     const { setPosition, setScale, setOpenFolderId } = useCanvasStore();
+    const { isVaultLocked, unlockedIds } = useVaultStore();
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -39,17 +61,16 @@ export default function Header() {
         const q = query.toLowerCase();
 
         const title = (item.metadata?.title || '').toString().toLowerCase();
-        const content = (item.content || '').toString().toLowerCase();
+        const rawContent = (item.content || '').toString();
+        const plainText = getPlainText(rawContent).toLowerCase();
         const description = (item.metadata?.description || '').toString().toLowerCase();
 
-        // Items might have tags in metadata (from shared/extensions) 
-        // OR we might have them fetched. For now search metadata.
         const tags = Array.isArray(item.metadata?.tags)
             ? item.metadata.tags.map((t: any) => (typeof t === 'string' ? t : t.name).toLowerCase())
             : [];
 
         return title.includes(q) ||
-            content.includes(q) ||
+            plainText.includes(q) ||
             description.includes(q) ||
             tags.some((t: string) => t.includes(q));
     });
@@ -170,8 +191,10 @@ export default function Header() {
                                 });
                             }
 
+                            const isObscured = result.is_vaulted && isVaultLocked && !unlockedIds.includes(result.id) && !vaultedItemsRevealed.includes(result.id);
+
                             return (
-                                <div key={result.id} className={styles.searchResultItem} onClick={() => handleResultClick(result)}>
+                                <div key={result.id} className={clsx(styles.searchResultItem, isObscured && styles.resultObscured)} onClick={() => handleResultClick(result)}>
                                     {result.resultType === 'folder' ? (
                                         <div className={styles.resultIcon}>
                                             <FolderIcon
@@ -182,14 +205,18 @@ export default function Header() {
                                         </div>
                                     ) : (
                                         (result.type === 'image' || (result.type === 'link' && result.metadata?.image)) ? (
-                                            <img
-                                                src={result.type === 'image' ? result.content : result.metadata?.image}
-                                                alt=""
-                                                className={styles.resultImg}
-                                            />
+                                            <div className={styles.resultImgWrapper}>
+                                                <img
+                                                    src={result.type === 'image' ? result.content : result.metadata?.image}
+                                                    alt=""
+                                                    className={clsx(styles.resultImg, isObscured && styles.blurred)}
+                                                />
+                                            </div>
                                         ) : (
                                             <div className={styles.resultIcon}>
-                                                {result.type === 'room' ? <DoorOpen size={16} /> : (result.type === 'link' ? '🔗' : '📄')}
+                                                {result.type === 'room' ? <DoorOpen size={16} /> :
+                                                    (result.type === 'video' || result.metadata?.isVideo) ? <Video size={16} /> :
+                                                        (result.type === 'link' ? <Link size={16} /> : <FileText size={16} />)}
                                             </div>
                                         )
                                     )}
@@ -197,6 +224,7 @@ export default function Header() {
                                         <div className={styles.resultTitleRow}>
                                             <div className={styles.resultTitle}>
                                                 {result.resultType === 'folder' ? result.name : (result.metadata?.title || 'Untitled')}
+                                                {isObscured && <Lock size={12} className={styles.lockIconInline} />}
                                             </div>
                                             <div className={styles.resultDate}>
                                                 {result.updated_at ? 'Ed: ' : ''}
@@ -207,17 +235,18 @@ export default function Header() {
                                             <span className={clsx(styles.typeBadge, result.resultType === 'folder' ? styles.badgeFolder : styles.badgeItem)}>
                                                 {result.resultType === 'folder' ? 'Folder' : (result.type === 'room' ? 'Mind Room' : (result.type === 'link' ? 'Link' : result.type === 'image' ? 'Image' : 'Idea'))}
                                             </span>
-                                            {insideProject && (
+                                            {isObscured && <span className={clsx(styles.typeBadge, styles.badgeLocked)}>Locked</span>}
+                                            {insideProject && !isObscured && (
                                                 <span className={clsx(styles.typeBadge, styles.badgeProject)}>
                                                     in {insideProject.metadata?.title || 'Project'}
                                                 </span>
                                             )}
                                         </div>
-                                        <div className={styles.resultDescription}>
-                                            {result.resultType !== 'folder' && (result.metadata?.description || (result.type === 'image' ? '' : result.content?.substring(0, 60)))}
+                                        <div className={clsx(styles.resultDescription, isObscured && styles.blurredText)}>
+                                            {result.resultType !== 'folder' && (result.metadata?.description || (result.type === 'image' ? '' : getPlainText(result.content).substring(0, 60)))}
                                             {result.resultType === 'item' && result.type !== 'image' && result.content?.length > 60 && '...'}
                                         </div>
-                                        {result.resultType === 'item' && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
+                                        {result.resultType === 'item' && !isObscured && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
                                             <div className={styles.resultTags}>
                                                 {result.metadata.tags.map((tag: any, i: number) => {
                                                     const tagName = typeof tag === 'string' ? tag : tag.name;

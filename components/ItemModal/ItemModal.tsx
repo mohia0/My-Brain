@@ -90,27 +90,43 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             fetchItemTags();
 
             // Polling for metadata if it's a fresh capture missing images/titles
-            if (item.type === 'link' && (!item.metadata?.image || item.metadata?.title === 'Capturing...' || item.metadata?.title === 'Shared Link')) {
+            if (item.type === 'link' && (!item.metadata?.image || /capturing|shared|moment/i.test(item.metadata?.title || ''))) {
                 let attempts = 0;
                 const poll = setInterval(async () => {
                     attempts++;
-                    if (attempts > 20) { clearInterval(poll); return; }
-                    if (attempts > 25) { clearInterval(poll); return; }
+                    // Stop after ~1 minute (20 attempts * 3s)
+                    if (attempts > 20) {
+                        clearInterval(poll);
+                        // If still missing title, move to fallback
+                        if (!item.metadata?.title || /capturing|shared|moment/i.test(item.metadata.title)) {
+                            let fb = 'Link';
+                            try { fb = new URL(item.content).hostname.replace('www.', ''); } catch { }
+                            updateItemContent(item.id, { metadata: { ...item.metadata, title: fb } });
+                        }
+                        return;
+                    }
 
                     const { data } = await supabase.from('items').select('metadata').eq('id', item.id).single();
                     const newMeta = data?.metadata;
 
                     if (newMeta) {
                         const hasImage = !!newMeta.image;
-                        const isPlaceholder = !newMeta.title || /capturing|shared link|sharedlink/i.test(newMeta.title);
+                        const isPlaceholder = !newMeta.title || /capturing|shared|moment/i.test(newMeta.title);
+                        const currentIsPlaceholder = !item.metadata?.title || /capturing|shared|moment/i.test(item.metadata.title);
 
-                        // Always update local state if we found something new or better
-                        if (!isPlaceholder || hasImage || newMeta.author !== item.metadata?.author) {
+                        // Only update if:
+                        // 1. We currently have a placeholder title and the new one isn't
+                        // 2. We don't have an image and the new one does
+                        // 3. The new metadata is strictly "richer" (e.g. has author where we didn't)
+                        const isImprovement = (currentIsPlaceholder && !isPlaceholder) ||
+                            (!item.metadata?.image && hasImage) ||
+                            (!item.metadata?.description && newMeta.description);
+
+                        if (isImprovement) {
                             updateItemContent(item.id, { metadata: newMeta });
                         }
 
-                        // ONLY stop polling if we have the image OR we've exhausted all attempts
-                        if (hasImage) {
+                        if (hasImage && !isPlaceholder) {
                             clearInterval(poll);
                         }
                     }
@@ -127,7 +143,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         // Check if anything has actually changed
         const hasTitleChanged = title !== (item.metadata?.title || '');
         const hasDescChanged = description !== (item.metadata?.description || '');
-        const hasContentChanged = content !== item.content;
+        const hasContentChanged = isLink ? (url !== item.content) : (content !== item.content);
 
         if (!hasTitleChanged && !hasDescChanged && !hasContentChanged) {
             return;
@@ -136,29 +152,45 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
         saveTimeoutRef.current = setTimeout(async () => {
-            // Plan A Security: NEVER save if the content is currently the protection placeholder
-            if (content.includes('[PROTECTED CONTENT]')) {
-                return;
-            }
+            if (content.includes('[PROTECTED CONTENT]')) return;
 
             setIsSaving(true);
             try {
+                const finalContent = isLink ? url : content;
+                const isUrlChanged = isLink && url !== item.content;
+
                 await updateItemContent(item.id, {
-                    content: content,
-                    metadata: { ...item.metadata, title, description }
+                    content: finalContent,
+                    metadata: isUrlChanged
+                        ? { ...item.metadata, title: 'Capturing Snapshot...', image: '', description: '' }
+                        : { ...item.metadata, title, description }
                 });
+
+                // If URL changed, restart the background capture
+                if (isUrlChanged) {
+                    console.log("[Capture] URL changed, triggering new metadata fetch for:", url);
+                    fetch('/api/metadata', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url,
+                            itemId: item.id,
+                            userId: item.user_id,
+                            skipCapture: false
+                        })
+                    }).catch(console.error);
+                }
             } catch (err) {
                 console.error("[LiveSync] Save failed:", err);
             } finally {
                 setTimeout(() => setIsSaving(false), 500);
-
             }
-        }, 1000); // 1s debounce for better responsiveness
+        }, 1200);
 
         return () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         };
-    }, [title, description, content]);
+    }, [title, description, content, url]);
 
     const hasChanged = item && (
         title !== (item.metadata?.title || '') ||

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Inbox as InboxIcon, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Inbox as InboxIcon, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import styles from './Inbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useDroppable } from '@dnd-kit/core';
@@ -11,9 +11,10 @@ interface InboxProps {
 }
 
 export default function Inbox({ onItemClick }: InboxProps) {
-    const { items } = useItemsStore();
+    const { items, clearInbox } = useItemsStore();
     const inboxItems = items.filter(i => i.status === 'inbox')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const [isClearing, setIsClearing] = useState(false);
 
     const { setNodeRef, isOver } = useDroppable({
         id: 'inbox-area',
@@ -51,6 +52,24 @@ export default function Inbox({ onItemClick }: InboxProps) {
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
                     </button>
+                    {!isCollapsed && inboxItems.length > 0 && (
+                        <button
+                            className={clsx(styles.clearBtn, isClearing && styles.confirmClear)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isClearing) {
+                                    clearInbox();
+                                    setIsClearing(false);
+                                } else {
+                                    setIsClearing(true);
+                                }
+                            }}
+                            onMouseLeave={() => setIsClearing(false)}
+                            title="Clear Inbox"
+                        >
+                            {isClearing ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={16} />}
+                        </button>
+                    )}
                 </div>
                 <div className={styles.headerTitle}>
                     <div style={{ position: 'relative', display: 'flex' }}>

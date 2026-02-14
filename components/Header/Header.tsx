@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './Header.module.css';
-import { Search, Folder as FolderIcon, DoorOpen, Lock, Unlock, ShieldAlert, Link, FileText, Image as ImageIcon, Video } from 'lucide-react';
+import { Search, Folder as FolderIcon, DoorClosed, Lock, Unlock, ShieldAlert, Link, FileText, Image as ImageIcon, Video } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
@@ -214,7 +214,7 @@ export default function Header() {
                                             </div>
                                         ) : (
                                             <div className={styles.resultIcon}>
-                                                {result.type === 'room' ? <DoorOpen size={16} /> :
+                                                {result.type === 'room' ? <DoorClosed size={16} /> :
                                                     (result.type === 'video' || result.metadata?.isVideo) ? <Video size={16} /> :
                                                         (result.type === 'link' ? <Link size={16} /> : <FileText size={16} />)}
                                             </div>

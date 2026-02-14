@@ -3,7 +3,7 @@ import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { generateId } from '@/lib/utils';
 import styles from './Toolbar.module.css';
-import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame, DoorOpen } from 'lucide-react';
+import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame, DoorClosed } from 'lucide-react';
 import clsx from 'clsx';
 import InputModal from '@/components/InputModal/InputModal';
 
@@ -177,7 +177,7 @@ export default function Toolbar() {
                 <div className={styles.addWrapper}>
                     <div className={clsx(styles.addMenu, isAddOpen && styles.addMenuOpen)}>
                         <button className={styles.addOption} onClick={() => handleAddItemClick('room')} data-tooltip="Mind Room" data-tooltip-pos="top">
-                            <DoorOpen size={16} />
+                            <DoorClosed size={16} />
                         </button>
                         <button className={styles.addOption} onClick={() => handleAddItemClick('folder')} data-tooltip="Folder" data-tooltip-pos="top">
                             <FolderPlus size={16} />

@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Item } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { DoorOpen, ArrowRight, CornerUpLeft } from 'lucide-react';
+import { DoorClosed, ArrowRight, CornerUpLeft } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -47,7 +47,7 @@ export default function RoomPortal({ item, isLocked, onClick }: RoomPortalProps)
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
 
             <div className="z-10 bg-zinc-800 p-4 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300 shadow-xl border border-white/5">
-                <DoorOpen size={32} className="text-purple-400" strokeWidth={1.5} />
+                <DoorClosed size={32} className="text-purple-400" strokeWidth={1.5} />
             </div>
 
             <div className="z-10 text-center px-4">

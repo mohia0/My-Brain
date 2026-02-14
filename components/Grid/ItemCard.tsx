@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import styles from './ItemCard.module.css';
 import { Item } from '@/types';
-import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorOpen, ArrowRight, Unlock, Edit3, Check } from 'lucide-react';
+import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorClosed, ArrowRight, Unlock, Edit3, Check } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
@@ -446,7 +446,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     {/* The Inside (Revealed when door opens) */}
                     <div className={styles.roomInside}>
                         <div className={styles.roomInsideGlow}>
-                            <DoorOpen size={32} className="mb-2" />
+                            <DoorClosed size={32} className="mb-2" />
                             <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Enter Room</span>
                         </div>
 

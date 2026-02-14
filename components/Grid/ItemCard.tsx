@@ -176,7 +176,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     );
 
     const renderRoomActions = () => (
-        <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+        <>
             <button
                 onClick={(e) => {
                     e.stopPropagation();
@@ -209,7 +209,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             >
                 {isDeleting ? "Sure?" : <Trash2 size={12} />}
             </button>
-        </div>
+        </>
     );
 
 
@@ -400,73 +400,57 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <div
                 id={`draggable-item-${localItem.id}`}
                 ref={ref}
-                className={clsx(baseClassName, styles.roomCardOuter)}
+                className={clsx(baseClassName, styles.roomCardOuter, isEditingTitle && styles.isEditing)}
                 style={finalStyle}
                 {...listeners}
                 {...attributes}
             >
-                {/* External Actions - Moved to bottom */}
-                {!isObscured && (
-                    <div
-                        className={styles.roomActionsWrapper}
-                        onPointerDown={e => e.stopPropagation()}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {renderRoomActions()}
-                    </div>
-                )}
-
-                <div className={styles.portalCard}>
+                <div
+                    className={styles.portalCard}
+                    onPointerDown={e => {
+                        e.stopPropagation();
+                        e.nativeEvent.stopImmediatePropagation();
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (isObscured) {
+                            setModalOpen(true, localItem.id);
+                        } else {
+                            useItemsStore.getState().setCurrentRoomId(localItem.id);
+                            useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                            useCanvasStore.getState().setScale(1);
+                        }
+                    }}
+                >
                     {/* The Inside (Revealed when door opens) */}
-                    <div className={styles.roomInside} onPointerDown={e => e.stopPropagation()}>
+                    <div className={clsx(styles.roomInside, isObscured && styles.obscuredInside)}>
                         <div className={styles.roomInsideGlow}>
-                            <DoorOpen size={32} className="text-purple-400 mb-2" />
-                            <span className="text-[10px] font-bold text-purple-200 tracking-[0.2em] uppercase">Enter Room</span>
+                            <DoorOpen size={32} className="mb-2" />
+                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Enter Room</span>
                         </div>
-                        {/* Click Zone to Enter */}
-                        <button
-                            className="absolute inset-0 w-full h-full z-[100] cursor-pointer"
-                            onPointerDown={e => e.stopPropagation()}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                console.log("Enter room clicked");
-                                if (isObscured) {
-                                    setModalOpen(true, localItem.id);
-                                } else {
-                                    useItemsStore.getState().setCurrentRoomId(localItem.id);
-                                    useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                                    useCanvasStore.getState().setScale(1);
-                                }
-                            }}
-                        />
+
+                        {!isObscured && (
+                            <div
+                                className={styles.roomInsideActions}
+                                onPointerDown={e => e.stopPropagation()}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                {renderRoomActions()}
+                            </div>
+                        )}
                     </div>
 
                     {/* The Door (Rotates) */}
-                    <div
-                        className={styles.roomDoor}
-                        onPointerDown={e => e.stopPropagation()}
-                        onClick={(e) => {
-                            // Clicking the door also enters
-                            e.stopPropagation();
-                            if (!isObscured) {
-                                useItemsStore.getState().setCurrentRoomId(localItem.id);
-                                useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                                useCanvasStore.getState().setScale(1);
-                            } else {
-                                setModalOpen(true, localItem.id);
-                            }
-                        }}
-                    >
+                    <div className={styles.roomDoor}>
                         <div className={styles.doorPanel}>
                             <div className={styles.doorFrameDesign} />
                             <div className={styles.doorHandle} />
 
                             {isEditingTitle ? (
-                                <form onSubmit={handleTitleSave} onClick={e => e.stopPropagation()} className="mt-8 z-20 w-full px-2">
+                                <form onSubmit={handleTitleSave} onClick={e => e.stopPropagation()} className="w-full">
                                     <input
                                         autoFocus
-                                        className="bg-black/50 border border-purple-500/50 rounded px-2 py-1 text-white text-center w-full outline-none text-xs"
+                                        className={styles.renameInput}
                                         value={tempTitle}
                                         onChange={e => setTempTitle(e.target.value)}
                                         onBlur={() => handleTitleSave()}
@@ -488,8 +472,17 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     </div>
                 </div>
 
-                {/* Floor Shadow */}
-                <div className={styles.doorShadow} />
+                {isObscured && (
+                    <button
+                        className={styles.revealButton}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalOpen(true, localItem.id);
+                        }}
+                    >
+                        <Unlock size={14} /> UNLOCK
+                    </button>
+                )}
             </div>
         );
     }

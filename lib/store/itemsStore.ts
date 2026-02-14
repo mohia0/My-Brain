@@ -191,14 +191,19 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             const currentRoomId = get().currentRoomId;
 
             // Parallel fetch for speed
-            // If in a room, only fetch items for that room. If not, fetch items where room_id IS NULL
-            const dbItemsReq = currentRoomId
-                ? supabase.from('items').select('*').eq('room_id', currentRoomId)
-                : supabase.from('items').select('*').is('room_id', null);
+            // If in a room, only fetch items for that room. 
+            // If not, fetch items where room_id IS NULL or not set.
+            let dbItemsReq = supabase.from('items').select('*');
+            let dbFoldersReq = supabase.from('folders').select('*');
 
-            const dbFoldersReq = currentRoomId
-                ? supabase.from('folders').select('*').eq('room_id', currentRoomId)
-                : supabase.from('folders').select('*').is('room_id', null);
+            if (currentRoomId) {
+                dbItemsReq = dbItemsReq.eq('room_id', currentRoomId);
+                dbFoldersReq = dbFoldersReq.eq('room_id', currentRoomId);
+            } else {
+                // Main canvas: items where room_id is NULL
+                dbItemsReq = dbItemsReq.is('room_id', null);
+                dbFoldersReq = dbFoldersReq.is('room_id', null);
+            }
 
             const [itemsRes, foldersRes] = await Promise.all([dbItemsReq, dbFoldersReq]);
 

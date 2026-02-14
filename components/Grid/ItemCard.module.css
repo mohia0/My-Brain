@@ -374,7 +374,6 @@
 .obscured .imageContentWrapper,
 .obscured .videoPreview,
 .obscured .captureThumbWrapper,
-.obscured .roomDoor,
 .obscured .mainBody {
     filter: blur(16px) grayscale(0.4);
     opacity: 0.5;
@@ -382,11 +381,38 @@
     pointer-events: none;
 }
 
+/* Room specific obscured handling */
+.roomCardOuter.obscured .roomInside {
+    filter: blur(30px) !important;
+    opacity: 0.4 !important;
+}
+
+.roomCardOuter.obscured .doorPanel {
+    filter: grayscale(0.2) !important;
+    /* Slight desaturation instead of blur */
+    opacity: 1 !important;
+    pointer-events: none;
+}
+
+.roomCardOuter.obscured .doorHandle {
+    filter: brightness(0.4);
+}
+
+/* Do NOT open the door when locked - keep it minimal and crisp */
+.roomCardOuter.obscured:hover .roomDoor {
+    transform: rotateY(0) !important;
+}
+
+.obscuredInside>* {
+    display: none !important;
+}
+
 .obscured .header,
 .obscured .videoHeader,
 .obscured .roomInfo,
 .obscured .captureTitle,
-.obscured .title {
+.obscured .title,
+.obscured .doorTitle {
     opacity: 1 !important;
     filter: none !important;
     z-index: 20;
@@ -445,8 +471,18 @@
 
 .revealButton:hover {
     transform: translate(-50%, -50%) scale(1.05);
-    background: var(--accent-light);
+    background: var(--accent-light, #8b5cf6);
     box-shadow: 0 6px 16px var(--accent-glow);
+}
+
+:global([data-theme='light']) .revealButton {
+    background: black !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+:global([data-theme='light']) .revealButton:hover {
+    background: #27272a !important;
 }
 
 .revealButton:active {
@@ -463,7 +499,6 @@
     max-width: 100%;
 }
 
-/* Room Card Variant - Premium Door Portal */
 .roomCardOuter {
     background: transparent !important;
     border: none !important;
@@ -472,15 +507,39 @@
     width: 200px !important;
     height: 320px !important;
     z-index: 15;
+    overflow: visible !important;
+
+    /* Theme Variables - Default (Dark) */
+    --room-inside-bg: #050505;
+    --room-door-bg: linear-gradient(135deg, #222 0%, #111 100%);
+    --room-door-border: #333;
+    --room-handle-bg: linear-gradient(to right, #666, #999, #666);
+    --room-title-color: rgba(255, 255, 255, 0.7);
+    --room-subtitle-color: rgba(255, 255, 255, 0.3);
+    --room-actions-bg: #111;
+    --room-actions-border: #333;
+    --room-highlight: #e9d5ff;
+    /* purple-200 */
+}
+
+:global([data-theme='light']) .roomCardOuter {
+    --room-inside-bg: #f0f0f5;
+    --room-door-bg: linear-gradient(135deg, #ffffff 0%, #f4f4f5 100%);
+    --room-door-border: #e2e8f0;
+    --room-handle-bg: linear-gradient(to right, #a1a1aa, #e4e4e7, #a1a1aa);
+    --room-title-color: #18181b;
+    --room-subtitle-color: #71717a;
+    --room-actions-bg: #ffffff;
+    --room-actions-border: #e2e8f0;
+    --room-highlight: #9333ea;
+    /* purple-600 */
 }
 
 .roomCardOuter:hover {
     z-index: 100;
-    /* Bring to front on hover */
 }
 
 .portalCard {
-    /* Frame Container */
     position: relative;
     width: 100%;
     height: 100%;
@@ -490,17 +549,13 @@
 .roomInside {
     position: absolute;
     inset: 4px;
-    background: #050505;
-    background-image:
-        radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%),
-        linear-gradient(to bottom, transparent, #000);
+    background: var(--room-inside-bg);
     border-radius: 8px;
     z-index: 1;
-    /* Behind door */
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 0 20px #000;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
     border: 1px solid var(--accent-glow);
 }
 
@@ -513,6 +568,15 @@
     justify-content: center;
     opacity: 0;
     transition: opacity 0.5s ease 0.2s;
+}
+
+.roomInsideGlow span {
+    color: var(--room-highlight) !important;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+.roomInsideGlow svg {
+    color: var(--room-highlight) !important;
 }
 
 .roomCardOuter:hover .roomInsideGlow {
@@ -532,28 +596,23 @@
 .doorPanel {
     position: absolute;
     inset: 0;
-    background: #151515;
-    border: 1px solid #333;
+    background: var(--room-door-bg);
+    border: 1px solid var(--room-door-border);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 20px;
     backface-visibility: hidden;
-    /* Wood texture simulation or sleek metal */
-    background-image: linear-gradient(135deg, #222 0%, #111 100%);
-    box-shadow:
-        inset 0 0 0 2px rgba(255, 255, 255, 0.05),
-        2px 0 10px rgba(0, 0, 0, 0.5);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .doorFrameDesign {
-    /* Inner panel look */
     position: absolute;
     inset: 12px;
-    border: 2px solid rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(0, 0, 0, 0.1);
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .doorHandle {
@@ -562,96 +621,106 @@
     top: 50%;
     width: 10px;
     height: 36px;
-    background: linear-gradient(to right, #666, #999, #666);
+    background: var(--room-handle-bg);
     border-radius: 2px;
-    box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transform: translateZ(4px);
-}
-
-/* On hover, Open the door */
-.roomCardOuter:hover .roomDoor {
-    transform: rotateY(-115deg);
 }
 
 .doorTitle {
     margin-top: 40px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--room-title-color);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     text-align: center;
     z-index: 5;
-    text-shadow: 0 1px 2px black;
+}
+
+.renameInput {
+    margin-top: 40px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: var(--room-title-color) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    text-align: center !important;
+    z-index: 5 !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    font-family: inherit !important;
+}
+
+/* Force door closed when editing title */
+.roomCardOuter.isEditing .roomDoor {
+    transform: rotateY(0) !important;
+}
+
+.roomCardOuter.isEditing .roomInsideGlow,
+.roomCardOuter.isEditing .roomInsideActions {
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .doorSubtitle {
     font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--room-subtitle-color);
     margin-top: 4px;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     z-index: 5;
 }
 
-/* Actions Wrapper - Replaces old actions positioning */
-.roomActionsWrapper {
+.roomInsideActions {
     position: absolute;
-    bottom: -15px;
+    bottom: 20px;
     left: 50%;
-    transform: translateX(-50%) translateY(10px);
+    transform: translateX(-50%);
     display: flex;
-    gap: 4px;
-    padding: 2px;
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 20px;
-    opacity: 0;
-    transition: all 0.2s ease;
-    z-index: 200;
-    pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.roomCardOuter:hover .roomActionsWrapper {
+    gap: 8px;
+    z-index: 5;
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    pointer-events: auto;
+    /* Always visible from "inside" */
 }
 
-.roomActionsWrapper button {
-    color: #888;
-    padding: 4px;
-    border-radius: 4px;
+.roomInsideActions button {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--room-highlight) !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    backdrop-filter: blur(4px);
 }
 
-.roomActionsWrapper button:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
+.roomInsideActions button:hover {
+    background: var(--accent) !important;
+    color: white !important;
+    border-color: var(--accent) !important;
+    transform: scale(1.1);
 }
 
-.roomActionsWrapper .deleteAction:hover {
-    color: #ff4444;
-    background: rgba(255, 68, 68, 0.1);
+:global([data-theme='light']) .roomInsideActions button {
+    color: black !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Shadow underneath */
-.doorShadow {
-    position: absolute;
-    bottom: -20px;
-    left: 10%;
-    width: 80%;
-    height: 10px;
-    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 0%, transparent 70%);
-    z-index: -1;
-    filter: blur(4px);
-    transition: all 0.6s ease;
+:global([data-theme='light']) .roomInsideActions button:hover {
+    background: black !important;
+    color: white !important;
 }
 
-.roomCardOuter:hover .doorShadow {
-    transform: scaleX(1.1) translateX(10%);
-    /* Shift shadow as door opens */
-    opacity: 0.4;
+.roomCardOuter:hover .roomDoor {
+    transform: rotateY(-115deg);
 }

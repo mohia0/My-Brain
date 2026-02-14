@@ -112,7 +112,8 @@
 
 .colorPicker {
     position: absolute;
-    top: 30px;
+    bottom: 30px;
+    /* Moved above the control */
     left: 50%;
     transform: translateX(-50%);
     background: var(--card-bg);

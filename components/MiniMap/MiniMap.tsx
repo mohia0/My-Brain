@@ -4,7 +4,7 @@ import React from 'react';
 import styles from './MiniMap.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { Map as MapIcon, Minimize2, HelpCircle, X } from 'lucide-react';
+import { Map as MapIcon, Minimize2, HelpCircle, X, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function MiniMap() {
@@ -138,6 +138,21 @@ export default function MiniMap() {
                 >
                     <HelpCircle size={14} />
                 </button>
+
+                {useItemsStore.getState().currentRoomId && (
+                    <button
+                        className={styles.homeBtn}
+                        onClick={() => {
+                            useItemsStore.getState().setCurrentRoomId(null);
+                            useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                            useCanvasStore.getState().setScale(0.65);
+                        }}
+                        data-tooltip="Back to Home"
+                        data-tooltip-pos="top"
+                    >
+                        <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
+                    </button>
+                )}
             </div>
 
             <div
@@ -157,7 +172,10 @@ export default function MiniMap() {
             >
                 <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
 
-                {items.filter(i => !i.folder_id && i.status !== 'inbox' && i.type !== 'project').map(item => (
+                {items.filter(i => {
+                    const room = useItemsStore.getState().currentRoomId;
+                    return (i.room_id || null) === room && !i.folder_id && i.status !== 'inbox' && i.type !== 'project';
+                }).map(item => (
                     <div
                         key={item.id}
                         className={styles.dot}
@@ -170,7 +188,10 @@ export default function MiniMap() {
                 ))}
 
                 {/* Folders as small white dots */}
-                {useItemsStore.getState().folders.filter(f => !f.parent_id).map(folder => (
+                {useItemsStore.getState().folders.filter(f => {
+                    const room = useItemsStore.getState().currentRoomId;
+                    return (f.room_id || null) === room && !f.parent_id;
+                }).map(folder => (
                     <div
                         key={folder.id}
                         className={styles.dot}

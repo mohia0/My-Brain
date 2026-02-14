@@ -312,8 +312,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const selectedItems = items.filter(item => {
                     const itemW = 280;
                     const itemH = 100;
-                    // Only select root items (not in inbox, not in folder)
+                    const currentRoomId = useItemsStore.getState().currentRoomId;
+
+                    // Filter by room and hierarchy
                     if (item.status === 'inbox' || item.folder_id) return false;
+                    if ((item.room_id || null) !== currentRoomId) return false;
 
                     return (
                         item.position_x < worldX + worldW &&
@@ -324,10 +327,13 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 }).map(i => i.id);
 
                 const selectedFolders = useItemsStore.getState().folders.filter(folder => {
-                    const folderW = 240; // Folder width approx
-                    const folderH = 180; // Folder height approx
-                    // Only select root folders (not nested)
+                    const folderW = 240;
+                    const folderH = 180;
+                    const currentRoomId = useItemsStore.getState().currentRoomId;
+
+                    // Filter by room and hierarchy
                     if (folder.parent_id) return false;
+                    if ((folder.room_id || null) !== currentRoomId) return false;
 
                     return (
                         folder.position_x < worldX + worldW &&
@@ -368,6 +374,8 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     user_id: 'unknown',
                     type: 'project',
                     content: '',
+                    status: 'active',
+                    room_id: useItemsStore.getState().currentRoomId,
                     position_x: worldX,
                     position_y: worldY,
                     created_at: new Date().toISOString(),
@@ -412,6 +420,8 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                         user_id: 'unknown',
                         type: 'image',
                         content,
+                        status: 'active',
+                        room_id: useItemsStore.getState().currentRoomId,
                         position_x: dropX,
                         position_y: dropY,
                         created_at: new Date().toISOString(),

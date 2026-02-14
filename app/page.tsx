@@ -128,6 +128,12 @@ export default function Home() {
   }, [session, showLoading, initializing]);
 
   useEffect(() => {
+    if (session && !isInitializingRef.current) {
+      fetchData();
+    }
+  }, [currentRoomId, session, fetchData]);
+
+  useEffect(() => {
     const checkMobile = () => {
       // 1. Force override via URL (debugging)
       const params = new URLSearchParams(window.location.search);
@@ -196,7 +202,7 @@ export default function Home() {
   }, [session, isMobile]);
 
   const visibleItems = items.filter(item =>
-    item.room_id === currentRoomId &&
+    (item.room_id || null) === currentRoomId &&
     !item.folder_id &&
     item.status !== 'inbox' &&
     item.status !== 'archived' &&
@@ -204,13 +210,13 @@ export default function Home() {
   );
 
   const projectAreas = items.filter(item =>
-    item.room_id === currentRoomId &&
+    (item.room_id || null) === currentRoomId &&
     item.type === 'project' &&
     item.status !== 'archived'
   );
 
   const visibleFolders = folders.filter(folder =>
-    folder.room_id === currentRoomId &&
+    (folder.room_id || null) === currentRoomId &&
     !folder.parent_id &&
     folder.status !== 'archived'
   );
@@ -283,8 +289,8 @@ export default function Home() {
                         isLocked={isInsideLockedArea(item.position_x, item.position_y, item.metadata?.width || 280, item.metadata?.height || (item.type === 'room' ? 280 : 120))}
                       />
                     ))}
+                    <RoomBackButton />
                   </Canvas>
-                  <RoomBackButton />
                   <MiniMap />
                   <Toolbar />
                   <ZoomWheel />

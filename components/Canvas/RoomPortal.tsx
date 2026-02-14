@@ -68,6 +68,8 @@ export default function RoomPortal({ item, isLocked, onClick }: RoomPortalProps)
     );
 }
 
+import styles from './RoomPortal.module.css';
+
 export function RoomBackButton() {
     const { currentRoomId, setCurrentRoomId } = useItemsStore();
     const { setPosition, setScale } = useCanvasStore();
@@ -81,17 +83,17 @@ export function RoomBackButton() {
     };
 
     return (
-        <div className="fixed top-6 left-6 z-[99999] animate-in fade-in zoom-in duration-300">
+        <div className={styles.backButtonWrapper}>
             <button
                 onClick={handleBack}
-                className="group flex items-center gap-3 bg-black/80 backdrop-blur-md border border-white/10 px-5 py-3 rounded-full hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
+                className={styles.backButton}
             >
-                <div className="bg-white/10 p-2 rounded-full group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                <div className={styles.iconWrapper}>
                     <CornerUpLeft size={20} />
                 </div>
-                <div className="flex flex-col items-start">
-                    <span className="text-white font-bold text-sm tracking-wide">EXIT ROOM</span>
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-wider group-hover:text-zinc-300">Return to Canvas</span>
+                <div className={styles.textColumn}>
+                    <span className={styles.mainText}>EXIT ROOM</span>
+                    <span className={styles.subText}>Return to Canvas</span>
                 </div>
             </button>
         </div>

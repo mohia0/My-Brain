@@ -216,6 +216,8 @@ export default function MiniMap() {
                     }}
                 />
             </div>
+
+            <div className={styles.versionText}>VER 1.07 Beta</div>
         </div>
     );
 }

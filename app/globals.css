@@ -98,6 +98,12 @@ body {
   -webkit-user-select: none;
 }
 
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
 input,
 textarea,
 [contenteditable="true"] {

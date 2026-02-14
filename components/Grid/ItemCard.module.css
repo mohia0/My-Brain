@@ -97,6 +97,8 @@
     object-fit: cover;
     border-radius: 0;
     display: block;
+    user-select: none;
+    pointer-events: none;
 }
 
 .imageContentWrapper {
@@ -204,6 +206,8 @@
     height: 100%;
     object-fit: cover;
     border-right: 1px solid var(--card-border);
+    user-select: none;
+    pointer-events: none;
 }
 
 .noSnapshot {

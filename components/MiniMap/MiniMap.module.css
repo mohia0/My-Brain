@@ -249,3 +249,14 @@
     color: var(--text);
     box-shadow: 0 2px 0 var(--border-light);
 }
+
+.versionText {
+    font-size: 9px;
+    font-family: monospace;
+    opacity: 0.4;
+    color: var(--text-dim);
+    margin-top: 2px;
+    margin-left: 2px;
+    letter-spacing: 0.05em;
+    pointer-events: none;
+}

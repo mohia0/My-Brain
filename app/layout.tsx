@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import React from 'react';
 import { Toaster } from "sonner";
 import "./globals.css";
+import ClientLayout from "./client-layout";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,8 +49,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
         suppressHydrationWarning
       >
-        {children}
-        <Toaster position="top-center" theme="dark" closeButton />
+        <ClientLayout>
+          {children}
+          <Toaster position="top-center" theme="dark" closeButton />
+        </ClientLayout>
       </body>
     </html>
   );

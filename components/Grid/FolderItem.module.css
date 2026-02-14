@@ -181,6 +181,8 @@
     border-radius: 8px;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
+    user-select: none;
+    pointer-events: none;
 }
 
 .miniIcon {
@@ -248,14 +250,24 @@
 
 .obscured .mainBody,
 .obscured .tab {
-    filter: blur(12px) grayscale(0.4);
-    opacity: 0.5;
+    filter: brightness(0.7) grayscale(0.2);
+    opacity: 0.9;
     pointer-events: none;
 }
 
+.obscured .previewGrid {
+    filter: blur(12px) grayscale(0.4);
+    opacity: 0.3;
+}
+
 .obscured .header {
-    opacity: 1 !important;
+    opacity: 0.7 !important;
     filter: none !important;
+    color: var(--text-dim) !important;
+}
+
+.obscured .bottomAccent {
+    opacity: 0.3;
 }
 
 .revealButton {

@@ -88,6 +88,7 @@ export default function FloatingBar() {
             name,
             position_x: avgX - 100, // Offset to center the folder icon
             position_y: avgY - 50,
+            status: 'active',
             created_at: new Date().toISOString()
         });
 

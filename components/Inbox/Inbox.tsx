@@ -49,6 +49,8 @@ export default function Inbox({ onItemClick }: InboxProps) {
                             e.stopPropagation();
                             setIsCollapsed(!isCollapsed);
                         }}
+                        data-tooltip={isCollapsed ? "Expand Inbox" : "Collapse Inbox"}
+                        data-tooltip-pos="top"
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
                     </button>
@@ -65,7 +67,8 @@ export default function Inbox({ onItemClick }: InboxProps) {
                                 }
                             }}
                             onMouseLeave={() => setIsClearing(false)}
-                            title="Clear Inbox"
+                            data-tooltip="Clear Inbox"
+                            data-tooltip-pos="top"
                         >
                             {isClearing ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={16} />}
                         </button>

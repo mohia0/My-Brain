@@ -21,6 +21,7 @@ export default function OrganizeButton() {
             className={styles.button}
             onClick={handleClick}
             data-tooltip={selectedIds.length > 0 ? "Organize Selection" : "Organize All"}
+            data-tooltip-pos="top"
         >
             <Sparkles size={20} />
         </button>

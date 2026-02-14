@@ -10,7 +10,7 @@
     border-radius: 16px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 8px 24px var(--shadow-color);
     z-index: 90;
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);

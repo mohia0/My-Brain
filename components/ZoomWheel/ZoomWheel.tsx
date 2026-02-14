@@ -34,7 +34,7 @@ export default function ZoomWheel() {
 
     return (
         <div className={styles.wrapper}>
-            <button className={styles.btn} onClick={() => handleZoom(scale * 1.1)}>
+            <button className={styles.btn} onClick={() => handleZoom(scale * 1.1)} data-tooltip="Zoom In" data-tooltip-pos="left">
                 <Plus size={18} />
             </button>
 
@@ -59,7 +59,7 @@ export default function ZoomWheel() {
                 </div>
             </div>
 
-            <button className={styles.btn} onClick={() => handleZoom(scale * 0.9)}>
+            <button className={styles.btn} onClick={() => handleZoom(scale * 0.9)} data-tooltip="Zoom Out" data-tooltip-pos="left">
                 <Minus size={18} />
             </button>
 

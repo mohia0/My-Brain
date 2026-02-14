@@ -87,6 +87,7 @@
     margin-right: 8px;
     pointer-events: auto;
     max-width: 200px;
+    overflow: visible;
 }
 
 .addOption {

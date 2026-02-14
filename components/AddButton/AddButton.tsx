@@ -146,6 +146,8 @@ export default function AddButton() {
             <button
                 className={`${styles.fab} ${isOpen ? styles.open : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
+                data-tooltip={isOpen ? "Close Menu" : "Add Idea"}
+                data-tooltip-pos="top"
             >
                 <Plus size={24} className={styles.icon} />
             </button>

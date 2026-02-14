@@ -9,7 +9,7 @@ import clsx from 'clsx';
 
 export default function MiniMap() {
     const { items, layoutAllItems } = useItemsStore(); // Added layoutAllItems
-    const { position, scale, setScale } = useCanvasStore();
+    const { position, scale, setScale, isMinimapCollapsed, setIsMinimapCollapsed } = useCanvasStore();
     const [showHelp, setShowHelp] = React.useState(false);
     const helpRef = React.useRef<HTMLDivElement>(null);
 
@@ -35,7 +35,6 @@ export default function MiniMap() {
 
     // Viewport rect calculation
     const [mount, setMount] = React.useState(false);
-    const [isCollapsed, setIsCollapsed] = React.useState(false);
 
     React.useEffect(() => {
         setMount(true);
@@ -61,7 +60,7 @@ export default function MiniMap() {
     };
 
     return (
-        <div className={clsx(styles.wrapper, isCollapsed && styles.isCollapsed)}>
+        <div className={clsx(styles.wrapper, isMinimapCollapsed && styles.isCollapsed)}>
             {showHelp && (
                 <div className={styles.helpModal} ref={helpRef}>
                     <div className={styles.helpHeader}>
@@ -124,11 +123,11 @@ export default function MiniMap() {
             <div className={styles.controls}>
                 <button
                     className={styles.toggleBtn}
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    data-tooltip={isCollapsed ? "Open MiniMap" : "Close MiniMap"}
+                    onClick={() => setIsMinimapCollapsed(!isMinimapCollapsed)}
+                    data-tooltip={isMinimapCollapsed ? "Open MiniMap" : "Close MiniMap"}
                     data-tooltip-pos="top-right"
                 >
-                    {isCollapsed ? <MapIcon size={14} strokeWidth={2.5} /> : <Minimize2 size={14} strokeWidth={2.5} />}
+                    {isMinimapCollapsed ? <MapIcon size={14} strokeWidth={2.5} /> : <Minimize2 size={14} strokeWidth={2.5} />}
                 </button>
 
                 <button

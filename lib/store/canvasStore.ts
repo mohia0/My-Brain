@@ -13,6 +13,8 @@ interface CanvasState {
     setTool: (tool: 'mouse' | 'hand' | 'area') => void;
     openFolderId: string | null;
     setOpenFolderId: (id: string | null) => void;
+    isMinimapCollapsed: boolean;
+    setIsMinimapCollapsed: (collapsed: boolean) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
@@ -34,4 +36,6 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     setTool: (tool: 'mouse' | 'hand' | 'area') => set({ currentTool: tool }),
     openFolderId: null,
     setOpenFolderId: (id) => set({ openFolderId: id }),
+    isMinimapCollapsed: false,
+    setIsMinimapCollapsed: (collapsed) => set({ isMinimapCollapsed: collapsed }),
 }));

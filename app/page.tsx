@@ -152,8 +152,11 @@ export default function Home() {
   // View Sync Logic
   useEffect(() => {
     if (session?.user?.user_metadata?.canvas_view && !isMobile) {
-      const { scale, x, y } = session.user.user_metadata.canvas_view;
+      const { scale, x, y, isMinimapCollapsed } = session.user.user_metadata.canvas_view;
       useCanvasStore.getState().restoreView(scale, { x, y });
+      if (isMinimapCollapsed !== undefined) {
+        useCanvasStore.getState().setIsMinimapCollapsed(isMinimapCollapsed);
+      }
     }
   }, [session, isMobile]);
 
@@ -170,7 +173,8 @@ export default function Home() {
             canvas_view: {
               scale: state.scale,
               x: state.position.x,
-              y: state.position.y
+              y: state.position.y,
+              isMinimapCollapsed: state.isMinimapCollapsed
             }
           }
         });

@@ -8,15 +8,25 @@ import styles from './Canvas.module.css';
 import { Undo, Redo } from 'lucide-react';
 import clsx from 'clsx';
 
-// Fixed Canvas Size (Figma-like artboard)
-const CANVAS_WIDTH = 10000;
-const CANVAS_HEIGHT = 5000;
-const HALF_WIDTH = CANVAS_WIDTH / 2;
-const HALF_HEIGHT = CANVAS_HEIGHT / 2;
+// Canvas Dimensions
+const MAIN_WIDTH = 10000;
+const MAIN_HEIGHT = 5000;
+const ROOM_WIDTH = 5000;
+const ROOM_HEIGHT = 2500;
 
 export default function Canvas({ children }: { children: React.ReactNode }) {
     const { scale, position, setPosition, setScale, currentTool } = useCanvasStore();
-    const { items, setSelection, clearSelection, addItem, undo, redo, history } = useItemsStore();
+    const { items, setSelection, clearSelection, addItem, undo, redo, history, currentRoomId } = useItemsStore();
+
+    // Derived Canvas Dimensions & Colors
+    const isRoom = !!currentRoomId;
+    const currentCanvasWidth = isRoom ? ROOM_WIDTH : MAIN_WIDTH;
+    const currentCanvasHeight = isRoom ? ROOM_HEIGHT : MAIN_HEIGHT;
+    const halfWidth = currentCanvasWidth / 2;
+    const halfHeight = currentCanvasHeight / 2;
+
+    const outerColor = isRoom ? 'var(--canvas-room-outer)' : 'var(--canvas-main-outer)';
+    const innerColor = isRoom ? 'var(--canvas-room-inner)' : 'var(--canvas-main-inner)';
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null);
@@ -139,11 +149,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const viewportW = window.innerWidth;
                 const viewportH = window.innerHeight;
 
-                const minX = viewportW - (HALF_WIDTH * currentScale);
-                const maxX = HALF_WIDTH * currentScale;
+                const minX = viewportW - (halfWidth * currentScale);
+                const maxX = halfWidth * currentScale;
 
-                const minY = viewportH - (HALF_HEIGHT * currentScale);
-                const maxY = HALF_HEIGHT * currentScale;
+                const minY = viewportH - (halfHeight * currentScale);
+                const maxY = halfHeight * currentScale;
 
                 if (minX <= maxX) {
                     newX = Math.max(minX, Math.min(maxX, newX));
@@ -171,7 +181,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 container.removeEventListener('wheel', handleWheel);
             }
         };
-    }, []);
+    }, [halfWidth, halfHeight]);
 
     const handleContextMenu = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -247,11 +257,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             const viewportW = window.innerWidth;
             const viewportH = window.innerHeight;
 
-            const minX = viewportW - (HALF_WIDTH * scale);
-            const maxX = HALF_WIDTH * scale;
+            const minX = viewportW - (halfWidth * scale);
+            const maxX = halfWidth * scale;
 
-            const minY = viewportH - (HALF_HEIGHT * scale);
-            const maxY = HALF_HEIGHT * scale;
+            const minY = viewportH - (halfHeight * scale);
+            const maxY = halfHeight * scale;
 
             if (minX > maxX) {
                 newX = viewportW / 2;
@@ -543,7 +553,8 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             style={{
-                cursor: selectionBox ? 'crosshair' : cursor
+                cursor: selectionBox ? 'crosshair' : cursor,
+                backgroundColor: outerColor
             }}
         >
             <div
@@ -557,11 +568,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 {/* Visual Board Boundaries */}
                 <div style={{
                     position: 'absolute',
-                    left: -HALF_WIDTH,
-                    top: -HALF_HEIGHT,
-                    width: CANVAS_WIDTH,
-                    height: CANVAS_HEIGHT,
-                    backgroundColor: 'var(--background)', // Keep board original color
+                    left: -halfWidth,
+                    top: -halfHeight,
+                    width: currentCanvasWidth,
+                    height: currentCanvasHeight,
+                    backgroundColor: innerColor,
                     border: '1px solid var(--card-border)',
                     pointerEvents: 'none',
                     zIndex: -1

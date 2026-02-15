@@ -91,7 +91,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
                 data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Folder" : "Lock Folder"))}
                 data-tooltip-pos="bottom"
             >
-                {isObscured ? <Unlock size={12} /> : (isVaulted && !isObscured ? <FolderIcon size={12} /> : (isVaulted ? <FolderIcon size={12} /> : <Lock size={12} />))}
+                {isObscured ? <Unlock size={12} /> : <Lock size={12} />}
             </button>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
             <button

@@ -264,6 +264,11 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
         // 3. Handle Dropping ONTO Inbox
         if (over && over.id === 'inbox-area') {
+            // Prevent rooms and project areas from being moved to inbox
+            if (activeData.type === 'project' || activeData.itemType === 'room' || activeData.type === 'room') {
+                return;
+            }
+
             updateItemContent(active.id as string, { status: 'inbox' });
             return;
         }
@@ -290,8 +295,11 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const PADDING = 20;
 
         // Canvas Boundaries (must match Canvas.tsx)
-        const CANVAS_WIDTH = 10000;
-        const CANVAS_HEIGHT = 5000;
+        // Canvas Boundaries (must match Canvas.tsx)
+        const currentRoomId = useItemsStore.getState().currentRoomId;
+        const isRoom = !!currentRoomId;
+        const CANVAS_WIDTH = isRoom ? 5000 : 10000;
+        const CANVAS_HEIGHT = isRoom ? 2500 : 5000;
         const HALF_WIDTH = CANVAS_WIDTH / 2;
         const HALF_HEIGHT = CANVAS_HEIGHT / 2;
 

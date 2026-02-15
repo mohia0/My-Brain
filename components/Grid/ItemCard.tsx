@@ -128,6 +128,11 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const handleVaultToggle = async (e: React.MouseEvent) => {
         e.stopPropagation();
 
+        if (hasPassword === false) {
+            toast.error("Please set up your Vault password in Settings first.");
+            return;
+        }
+
         if (hasPassword !== true && !isVaulted) {
             setModalOpen(true);
             return;
@@ -164,6 +169,8 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     e.stopPropagation();
                     if (isVaulted && !isObscured) {
                         handleLockItem(e);
+                    } else if (isObscured) {
+                        setModalOpen(true, localItem.id);
                     } else if (!isVaulted) {
                         handleVaultToggle(e);
                     }
@@ -205,6 +212,8 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     e.preventDefault();
                     if (isVaulted && !isObscured) {
                         handleLockItem(e);
+                    } else if (isObscured) {
+                        setModalOpen(true, localItem.id);
                     } else if (!isVaulted) {
                         handleVaultToggle(e); // This now opens the modal if needed
                     }
@@ -643,7 +652,7 @@ export default function ItemCard({ item, isLocked, onClick }: ItemCardProps) {
 
     const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
         id: item.id,
-        data: { ...item, type: 'item' },
+        data: { ...item, type: 'item', itemType: item.type },
         disabled: isLocked
     });
 

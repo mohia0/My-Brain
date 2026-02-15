@@ -38,6 +38,12 @@
   --grid-dot: rgba(255, 255, 255, 0.08);
   --canvas-gutter: #0f0f11;
 
+  /* Canvas Specific Colors */
+  --canvas-main-inner: #09090b;
+  --canvas-main-outer: #000000;
+  --canvas-room-inner: #111113;
+  --canvas-room-outer: #050505;
+
   /* Zoom/Pan Context */
   --scale: 1;
 }
@@ -71,6 +77,12 @@
   --modal-bg: #ffffff;
   --grid-dot: rgba(0, 0, 0, 0.12);
   --canvas-gutter: #e5e5ea;
+
+  /* Canvas Specific Colors (Light Mode) */
+  --canvas-main-inner: #f4f4f7;
+  --canvas-main-outer: #e4e4e7;
+  --canvas-room-inner: #ffffff;
+  --canvas-room-outer: #f4f4f5;
 }
 
 * {

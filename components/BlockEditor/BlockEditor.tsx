@@ -3,14 +3,14 @@
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
-import { BlockNoteView } from "@blocknote/mantine";
+import { BlockNoteView, darkDefaultTheme, lightDefaultTheme } from "@blocknote/mantine";
 import { Block, BlockNoteEditor } from "@blocknote/core";
 import { filterSuggestionItems } from "@blocknote/core/extensions";
 import {
     getDefaultReactSlashMenuItems,
     SuggestionMenuController
 } from "@blocknote/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Undo, Redo } from "lucide-react";
 
 interface BlockEditorProps {
@@ -43,19 +43,19 @@ const getCustomSlashMenuItems = (editor: BlockNoteEditor) => {
 };
 
 export default function BlockEditor({ initialContent, onChange, editable = true }: BlockEditorProps) {
-    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+    const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('dark');
 
     useEffect(() => {
         // Initial theme check
         const currentTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'dark';
-        setTheme(currentTheme);
+        setColorScheme(currentTheme);
 
         // Watch for theme changes
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
                     const newTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'dark';
-                    setTheme(newTheme);
+                    setColorScheme(newTheme);
                 }
             });
         });
@@ -64,6 +64,20 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
 
         return () => observer.disconnect();
     }, []);
+
+    const customBlockNoteTheme = useMemo(() => {
+        const base = colorScheme === 'dark' ? darkDefaultTheme : lightDefaultTheme;
+        return {
+            ...base,
+            colors: {
+                ...base.colors,
+                editor: {
+                    text: colorScheme === 'dark' ? "#ededed" : "#1a1a1a",
+                    background: "transparent",
+                },
+            }
+        };
+    }, [colorScheme]);
 
     // Try to parse initial content as JSON blocks
     const getInitialBlocks = (): Block[] | undefined => {
@@ -120,7 +134,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                 <BlockNoteView
                     editor={editor}
                     onChange={handleChange}
-                    theme={theme}
+                    theme={customBlockNoteTheme as any}
                     editable={editable}
                     slashMenu={false}
                 >
@@ -144,7 +158,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                     transform: 'translateX(-50%)',
                     display: 'flex',
                     padding: '2px',
-                    background: theme === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(20, 20, 20, 0.4)',
+                    background: colorScheme === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(20, 20, 20, 0.4)',
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '8px',
@@ -155,12 +169,12 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                 }}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.opacity = '1';
-                        e.currentTarget.style.background = theme === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 30, 30, 0.8)';
+                        e.currentTarget.style.background = colorScheme === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 30, 30, 0.8)';
                         e.currentTarget.style.transform = 'translateX(-50%) translateY(-2px)';
                     }}
                     onMouseLeave={(e) => {
                         e.currentTarget.style.opacity = '0.4';
-                        e.currentTarget.style.background = theme === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(20, 20, 20, 0.4)';
+                        e.currentTarget.style.background = colorScheme === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(20, 20, 20, 0.4)';
                         e.currentTarget.style.transform = 'translateX(-50%) translateY(0)';
                     }}
                 >
@@ -169,7 +183,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                         style={{
                             background: 'transparent',
                             border: 'none',
-                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
+                            color: colorScheme === 'light' ? '#1a1a1a' : 'var(--foreground)',
                             padding: '6px',
                             borderRadius: '6px',
                             cursor: 'pointer',
@@ -197,7 +211,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                         style={{
                             background: 'transparent',
                             border: 'none',
-                            color: theme === 'light' ? '#1a1a1a' : 'var(--foreground)',
+                            color: colorScheme === 'light' ? '#1a1a1a' : 'var(--foreground)',
                             padding: '6px',
                             borderRadius: '6px',
                             cursor: 'pointer',

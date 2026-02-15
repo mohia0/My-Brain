@@ -56,7 +56,7 @@
 }
 
 .noteModal .leftColumn {
-    background: rgba(255, 255, 255, 0.02);
+    background: transparent;
 }
 
 .noteModal .modalContent {
@@ -306,7 +306,7 @@
 .rightColumn {
     display: flex;
     flex-direction: column;
-    background: var(--modal-bg);
+    background: transparent;
     height: 100%;
     overflow: hidden;
     position: relative;
@@ -466,7 +466,8 @@
     background: transparent !important;
 }
 
-.inlineEditorWrapper :global(.bn-container) {
+.inlineEditorWrapper :global(.bn-container),
+.editorWrapper :global(.bn-container) {
     background: transparent !important;
 }
 
@@ -522,6 +523,9 @@
 }
 
 .noteTitleDisplay {
+    display: block;
+    width: 100%;
+    margin: 0;
     font-size: 1.8rem;
     font-weight: 800;
     color: var(--foreground);
@@ -529,6 +533,8 @@
     padding: 0;
     transition: color 0.2s;
     letter-spacing: -0.02em;
+    font-family: inherit;
+    line-height: 1.2;
 }
 
 .noteTitleDisplay:hover {
@@ -536,15 +542,20 @@
 }
 
 .noteTitleInput {
+    display: block;
+    width: 100%;
+    margin: 0;
     background: transparent;
     border: none;
     font-size: 1.8rem;
     font-weight: 800;
     color: var(--foreground);
-    width: 100%;
     outline: none;
     padding: 0;
     letter-spacing: -0.02em;
+    font-family: inherit;
+    line-height: 1.2;
+    box-sizing: border-box;
 }
 
 .editorWrapper {

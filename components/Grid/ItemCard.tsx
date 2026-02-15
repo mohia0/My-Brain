@@ -437,9 +437,9 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         if (isObscured) return;
 
                         // Enter Room
-                        useItemsStore.getState().setCurrentRoomId(localItem.id);
-                        // Reset view for new room
-                        useCanvasStore.getState().setPosition(0, 0);
+                        useItemsStore.getState().enterRoom(localItem.id, localItem.metadata?.title || 'Mind Room');
+                        // Reset view for new room - CENTER IT
+                        useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
                         useCanvasStore.getState().setScale(1);
                     }}
                 >

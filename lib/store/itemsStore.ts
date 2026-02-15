@@ -160,6 +160,12 @@ interface ItemsState {
     vaultedItemsRevealed: string[]; // IDs of items currently "peeked" with password
     revealVaulted: (id: string) => Promise<void>;
     reLockVaulted: (id: string) => void;
+
+    // Room Navigation History
+    roomHistory: { id: string | null, title: string }[];
+    currentRoomTitle: string; // Title of the room we are actually IN right now
+    enterRoom: (id: string, title: string) => void;
+    exitRoom: () => void;
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -175,6 +181,37 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     isLimitExceeded: false,
     setIsLimitExceeded: (val) => set({ isLimitExceeded: val }),
     vaultedItemsRevealed: [],
+    roomHistory: [],
+    currentRoomTitle: 'Canvas',
+
+    enterRoom: (id, title) => {
+        const state = get();
+        const prevId = state.currentRoomId;
+        const prevTitle = state.currentRoomTitle;
+
+        set({
+            roomHistory: [...state.roomHistory, { id: prevId, title: prevTitle }],
+            currentRoomId: id,
+            currentRoomTitle: title
+        });
+    },
+
+    exitRoom: () => {
+        const state = get();
+        if (state.roomHistory.length === 0) {
+            set({ currentRoomId: null, currentRoomTitle: 'Canvas' });
+            return;
+        }
+
+        const newHistory = [...state.roomHistory];
+        const lastEntry = newHistory.pop();
+
+        set({
+            currentRoomId: lastEntry?.id ?? null,
+            currentRoomTitle: lastEntry?.title || 'Canvas',
+            roomHistory: newHistory
+        });
+    },
 
     revealVaulted: async (id: string) => {
         try {

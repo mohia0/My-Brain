@@ -22,11 +22,9 @@ export default function RoomPortal({ item, isLocked, onClick }: RoomPortalProps)
     const handleEnterRoom = (e: React.MouseEvent) => {
         e.stopPropagation();
 
-        // Use getState to avoid re-rendering loop issues if calling from effect, 
-        // but here it is an event handler.
-        const { scale, position } = useCanvasStore.getState();
+        const { enterRoom } = useItemsStore.getState();
 
-        setCurrentRoomId(item.id);
+        enterRoom(item.id, item.metadata?.title || 'Mind Room');
         setPosition(window.innerWidth / 2, window.innerHeight / 2);
         setScale(1);
     };
@@ -71,13 +69,17 @@ export default function RoomPortal({ item, isLocked, onClick }: RoomPortalProps)
 import styles from './RoomPortal.module.css';
 
 export function RoomBackButton() {
-    const { currentRoomId, setCurrentRoomId } = useItemsStore();
+    const { currentRoomId, roomHistory, exitRoom } = useItemsStore();
     const { setPosition, setScale } = useCanvasStore();
 
     if (!currentRoomId) return null;
 
+    const lastRoom = roomHistory[roomHistory.length - 1];
+    const destinationName = lastRoom ? lastRoom.title : 'Canvas';
+
     const handleBack = () => {
-        setCurrentRoomId(null);
+        exitRoom();
+        // Always center when going back
         setPosition(window.innerWidth / 2, window.innerHeight / 2);
         setScale(0.65);
     };
@@ -93,7 +95,7 @@ export function RoomBackButton() {
                 </div>
                 <div className={styles.textColumn}>
                     <span className={styles.mainText}>EXIT ROOM</span>
-                    <span className={styles.subText}>Return to Canvas</span>
+                    <span className={styles.subText}>Return to {destinationName}</span>
                 </div>
             </button>
         </div>

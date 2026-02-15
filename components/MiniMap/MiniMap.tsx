@@ -8,8 +8,12 @@ import { Map as MapIcon, Minimize2, HelpCircle, X, ArrowRight } from 'lucide-rea
 import clsx from 'clsx';
 
 export default function MiniMap() {
-    const { items, layoutAllItems } = useItemsStore(); // Added layoutAllItems
-    const { position, scale, setScale, isMinimapCollapsed, setIsMinimapCollapsed } = useCanvasStore();
+    const { items, folders, roomHistory, exitRoom } = useItemsStore(); // Increased destructuring
+    const { position, scale, setScale, isMinimapCollapsed, setIsMinimapCollapsed, setPosition } = useCanvasStore();
+
+    // Determine destination for tooltip
+    const lastRoom = roomHistory[roomHistory.length - 1];
+    const destinationTitle = lastRoom ? lastRoom.title : 'Canvas';
     const [showHelp, setShowHelp] = React.useState(false);
     const helpRef = React.useRef<HTMLDivElement>(null);
 
@@ -143,11 +147,11 @@ export default function MiniMap() {
                     <button
                         className={styles.homeBtn}
                         onClick={() => {
-                            useItemsStore.getState().setCurrentRoomId(null);
-                            useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                            useCanvasStore.getState().setScale(0.65);
+                            exitRoom();
+                            setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                            setScale(0.65);
                         }}
-                        data-tooltip="Back to Home"
+                        data-tooltip={`Return to ${destinationTitle}`}
                         data-tooltip-pos="top"
                     >
                         <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />

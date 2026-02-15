@@ -761,6 +761,16 @@
     border-color: rgba(255, 255, 255, 0.15);
 }
 
+:global([data-theme='light']) .tag {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+:global([data-theme='light']) .tag:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
 .tagDot {
     width: 8px;
     height: 8px;
@@ -813,6 +823,11 @@
     background: var(--accent-glow);
 }
 
+:global([data-theme='light']) .addTagBtn {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1.5px dashed rgba(0, 0, 0, 0.1);
+}
+
 .tagInput {
     background: rgba(255, 255, 255, 0.05);
     border: 1.5px solid var(--accent);
@@ -822,6 +837,11 @@
     font-size: 0.85rem;
     width: 120px;
     outline: none;
+}
+
+:global([data-theme='light']) .tagInput {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1.5px solid var(--accent);
 }
 
 /* --- FOOTER --- */

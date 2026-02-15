@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { generateId } from '@/lib/utils';
-import { Item, Folder } from '@/types';
+import { Item, Folder, Tag } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 type PositionUpdate = { id: string, type: 'item' | 'folder', x: number, y: number, prevX: number, prevY: number };
@@ -166,6 +166,7 @@ interface ItemsState {
     currentRoomTitle: string; // Title of the room we are actually IN right now
     enterRoom: (id: string, title: string) => void;
     exitRoom: () => void;
+    updateItemTags: (id: string, tags: Tag[]) => void;
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -264,7 +265,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             // Parallel fetch for speed
             // If in a room, only fetch items for that room.
             // If not, fetch items where room_id IS NULL or not set.
-            let dbItemsReq = supabase.from('items').select('*');
+            // JOIN with tags via item_tags
+            let dbItemsReq = supabase.from('items').select('*, item_tags(tags(*))');
             let dbFoldersReq = supabase.from('folders').select('*');
 
             if (currentRoomId) {
@@ -282,7 +284,23 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             if (itemsRes.data) {
                 set(state => {
                     const localSyncing = state.items.filter(i => i.syncStatus === 'syncing');
-                    const remoteItems = itemsRes.data as Item[];
+                    const rawItems = itemsRes.data as any[];
+
+                    // Map item_tags to metadata.tags for consistency with search/UI
+                    const remoteItems: Item[] = rawItems.map(item => {
+                        const tags = (item.item_tags || [])
+                            .map((it: any) => it.tags)
+                            .filter(Boolean);
+
+                        return {
+                            ...item,
+                            metadata: {
+                                ...(item.metadata || {}),
+                                tags: tags
+                            }
+                        };
+                    });
+
                     const filteredRemote = remoteItems.filter(ri => !localSyncing.find(li => li.id === ri.id));
                     return { items: [...filteredRemote, ...localSyncing] };
                 });
@@ -1086,15 +1104,39 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     refreshItem: async (id: string) => {
         try {
-            const { data, error } = await supabase.from('items').select('*').eq('id', id).single();
+            const { data, error } = await supabase.from('items').select('*, item_tags(tags(*))').eq('id', id).single();
             if (data && !error) {
+                const tags = (data.item_tags || [])
+                    .map((it: any) => it.tags)
+                    .filter(Boolean);
+
                 set(state => ({
-                    items: state.items.map(i => i.id === id ? { ...i, ...data, syncStatus: 'synced' } : i)
+                    items: state.items.map(i => i.id === id ? {
+                        ...i,
+                        ...data,
+                        metadata: {
+                            ...(data.metadata || {}),
+                            tags: tags
+                        },
+                        syncStatus: 'synced'
+                    } : i)
                 }));
             }
         } catch (e) {
             console.error('[Store] refreshItem failed:', e);
         }
+    },
+
+    updateItemTags: (id: string, tags: Tag[]) => {
+        set(state => ({
+            items: state.items.map(i => i.id === id ? {
+                ...i,
+                metadata: {
+                    ...(i.metadata || {}),
+                    tags: tags
+                }
+            } : i)
+        }));
     },
 
     subscribeToChanges: () => {

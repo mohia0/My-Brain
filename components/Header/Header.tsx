@@ -98,6 +98,20 @@ export default function Header() {
             if (title.includes(token)) score += 50;
         });
 
+        // Tags matching
+        if (result.resultType === 'item' && result.metadata?.tags) {
+            const tagsList = Array.isArray(result.metadata.tags)
+                ? result.metadata.tags.map((t: any) => (typeof t === 'string' ? t : t.name).toLowerCase())
+                : [];
+
+            searchTokens.forEach(token => {
+                if (tagsList.some((t: string) => t.includes(token))) {
+                    score += 200; // Strong match for tags
+                    if (tagsList.some((t: string) => t === token)) score += 300; // Exact tag match!
+                }
+            });
+        }
+
         // Content/Description matches
         if (description.includes(q)) score += 100;
 

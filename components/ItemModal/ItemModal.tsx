@@ -18,7 +18,7 @@ interface ItemModalProps {
 }
 
 export default function ItemModal({ itemId, onClose }: ItemModalProps) {
-    const { items, fetchData, updateItemContent, removeItem, archiveItem } = useItemsStore();
+    const { items, fetchData, updateItemContent, removeItem, archiveItem, updateItemTags } = useItemsStore();
     const item = items.find(i => i.id === itemId);
     const isLink = item?.type === 'link';
     const isNote = item?.type === 'text';
@@ -293,7 +293,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         }
         if (tag) {
             const { error } = await supabase.from('item_tags').insert({ item_id: item.id, tag_id: tag.id });
-            if (!error) setTags([...tags, tag]);
+            if (!error) {
+                const newTags = [...tags, tag];
+                setTags(newTags);
+                updateItemTags(item.id, newTags);
+            }
         }
         setNewTagName('');
         setIsTypingTag(false);
@@ -301,7 +305,9 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     const handleRemoveTag = async (tagId: string) => {
         await supabase.from('item_tags').delete().match({ item_id: item.id, tag_id: tagId });
-        setTags(tags.filter(t => t.id !== tagId));
+        const newTags = tags.filter(t => t.id !== tagId);
+        setTags(newTags);
+        updateItemTags(item.id, newTags);
     };
 
 

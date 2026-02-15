@@ -264,6 +264,11 @@
     align-items: center;
 }
 
+:global([data-theme='light']) .resultTag {
+    border: 1px solid rgba(110, 86, 207, 0.4);
+    background: rgba(110, 86, 207, 0.08);
+}
+
 .resultContent {
     display: none;
 }

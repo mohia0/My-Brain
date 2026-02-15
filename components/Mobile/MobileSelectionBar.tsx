@@ -59,7 +59,12 @@ export default function MobileSelectionBar() {
         return () => window.removeEventListener('systemBack', onSystemBack);
     }, [isPickerOpen, selectedIds.length]);
 
-    if (selectedIds.length === 0) return null;
+    const selectedItemsList = items.filter(i => selectedIds.includes(i.id));
+    const isOnlyTwoProjectAreas = selectedIds.length === 2 &&
+        selectedItemsList.length === 2 &&
+        selectedItemsList.every(i => i.type === 'project');
+
+    if (selectedIds.length === 0 || isOnlyTwoProjectAreas) return null;
 
     return (
         <div className={styles.barWrapper}>

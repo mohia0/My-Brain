@@ -37,7 +37,12 @@ export default function FloatingBar() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    if (selectedIds.length <= 1) return null;
+    const selectedItemsList = items.filter(i => selectedIds.includes(i.id));
+    const isOnlyTwoProjectAreas = selectedIds.length === 2 &&
+        selectedItemsList.length === 2 &&
+        selectedItemsList.every(i => i.type === 'project');
+
+    if (selectedIds.length <= 1 || isOnlyTwoProjectAreas) return null;
 
     const handleDelete = () => {
         if (!isDeleting) {

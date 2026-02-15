@@ -694,8 +694,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                         left: (snapLines.vertical * scale) + useCanvasStore.getState().position.x,
                         width: 1,
                         backgroundColor: 'var(--accent)',
-                        opacity: 0.4,
-                        zIndex: 99999,
+                        opacity: 0.35,
+                        zIndex: 50,
                         pointerEvents: 'none'
                     }}
                 />
@@ -709,8 +709,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                         top: (snapLines.horizontal * scale) + useCanvasStore.getState().position.y,
                         height: 1,
                         backgroundColor: 'var(--accent)',
-                        opacity: 0.4,
-                        zIndex: 99999,
+                        opacity: 0.35,
+                        zIndex: 50,
                         pointerEvents: 'none'
                     }}
                 />

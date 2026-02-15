@@ -244,7 +244,13 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const handleMouseMove = (e: React.MouseEvent) => {
+    // Refs for Event Handlers (to avoid stale closures in window listeners)
+    const handleMouseMoveRef = useRef((e: MouseEvent | React.MouseEvent) => { });
+    const handleMouseUpRef = useRef((e: MouseEvent | React.MouseEvent) => { });
+
+    // ... (existing helper functions) ...
+
+    const handleMouseMove = (e: MouseEvent | React.MouseEvent) => {
         // Panning Logic
         if (isPanning) {
             const dx = e.clientX - lastMousePos.current.x;
@@ -320,15 +326,34 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const worldH = height / scale;
 
                 const selectedItems = items.filter(item => {
-                    const itemW = 280;
-                    const itemH = 100;
+                    let itemW = 280;
+                    let itemH = 100;
+
+                    // Prioritize actual DOM dimensions for accuracy
+                    const el = document.getElementById(`draggable-item-${item.id}`);
+                    if (el) {
+                        itemW = el.offsetWidth;
+                        itemH = el.offsetHeight;
+                    } else if (item.type === 'project') {
+                        // Fallback for projects if DOM not found (e.g. slight timing issue)
+                        itemW = item.metadata?.width || 300;
+                        itemH = item.metadata?.height || 200;
+                    } else if (item.type === 'room') {
+                        itemW = 220;
+                        itemH = 220;
+                    } else {
+                        // Metadata fallback for standard items
+                        itemW = item.metadata?.width || 250;
+                        itemH = item.metadata?.height || 100;
+                    }
+
                     const currentRoomId = useItemsStore.getState().currentRoomId;
 
                     // Filter by room and hierarchy
                     if (item.status === 'inbox' || item.folder_id) return false;
                     if ((item.room_id || null) !== currentRoomId) return false;
                     if (item.type === 'room') return false;
-                    // Intentionally allowing 'project' type to be selected now
+                    // Intentionally allowing 'project' type to be selected
 
                     return (
                         item.position_x < worldX + worldW &&
@@ -339,8 +364,15 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 }).map(i => i.id);
 
                 const selectedFolders = useItemsStore.getState().folders.filter(folder => {
-                    const folderW = 240;
-                    const folderH = 180;
+                    let folderW = 280;
+                    let folderH = 120;
+
+                    const el = document.getElementById(`draggable-folder-${folder.id}`);
+                    if (el) {
+                        folderW = el.offsetWidth;
+                        folderH = el.offsetHeight;
+                    }
+
                     const currentRoomId = useItemsStore.getState().currentRoomId;
 
                     // Filter by room and hierarchy
@@ -358,109 +390,22 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const isCtrlPressed = e.ctrlKey || e.metaKey;
                 const currentSelectedIds = useItemsStore.getState().selectedIds;
 
-                const selectedProjectAreas = items.filter(i =>
-                    selectedItems.includes(i.id) && i.type === 'project'
-                );
-
-                // Filter out items that are INSIDE any selected project area
-                const filteredSelectedItems = selectedItems.filter(id => {
-                    const item = items.find(i => i.id === id);
-                    if (!item || item.type === 'project') return true; // Keep projects and missing items
-
-                    // Check if inside any selected project
-                    const isInsideSelectedProject = selectedProjectAreas.some(proj => {
-                        const pW = proj.metadata?.width || 300;
-                        const pH = proj.metadata?.height || 200;
-
-                        // Simple containment check (center point)
-                        const itemW = item.metadata?.width || 250;
-                        const itemH = item.metadata?.height || 100;
-                        const cx = item.position_x + itemW / 2;
-                        const cy = item.position_y + itemH / 2;
-
-                        return (
-                            cx > proj.position_x &&
-                            cx < proj.position_x + pW &&
-                            cy > proj.position_y &&
-                            cy < proj.position_y + pH
-                        );
-                    });
-
-                    // Remove if inside a project area that is ALSO selected
-                    return !isInsideSelectedProject;
-                });
-
-                // Filter out folders similarly
-                const filteredSelectedFolders = selectedFolders.filter(id => {
-                    const folders = useItemsStore.getState().folders;
-                    const folder = folders.find(f => f.id === id);
-                    if (!folder) return true;
-
-                    const isInsideSelectedProject = selectedProjectAreas.some(proj => {
-                        const pW = proj.metadata?.width || 300;
-                        const pH = proj.metadata?.height || 200;
-                        const cx = folder.position_x + 100; // Center of 200w
-                        const cy = folder.position_y + 50;  // Center of 100h
-
-                        return (
-                            cx > proj.position_x &&
-                            cx < proj.position_x + pW &&
-                            cy > proj.position_y &&
-                            cy < proj.position_y + pH
-                        );
-                    });
-
-                    return !isInsideSelectedProject;
-                });
-
+                // NOTE: We REMOVED the logic that filters out items "inside" selected projects.
+                // Since Project Areas do not own their children in the data model (no parent_id link),
+                // we MUST select both the project and its contents so they move together.
 
                 if (isCtrlPressed) {
-                    // Combine old selection with newly box-selected ones, BUT re-filter the WHOLE set
-                    const combinedIds = Array.from(new Set([...currentSelectedIds, ...filteredSelectedItems, ...filteredSelectedFolders]));
-
-                    // Re-filter the ENTIRE combined selection to ensure no "previously selected" items are inside "newly selected" projects
-                    // 1. Identify all project areas in the FINAL set
-                    const allSelectedProjects = items.filter(i => combinedIds.includes(i.id) && i.type === 'project');
-
-                    // 2. Filter the combined IDs
-                    const finalFilteredIds = combinedIds.filter(id => {
-                        const item = items.find(i => i.id === id);
-                        const folder = useItemsStore.getState().folders.find(f => f.id === id);
-
-                        // Always keep projects
-                        if (item && item.type === 'project') return true;
-
-                        // Check containment against ALL selected projects
-                        const isInside = allSelectedProjects.some(proj => {
-                            const pW = proj.metadata?.width || 300;
-                            const pH = proj.metadata?.height || 200;
-
-                            let cx = 0, cy = 0;
-                            if (item) {
-                                cx = item.position_x + (item.metadata?.width || 250) / 2;
-                                cy = item.position_y + (item.metadata?.height || 100) / 2;
-                            } else if (folder) {
-                                cx = folder.position_x + 100;
-                                cy = folder.position_y + 50;
-                            } else {
-                                return false;
-                            }
-
-                            return (cx > proj.position_x && cx < proj.position_x + pW && cy > proj.position_y && cy < proj.position_y + pH);
-                        });
-
-                        return !isInside;
-                    });
-
-                    setSelection(finalFilteredIds);
+                    // Combine old selection with newly box-selected ones
+                    const combinedIds = Array.from(new Set([...currentSelectedIds, ...selectedItems, ...selectedFolders]));
+                    setSelection(combinedIds);
                 } else {
-                    setSelection([...filteredSelectedItems, ...filteredSelectedFolders]);
+                    setSelection([...selectedItems, ...selectedFolders]);
                 }
             }
         }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent | React.MouseEvent) => {
         setIsPanning(false);
         setSelectionBox(null);
 
@@ -500,6 +445,30 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             setCursor('default');
         }
     };
+
+    // Update Refs
+    useEffect(() => {
+        handleMouseMoveRef.current = handleMouseMove;
+        handleMouseUpRef.current = handleMouseUp;
+    });
+
+    // Window Event Listeners for Interaction
+    useEffect(() => {
+        const isActive = isPanning || !!selectionBox || !!drawingBox;
+
+        if (isActive) {
+            const onMove = (e: MouseEvent) => handleMouseMoveRef.current(e);
+            const onUp = (e: MouseEvent) => handleMouseUpRef.current(e);
+
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+
+            return () => {
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onUp);
+            };
+        }
+    }, [isPanning, !!selectionBox, !!drawingBox]);
 
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
@@ -549,9 +518,6 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onDrop={handleDrop}
             onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
             style={{
                 cursor: selectionBox ? 'crosshair' : cursor,
                 backgroundColor: outerColor

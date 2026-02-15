@@ -3,10 +3,10 @@
 import React from 'react';
 import styles from './ZoomWheel.module.css';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { Plus, Minus, Target } from 'lucide-react';
+import { Plus, Minus, Target, Magnet } from 'lucide-react';
 
 export default function ZoomWheel() {
-    const { scale, zoomAt } = useCanvasStore();
+    const { scale, zoomAt, isSnappingEnabled, toggleSnapping } = useCanvasStore();
 
     // Use 0.65 as the base (1:1 visual feels like scale 0.65)
     // Display should be relative to 0.65
@@ -70,6 +70,16 @@ export default function ZoomWheel() {
                 data-tooltip-pos="left"
             >
                 <Target size={18} />
+            </button>
+
+            <button
+                className={styles.resetBtn}
+                onClick={toggleSnapping}
+                data-tooltip={isSnappingEnabled ? "Snapping On" : "Snapping Off"}
+                data-tooltip-pos="left"
+                style={isSnappingEnabled ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : {}}
+            >
+                <Magnet size={18} />
             </button>
         </div>
     );

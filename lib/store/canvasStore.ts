@@ -15,6 +15,8 @@ interface CanvasState {
     setOpenFolderId: (id: string | null) => void;
     isMinimapCollapsed: boolean;
     setIsMinimapCollapsed: (collapsed: boolean) => void;
+    isSnappingEnabled: boolean;
+    toggleSnapping: () => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
@@ -38,4 +40,6 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     setOpenFolderId: (id) => set({ openFolderId: id }),
     isMinimapCollapsed: false,
     setIsMinimapCollapsed: (collapsed) => set({ isMinimapCollapsed: collapsed }),
+    isSnappingEnabled: true,
+    toggleSnapping: () => set((state) => ({ isSnappingEnabled: !state.isSnappingEnabled })),
 }));

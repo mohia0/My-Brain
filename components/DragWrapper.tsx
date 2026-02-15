@@ -15,7 +15,8 @@ import {
     defaultDropAnimationSideEffects,
     DropAnimation,
     UniqueIdentifier,
-    pointerWithin
+    pointerWithin,
+    Modifier
 } from '@dnd-kit/core';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
@@ -30,7 +31,9 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     const { updateItemContent, updatePositions, items, folders, selectedIds } = useItemsStore();
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
     const [activeItem, setActiveItem] = useState<any>(null);
+    const [snapLines, setSnapLines] = useState<{ vertical: number | null, horizontal: number | null }>({ vertical: null, horizontal: null });
     const draggedProjectContentsRef = React.useRef<string[]>([]);
+    const lastSnapDeltaRef = React.useRef<{ x: number, y: number }>({ x: 0, y: 0 });
 
     const isHandTool = currentTool === 'hand';
 
@@ -44,6 +47,165 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             activationConstraint: isHandTool ? { distance: 999999 } : undefined
         })
     );
+
+    const getElementRect = (id: string, isFolder: boolean) => {
+        const el = document.getElementById(isFolder ? `draggable-folder-${id}` : `draggable-item-${id}`);
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            // We need canvas-relative coordinates, but getBoundingClientRect is viewport.
+            // However, for pure dimension/offset checks against other items in same space, we can rely on store positions.
+            return { w: el.offsetWidth, h: el.offsetHeight };
+        }
+        return { w: isFolder ? 200 : 280, h: 100 };
+    };
+
+    const snapToGrid: Modifier = ({ transform, active, draggingNodeRect }) => {
+        const { scale, isSnappingEnabled } = useCanvasStore.getState();
+        const { items, folders, selectedIds } = useItemsStore.getState();
+
+        if (!isSnappingEnabled) {
+            // Check if we need to clear guides (only if they are currently set)
+            // Use rAF to avoid "setState during render" error
+            requestAnimationFrame(() => {
+                setSnapLines(prev => {
+                    if (prev.vertical === null && prev.horizontal === null) return prev;
+                    return { vertical: null, horizontal: null };
+                });
+            });
+            lastSnapDeltaRef.current = { x: transform.x, y: transform.y };
+            return transform;
+        }
+
+        // 1. Identify Subject
+        if (!active) return transform;
+        const activeId = active.id as string;
+        const activeItemObj = items.find(i => i.id === activeId);
+        const activeFolderObj = folders.find(f => f.id === activeId);
+        const subject = activeItemObj || activeFolderObj;
+
+        if (!subject || !draggingNodeRect) {
+            requestAnimationFrame(() => {
+                setSnapLines(prev => {
+                    if (prev.vertical === null && prev.horizontal === null) return prev;
+                    return { vertical: null, horizontal: null };
+                });
+            });
+            lastSnapDeltaRef.current = { x: transform.x, y: transform.y };
+            return transform;
+        }
+
+        // 2. Setup Coordinates (Canvas Space)
+        const isFolder = !!activeFolderObj;
+        // The transform is the DELTA. The initial position is activeItemObj.position_x.
+        // We want to snap the FINAL position.
+        const currentX = subject.position_x + (transform.x / scale);
+        const currentY = subject.position_y + (transform.y / scale);
+
+        const dims = getElementRect(activeId, isFolder);
+        const w = dims.w;
+        const h = dims.h;
+
+        // 3. Find Candidates
+        const movingIds = selectedIds.includes(activeId) ? selectedIds : [activeId];
+        const ignoreIds = new Set([...movingIds, ...draggedProjectContentsRef.current]);
+
+        const candidateRects: { x: number, y: number, w: number, h: number }[] = [];
+
+        items.forEach(i => {
+            if (ignoreIds.has(i.id) || i.type === 'project') return;
+            // Optimistic: Use store positions (fastest). 
+            // Ideally we'd measure DOM for exactness, but store is source of truth.
+            // For width/height, we might want defaults or store metadata if available.
+            let w = i.metadata?.width || 250;
+            let h = i.metadata?.height || 100;
+            // Try to get real dim if available (mounted)
+            const el = document.getElementById(`draggable-item-${i.id}`);
+            if (el) { w = el.offsetWidth; h = el.offsetHeight; }
+
+            candidateRects.push({ x: i.position_x, y: i.position_y, w, h });
+        });
+
+        folders.forEach(f => {
+            if (ignoreIds.has(f.id)) return;
+            const el = document.getElementById(`draggable-folder-${f.id}`);
+            let w = 200; let h = 100;
+            if (el) { w = el.offsetWidth; h = el.offsetHeight; }
+            candidateRects.push({ x: f.position_x, y: f.position_y, w, h });
+        });
+
+        // 4. Calculate Snap
+        const SNAP_THRESHOLD = 20 / scale; // Visual pixels
+        const GAP = 20;
+
+        let snappedX = currentX;
+        let snappedY = currentY;
+        let bestDiffX = SNAP_THRESHOLD;
+        let bestDiffY = SNAP_THRESHOLD;
+        let guideX: number | null = null;
+        let guideY: number | null = null;
+
+        // Center Helper
+        const centerX = currentX + w / 2;
+        const centerY = currentY + h / 2;
+
+        candidateRects.forEach(rect => {
+            const rLeft = rect.x;
+            const rRight = rect.x + rect.w;
+            const rCenter = rect.x + rect.w / 2;
+            const rTop = rect.y;
+            const rBottom = rect.y + rect.h;
+            const rMid = rect.y + rect.h / 2;
+
+            // X Snapping
+            // Left-Left
+            if (Math.abs(currentX - rLeft) < bestDiffX) { snappedX = rLeft; bestDiffX = Math.abs(currentX - rLeft); guideX = rLeft; }
+            // Right-Right
+            if (Math.abs((currentX + w) - rRight) < bestDiffX) { snappedX = rRight - w; bestDiffX = Math.abs((currentX + w) - rRight); guideX = rRight; }
+            // Left-Right (Adjacency)
+            if (Math.abs(currentX - (rRight + GAP)) < bestDiffX) { snappedX = rRight + GAP; bestDiffX = Math.abs(currentX - (rRight + GAP)); guideX = rRight + GAP; }
+            // Right-Left (Adjacency)
+            if (Math.abs((currentX + w) - (rLeft - GAP)) < bestDiffX) { snappedX = rLeft - GAP - w; bestDiffX = Math.abs((currentX + w) - (rLeft - GAP)); guideX = rLeft - GAP; }
+            // Center-Center
+            if (Math.abs(centerX - rCenter) < bestDiffX) { snappedX = rCenter - w / 2; bestDiffX = Math.abs(centerX - rCenter); guideX = rCenter; }
+
+            // Y Snapping
+            // Top-Top
+            if (Math.abs(currentY - rTop) < bestDiffY) { snappedY = rTop; bestDiffY = Math.abs(currentY - rTop); guideY = rTop; }
+            // Bottom-Bottom
+            if (Math.abs((currentY + h) - rBottom) < bestDiffY) { snappedY = rBottom - h; bestDiffY = Math.abs((currentY + h) - rBottom); guideY = rBottom; }
+            // Top-Bottom (Adjacency)
+            if (Math.abs(currentY - (rBottom + GAP)) < bestDiffY) { snappedY = rBottom + GAP; bestDiffY = Math.abs(currentY - (rBottom + GAP)); guideY = rBottom + GAP; }
+            // Bottom-Top (Adjacency)
+            if (Math.abs((currentY + h) - (rTop - GAP)) < bestDiffY) { snappedY = rTop - GAP - h; bestDiffY = Math.abs((currentY + h) - (rTop - GAP)); guideY = rTop - GAP; }
+            // Center-Center
+            if (Math.abs(centerY - rMid) < bestDiffY) { snappedY = rMid - h / 2; bestDiffY = Math.abs(centerY - rMid); guideY = rMid; }
+        });
+
+        // 5. Update State (Throttled effect essentially since this runs frame-by-frame)
+        // Use requestAnimationFrame to avoid "setState during render" error
+        requestAnimationFrame(() => {
+            // Check current value to avoid unnecessary re-renders (and loops)
+            // leveraging the closure to read the latest 'snapLines' state is risky if closure is stale,
+            // but since DragWrapper re-renders on state change, this function is recreated with fresh scope.
+            setSnapLines(prev => {
+                if (prev.vertical === guideX && prev.horizontal === guideY) return prev;
+                return { vertical: guideX, horizontal: guideY };
+            });
+        });
+
+        // 6. Return Modified Transform (Delta)
+        const finalDeltaX = (snappedX - subject.position_x) * scale;
+        const finalDeltaY = (snappedY - subject.position_y) * scale;
+
+        // Save for use in dragMove/dragEnd
+        lastSnapDeltaRef.current = { x: finalDeltaX, y: finalDeltaY };
+
+        return {
+            ...transform,
+            x: finalDeltaX,
+            y: finalDeltaY
+        };
+    };
 
     const handleDragStart = (event: DragStartEvent) => {
         const id = event.active.id;
@@ -131,59 +293,28 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     };
 
     const handleDragMove = (event: DragMoveEvent) => {
-        const { active, delta } = event;
+        const { active } = event;
         const currentScale = useCanvasStore.getState().scale;
         const currentSelectedIds = useItemsStore.getState().selectedIds;
 
-        // Safety: Ensure we have content references if they weren't caught in DragStart (e.g. fast selection)
-        // This is a "just in case" self-correction mechanism
-        if (currentSelectedIds.includes(active.id as string) && draggedProjectContentsRef.current.length === 0) {
-            const state = useItemsStore.getState();
-            const freshItems = state.items;
-            const freshFolders = state.folders;
-            const allContainedIds: string[] = [];
+        // Use the SNAPPED delta calculated by the modifier
+        // We trust 'lastSnapDeltaRef' because 'snapToGrid' modifier runs just before this for the active frame (usually).
+        // Even if slightly out of sync, it is better than recalculating.
+        const delta = lastSnapDeltaRef.current;
 
-            currentSelectedIds.forEach(dragId => {
-                const item = freshItems.find(i => i.id === dragId);
-                if (item && item.type === 'project') {
-                    const areaLeft = item.position_x;
-                    const areaRight = item.position_x + (item.metadata?.width || 300);
-                    const areaTop = item.position_y;
-                    const areaBottom = item.position_y + (item.metadata?.height || 200);
-
-                    const contained = freshItems.filter(i => {
-                        if (i.id === item.id || i.folder_id || i.type === 'project') return false;
-                        let itemW = i.metadata?.width || 250;
-                        let itemH = i.metadata?.height || 100;
-                        return (areaLeft < i.position_x + itemW && areaRight > i.position_x && areaTop < i.position_y + itemH && areaBottom > i.position_y);
-                    }).map(i => i.id);
-
-                    const containedFolders = freshFolders.filter(f => {
-                        if (f.parent_id) return false;
-                        let fW = 200;
-                        let fH = 100;
-                        return (areaLeft < f.position_x + fW && areaRight > f.position_x && areaTop < f.position_y + fH && areaBottom > f.position_y);
-                    }).map(f => f.id);
-                    allContainedIds.push(...contained, ...containedFolders);
-                }
-            });
-            if (allContainedIds.length > 0) {
-                draggedProjectContentsRef.current = [...new Set(allContainedIds)];
-            }
-        }
+        // Safety check: lastSnapDeltaRef might be stale if drag just started or switched? 
+        // But dragMove implies we are dragging.
 
         const moveElement = (id: string) => {
             const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
             if (el) {
+                // Apply visual transform manually to neighbors
                 el.style.transform = `translate3d(${delta.x / currentScale}px, ${delta.y / currentScale}px, 0)`;
                 el.style.zIndex = '1000';
             }
         };
 
-        // Move Selected Items (except active one which is handled by dnd-kit if using transform, 
-        // BUT for project areas we might want consistent handling. 
-        // Actually dnd-kit applies transform to the active node ref. 
-        // We move the OTHERS manually.)
+        // Move Selected Items (except active one which dnd-kit moves via modifier)
         if (currentSelectedIds.includes(active.id as string)) {
             currentSelectedIds.forEach(id => {
                 if (id === active.id) return;
@@ -191,19 +322,26 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             });
         }
 
-        // Move Contained Items (that aren't already selected)
+        // Move Contained Items
         if (draggedProjectContentsRef.current) {
             draggedProjectContentsRef.current.forEach(id => {
-                if (currentSelectedIds.includes(id as string)) return; // Already moved above
+                if (currentSelectedIds.includes(id as string)) return;
                 moveElement(id);
             });
         }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const { active, delta, over } = event;
+        const { active, over } = event;
         const currentScale = useCanvasStore.getState().scale;
         const currentSelectedIds = useItemsStore.getState().selectedIds;
+
+        // Use the final snapped delta
+        const delta = lastSnapDeltaRef.current; // { x, y } in scaled pixels (screen deltas)
+
+        // Clear guides
+        setSnapLines({ vertical: null, horizontal: null });
+        lastSnapDeltaRef.current = { x: 0, y: 0 };
 
         // Cleanup transforms
         const clearTransform = (id: string) => {
@@ -287,8 +425,28 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         }
 
         // 5. Handle Normal Canvas Drag
-        const dx = delta.x / currentScale;
-        const dy = delta.y / currentScale;
+        // NOTE: We use 'delta' (which comes from lastSnapDeltaRef) for the position calculation
+        // But we need to use it consistently. snapping logic already calculated finalDelta.
+        // So we just apply it.
+        let dx = delta.x / currentScale;
+        let dy = delta.y / currentScale;
+
+        // ... (existing logic for constrained position / project areas)
+        // We still run project area constraints logic because snapping might have pushed it out?
+        // OR we just trust the snap if it was a snap?
+        // Let's run the standard constraint logic but with the snapped delta.
+
+        const getElementDims = (id: string, isFolder: boolean) => {
+            const el = document.getElementById(isFolder ? `draggable-folder-${id}` : `draggable-item-${id}`);
+            if (el) return { w: el.offsetWidth, h: el.offsetHeight };
+            return { w: isFolder ? 200 : 280, h: 100 }; // Fallbacks
+        };
+
+        const movingIds = currentSelectedIds.includes(active.id as string)
+            ? currentSelectedIds
+            : [active.id as string];
+
+        // NO inline snapping logic here anymore. It's done in the modifier.
 
         const updates: { id: string, type: 'item' | 'folder', x: number, y: number }[] = [];
         const processedIds = new Set<string>();
@@ -394,15 +552,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             return { x: finalX, y: finalY };
         };
 
-        const getElementDims = (id: string, isFolder: boolean) => {
-            const el = document.getElementById(isFolder ? `draggable-folder-${id}` : `draggable-item-${id}`);
-            if (el) return { w: el.offsetWidth, h: el.offsetHeight };
-            return { w: isFolder ? 200 : 280, h: 100 }; // Fallbacks
-        };
 
-        const movingIds = currentSelectedIds.includes(active.id as string)
-            ? currentSelectedIds
-            : [active.id as string];
 
         // Identify "Root" movers - items that are NOT implicitly moved by a selected project area
         const rootIds = movingIds.filter(id => !draggedContents.includes(id));
@@ -529,11 +679,42 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     return (
         <DndContext
             sensors={sensors}
+            modifiers={[snapToGrid]}
             collisionDetection={pointerWithin}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
         >
+            {snapLines.vertical !== null && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        left: (snapLines.vertical * scale) + useCanvasStore.getState().position.x,
+                        width: 1,
+                        backgroundColor: 'var(--accent)',
+                        opacity: 0.4,
+                        zIndex: 99999,
+                        pointerEvents: 'none'
+                    }}
+                />
+            )}
+            {snapLines.horizontal !== null && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        top: (snapLines.horizontal * scale) + useCanvasStore.getState().position.y,
+                        height: 1,
+                        backgroundColor: 'var(--accent)',
+                        opacity: 0.4,
+                        zIndex: 99999,
+                        pointerEvents: 'none'
+                    }}
+                />
+            )}
             {children}
             <DragOverlay dropAnimation={null}>
                 {activeId ? renderOverlayItem() : null}

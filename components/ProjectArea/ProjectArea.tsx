@@ -208,6 +208,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                             className={clsx(styles.controlBtn, styles.deleteBtn)}
                             onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(!showDeleteConfirm); }}
                             data-tooltip="Delete Area"
+                            data-tooltip-pos="bottom-left"
                             style={{ color: showDeleteConfirm ? 'var(--danger)' : undefined }}
                         >
                             <Trash2 size={14} />

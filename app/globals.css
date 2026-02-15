@@ -238,6 +238,30 @@ a {
   transform: translateY(-10px);
 }
 
+[data-tooltip-pos="bottom-left"]::after {
+  top: 100%;
+  bottom: auto;
+  left: auto;
+  right: 0;
+  transform: translateY(2px);
+}
+
+[data-tooltip-pos="bottom-left"]:hover::after {
+  transform: translateY(10px);
+}
+
+[data-tooltip-pos="bottom-right"]::after {
+  top: 100%;
+  bottom: auto;
+  left: 0;
+  right: auto;
+  transform: translateY(2px);
+}
+
+[data-tooltip-pos="bottom-right"]:hover::after {
+  transform: translateY(10px);
+}
+
 .fade-in {
   animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

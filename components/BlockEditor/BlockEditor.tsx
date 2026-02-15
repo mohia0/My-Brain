@@ -116,7 +116,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
             borderRadius: 'inherit',
             position: 'relative'
         }}>
-            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10, paddingLeft: 40, paddingRight: 40 }}>
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10, paddingLeft: 24, paddingRight: 24 }}>
                 <BlockNoteView
                     editor={editor}
                     onChange={handleChange}

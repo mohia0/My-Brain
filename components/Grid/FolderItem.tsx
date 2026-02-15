@@ -107,11 +107,11 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
             >
                 {isObscured ? <Unlock size={12} /> : <Lock size={12} />}
             </button>
-            <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
+            <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
             <button
                 onClick={handleDeleteClick}
                 data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
-                data-tooltip-pos="bottom"
+                data-tooltip-pos="bottom-left"
                 className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
                 onMouseLeave={() => setIsDeleting(false)}
             >

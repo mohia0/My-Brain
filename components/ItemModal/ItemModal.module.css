@@ -51,7 +51,7 @@
 }
 
 .noteModal {
-    width: 950px;
+    width: 1150px;
     height: 85vh;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .noteModal .modalContent {
-    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
 }
 
 @keyframes slideUp {
@@ -517,7 +517,7 @@
 
 /* Vertical Note Layout Styles */
 .noteTitleSection {
-    padding: 32px 32px 12px 32px;
+    padding: 32px 24px 12px 24px;
     background: transparent;
 }
 

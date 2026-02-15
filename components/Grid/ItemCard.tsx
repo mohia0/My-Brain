@@ -191,12 +191,12 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             >
                 <LockIcon size={12} />
             </button>
-            <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom"><Archive size={12} /></button>
-            <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom"><Copy size={12} /></button>
+            <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
+            <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom-left"><Copy size={12} /></button>
             <button
                 onClick={handleDeleteClick}
                 data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
-                data-tooltip-pos="bottom"
+                data-tooltip-pos="bottom-left"
                 className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
                 onMouseLeave={() => setIsDeleting(false)}
             >
@@ -239,7 +239,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <button
                 onClick={handleDeleteClick}
                 data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
-                data-tooltip-pos="bottom"
+                data-tooltip-pos="bottom-left"
                 className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
                 onMouseLeave={() => setIsDeleting(false)}
             >

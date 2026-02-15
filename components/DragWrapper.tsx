@@ -30,7 +30,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     const { updateItemContent, updatePositions, items, folders, selectedIds } = useItemsStore();
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
     const [activeItem, setActiveItem] = useState<any>(null);
-    const [draggedProjectContents, setDraggedProjectContents] = useState<string[]>([]);
+    const draggedProjectContentsRef = React.useRef<string[]>([]);
 
     const isHandTool = currentTool === 'hand';
 
@@ -52,33 +52,61 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         setActiveId(id);
         setActiveItem(data);
 
-        const currentSelectedIds = useItemsStore.getState().selectedIds;
-        const dragIds = currentSelectedIds.includes(id as string) ? currentSelectedIds : [id as string];
+        const state = useItemsStore.getState();
+        const currentSelectedIds = state.selectedIds;
+        const freshItems = state.items;
+        const freshFolders = state.folders;
+
+        // If the dragged item is PART of the selection, drag the whole selection
+        // If it's NOT selected (clicked outside selection), just drag that item (and clear selection elsewhere likely)
+        // But DndKit start happens before onClick clear usually. 
+        // For project areas, we want to treat them as containers.
+
+        const isSelected = currentSelectedIds.includes(id as string);
+        const dragIds = isSelected ? currentSelectedIds : [id as string];
 
         const allContainedIds: string[] = [];
 
         // Find contents for ALL dragged project areas
         dragIds.forEach(dragId => {
-            const item = items.find(i => i.id === dragId);
+            const item = freshItems.find(i => i.id === dragId);
             if (item && item.type === 'project') {
                 const areaLeft = item.position_x;
-                const areaRight = item.position_x + (item.metadata.width || 300);
+                const areaRight = item.position_x + (item.metadata?.width || 300);
                 const areaTop = item.position_y;
-                const areaBottom = item.position_y + (item.metadata.height || 200);
+                const areaBottom = item.position_y + (item.metadata?.height || 200);
 
                 // Find items inside this project area
-                const contained = items.filter(i => {
+                const contained = freshItems.filter(i => {
                     if (i.id === item.id || i.folder_id || i.type === 'project') return false;
-                    const itemW = i.metadata?.width || 250;
-                    const itemH = i.metadata?.height || 100;
+
+                    // Get actual dimensions if possible
+                    let itemW = i.metadata?.width || 250;
+                    let itemH = i.metadata?.height || 100;
+                    const el = document.getElementById(`draggable-item-${i.id}`);
+                    if (el) {
+                        itemW = el.offsetWidth;
+                        itemH = el.offsetHeight;
+                    } else if (i.type === 'room') {
+                        itemW = 220;
+                        itemH = 220;
+                    }
+
                     return (areaLeft < i.position_x + itemW && areaRight > i.position_x && areaTop < i.position_y + itemH && areaBottom > i.position_y);
                 }).map(i => i.id);
 
                 // Find folders inside this project area
-                const containedFolders = folders.filter(f => {
+                const containedFolders = freshFolders.filter(f => {
                     if (f.parent_id) return false;
-                    const fW = 200;
-                    const fH = 100;
+
+                    let fW = 200;
+                    let fH = 100;
+                    const el = document.getElementById(`draggable-folder-${f.id}`);
+                    if (el) {
+                        fW = el.offsetWidth;
+                        fH = el.offsetHeight;
+                    }
+
                     return (areaLeft < f.position_x + fW && areaRight > f.position_x && areaTop < f.position_y + fH && areaBottom > f.position_y);
                 }).map(f => f.id);
 
@@ -86,14 +114,63 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             }
         });
 
-        // Deduplicate
-        setDraggedProjectContents([...new Set(allContainedIds)]);
+        // Deduplicate and Force Set
+        // Crucial: We must set this immediately so DragMove sees it on the very first frame
+        const uniqueContained = [...new Set(allContainedIds)];
+        draggedProjectContentsRef.current = uniqueContained;
+
+        // CRITICAL FIX: If any contained items are currently selected, DESELECT them.
+        // This forces them to be handled by the "Project Content Mover" logic (Loop 2), which is known to work reliably,
+        // rather than the "Selected Item Mover" logic (Loop 1), which is failing for these items.
+        // It also resolves the visual clutter ("double selection") complaint.
+        const intersection = currentSelectedIds.filter(selId => uniqueContained.includes(selId));
+        if (intersection.length > 0) {
+            const newSelection = currentSelectedIds.filter(selId => !uniqueContained.includes(selId));
+            state.setSelection(newSelection);
+        }
     };
 
     const handleDragMove = (event: DragMoveEvent) => {
         const { active, delta } = event;
         const currentScale = useCanvasStore.getState().scale;
         const currentSelectedIds = useItemsStore.getState().selectedIds;
+
+        // Safety: Ensure we have content references if they weren't caught in DragStart (e.g. fast selection)
+        // This is a "just in case" self-correction mechanism
+        if (currentSelectedIds.includes(active.id as string) && draggedProjectContentsRef.current.length === 0) {
+            const state = useItemsStore.getState();
+            const freshItems = state.items;
+            const freshFolders = state.folders;
+            const allContainedIds: string[] = [];
+
+            currentSelectedIds.forEach(dragId => {
+                const item = freshItems.find(i => i.id === dragId);
+                if (item && item.type === 'project') {
+                    const areaLeft = item.position_x;
+                    const areaRight = item.position_x + (item.metadata?.width || 300);
+                    const areaTop = item.position_y;
+                    const areaBottom = item.position_y + (item.metadata?.height || 200);
+
+                    const contained = freshItems.filter(i => {
+                        if (i.id === item.id || i.folder_id || i.type === 'project') return false;
+                        let itemW = i.metadata?.width || 250;
+                        let itemH = i.metadata?.height || 100;
+                        return (areaLeft < i.position_x + itemW && areaRight > i.position_x && areaTop < i.position_y + itemH && areaBottom > i.position_y);
+                    }).map(i => i.id);
+
+                    const containedFolders = freshFolders.filter(f => {
+                        if (f.parent_id) return false;
+                        let fW = 200;
+                        let fH = 100;
+                        return (areaLeft < f.position_x + fW && areaRight > f.position_x && areaTop < f.position_y + fH && areaBottom > f.position_y);
+                    }).map(f => f.id);
+                    allContainedIds.push(...contained, ...containedFolders);
+                }
+            });
+            if (allContainedIds.length > 0) {
+                draggedProjectContentsRef.current = [...new Set(allContainedIds)];
+            }
+        }
 
         const moveElement = (id: string) => {
             const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
@@ -103,21 +180,24 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             }
         };
 
-        // Move Selected Items
+        // Move Selected Items (except active one which is handled by dnd-kit if using transform, 
+        // BUT for project areas we might want consistent handling. 
+        // Actually dnd-kit applies transform to the active node ref. 
+        // We move the OTHERS manually.)
         if (currentSelectedIds.includes(active.id as string)) {
             currentSelectedIds.forEach(id => {
-                if (id === active.id) return; // Handled by overlay if active, but wait... dnd-kit usually handles active via transform. 
-                // Actually dnd-kit modifies the `transform` prop passed to useDraggable. 
-                // For multi-drag, we manually move the OTHERS.
+                if (id === active.id) return;
                 moveElement(id);
             });
         }
 
         // Move Contained Items (that aren't already selected)
-        draggedProjectContents.forEach(id => {
-            if (currentSelectedIds.includes(id as string)) return; // Already moved above
-            moveElement(id);
-        });
+        if (draggedProjectContentsRef.current) {
+            draggedProjectContentsRef.current.forEach(id => {
+                if (currentSelectedIds.includes(id as string)) return; // Already moved above
+                moveElement(id);
+            });
+        }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -137,7 +217,15 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         if (currentSelectedIds.includes(active.id as string)) {
             currentSelectedIds.forEach(id => { if (id !== active.id) clearTransform(id); });
         }
-        draggedProjectContents.forEach(id => { if (!currentSelectedIds.includes(id as string)) clearTransform(id); });
+
+        if (draggedProjectContentsRef.current) {
+            draggedProjectContentsRef.current.forEach(id => {
+                if (!currentSelectedIds.includes(id as string)) clearTransform(id);
+            });
+        }
+
+        const draggedContents = draggedProjectContentsRef.current || [];
+        draggedProjectContentsRef.current = []; // Reset
 
         setActiveId(null);
         setActiveItem(null);
@@ -309,7 +397,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             : [active.id as string];
 
         // Identify "Root" movers - items that are NOT implicitly moved by a selected project area
-        const rootIds = movingIds.filter(id => !draggedProjectContents.includes(id));
+        const rootIds = movingIds.filter(id => !draggedContents.includes(id));
 
         rootIds.forEach(id => {
             if (processedIds.has(id)) return;
@@ -340,7 +428,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
                 // Move Contents Rigidly
                 // We need to re-find contents for THIS specific project to apply the shift
-                // (Since draggedProjectContents is global for all selected projects)
+                // (Since draggedContents is global for all selected projects)
                 const areaLeft = item.position_x;
                 const areaRight = item.position_x + (item.metadata.width || 300);
                 const areaTop = item.position_y;
@@ -348,15 +436,32 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
                 const contents = items.filter(i => {
                     if (i.id === item.id || i.folder_id || i.type === 'project') return false;
-                    const itemW = i.metadata?.width || 250;
-                    const itemH = i.metadata?.height || 100;
+
+                    let itemW = i.metadata?.width || 250;
+                    let itemH = i.metadata?.height || 100;
+                    const el = document.getElementById(`draggable-item-${i.id}`);
+                    if (el) {
+                        itemW = el.offsetWidth;
+                        itemH = el.offsetHeight;
+                    } else if (i.type === 'room') {
+                        itemW = 220;
+                        itemH = 220;
+                    }
+
                     return (areaLeft < i.position_x + itemW && areaRight > i.position_x && areaTop < i.position_y + itemH && areaBottom > i.position_y);
                 });
 
                 const contentFolders = folders.filter(f => {
                     if (f.parent_id) return false;
-                    const fW = 200;
-                    const fH = 100;
+
+                    let fW = 200;
+                    let fH = 100;
+                    const el = document.getElementById(`draggable-folder-${f.id}`);
+                    if (el) {
+                        fW = el.offsetWidth;
+                        fH = el.offsetHeight;
+                    }
+
                     return (areaLeft < f.position_x + fW && areaRight > f.position_x && areaTop < f.position_y + fH && areaBottom > f.position_y);
                 });
 

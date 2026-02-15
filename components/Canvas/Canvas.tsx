@@ -223,7 +223,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     clearSelection();
                 }
 
-                // 2. Start Selection Box
+                // 2. Start Selection Box - Resetting selection box logic should just happen
                 const rect = containerRef.current?.getBoundingClientRect();
                 if (rect) {
                     const x = e.clientX - rect.left;
@@ -318,6 +318,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     if (item.status === 'inbox' || item.folder_id) return false;
                     if ((item.room_id || null) !== currentRoomId) return false;
                     if (item.type === 'room') return false;
+                    // Intentionally allowing 'project' type to be selected now
 
                     return (
                         item.position_x < worldX + worldW &&
@@ -347,12 +348,103 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 const isCtrlPressed = e.ctrlKey || e.metaKey;
                 const currentSelectedIds = useItemsStore.getState().selectedIds;
 
+                const selectedProjectAreas = items.filter(i =>
+                    selectedItems.includes(i.id) && i.type === 'project'
+                );
+
+                // Filter out items that are INSIDE any selected project area
+                const filteredSelectedItems = selectedItems.filter(id => {
+                    const item = items.find(i => i.id === id);
+                    if (!item || item.type === 'project') return true; // Keep projects and missing items
+
+                    // Check if inside any selected project
+                    const isInsideSelectedProject = selectedProjectAreas.some(proj => {
+                        const pW = proj.metadata?.width || 300;
+                        const pH = proj.metadata?.height || 200;
+
+                        // Simple containment check (center point)
+                        const itemW = item.metadata?.width || 250;
+                        const itemH = item.metadata?.height || 100;
+                        const cx = item.position_x + itemW / 2;
+                        const cy = item.position_y + itemH / 2;
+
+                        return (
+                            cx > proj.position_x &&
+                            cx < proj.position_x + pW &&
+                            cy > proj.position_y &&
+                            cy < proj.position_y + pH
+                        );
+                    });
+
+                    // Remove if inside a project area that is ALSO selected
+                    return !isInsideSelectedProject;
+                });
+
+                // Filter out folders similarly
+                const filteredSelectedFolders = selectedFolders.filter(id => {
+                    const folders = useItemsStore.getState().folders;
+                    const folder = folders.find(f => f.id === id);
+                    if (!folder) return true;
+
+                    const isInsideSelectedProject = selectedProjectAreas.some(proj => {
+                        const pW = proj.metadata?.width || 300;
+                        const pH = proj.metadata?.height || 200;
+                        const cx = folder.position_x + 100; // Center of 200w
+                        const cy = folder.position_y + 50;  // Center of 100h
+
+                        return (
+                            cx > proj.position_x &&
+                            cx < proj.position_x + pW &&
+                            cy > proj.position_y &&
+                            cy < proj.position_y + pH
+                        );
+                    });
+
+                    return !isInsideSelectedProject;
+                });
+
+
                 if (isCtrlPressed) {
-                    // Combine old selection with newly box-selected ones
-                    const uniqueSelection = Array.from(new Set([...currentSelectedIds, ...selectedItems, ...selectedFolders]));
-                    setSelection(uniqueSelection);
+                    // Combine old selection with newly box-selected ones, BUT re-filter the WHOLE set
+                    const combinedIds = Array.from(new Set([...currentSelectedIds, ...filteredSelectedItems, ...filteredSelectedFolders]));
+
+                    // Re-filter the ENTIRE combined selection to ensure no "previously selected" items are inside "newly selected" projects
+                    // 1. Identify all project areas in the FINAL set
+                    const allSelectedProjects = items.filter(i => combinedIds.includes(i.id) && i.type === 'project');
+
+                    // 2. Filter the combined IDs
+                    const finalFilteredIds = combinedIds.filter(id => {
+                        const item = items.find(i => i.id === id);
+                        const folder = useItemsStore.getState().folders.find(f => f.id === id);
+
+                        // Always keep projects
+                        if (item && item.type === 'project') return true;
+
+                        // Check containment against ALL selected projects
+                        const isInside = allSelectedProjects.some(proj => {
+                            const pW = proj.metadata?.width || 300;
+                            const pH = proj.metadata?.height || 200;
+
+                            let cx = 0, cy = 0;
+                            if (item) {
+                                cx = item.position_x + (item.metadata?.width || 250) / 2;
+                                cy = item.position_y + (item.metadata?.height || 100) / 2;
+                            } else if (folder) {
+                                cx = folder.position_x + 100;
+                                cy = folder.position_y + 50;
+                            } else {
+                                return false;
+                            }
+
+                            return (cx > proj.position_x && cx < proj.position_x + pW && cy > proj.position_y && cy < proj.position_y + pH);
+                        });
+
+                        return !isInside;
+                    });
+
+                    setSelection(finalFilteredIds);
                 } else {
-                    setSelection([...selectedItems, ...selectedFolders]);
+                    setSelection([...filteredSelectedItems, ...filteredSelectedFolders]);
                 }
             }
         }

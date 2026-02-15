@@ -147,6 +147,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
 
     return (
         <div
+            id={`draggable-item-${item.id}`}
             ref={setNodeRef}
             className={clsx(styles.area, isSelected && styles.selected)}
             style={style}

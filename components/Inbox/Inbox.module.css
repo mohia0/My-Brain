@@ -94,6 +94,8 @@
     color: var(--foreground);
     background: var(--card-bg);
     cursor: pointer;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
 }
 
 .headerTitle {

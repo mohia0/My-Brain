@@ -3,6 +3,7 @@ import styles from './ArchiveView.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { Archive, X, RotateCcw, Trash2, Search, FileText, Link, Image as ImageIcon, Folder } from 'lucide-react';
 import clsx from 'clsx';
+import { HighlightText } from '../ui/HighlightText';
 
 interface ArchiveCardProps {
     id: string;
@@ -16,7 +17,7 @@ interface ArchiveCardProps {
     onDelete: () => void;
 }
 
-function ArchiveCard({ id, type, title, description, image, color, date, onUnarchive, onDelete }: ArchiveCardProps) {
+function ArchiveCard({ id, type, title, description, image, color, date, onUnarchive, onDelete, searchQuery = '' }: ArchiveCardProps & { searchQuery?: string }) {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const getIcon = () => {
@@ -43,8 +44,14 @@ function ArchiveCard({ id, type, title, description, image, color, date, onUnarc
             <div className={styles.cardBody}>
                 <div className={styles.cardInfo}>
                     <div className={styles.cardType}>{type}</div>
-                    <div className={styles.cardTitle}>{title}</div>
-                    {description && <div className={styles.cardDesc}>{description}</div>}
+                    <div className={styles.cardTitle}>
+                        <HighlightText text={title} query={searchQuery} />
+                    </div>
+                    {description && (
+                        <div className={styles.cardDesc}>
+                            <HighlightText text={description} query={searchQuery} />
+                        </div>
+                    )}
                 </div>
 
                 <div className={styles.cardFooter}>
@@ -92,15 +99,27 @@ export default function ArchiveView() {
 
     const [searchQuery, setSearchQuery] = useState('');
 
+    const searchTokens = searchQuery.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
+
     const archivedItems = items.filter(i => i.status === 'archived');
     const archivedFolders = folders.filter(f => f.status === 'archived');
 
-    const filteredItems = archivedItems.filter(i =>
-        (i.metadata?.title || i.content).toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    const filteredFolders = archivedFolders.filter(f =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredItems = archivedItems.filter(item => {
+        if (searchTokens.length === 0) return true;
+        const title = (item.metadata?.title || '').toString().toLowerCase();
+        const content = (item.content || '').toString().toLowerCase();
+        const description = (item.metadata?.description || '').toString().toLowerCase();
+
+        return searchTokens.every(token =>
+            title.includes(token) || content.includes(token) || description.includes(token)
+        );
+    });
+
+    const filteredFolders = archivedFolders.filter(folder => {
+        if (searchTokens.length === 0) return true;
+        const name = folder.name.toLowerCase();
+        return searchTokens.every(token => name.includes(token));
+    });
 
     if (!isArchiveOpen) return null;
 
@@ -145,6 +164,7 @@ export default function ArchiveView() {
                                     date={folder.created_at}
                                     onUnarchive={() => unarchiveFolder(folder.id)}
                                     onDelete={() => removeFolder(folder.id)}
+                                    searchQuery={searchQuery}
                                 />
                             ))}
 
@@ -159,6 +179,7 @@ export default function ArchiveView() {
                                     date={item.created_at}
                                     onUnarchive={() => unarchiveItem(item.id)}
                                     onDelete={() => removeItem(item.id)}
+                                    searchQuery={searchQuery}
                                 />
                             ))}
                         </div>

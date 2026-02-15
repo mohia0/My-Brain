@@ -33,9 +33,17 @@ export default function MiniMap() {
     // ... existing map scale logic ...
     const WORLD_WIDTH = 10000;
     const WORLD_HEIGHT = 5000;
+
+    const ROOM_WIDTH = 5000;
+    const ROOM_HEIGHT = 2500;
+
+    const currentRoomId = useItemsStore.getState().currentRoomId; // Get current room ID
+    const CURRENT_WORLD_WIDTH = currentRoomId ? ROOM_WIDTH : WORLD_WIDTH;
+    const CURRENT_WORLD_HEIGHT = currentRoomId ? ROOM_HEIGHT : WORLD_HEIGHT;
+
     const MAP_HEIGHT = 125;
-    const RATIO = MAP_HEIGHT / WORLD_HEIGHT; // Unified ratio
-    const MAP_WIDTH = WORLD_WIDTH * RATIO;
+    const RATIO = MAP_HEIGHT / CURRENT_WORLD_HEIGHT; // Unified ratio based on current world
+    const MAP_WIDTH = CURRENT_WORLD_WIDTH * RATIO;
 
     // Viewport rect calculation
     const [mount, setMount] = React.useState(false);
@@ -54,8 +62,8 @@ export default function MiniMap() {
         const clickX = clientX - rect.left;
         const clickY = clientY - rect.top;
 
-        const worldX = (clickX / RATIO) - (WORLD_WIDTH / 2);
-        const worldY = (clickY / RATIO) - (WORLD_HEIGHT / 2);
+        const worldX = (clickX / RATIO) - (CURRENT_WORLD_WIDTH / 2);
+        const worldY = (clickY / RATIO) - (CURRENT_WORLD_HEIGHT / 2);
 
         const newX = (window.innerWidth / 2) - (worldX * scale);
         const newY = (window.innerHeight / 2) - (worldY * scale);
@@ -176,36 +184,76 @@ export default function MiniMap() {
             >
                 <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
 
-                {items.filter(i => {
+                {/* Areas / Projects */}
+                {mount && items.filter(i => {
                     const room = useItemsStore.getState().currentRoomId;
-                    return (i.room_id || null) === room && !i.folder_id && i.status !== 'inbox' && i.type !== 'project';
+                    return (i.room_id || null) === room && i.type === 'project' && i.status !== 'inbox';
                 }).map(item => (
                     <div
                         key={item.id}
-                        className={styles.dot}
+                        className={clsx(styles.area, styles.fadeIn)}
                         style={{
-                            left: (item.position_x + (WORLD_WIDTH / 2)) * RATIO,
-                            top: (item.position_y + (WORLD_HEIGHT / 2)) * RATIO,
-                            backgroundColor: 'var(--accent)'
+                            left: (item.position_x + (CURRENT_WORLD_WIDTH / 2)) * RATIO,
+                            top: (item.position_y + (CURRENT_WORLD_HEIGHT / 2)) * RATIO,
+                            width: (item.metadata?.width || 300) * RATIO,
+                            height: (item.metadata?.height || 200) * RATIO
                         }}
                     />
                 ))}
 
-                {/* Folders as small white dots */}
-                {useItemsStore.getState().folders.filter(f => {
+                {/* Items & Rooms */}
+                {mount && items.filter(i => {
+                    const room = useItemsStore.getState().currentRoomId;
+                    return (i.room_id || null) === room && !i.folder_id && i.status !== 'inbox' && i.type !== 'project';
+                }).map(item => {
+                    const isRoom = item.type === 'room';
+
+                    // Simple logic for accurate dimensions on map
+                    let w = 250;
+                    let h = 100;
+                    if (item.type === 'link') {
+                        w = 280; h = item.metadata?.image ? 100 : 40;
+                    } else if (item.type === 'image') {
+                        w = 200; h = 200;
+                    } else if (item.type === 'room') {
+                        w = 220; h = 220;
+                    }
+
+                    // Respect metadata overrides
+                    w = item.metadata?.width || w;
+                    h = item.metadata?.height || h;
+
+                    return (
+                        <div
+                            key={item.id}
+                            className={clsx(isRoom ? styles.room : styles.card, styles.fadeIn)}
+                            style={{
+                                left: (item.position_x + (CURRENT_WORLD_WIDTH / 2)) * RATIO,
+                                top: (item.position_y + (CURRENT_WORLD_HEIGHT / 2)) * RATIO,
+                                width: isRoom ? 6 : w * RATIO,
+                                height: isRoom ? 9 : h * RATIO,
+                                backgroundColor: isRoom ? undefined : 'var(--accent)'
+                            }}
+                        >
+                            {isRoom && <div className={styles.roomLock} />}
+                        </div>
+                    );
+                })}
+
+                {/* Folders as small rectangles (scaled) */}
+                {mount && useItemsStore.getState().folders.filter(f => {
                     const room = useItemsStore.getState().currentRoomId;
                     return (f.room_id || null) === room && !f.parent_id;
                 }).map(folder => (
                     <div
                         key={folder.id}
-                        className={styles.dot}
+                        className={clsx(styles.card, styles.fadeIn)}
                         style={{
-                            left: (folder.position_x + (WORLD_WIDTH / 2)) * RATIO,
-                            top: (folder.position_y + (WORLD_HEIGHT / 2)) * RATIO,
-                            backgroundColor: 'white',
-                            opacity: 0.6,
-                            width: 3,
-                            height: 3
+                            left: (folder.position_x + (CURRENT_WORLD_WIDTH / 2)) * RATIO,
+                            top: (folder.position_y + (CURRENT_WORLD_HEIGHT / 2)) * RATIO,
+                            width: 280 * RATIO,
+                            height: 120 * RATIO,
+                            backgroundColor: 'var(--accent)'
                         }}
                     />
                 ))}
@@ -213,10 +261,12 @@ export default function MiniMap() {
                 <div
                     className={styles.viewport}
                     style={{
-                        left: ((-position.x / scale) + (WORLD_WIDTH / 2)) * RATIO,
-                        top: ((-position.y / scale) + (WORLD_HEIGHT / 2)) * RATIO,
+                        left: ((-position.x / scale) + (CURRENT_WORLD_WIDTH / 2)) * RATIO,
+                        top: ((-position.y / scale) + (CURRENT_WORLD_HEIGHT / 2)) * RATIO,
                         width: viewportW * RATIO,
-                        height: viewportH * RATIO
+                        height: viewportH * RATIO,
+                        opacity: mount ? 1 : 0,
+                        transition: 'opacity 0.3s ease'
                     }}
                 />
             </div>

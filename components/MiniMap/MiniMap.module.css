@@ -24,10 +24,47 @@
 
 .dot {
     position: absolute;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
+    width: 2.5px;
+    height: 2.5px;
     transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.area {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(110, 86, 207, 0.1);
+    pointer-events: none;
+    border-radius: 1px;
+}
+
+.room {
+    position: absolute;
+    width: 6px;
+    height: 9px;
+    background: var(--accent);
+    pointer-events: none;
+    border-radius: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 1px;
+}
+
+.roomLock {
+    width: 1.5px;
+    height: 1.5px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+.card {
+    position: absolute;
+    background: var(--accent);
+    pointer-events: none;
+    border-radius: 0.5px;
+    opacity: 0.9;
 }
 
 .viewport {
@@ -259,4 +296,15 @@
     margin-left: 2px;
     letter-spacing: 0.05em;
     pointer-events: none;
+}
+
+.fadeIn {
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
 }

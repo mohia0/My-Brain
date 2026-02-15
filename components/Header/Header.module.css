@@ -46,7 +46,7 @@
     letter-spacing: -0.03em;
     font-family: var(--font-outfit), sans-serif;
     transition: all 0.3s ease;
-    transform: translateY(0);
+    transform: translateY(-1px);
     /* Removed the shift-up */
 }
 
@@ -352,6 +352,14 @@
     background: rgba(0, 0, 0, 0.4);
     color: #aeaeae;
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.highlight {
+    background: rgba(110, 86, 207, 0.12);
+    color: var(--accent);
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 600;
 }
 
 :global([data-theme='light']) .badgeLocked {

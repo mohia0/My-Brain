@@ -29,6 +29,8 @@ const getPlainText = (content: string) => {
     }
 };
 
+import { HighlightText } from '../ui/HighlightText';
+
 export default function Header() {
     const { items, folders, setSelection, vaultedItemsRevealed } = useItemsStore();
     const { setPosition, setScale, setOpenFolderId } = useCanvasStore();
@@ -50,15 +52,16 @@ export default function Header() {
         return () => observer.disconnect();
     }, []);
 
+    const searchTokens = query.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
+
     const filteredFolders = folders.filter(folder => {
-        if (!query) return false;
-        const q = query.toLowerCase();
-        return folder.name.toLowerCase().includes(q);
+        if (searchTokens.length === 0) return false;
+        const name = folder.name.toLowerCase();
+        return searchTokens.every(token => name.includes(token));
     });
 
     const filteredItems = items.filter(item => {
-        if (!query) return false;
-        const q = query.toLowerCase();
+        if (searchTokens.length === 0) return false;
 
         const title = (item.metadata?.title || '').toString().toLowerCase();
         const rawContent = (item.content || '').toString();
@@ -69,16 +72,45 @@ export default function Header() {
             ? item.metadata.tags.map((t: any) => (typeof t === 'string' ? t : t.name).toLowerCase())
             : [];
 
-        return title.includes(q) ||
-            plainText.includes(q) ||
-            description.includes(q) ||
-            tags.some((t: string) => t.includes(q));
+        // Smart AND logic: every token must match at least one field
+        return searchTokens.every(token =>
+            title.includes(token) ||
+            plainText.includes(token) ||
+            description.includes(token) ||
+            tags.some((t: string) => t.includes(token))
+        );
     });
+
+    const getScore = (result: any) => {
+        const q = query.toLowerCase().trim();
+        const title = (result.resultType === 'folder' ? result.name : (result.metadata?.title || '')).toString().toLowerCase();
+        const description = (result.metadata?.description || '').toString().toLowerCase();
+
+        let score = 0;
+        // Exact title match is highest
+        if (title === q) score += 1000;
+        // Title starts with query
+        else if (title.startsWith(q)) score += 500;
+        // Title contains all words in order
+        else if (title.includes(q)) score += 300;
+        // Individual word matches in title
+        searchTokens.forEach(token => {
+            if (title.includes(token)) score += 50;
+        });
+
+        // Content/Description matches
+        if (description.includes(q)) score += 100;
+
+        // Prefer folders if searching for a short string that matches many things
+        if (result.resultType === 'folder' && title.includes(q)) score += 50;
+
+        return score;
+    };
 
     const allResults = [
         ...filteredFolders.map(f => ({ ...f, resultType: 'folder' })),
         ...filteredItems.map(i => ({ ...i, resultType: 'item' }))
-    ];
+    ].sort((a, b) => getScore(b) - getScore(a));
 
     const handleResultClick = (result: any) => {
         // Center on item at target zoom level
@@ -157,7 +189,7 @@ export default function Header() {
                 <Search size={16} className={styles.searchIcon} />
                 <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Search your brain..."
                     className={styles.searchInput}
                     value={query}
                     onChange={(e) => {
@@ -168,7 +200,7 @@ export default function Header() {
                     onBlur={() => setTimeout(() => setShowResults(false), 400)}
                 />
 
-                <div className={clsx(styles.searchResults, (showResults && query) && styles.resultsOpen)}>
+                <div className={clsx(styles.searchResults, (showResults && query.trim()) && styles.resultsOpen)}>
                     {allResults.length === 0 ? (
                         <div className={styles.noResults}>No matches found. Try searching for tags or text.</div>
                     ) : (
@@ -223,7 +255,11 @@ export default function Header() {
                                     <div className={styles.resultText}>
                                         <div className={styles.resultTitleRow}>
                                             <div className={styles.resultTitle}>
-                                                {result.resultType === 'folder' ? result.name : (result.metadata?.title || 'Untitled')}
+                                                {result.resultType === 'folder' ? (
+                                                    <HighlightText text={result.name} query={query} />
+                                                ) : (
+                                                    <HighlightText text={result.metadata?.title || 'Untitled'} query={query} />
+                                                )}
                                                 {isObscured && <Lock size={12} className={styles.lockIconInline} />}
                                             </div>
                                             <div className={styles.resultDate}>
@@ -243,14 +279,23 @@ export default function Header() {
                                             )}
                                         </div>
                                         <div className={clsx(styles.resultDescription, isObscured && styles.blurredText)}>
-                                            {result.resultType !== 'folder' && (result.metadata?.description || (result.type === 'image' ? '' : getPlainText(result.content).substring(0, 60)))}
-                                            {result.resultType === 'item' && result.type !== 'image' && result.content?.length > 60 && '...'}
+                                            {result.resultType !== 'folder' && (
+                                                <HighlightText
+                                                    text={result.metadata?.description || (result.type === 'image' ? '' : getPlainText(result.content).substring(0, 80))}
+                                                    query={query}
+                                                />
+                                            )}
+                                            {result.resultType === 'item' && result.type !== 'image' && (result.metadata?.description?.length > 80 || result.content?.length > 80) && '...'}
                                         </div>
                                         {result.resultType === 'item' && !isObscured && result.metadata?.tags && Array.isArray(result.metadata.tags) && result.metadata.tags.length > 0 && (
                                             <div className={styles.resultTags}>
                                                 {result.metadata.tags.map((tag: any, i: number) => {
                                                     const tagName = typeof tag === 'string' ? tag : tag.name;
-                                                    return <span key={i} className={styles.resultTag}>#{tagName}</span>;
+                                                    return (
+                                                        <span key={i} className={styles.resultTag}>
+                                                            #<HighlightText text={tagName} query={query} />
+                                                        </span>
+                                                    );
                                                 })}
                                             </div>
                                         )}

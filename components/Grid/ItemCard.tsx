@@ -9,6 +9,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { supabase } from '@/lib/supabase';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
+import { toast } from 'sonner';
 import clsx from 'clsx';
 
 interface ItemCardProps {
@@ -148,7 +149,11 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
     const handleLockItem = (e: React.MouseEvent) => {
         e.stopPropagation();
-        lockItem(localItem.id);
+        if (!isVaultLocked) {
+            lock(); // Re-lock the vault globally if it's currently open
+        } else {
+            lockItem(localItem.id); // Otherwise just re-lock this specific item
+        }
         reLockVaulted(localItem.id);
     };
 
@@ -167,6 +172,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             <button
                 onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault(); // Add preventDefault
                     if (isVaulted && !isObscured) {
                         handleLockItem(e);
                     } else if (isObscured) {
@@ -175,6 +181,11 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         handleVaultToggle(e);
                     }
                 }}
+                onPointerDown={(e) => {
+                    e.stopPropagation();
+                    // Don't stop immediate prop as it might need to bubble for some React events, but stopping propagation is usually key for dnd-kit
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
                 data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
                 data-tooltip-pos="bottom"
             >
@@ -219,6 +230,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     }
                 }}
                 onPointerDown={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
                 data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
                 data-tooltip-pos="bottom"
             >

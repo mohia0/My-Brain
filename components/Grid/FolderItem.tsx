@@ -81,13 +81,27 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
 
     const handleLockFolder = (e: React.MouseEvent) => {
         e.stopPropagation();
-        lockItem(folder.id);
+        if (!isVaultLocked) {
+            lock();
+        } else {
+            lockItem(folder.id);
+        }
     };
 
     const renderActions = () => (
         <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
             <button
-                onClick={isVaulted && !isObscured ? handleLockFolder : (isObscured ? (e) => { e.stopPropagation(); setModalOpen(true, folder.id); } : handleVaultToggle)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (isVaulted && !isObscured) handleLockFolder(e);
+                    else if (isObscured) {
+                        e.stopPropagation();
+                        setModalOpen(true, folder.id);
+                    } else handleVaultToggle(e);
+                }}
+                onPointerDown={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
                 data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Folder" : "Lock Folder"))}
                 data-tooltip-pos="bottom"
             >

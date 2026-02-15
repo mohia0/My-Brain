@@ -139,6 +139,8 @@
     align-items: center;
     justify-content: center;
     border-radius: 4px;
+    pointer-events: auto;
+    /* Ensure clickable */
 }
 
 .actions button:hover {
@@ -371,6 +373,8 @@
 
 .obscured {
     overflow: hidden;
+    pointer-events: auto !important;
+    /* Allow interaction with the card itself (like context menu or buttons) */
 }
 
 .obscured .content,
@@ -381,7 +385,7 @@
     filter: blur(16px) grayscale(0.4);
     opacity: 0.5;
     user-select: none;
-    pointer-events: none;
+    /* Removed pointer-events: none so children buttons can be clicked */
 }
 
 /* Room specific obscured handling */
@@ -441,6 +445,7 @@
 .obscured .innerCard>button,
 .card.obscured>button {
     z-index: 30;
+    pointer-events: auto !important;
 }
 
 .card.obscured:hover,

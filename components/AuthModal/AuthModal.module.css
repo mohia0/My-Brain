@@ -294,3 +294,41 @@
 .toggleLink:hover {
     opacity: 0.8;
 }
+
+.googleButton {
+    background: white;
+    color: #1f1f1f;
+    border: 1px solid #e1e3e1;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 0px;
+    font-family: var(--font-outfit), sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.googleButton:hover {
+    background: #f1f3f4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.googleButton:active {
+    transform: translateY(0);
+    background: #e8eaed;
+}
+
+.googleButton:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}

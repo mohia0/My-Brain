@@ -116,6 +116,11 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
         setLoading(true);
         setError(null);
         try {
+            // Set a flag so the page knows we are returning from an auth redirect
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('isAuthenticating', 'true');
+            }
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {

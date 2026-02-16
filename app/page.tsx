@@ -55,23 +55,33 @@ export default function Home() {
   const runInit = async () => {
     const MIN_LOADING_TIME = 500;
 
-    // Check for OAuth redirect (access_token or recovery type)
-    if (typeof window !== 'undefined' &&
-      (window.location.hash.includes('access_token') ||
+    // Check for 'isAuthenticating' flag OR hash/search parameters
+    const checkRedirect = () => {
+      if (typeof window === 'undefined') return false;
+
+      const isAuthenticating = localStorage.getItem('isAuthenticating') === 'true';
+      const hasHash = window.location.hash.includes('access_token') ||
         window.location.hash.includes('type=recovery') ||
-        window.location.search.includes('code='))) {
-      console.log("OAuth/Auth redirect detected, waiting for auth listener...");
-      // We do not stop loading here. We let onAuthStateChange handle it.
-      // But we set a failsafe timeout just in case
-      setTimeout(() => {
-        if (isInitializingRef.current) {
-          console.log("Auth listener timeout, forcing load completion.");
-          setInitializing(false);
-          setShowLoading(false);
-        }
-      }, 8000); // 8 seconds timeout for auth processing
-      return;
+        window.location.search.includes('code=');
+
+      if (isAuthenticating || hasHash) {
+        console.log("Auth redirect or authenticating state detected, waiting for session...");
+
+        // Clear the flag after a delay to prevent getting stuck if auth fails
+        setTimeout(() => {
+          if (isInitializingRef.current) {
+            console.log("Auth timeout reached, verifying state.");
+            localStorage.removeItem('isAuthenticating');
+            setInitializing(false);
+            setShowLoading(false);
+          }
+        }, 10000); // 10 seconds timeout for full auth flow
+        return true;
+      }
+      return false;
     }
+
+    if (checkRedirect()) return;
 
     setInitializing(true);
     isInitializingRef.current = true;
@@ -119,6 +129,10 @@ export default function Home() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
+
+      if (session) {
+        localStorage.removeItem('isAuthenticating');
+      }
 
       // If we are stuck in loading state (e.g. from redirect wait), finish loading now
       if (session && (showLoadingRef.current || isInitializingRef.current)) {

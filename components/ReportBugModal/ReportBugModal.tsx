@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './ReportBugModal.module.css';
 import { X, Send, AlertTriangle } from 'lucide-react';
+import { getApiUrl } from '@/lib/utils';
 
 interface ReportBugModalProps {
     isOpen: boolean;
@@ -46,7 +47,7 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
         setStatus('idle');
 
         try {
-            const res = await fetch('/api/report-bug', {
+            const res = await fetch(getApiUrl('/api/report-bug'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, message })

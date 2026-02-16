@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { generateId } from '@/lib/utils';
+import { generateId, getApiUrl } from '@/lib/utils';
 import styles from './Toolbar.module.css';
 import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame, DoorClosed } from 'lucide-react';
 import clsx from 'clsx';
@@ -91,7 +91,7 @@ export default function Toolbar() {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s Timeout
 
-                fetch('/api/metadata', {
+                fetch(getApiUrl('/api/metadata'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: content, itemId: id, skipCapture: true }),

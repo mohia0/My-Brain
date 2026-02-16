@@ -91,8 +91,16 @@ export default function Home() {
 
     try {
       const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
+      const { data, error } = await supabase.auth.getSession();
+      const initialSession = data?.session;
+
+      if (error) {
+        console.warn("Session check error (clearing invalid session):", error.message);
+        await supabase.auth.signOut();
+        setSession(null);
+      } else {
+        setSession(initialSession);
+      }
 
       let dataPromise = Promise.resolve();
       if (initialSession) {
@@ -136,6 +144,9 @@ export default function Home() {
 
       // If we are stuck in loading state (e.g. from redirect wait), finish loading now
       if (session && (showLoadingRef.current || isInitializingRef.current)) {
+        // IMPORTANT: Fetch data immediately if we have a session, regardless of current fade state
+        fetchData(session.user);
+
         // Trigger the standard fade out logic
         if (!isFading) { // Only if not already fading
           setIsFading(true);
@@ -150,7 +161,7 @@ export default function Home() {
       }
 
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
-        fetchData();
+        fetchData(session.user);
         if (unsubscribeRef.current) unsubscribeRef.current();
         unsubscribeRef.current = subscribeToChanges();
       }

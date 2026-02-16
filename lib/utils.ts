@@ -15,3 +15,18 @@ export function generateId(): string {
         return v.toString(16);
     });
 }
+
+import { Capacitor } from '@capacitor/core';
+
+export function getApiUrl(endpoint: string): string {
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+    // Helper to detect if running in Capacitor Native environment
+    const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+
+    if (isNative) {
+        return `https://www.brainia.space${cleanEndpoint}`;
+    }
+
+    return cleanEndpoint;
+}

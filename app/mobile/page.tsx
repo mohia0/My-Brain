@@ -27,6 +27,13 @@ export default function MobilePage() {
         let unsubscribe: (() => void) | undefined;
 
         supabase.auth.getSession().then((res: any) => {
+            if (res.error) {
+                console.warn("Mobile session check failed:", res.error.message);
+                supabase.auth.signOut().then(() => setSession(null));
+                setLoading(false);
+                return;
+            }
+
             const session = res.data?.session;
             setSession(session);
             setLoading(false);
@@ -34,6 +41,10 @@ export default function MobilePage() {
                 fetchData(session.user);
                 unsubscribe = subscribeToChanges();
             }
+        }).catch((err: any) => {
+            console.warn("Mobile session unexpected error:", err);
+            setLoading(false);
+            setSession(null);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {

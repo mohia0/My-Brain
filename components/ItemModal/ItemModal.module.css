@@ -10,6 +10,9 @@
     align-items: center;
     justify-content: center;
     z-index: 20000;
+    touch-action: none;
+    /* Prevent scroll chaining/propagation */
+    overscroll-behavior: none;
 }
 
 .modal {
@@ -28,19 +31,35 @@
     user-select: text;
 }
 
-.swipeHandle {
+.swipeZone {
     display: none;
 }
 
 @media (max-width: 768px) {
+    .swipeZone {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 48px;
+        /* Touch target size */
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        cursor: grab;
+        /* No background, invisible hit area. Scrolls WITH content. */
+    }
+
     .swipeHandle {
-        display: block;
-        width: 40px;
-        height: 5px;
-        background: rgba(255, 255, 255, 0.2);
+        width: 48px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.25);
         border-radius: 100px;
-        margin: 10px auto 0;
         flex-shrink: 0;
+        margin-top: 12px;
+        /* Push it down slightly from very top edge */
     }
 }
 
@@ -943,7 +962,10 @@
         flex-direction: column !important;
         height: 100% !important;
         overflow-y: auto !important;
-        /* Allow whole modal to scroll if needed, but inner columns handle most */
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        position: relative;
     }
 
     .leftColumn {
@@ -956,6 +978,7 @@
         border-right: none !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         background: rgba(0, 0, 0, 0.4) !important;
+        position: relative;
     }
 
     /* Note specific mobile tweaks */
@@ -990,9 +1013,11 @@
     .scrollBody {
         flex: none !important;
         overflow-y: visible !important;
-        padding: 20px 20px 140px 20px !important;
+        /* Let parent scroll handle it */
+        padding: 20px 20px 200px 20px !important;
         /* Massive padding to clear fixed footer */
         gap: 20px !important;
+        min-height: 0 !important;
     }
 
     .section {
@@ -1026,7 +1051,6 @@
     }
 
     .scrollBody {
-        padding: 16px !important;
         gap: 16px !important;
     }
 

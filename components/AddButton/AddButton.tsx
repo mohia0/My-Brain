@@ -6,7 +6,7 @@ import { Plus, FileText, Link, Image as ImageIcon, FolderPlus, X } from 'lucide-
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { generateId } from '@/lib/utils';
+import { generateId, getApiUrl } from '@/lib/utils';
 
 import InputModal from '@/components/InputModal/InputModal';
 
@@ -80,7 +80,7 @@ export default function AddButton() {
                 supabase.auth.getSession().then(({ data: { session } }: any) => {
                     const userId = session?.user?.id || 'unknown';
 
-                    fetch('/api/metadata', {
+                    fetch(getApiUrl('/api/metadata'), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: content, itemId: id, userId, skipCapture: true }),

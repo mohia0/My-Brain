@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
+import { getApiUrl } from '@/lib/utils';
 
 const BlockEditor = dynamic(() => import('@/components/BlockEditor/BlockEditor'), { ssr: false });
 
@@ -42,10 +43,12 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const titleInputRef = useRef<HTMLInputElement>(null);
     const headerTitleRef = useRef<HTMLDivElement>(null);
     const scrollBodyRef = useRef<HTMLDivElement>(null);
+    const modalContentRef = useRef<HTMLDivElement>(null);
+    const swipeZoneRef = useRef<HTMLDivElement>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 150, scrollBodyRef);
+    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 150, [scrollBodyRef, modalContentRef], swipeZoneRef);
 
     useEffect(() => {
         if (item) {
@@ -160,7 +163,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 // If URL changed, restart the background capture
                 if (isUrlChanged) {
                     console.log("[Capture] URL changed, triggering new metadata fetch for:", url);
-                    fetch('/api/metadata', {
+                    fetch(getApiUrl('/api/metadata'), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -353,8 +356,18 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
                 }}
             >
-                <div className={styles.swipeHandle} />
-                <div className={clsx(styles.modalContent, isLink && styles.compactContent)}>
+                <div className={clsx(styles.modalContent, isLink && styles.compactContent)} ref={modalContentRef}>
+
+                    {/* Swipe Zone Wrapper - scrolls with content */}
+                    <div
+                        ref={swipeZoneRef}
+                        className={styles.swipeZone}
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                    >
+                        <div className={styles.swipeHandle} />
+                    </div>
 
                     {/* LEFT COLUMN: PRIMARY VIEW */}
                     <div className={styles.leftColumn}>

@@ -17,7 +17,7 @@ import VaultAuthModal, { useVaultStore } from '@/components/Vault/VaultAuthModal
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import { Capacitor } from '@capacitor/core';
-import { generateId } from '@/lib/utils';
+import { generateId, getApiUrl } from '@/lib/utils';
 // --- CRITICAL: DO NOT MODIFY CAPTURE LOGIC WITHOUT REVIEW ---
 // The handleSharedContent function is vital for the mobile share extension.
 // Ensure it always has access to the latest authentication session and store state.
@@ -39,22 +39,12 @@ export default function MobilePageContent({ session }: { session: any }) {
         checkVaultStatus();
     }, []);
 
-    // Dynamic API Base URL handling for Capacitor
-    // When running as a native app, we need to point to the production API
-    // Default to Vercel production URL if env var is not set
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://www.brainia.space';
+    useEffect(() => {
+        checkVaultStatus();
+    }, []);
 
-    const getApiUrl = (endpoint: string) => {
-        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-
-        if (Capacitor.isNativePlatform()) {
-            const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
-            return `${cleanBase}${cleanEndpoint}`;
-        }
-
-        // On web/browser, relative paths are safest and handle protocol/origin automatically
-        return cleanEndpoint;
-    };
+    // API URL handling is now centralized in @/lib/utils/getApiUrl
+    // ensuring consistent behavior across web and mobile builds
 
     // Modal states
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);

@@ -15,7 +15,7 @@ interface MobileArchiveProps {
 export default function MobileArchive({ onItemClick, onFolderClick, onBack }: MobileArchiveProps) {
     const { items, folders } = useItemsStore();
 
-    const archivedItems = items.filter(i => i.status === 'archived')
+    const archivedItems = items.filter(i => i.status === 'archived' && (i as any).type !== 'project')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const archivedFolders = folders.filter(f => f.status === 'archived')

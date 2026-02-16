@@ -166,8 +166,6 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                     .brainia-editor .bn-editor .bn-block-content .bn-inline-content {
                         unicode-bidi: plaintext;
                         text-align: start;
-                        display: block;
-                        width: 100%;
                     }
                     
                     /* Ensure placeholders align correctly */

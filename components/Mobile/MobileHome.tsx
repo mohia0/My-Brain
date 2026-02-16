@@ -14,7 +14,7 @@ interface MobileHomeProps {
 export default function MobileHome({ onItemClick, onFolderClick }: MobileHomeProps) {
     const { items, folders } = useItemsStore();
 
-    const visibleItems = items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id && (i as any).type !== 'room')
+    const visibleItems = items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id && (i as any).type !== 'room' && (i as any).type !== 'project')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const visibleFolders = folders.filter(f => f.status !== 'archived' && !f.parent_id)

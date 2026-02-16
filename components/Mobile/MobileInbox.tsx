@@ -18,7 +18,7 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
     const containerRef = React.useRef<HTMLDivElement>(null);
     const touchStart = React.useRef(0);
 
-    const inboxItems = items.filter(i => i.status === filterStatus)
+    const inboxItems = items.filter(i => i.status === filterStatus && (i as any).type !== 'project')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     // Initial fetch is handled by the root Home component

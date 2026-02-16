@@ -49,38 +49,29 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     useEffect(() => {
         if (item) {
-            // Update title if:
-            // 1. Local state is empty OR
-            // 2. Local state is just a 'Capturing' placeholder but store has a real title
-            const isLocalPlaceholder = !title || /capturing|shared link|sharedlink/i.test(title);
-            const isStoreBetter = item.metadata?.title && !/capturing|shared link|sharedlink/i.test(item.metadata.title);
-
-            if (!isEditingTitle && (isLocalPlaceholder || title === '')) {
-                if (item.metadata?.title) {
-                    setTitle(item.metadata.title);
-                } else if (item.type === 'text') {
-                    // Deriving title from content
-                    let displayContent = item.content;
-                    if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
-                        try {
-                            const blocks = JSON.parse(displayContent);
-                            displayContent = Array.isArray(blocks)
-                                ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
-                                : displayContent;
-                        } catch { }
-                    }
-                    const clean = displayContent.trim();
-                    if (clean) {
-                        setTitle(clean.length > 50 ? clean.substring(0, 50) + '...' : clean);
-                    }
+            // Live Sync Title
+            if (!isEditingTitle && item.metadata?.title !== undefined && item.metadata.title !== title) {
+                setTitle(item.metadata.title);
+            } else if (!isEditingTitle && (!title || title === "Idea Title" || /^Capturing/.test(title)) && item.type === 'text') {
+                // Fallback: Deriving title from content
+                let displayContent = item.content;
+                if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
+                    try {
+                        const blocks = JSON.parse(displayContent);
+                        displayContent = Array.isArray(blocks)
+                            ? blocks.map((b: any) => Array.isArray(b.content) ? b.content.map((c: any) => c.text).join('') : b.content || '').join(' ')
+                            : displayContent;
+                    } catch { }
                 }
-            } else if (!isEditingTitle && isLocalPlaceholder && isStoreBetter) {
-                setTitle(item.metadata?.title || '');
+                const clean = displayContent.trim();
+                if (clean) {
+                    setTitle(clean.length > 50 ? clean.substring(0, 50) + '...' : clean);
+                }
             }
 
-            // Sync description similarly
-            if (!description || description === '' || (description.startsWith('http') && item.metadata?.description && !item.metadata.description.startsWith('http'))) {
-                setDescription(item.metadata?.description || '');
+            // Live Sync Description
+            if (item.metadata?.description !== undefined && item.metadata.description !== description) {
+                setDescription(item.metadata.description);
             }
 
             if (content !== item.content) {

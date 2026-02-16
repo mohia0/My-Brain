@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './MobileHeader.module.css';
 import Orb from '../Orb/Orb';
-import { Search, X, Folder, LogOut, Sun, Moon, User, Archive } from 'lucide-react';
+import { Search, X, Folder, LogOut, Sun, Moon, User, Archive, AlertCircle } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -115,6 +115,8 @@ export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHe
         );
     }
 
+
+
     return (
         <>
             <header className={styles.header}>
@@ -133,6 +135,8 @@ export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHe
                     </div>
                     <h1>Brainia</h1>
                 </div>
+
+
 
                 {user && (
                     <div
@@ -177,6 +181,20 @@ export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHe
                                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                                 <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
                             </div>
+                            <div className={styles.menuInfoItem} style={{
+                                padding: '12px 16px',
+                                opacity: 0.6,
+                                fontSize: '0.75rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 12,
+                                borderTop: '1px solid var(--border-color)',
+                                marginTop: 8,
+                                paddingTop: 16
+                            }}>
+                                <AlertCircle size={16} />
+                                <span>Manage Password & Vault Key via Desktop Browser</span>
+                            </div>
                             <div className={styles.menuItem} onClick={handleLogout}>
                                 <LogOut size={18} />
                                 <span>Sign Out</span>
@@ -184,7 +202,8 @@ export default function MobileHeader({ onResultClick, onArchiveClick }: MobileHe
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
         </>
     );
 }

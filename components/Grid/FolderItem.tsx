@@ -102,10 +102,11 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
                 }}
                 onPointerDown={e => e.stopPropagation()}
                 onMouseDown={e => e.stopPropagation()}
-                data-tooltip={isObscured ? "Unlock Item" : (isVaulted && !isObscured ? "Lock Item" : (isVaulted ? "Unvault Folder" : "Lock Folder"))}
+                data-tooltip={isObscured ? "Hidden - Tap to Unlock" : (isVaulted ? "Re-Lock Folder" : "Lock Folder")}
                 data-tooltip-pos="bottom"
+                style={{ color: 'inherit' }}
             >
-                {isObscured ? <Unlock size={12} /> : <Lock size={12} />}
+                <Lock size={12} />
             </button>
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
             <button

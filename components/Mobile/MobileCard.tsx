@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video, Lock, Unlock } from 'lucide-react';
 import styles from './MobileCard.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
 
 interface MobileCardProps {
@@ -13,12 +14,18 @@ interface MobileCardProps {
 }
 
 export default function MobileCard({ item, onClick }: MobileCardProps) {
-    const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection } = useItemsStore();
+    const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection, vaultedItemsRevealed, toggleVaultItem, toggleVaultFolder } = useItemsStore();
+    const { isVaultLocked, unlockedIds, setModalOpen, lockItem } = useVaultStore();
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRemoving, setIsRemoving] = useState(false);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
     const isSelected = selectedIds.includes(item.id);
     const inSelectionMode = selectedIds.length > 0;
+
+    // Vault Logic
+    const isVaulted = item.is_vaulted;
+    const isUnlockedLocally = unlockedIds.includes(item.id) || vaultedItemsRevealed?.includes(item.id);
+    const isObscured = isVaulted && isVaultLocked && !isUnlockedLocally;
 
     const isFolder = 'type' in item && (item as any).type === 'folder';
     const folderItems = isFolder ? items.filter(i => i.folder_id === item.id) : [];
@@ -43,6 +50,8 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
         if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
         return `${Math.floor(diff / 86400)}d ago`;
     };
+
+
 
     const handleDuplicate = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -94,6 +103,12 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
             return;
         }
 
+        if (isObscured) {
+            e.stopPropagation();
+            setModalOpen(true, item.id);
+            return;
+        }
+
         onClick?.();
     };
 
@@ -113,6 +128,69 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     };
 
     const [imageError, setImageError] = useState(false);
+
+    if (isObscured) {
+        return (
+            <div
+                className={clsx(
+                    styles.card,
+                    isFolder && styles.gridCard,
+                    isRemoving && styles.removing,
+                    isSelected && styles.selected
+                )}
+                onClick={handleClick}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchEnd}
+                style={isFolder && (item as any).color ? {
+                    backgroundColor: `${(item as any).color}15`,
+                    borderColor: `${(item as any).color}30`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 12
+                } : {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 120,
+                    gap: 12
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', textAlign: 'center', padding: '0 20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                        {isFolder ? (item as any).name : (item.metadata?.title || 'Untitled Idea')}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.5 }}>
+                        <Lock size={14} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Vault Protected</span>
+                    </div>
+                </div>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setModalOpen(true, item.id);
+                    }}
+                    style={{
+                        background: 'var(--accent)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: 8,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6
+                    }}
+                >
+                    <Unlock size={14} /> UNLOCK
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div
@@ -255,6 +333,25 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
             </div>
 
             <div className={styles.actions} onClick={e => e.stopPropagation()}>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (isVaulted && !isObscured) {
+                            // If it's vaulted but revealed, clicking lock should re-lock it (hide it)
+                            lockItem(item.id);
+                        } else {
+                            // Otherwise toggle its vaulted status (Add to vault)
+                            if (isFolder) toggleVaultFolder(item.id);
+                            else toggleVaultItem(item.id);
+                        }
+                    }}
+                    className={styles.actionBtn}
+                    data-tooltip={isVaulted ? "Re-Lock Item" : "Lock in Vault"}
+                    data-tooltip-pos="left"
+                    style={{ color: 'inherit' }}
+                >
+                    <Lock size={14} />
+                </button>
                 <button onClick={handleArchive} className={styles.actionBtn} data-tooltip="Archive" data-tooltip-pos="left"><Archive size={14} /></button>
                 {!isFolder && <button onClick={handleDuplicate} className={styles.actionBtn} data-tooltip="Duplicate" data-tooltip-pos="left"><Copy size={14} /></button>}
                 <button

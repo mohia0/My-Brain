@@ -13,19 +13,31 @@ import ItemModal from '@/components/ItemModal/ItemModal';
 import FolderModal from '@/components/FolderModal/FolderModal';
 import InputModal from '@/components/InputModal/InputModal';
 import MobileSelectionBar from './MobileSelectionBar';
+import VaultAuthModal, { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import { Capacitor } from '@capacitor/core';
 import { generateId } from '@/lib/utils';
+// --- CRITICAL: DO NOT MODIFY CAPTURE LOGIC WITHOUT REVIEW ---
+// The handleSharedContent function is vital for the mobile share extension.
+// Ensure it always has access to the latest authentication session and store state.
+// ------------------------------------------------------------
 
 
 
 // We access SendIntent dynamically to avoid Capacitor 2 build errors
 
 export default function MobilePageContent({ session }: { session: any }) {
+    const sessionRef = React.useRef(session);
+    useEffect(() => { sessionRef.current = session; }, [session]);
     const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'archive'>('home');
     const [shareState, setShareState] = useState<'idle' | 'saving' | 'saved' | 'capturing'>('idle');
     const [isOverlayFading, setIsOverlayFading] = useState(false);
+    const { isModalOpen, setModalOpen, checkVaultStatus } = useVaultStore();
+
+    useEffect(() => {
+        checkVaultStatus();
+    }, []);
 
     // Dynamic API Base URL handling for Capacitor
     // When running as a native app, we need to point to the production API
@@ -158,6 +170,10 @@ export default function MobilePageContent({ session }: { session: any }) {
 
 
     const uploadMobileFile = async (uri: string, itemId: string, userId: string): Promise<string | null> => {
+        if (!userId || userId === 'unknown') {
+            console.error("[MobileUpload] CRITICAL: Invalid User ID during upload attempt");
+            return null;
+        }
 
         try {
             // Ensure we have a usable URI
@@ -238,7 +254,9 @@ export default function MobilePageContent({ session }: { session: any }) {
         try {
             const data = intent.value || intent;
             const extras = intent.extras || {};
-            const userId = session?.user?.id || 'unknown';
+            // --- CRITICAL: Use ref to get latest session user ID ---
+            const userId = sessionRef.current?.user?.id || 'unknown';
+            console.log(`[MobileShare] Capturing content for user: ${userId}`);
 
             // --- DATA PRE-EXTRACTION ---
             let rawText = (extras['android.intent.extra.TEXT'] || extras['android.intent.extra.PROCESS_TEXT'] || data.value || data.text || data.url || "").toString().trim();
@@ -349,46 +367,65 @@ export default function MobilePageContent({ session }: { session: any }) {
             });
 
             // --- ENRICHMENT ---
+            // --- ENRICHMENT ---
+            // --- ENRICHMENT ---
             if (finalUrl) {
-                // ENRICHMENT: Metadata
-                try {
-                    const metaUrl = getApiUrl('/api/metadata');
-                    fetch(metaUrl, {
+                // ENRICHMENT: Metadata & Screenshot
+                const metadataUrl = getApiUrl('/api/metadata');
+                const screenshotUrl = getApiUrl('/api/screenshot');
+
+                console.log(`[MobileShare] Triggering Metadata: ${metadataUrl}`);
+
+                // 1. Metadata Fetch
+                fetch(metadataUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: finalUrl, itemId, userId })
+                })
+                    .then(async res => {
+                        if (!res.ok) throw new Error(`Metadata HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        console.log('[MobileShare] Metadata Success:', data);
+                        // Merge with latest state
+                        const current = useItemsStore.getState().items.find(i => i.id === itemId);
+                        updateItemContent(itemId, {
+                            metadata: { ...current?.metadata, ...data, source: 'mobile-share-meta' }
+                        });
+                    })
+                    .catch(e => console.error("[MobileShare] Metadata failed:", e));
+
+                // 2. Screenshot Fetch (Delayed)
+                setTimeout(() => {
+                    console.log(`[MobileShare] Triggering Screenshot: ${screenshotUrl}`);
+                    fetch(screenshotUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: finalUrl, itemId, userId })
-                    }).then(async r => {
-                        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                        const newM = await r.json();
-                        if (newM && !newM.error) {
-                            const existing = useItemsStore.getState().items.find(i => i.id === itemId);
-                            updateItemContent(itemId, { metadata: { ...existing?.metadata, ...newM, source: 'mobile-enriched' } });
-                        }
-                    }).catch(e => console.error(`[MobileShare] Metadata failed (${metaUrl}):`, e.message));
-                } catch (e) {
-                    console.error("[MobileShare] Metadata trigger error:", e);
-                }
-
-                // ENRICHMENT: Screenshot
-                setTimeout(() => {
-                    try {
-                        const shotUrl = getApiUrl('/api/screenshot');
-                        fetch(shotUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url: finalUrl, itemId, userId })
-                        }).catch(e => console.error(`[MobileShare] Screenshot failed (${shotUrl}):`, e.message));
-                    } catch (e) {
-                        console.error("[MobileShare] Screenshot trigger error:", e);
-                    }
-                }, 1200);
+                    })
+                        .then(async res => {
+                            if (!res.ok) throw new Error(`Screenshot HTTP ${res.status}`);
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.metadata) {
+                                console.log('[MobileShare] Screenshot Success:', data.metadata);
+                                const current = useItemsStore.getState().items.find(i => i.id === itemId);
+                                updateItemContent(itemId, {
+                                    metadata: { ...current?.metadata, ...data.metadata, source: 'mobile-share-screen' }
+                                });
+                            }
+                        })
+                        .catch(e => console.error("[MobileShare] Screenshot failed:", e));
+                }, 1500);
             }
 
             setShareState('saved');
             setTimeout(() => {
                 setIsOverlayFading(true);
-                // Safety sync - ensure store is perfectly up to date
-                fetchData().catch(() => { });
+                // Safety sync removed to prevent overwriting optimistic updates with stale DB state
+                // fetchData().catch(() => { }); 
                 setTimeout(() => { setShareState('idle'); setIsOverlayFading(false); }, 500);
             }, 1000);
 
@@ -416,7 +453,7 @@ export default function MobilePageContent({ session }: { session: any }) {
         if (!type) return;
 
         const id = generateId();
-        const userId = session?.user?.id || 'unknown';
+        const userId = sessionRef.current?.user?.id || 'unknown';
 
         if (type === 'folder') {
             addFolder({
@@ -460,9 +497,28 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             if (type === 'link') {
                 // Trigger metadata AND screenshot
-                try {
-                    const metadataUrl = getApiUrl('/api/metadata');
-                    fetch(metadataUrl, {
+                const metadataUrl = getApiUrl('/api/metadata');
+                const screenshotUrl = getApiUrl('/api/screenshot');
+
+                // Metadata Fetch
+                fetch(metadataUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: content, itemId: id, userId })
+                })
+                    .then(async res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        console.log('[MobileAdd] Metadata success:', data);
+                        updateItemContent(id, { metadata: { ...data, source: 'mobile-add' } });
+                    })
+                    .catch(err => console.error(`[MobileAdd] Metadata failed (${metadataUrl}):`, err));
+
+                // Screenshot Fetch (Delayed slightly to avoid congestion)
+                setTimeout(() => {
+                    fetch(screenshotUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: content, itemId: id, userId })
@@ -471,24 +527,16 @@ export default function MobilePageContent({ session }: { session: any }) {
                             if (!res.ok) throw new Error(`HTTP ${res.status}`);
                             return res.json();
                         })
-                        .then(data => updateItemContent(id, { metadata: data }))
-                        .catch(err => console.error(`[MobileAdd] Metadata failed (${metadataUrl}):`, err));
-                } catch (e) {
-                    console.error("[MobileAdd] Metadata trigger error:", e);
-                }
-
-                setTimeout(() => {
-                    try {
-                        const screenshotUrl = getApiUrl('/api/screenshot');
-                        fetch(screenshotUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url: content, itemId: id, userId })
-                        }).catch(err => console.error(`[MobileAdd] Screenshot failed (${screenshotUrl}):`, err));
-                    } catch (e) {
-                        console.error("[MobileAdd] Screenshot trigger error:", e);
-                    }
-                }, 800);
+                        .then(data => {
+                            if (data.metadata) {
+                                console.log('[MobileAdd] Screenshot success:', data.metadata);
+                                // Start with current local item state
+                                const currentItem = useItemsStore.getState().items.find(i => i.id === id);
+                                updateItemContent(id, { metadata: { ...currentItem?.metadata, ...data.metadata, source: 'mobile-screenshot' } });
+                            }
+                        })
+                        .catch(err => console.error(`[MobileAdd] Screenshot failed (${screenshotUrl}):`, err));
+                }, 1000);
             }
         }
     };
@@ -574,6 +622,12 @@ export default function MobilePageContent({ session }: { session: any }) {
 
 
             {/* Modals */}
+            {isModalOpen && (
+                <VaultAuthModal
+                    onClose={() => setModalOpen(false)}
+                    onSuccess={() => { }}
+                />
+            )}
             {selectedItemId && (
                 <ItemModal
                     itemId={selectedItemId}

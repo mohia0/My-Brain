@@ -1,8 +1,9 @@
 import React from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2, RefreshCw, AlertCircle, Play, Video } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2, RefreshCw, AlertCircle, Play, Video, Lock, Unlock } from 'lucide-react';
 import styles from './MobileInbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
+import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
 
 interface MobileInboxItemProps {
@@ -12,7 +13,8 @@ interface MobileInboxItemProps {
 }
 
 export default function MobileInboxItem({ item, onClick, style }: MobileInboxItemProps) {
-    const { updateItemContent, removeItem, toggleSelection, selectedIds } = useItemsStore();
+    const { updateItemContent, removeItem, toggleSelection, selectedIds, vaultedItemsRevealed } = useItemsStore();
+    const { isVaultLocked, unlockedIds, setModalOpen } = useVaultStore();
     const [isDeleting, setIsDeleting] = React.useState(false);
     const [isRemoving, setIsRemoving] = React.useState(false);
     const [localItem, setLocalItem] = React.useState(item);
@@ -22,6 +24,10 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
     const inSelectionMode = selectedIds.length > 0;
     const isVideo = localItem.type === 'video' || localItem.metadata?.isVideo;
     const isImage = ((localItem.type === 'link' && localItem.metadata?.image) || localItem.type === 'image') && !isVideo;
+
+    // Vault Logic
+    const isVaulted = item.is_vaulted;
+    const isObscured = isVaulted && isVaultLocked && !unlockedIds.includes(item.id) && !vaultedItemsRevealed?.includes(item.id);
 
     // Update local state when item prop changes
     React.useEffect(() => {
@@ -111,6 +117,58 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
     };
 
     const [imageError, setImageError] = React.useState(false);
+
+    if (isObscured) {
+        return (
+            <div
+                className={clsx(
+                    styles.itemCard,
+                    isRemoving && styles.removing,
+                    isSelected && styles.selected
+                )}
+                onClick={handleClick}
+                style={{
+                    ...style,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 90,
+                    gap: 12,
+                    background: 'var(--card-bg)'
+                }}
+            >
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {(item as any).name || item.metadata?.title || 'Untitled Idea'}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.5 }}>
+                        <Lock size={12} />
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Vault Protected</span>
+                    </div>
+                </div>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setModalOpen(true, item.id);
+                    }}
+                    style={{
+                        background: 'var(--accent)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                    }}
+                >
+                    <Unlock size={12} /> UNLOCK
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div

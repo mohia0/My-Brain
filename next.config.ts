@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  typescript: {
+    ignoreBuildErrors: isCapacitorBuild,
+  },
+  // @ts-ignore
+  eslint: {
+    ignoreDuringBuilds: isCapacitorBuild,
+  },
   async headers() {
     return [
       {

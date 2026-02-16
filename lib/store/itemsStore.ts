@@ -567,12 +567,29 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     toggleVaultItem: async (id) => {
         const item = get().items.find(i => i.id === id);
         if (!item) return;
+
+        // Clear any "temporarily unlocked" state for this item so it resets
+        const vaultStore = (window as any).__VAULT_STORE__;
+        if (vaultStore) {
+            await vaultStore.getState().lockItem(id);
+        }
+
+        // Also clear local revealed content if any
+        get().reLockVaulted(id);
+
         await get().updateItemContent(id, { is_vaulted: !item.is_vaulted });
     },
 
     toggleVaultFolder: async (id) => {
         const folder = get().folders.find(f => f.id === id);
         if (!folder) return;
+
+        // Clear any "temporarily unlocked" state for this folder
+        const vaultStore = (window as any).__VAULT_STORE__;
+        if (vaultStore) {
+            await vaultStore.getState().lockItem(id);
+        }
+
         await get().updateFolderContent(id, { is_vaulted: !folder.is_vaulted });
     },
 

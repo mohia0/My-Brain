@@ -186,8 +186,9 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                     // Don't stop immediate prop as it might need to bubble for some React events, but stopping propagation is usually key for dnd-kit
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
-                data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
+                data-tooltip={isObscured ? "Hidden - Tap to Unlock" : (isVaulted ? "Re-Lock Item" : "Lock in Vault")}
                 data-tooltip-pos="bottom"
+                style={{ color: 'inherit' }}
             >
                 <LockIcon size={12} />
             </button>

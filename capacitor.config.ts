@@ -4,8 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.mybrain.app',
   appName: 'Brainia',
   webDir: 'out',
-  // Server config removed to ensure production build loads from local assets
-  // server: { ... }
+  server: {
+    url: 'http://192.168.1.237:3000',
+    cleartext: true
+  }
 };
 
 export default config;

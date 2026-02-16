@@ -124,6 +124,8 @@ export default function Home() {
   useEffect(() => {
     if (!session && !showLoading && !initializing) {
       setShouldShowAuth(true);
+    } else if (session) {
+      setShouldShowAuth(false);
     }
   }, [session, showLoading, initializing]);
 

@@ -116,8 +116,8 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                                 accept="image/*"
                                 capture={mode === 'camera' ? 'environment' : undefined}
                                 onChange={handleFileChange}
-                                className={styles.fileInput}
                                 id="file-upload"
+                                dir="auto"
                             />
                             {!value && (
                                 <label htmlFor="file-upload" className={styles.fileLabel}>
@@ -131,6 +131,7 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                                 onChange={e => setValue(e.target.value)}
                                 placeholder="Or paste image URL..."
                                 style={{ marginTop: 8 }}
+                                dir="auto"
                             />
                         </div>
                     ) : (
@@ -140,6 +141,7 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                             value={value}
                             onChange={e => setValue(e.target.value)}
                             placeholder={placeholder}
+                            dir="auto"
                         />
                     )}
 

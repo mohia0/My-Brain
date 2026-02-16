@@ -131,6 +131,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
         }
     }, [initialContent]);
 
+    // CSS-only solution is safer for performance
     return (
         <div style={{
             height: '100%',
@@ -161,13 +162,17 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                     />
                 </BlockNoteView>
                 <style jsx global>{`
-                    .brainia-editor .bn-editor [data-content-type] {
+                    /* Smart RTL detection using standard unicode-bidi */
+                    .brainia-editor .bn-editor .bn-block-content .bn-inline-content {
                         unicode-bidi: plaintext;
                         text-align: start;
+                        display: block;
+                        width: 100%;
                     }
-                    /* Ensure placeholders and text in blocks follow RTL when needed */
-                    .brainia-editor .bn-editor * {
-                        direction: inherit;
+                    
+                    /* Ensure placeholders align correctly */
+                    .brainia-editor .bn-editor [data-placeholder]:empty:before {
+                        text-align: inherit;
                     }
                 `}</style>
             </div>

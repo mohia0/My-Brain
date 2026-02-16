@@ -384,9 +384,10 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             onBlur={() => setIsEditingTitle(false)}
                                             onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
                                             placeholder="Idea Title"
+                                            dir="auto"
                                         />
                                     ) : (
-                                        <div className={styles.noteTitleDisplay} onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}>
+                                        <div className={styles.noteTitleDisplay} onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }} dir="auto">
                                             {title || "Idea Title"}
                                         </div>
                                     )}
@@ -483,6 +484,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             onBlur={() => setIsEditingTitle(false)}
                                             onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
                                             placeholder="Capture Title"
+                                            dir="auto"
                                         />
                                     ) : (
                                         <div
@@ -494,6 +496,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                                     styles.captureTitle,
                                                     title.split(' ').length > 7 && styles.titleLong
                                                 )}
+                                                dir="auto"
                                             >
                                                 {title || "Untitled Capture"}
                                             </h1>
@@ -529,7 +532,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                         </div>
                                     ))}
                                     {isTypingTag ? (
-                                        <input className={styles.tagInput} autoFocus value={newTagName} onChange={e => setNewTagName(e.target.value)} onBlur={handleAddTag} onKeyDown={e => e.key === 'Enter' && handleAddTag()} placeholder="Tag..." />
+                                        <input className={styles.tagInput} autoFocus value={newTagName} onChange={e => setNewTagName(e.target.value)} onBlur={handleAddTag} onKeyDown={e => e.key === 'Enter' && handleAddTag()} placeholder="Tag..." dir="auto" />
                                     ) : (
                                         <button className={styles.addTagBtn} onClick={() => setIsTypingTag(true)}>+ Add</button>
                                     )}
@@ -546,6 +549,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                         value={description}
                                         onChange={e => setDescription(e.target.value)}
                                         placeholder="Add thoughts..."
+                                        dir="auto"
                                     />
                                 </div>
                             )}

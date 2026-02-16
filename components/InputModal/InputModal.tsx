@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './InputModal.module.css';
 import { X } from 'lucide-react';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
+import { toast } from "sonner";
 
 interface InputModalProps {
     isOpen: boolean;
@@ -45,6 +46,16 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Limit to 3MB
+            const MAX_SIZE = 3 * 1024 * 1024;
+            if (file.size > MAX_SIZE) {
+                toast.error("File too large", {
+                    description: "Maximum size allowed is 3MB.",
+                });
+                e.target.value = ''; // Reset input
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 const result = e.target?.result as string;

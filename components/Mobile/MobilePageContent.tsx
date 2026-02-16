@@ -18,6 +18,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import { Capacitor } from '@capacitor/core';
 import { generateId, getApiUrl } from '@/lib/utils';
+import { toast } from "sonner";
 // --- CRITICAL: DO NOT MODIFY CAPTURE LOGIC WITHOUT REVIEW ---
 // The handleSharedContent function is vital for the mobile share extension.
 // Ensure it always has access to the latest authentication session and store state.
@@ -195,6 +196,14 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             const blob = await response.blob();
 
+            // Limit to 3MB
+            const MAX_SIZE = 3 * 1024 * 1024;
+            if (blob.size > MAX_SIZE) {
+                toast.error("File too large", {
+                    description: "Maximum size allowed is 3MB.",
+                });
+                throw new Error("File too large (max 3MB)");
+            }
 
             if (blob.size < 10) {
 

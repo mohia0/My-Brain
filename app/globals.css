@@ -297,3 +297,12 @@ a {
     top: 100%;
   }
 }
+
+/* BlockNote UI Fixes - Prevent selection of placeholders */
+.bn-placeholder,
+.bn-block-content:empty::before,
+[data-content]:empty::before {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: none !important;
+}

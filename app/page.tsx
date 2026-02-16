@@ -53,18 +53,22 @@ export default function Home() {
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const runInit = async () => {
-    const MIN_LOADING_TIME = 500;
+    const MIN_LOADING_TIME = 800; // Increased to ensure smooth visual
 
     // Check for 'isAuthenticating' flag OR hash/search parameters
     const checkRedirect = () => {
       if (typeof window === 'undefined') return false;
 
       const isAuthenticating = localStorage.getItem('isAuthenticating') === 'true';
-      const hasHash = window.location.hash.includes('access_token') ||
-        window.location.hash.includes('type=recovery') ||
-        window.location.search.includes('code=');
+      const hash = window.location.hash;
+      const search = window.location.search;
 
-      if (isAuthenticating || hasHash) {
+      const hasAuthParams = hash.includes('access_token') ||
+        hash.includes('type=recovery') ||
+        hash.includes('error_description') ||
+        search.includes('code=');
+
+      if (isAuthenticating || hasAuthParams) {
         console.log("Auth redirect or authenticating state detected, waiting for session...");
 
         // Clear the flag after a delay to prevent getting stuck if auth fails
@@ -72,8 +76,14 @@ export default function Home() {
           if (isInitializingRef.current) {
             console.log("Auth timeout reached, verifying state.");
             localStorage.removeItem('isAuthenticating');
-            setInitializing(false);
-            setShowLoading(false);
+
+            // Re-check session one last time
+            supabase.auth.getSession().then((result: any) => {
+              if (!result.data.session) {
+                setInitializing(false);
+                setShowLoading(false);
+              }
+            });
           }
         }, 10000); // 10 seconds timeout for full auth flow
         return true;
@@ -88,6 +98,17 @@ export default function Home() {
     setShowLoading(true);
     showLoadingRef.current = true;
     setIsFading(false);
+
+    const checkMobileWidth = () => {
+      if (typeof window === 'undefined') return false;
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'desktop') return false;
+      if (params.get('view') === 'mobile') return true;
+      const isCapacitor = ((window as any).Capacitor?.isNativePlatform() || (window as any).Capacitor?.isNative);
+      return isCapacitor || window.innerWidth <= 768;
+    };
+
+    const isCurrentlyMobile = checkMobileWidth();
 
     try {
       const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
@@ -104,13 +125,29 @@ export default function Home() {
 
       let dataPromise = Promise.resolve();
       if (initialSession) {
+        // View restoration logic integrated here
+        if (initialSession.user?.user_metadata?.canvas_view && !isCurrentlyMobile) {
+          const { scale, x, y, isMinimapCollapsed } = initialSession.user.user_metadata.canvas_view;
+          useCanvasStore.getState().restoreView(scale, { x, y });
+          if (isMinimapCollapsed !== undefined) {
+            useCanvasStore.getState().setIsMinimapCollapsed(isMinimapCollapsed);
+          }
+        } else {
+          useCanvasStore.getState().setViewRestored(true);
+        }
+
         dataPromise = fetchData(initialSession.user).then(() => {
           if (unsubscribeRef.current) unsubscribeRef.current();
           unsubscribeRef.current = subscribeToChanges();
         });
+      } else {
+        useCanvasStore.getState().setViewRestored(true);
       }
 
       await Promise.all([timerPromise, dataPromise]);
+
+      // Double check if data is actually loaded (items/folders might be empty, that's fine, but fetchData should have finished)
+      // The loading state in itemsStore will be false now due to await dataPromise
 
       // Start fade sequence
       setIsFading(true);
@@ -125,7 +162,8 @@ export default function Home() {
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       console.error("Initialization error:", err);
-      // In error case, we should probably allow access (maybe offline?) or show login
+      // Ensure we don't get stuck
+      useCanvasStore.getState().setViewRestored(true);
       setInitializing(false);
       setShowLoading(false);
       setIsFading(false);
@@ -144,21 +182,44 @@ export default function Home() {
 
       // If we are stuck in loading state (e.g. from redirect wait), finish loading now
       if (session && (showLoadingRef.current || isInitializingRef.current)) {
-        // IMPORTANT: Fetch data immediately if we have a session, regardless of current fade state
-        fetchData(session.user);
+        const isCurrentlyMobile = typeof window !== 'undefined' && (
+          (window as any).Capacitor?.isNativePlatform() ||
+          (window as any).Capacitor?.isNative ||
+          window.innerWidth <= 768
+        );
 
-        // Trigger the standard fade out logic
-        if (!isFading) { // Only if not already fading
-          setIsFading(true);
-          setTimeout(() => {
-            setShowLoading(false);
-            showLoadingRef.current = false;
-            setInitializing(false);
-            isInitializingRef.current = false;
-            setIsFading(false);
-          }, 800);
+        // Restore view if metadata exists
+        if (session.user?.user_metadata?.canvas_view && !isCurrentlyMobile) {
+          const { scale, x, y, isMinimapCollapsed } = session.user.user_metadata.canvas_view;
+          useCanvasStore.getState().restoreView(scale, { x, y });
+          if (isMinimapCollapsed !== undefined) {
+            useCanvasStore.getState().setIsMinimapCollapsed(isMinimapCollapsed);
+          }
+        } else {
+          useCanvasStore.getState().setViewRestored(true);
         }
+
+        // IMPORTANT: Fetch data immediately if we have a session
+        fetchData(session.user).then(() => {
+          // Trigger the standard fade out logic ONLY after data is fetched
+          if (showLoadingRef.current && !isFading) {
+            setIsFading(true);
+            setTimeout(() => {
+              setShowLoading(false);
+              showLoadingRef.current = false;
+              setInitializing(false);
+              isInitializingRef.current = false;
+              setIsFading(false);
+            }, 800);
+          }
+        });
       }
+
+      // If we found a session LATE (AuthModal was already visible), strictly handle the switch.
+      // We don't want to re-mount the loading screen if we can avoid it, but it might be cleaner to do so briefly
+      // than to jerk to content. However, the user complained about "appear and go and appear".
+      // We'll trust the logic above handles the 'loading' case. 
+      // If !showLoadingRef.current, we just let the useEffect below (session change) handle the UI update (AuthModal unmounts).
 
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData(session.user);
@@ -229,14 +290,15 @@ export default function Home() {
 
   // View Sync Logic
   useEffect(() => {
-    if (session?.user?.user_metadata?.canvas_view && !isMobile) {
+    // This effect handles updates when session changes but loading screen is ALREADY gone
+    if (session?.user?.user_metadata?.canvas_view && !isMobile && !showLoading) {
       const { scale, x, y, isMinimapCollapsed } = session.user.user_metadata.canvas_view;
       useCanvasStore.getState().restoreView(scale, { x, y });
       if (isMinimapCollapsed !== undefined) {
         useCanvasStore.getState().setIsMinimapCollapsed(isMinimapCollapsed);
       }
     }
-  }, [session, isMobile]);
+  }, [session, isMobile, showLoading]);
 
   useEffect(() => {
     if (!session || isMobile) return;

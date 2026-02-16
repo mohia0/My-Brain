@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface CanvasState {
     scale: number;
@@ -17,29 +18,46 @@ interface CanvasState {
     setIsMinimapCollapsed: (collapsed: boolean) => void;
     isSnappingEnabled: boolean;
     toggleSnapping: () => void;
+    isViewRestored: boolean;
+    setViewRestored: (restored: boolean) => void;
 }
 
-export const useCanvasStore = create<CanvasState>((set) => ({
-    scale: 0.65,
-    position: { x: 0, y: 0 },
-    setScale: (scale) => set({ scale }),
-    setPosition: (x, y) => set({ position: { x, y } }),
-    restoreView: (scale, position) => set({ scale, position }),
-    zoomIn: () => set((state) => ({ scale: Math.min(state.scale * 1.1, 1.3) })),
-    zoomOut: () => set((state) => ({ scale: Math.max(state.scale * 0.9, 0.1) })),
-    zoomAt: (newScale: number, point: { x: number, y: number }) => set((state) => {
-        const safeScale = Math.min(Math.max(newScale, 0.1), 1.3);
-        const scaleChange = safeScale / state.scale;
-        const newX = point.x - (point.x - state.position.x) * scaleChange;
-        const newY = point.y - (point.y - state.position.y) * scaleChange;
-        return { scale: safeScale, position: { x: newX, y: newY } };
-    }),
-    currentTool: 'mouse',
-    setTool: (tool: 'mouse' | 'hand' | 'area') => set({ currentTool: tool }),
-    openFolderId: null,
-    setOpenFolderId: (id) => set({ openFolderId: id }),
-    isMinimapCollapsed: false,
-    setIsMinimapCollapsed: (collapsed) => set({ isMinimapCollapsed: collapsed }),
-    isSnappingEnabled: true,
-    toggleSnapping: () => set((state) => ({ isSnappingEnabled: !state.isSnappingEnabled })),
-}));
+export const useCanvasStore = create<CanvasState>()(
+    persist(
+        (set) => ({
+            scale: 0.65,
+            position: { x: 0, y: 0 },
+            setScale: (scale) => set({ scale }),
+            setPosition: (x, y) => set({ position: { x, y } }),
+            restoreView: (scale, position) => set({ scale, position, isViewRestored: true }),
+            zoomIn: () => set((state) => ({ scale: Math.min(state.scale * 1.1, 1.3) })),
+            zoomOut: () => set((state) => ({ scale: Math.max(state.scale * 0.9, 0.1) })),
+            zoomAt: (newScale: number, point: { x: number, y: number }) => set((state) => {
+                const safeScale = Math.min(Math.max(newScale, 0.1), 1.3);
+                const scaleChange = safeScale / state.scale;
+                const newX = point.x - (point.x - state.position.x) * scaleChange;
+                const newY = point.y - (point.y - state.position.y) * scaleChange;
+                return { scale: safeScale, position: { x: newX, y: newY } };
+            }),
+            currentTool: 'mouse',
+            setTool: (tool: 'mouse' | 'hand' | 'area') => set({ currentTool: tool }),
+            openFolderId: null,
+            setOpenFolderId: (id) => set({ openFolderId: id }),
+            isMinimapCollapsed: false,
+            setIsMinimapCollapsed: (collapsed) => set({ isMinimapCollapsed: collapsed }),
+            isSnappingEnabled: true,
+            toggleSnapping: () => set((state) => ({ isSnappingEnabled: !state.isSnappingEnabled })),
+            isViewRestored: false,
+            setViewRestored: (restored) => set({ isViewRestored: restored }),
+        }),
+        {
+            name: 'brainia-canvas-storage',
+            partialize: (state) => ({
+                scale: state.scale,
+                position: state.position,
+                isMinimapCollapsed: state.isMinimapCollapsed,
+                isSnappingEnabled: state.isSnappingEnabled
+            }),
+        }
+    )
+);

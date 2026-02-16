@@ -12,6 +12,7 @@ import {
 } from "@blocknote/react";
 import { useEffect, useState, useMemo } from "react";
 import { Undo, Redo } from "lucide-react";
+import { toast } from "sonner";
 
 interface BlockEditorProps {
     initialContent?: string; // JSON string or plain text
@@ -21,6 +22,16 @@ interface BlockEditorProps {
 
 // Function to handle file uploads (Images)
 const uploadFile = async (file: File) => {
+    // Limit to 3MB
+    const MAX_SIZE = 3 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+        toast.error("File too large", {
+            description: "Maximum size allowed is 3MB.",
+            duration: 4000,
+        });
+        return "";
+    }
+
     // For now, we use a simple base64 conversion. 
     // In production, you'd upload this to Supabase Storage or S3.
     return new Promise<string>((resolve) => {
@@ -137,6 +148,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                     theme={customBlockNoteTheme as any}
                     editable={editable}
                     slashMenu={false}
+                    className="brainia-editor"
                 >
                     <SuggestionMenuController
                         triggerCharacter={"/"}
@@ -148,6 +160,16 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                         }
                     />
                 </BlockNoteView>
+                <style jsx global>{`
+                    .brainia-editor .bn-editor [data-content-type] {
+                        unicode-bidi: plaintext;
+                        text-align: start;
+                    }
+                    /* Ensure placeholders and text in blocks follow RTL when needed */
+                    .brainia-editor .bn-editor * {
+                        direction: inherit;
+                    }
+                `}</style>
             </div>
 
             {editable && (

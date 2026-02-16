@@ -212,8 +212,6 @@ export default function FloatingBar() {
             <button
                 className={`${styles.actionBtn} ${styles.delete} ${isDeleting ? styles.confirmDelete : ''}`}
                 onClick={handleDelete}
-                data-tooltip={isDeleting ? "Confirm Delete" : "Delete Selection"}
-                data-tooltip-pos="top"
                 onMouseLeave={() => setIsDeleting(false)}
             >
                 {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={18} />}

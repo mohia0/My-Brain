@@ -217,8 +217,6 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                         className={clsx(styles.actionBtn, styles.removeBtn, isDeleting && styles.confirmDelete)}
                         onClick={handleRemove}
                         onMouseLeave={() => setIsDeleting(false)}
-                        data-tooltip={isDeleting ? "Confirm Delete" : "Remove"}
-                        data-tooltip-pos="left"
                     >
                         {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={14} />}
                     </button>

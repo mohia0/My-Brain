@@ -129,6 +129,17 @@ export const useVaultStore = create<VaultState>()(
                         }
                     });
                     if (!error) {
+                        try {
+                            // Un-vault all items and folders for this user
+                            await supabase.from('items').update({ is_vaulted: false }).eq('user_id', user.id);
+                            await supabase.from('folders').update({ is_vaulted: false }).eq('user_id', user.id);
+
+                            // Refresh logic to reflect changes locally immediately
+                            await useItemsStore.getState().fetchData();
+                        } catch (err) {
+                            console.error("Failed to reset vault status on items", err);
+                        }
+
                         set({ hasPassword: false, isVaultLocked: false, unlockedIds: [] });
                         return true;
                     }
@@ -304,6 +315,22 @@ export default function VaultAuthModal({ onClose, onSuccess }: { onClose: () => 
                 return;
             }
             await setPassword(input);
+
+            // If setup was triggered by a specific item/folder, lock it now
+            if (modalTargetId) {
+                // Determine if it's a folder or item based on store or assumption?
+                // toggleVaultItem works for items. toggleVaultFolder for folders.
+                // We don't know the type here easily.
+                // However, the ID is unique.
+                const state = useItemsStore.getState();
+                const isFolder = state.folders.some(f => f.id === modalTargetId);
+                if (isFolder) {
+                    await state.toggleVaultFolder(modalTargetId);
+                } else {
+                    await state.toggleVaultItem(modalTargetId);
+                }
+            }
+
             toast.success("Vault password set!");
             onSuccess?.();
             onClose();

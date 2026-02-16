@@ -129,13 +129,15 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const handleVaultToggle = async (e: React.MouseEvent) => {
         e.stopPropagation();
 
+        // If no password is set, open modal to set it up (Targeting this item)
         if (hasPassword === false) {
-            toast.error("Please set up your Vault password in Settings first.");
+            setModalOpen(true, localItem.id);
             return;
         }
 
         if (hasPassword !== true && !isVaulted) {
-            setModalOpen(true);
+            // Checking state or other weird state
+            setModalOpen(true, localItem.id);
             return;
         }
 
@@ -149,6 +151,12 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
     const handleLockItem = (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        if (hasPassword === false) {
+            setModalOpen(true, localItem.id);
+            return;
+        }
+
         if (!isVaultLocked) {
             lock(); // Re-lock the vault globally if it's currently open
         } else {

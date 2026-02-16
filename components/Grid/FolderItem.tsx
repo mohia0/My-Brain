@@ -67,8 +67,14 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
     const handleVaultToggle = async (e: React.MouseEvent) => {
         e.stopPropagation();
 
+        // If no password is set, open modal (Targeting this folder)
+        if (hasPassword === false) {
+            setModalOpen(true, folder.id);
+            return;
+        }
+
         if (hasPassword !== true && !isVaulted) {
-            setModalOpen(true);
+            setModalOpen(true, folder.id);
             return;
         }
 
@@ -81,6 +87,12 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
 
     const handleLockFolder = (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        if (hasPassword === false) {
+            setModalOpen(true, folder.id);
+            return;
+        }
+
         if (!isVaultLocked) {
             lock();
         } else {

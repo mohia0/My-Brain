@@ -15,7 +15,7 @@ interface MobileCardProps {
 
 export default function MobileCard({ item, onClick }: MobileCardProps) {
     const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection, vaultedItemsRevealed, toggleVaultItem, toggleVaultFolder } = useItemsStore();
-    const { isVaultLocked, unlockedIds, setModalOpen, lockItem } = useVaultStore();
+    const { isVaultLocked, unlockedIds, setModalOpen, lockItem, hasPassword } = useVaultStore();
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRemoving, setIsRemoving] = useState(false);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -340,6 +340,12 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                             // If it's vaulted but revealed, clicking lock should re-lock it (hide it)
                             lockItem(item.id);
                         } else {
+                            // First check if a master key exists
+                            if (hasPassword === false) {
+                                setModalOpen(true, item.id);
+                                return;
+                            }
+
                             // Otherwise toggle its vaulted status (Add to vault)
                             if (isFolder) toggleVaultFolder(item.id);
                             else toggleVaultItem(item.id);

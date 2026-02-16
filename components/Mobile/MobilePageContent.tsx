@@ -284,7 +284,21 @@ export default function MobilePageContent({ session }: { session: any }) {
             processedIntentRef.current = { hash: intentHash, time: Date.now() };
 
             // --- INTEGRITY CHECK (AVOID BROKEN CARDS) ---
-            const processedFiles = data.files || [];
+            const processedFiles: any[] = [];
+            const rawFiles = data.files || [];
+
+            // Safe Raw File Processing
+            if (Array.isArray(rawFiles)) {
+                rawFiles.forEach((f: any) => {
+                    if (f && (f.uri || f.path || f.webPath)) {
+                        processedFiles.push({
+                            uri: f.uri || f.path || f.webPath,
+                            mimeType: f.mimeType || f.type || 'application/octet-stream'
+                        });
+                    }
+                });
+            }
+
             const hasEnoughText = rawText.length > 5;
             if (!bestUrl && processedFiles.length === 0 && !hasEnoughText) {
                 setShareState('idle');
@@ -309,7 +323,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 description = description.replace(/^[:\-–—\s\u2013\u2014]+|[:\-–—\s\u2013\u2014]+$/g, "");
             }
 
-            // --- FILE HANDLING ---
+            // --- FALLBACK FILE HANDLING (If Plugin didn't autoparse) ---
             if (processedFiles.length === 0) {
                 const streamUri = extras['android.intent.extra.STREAM'] || data.uri || data.path;
                 if (streamUri) {
@@ -349,8 +363,10 @@ export default function MobilePageContent({ session }: { session: any }) {
             // Handle first file as primary if present
             if (processedFiles.length > 0) {
                 const file = processedFiles[0];
-                const isImg = file.mimeType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.uri);
-                const isVid = file.mimeType?.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(file.uri);
+                const mime = file.mimeType || '';
+                const isImg = mime.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.uri);
+                const isVid = mime.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(file.uri);
+
                 if (isImg || isVid) {
                     const uploaded = await uploadMobileFile(file.uri, itemId, userId);
                     if (uploaded) {
@@ -366,8 +382,6 @@ export default function MobilePageContent({ session }: { session: any }) {
                 created_at: new Date().toISOString()
             });
 
-            // --- ENRICHMENT ---
-            // --- ENRICHMENT ---
             // --- ENRICHMENT ---
             if (finalUrl) {
                 // ENRICHMENT: Metadata & Screenshot

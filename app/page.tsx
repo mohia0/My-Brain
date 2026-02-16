@@ -55,6 +55,24 @@ export default function Home() {
   const runInit = async () => {
     const MIN_LOADING_TIME = 500;
 
+    // Check for OAuth redirect (access_token or recovery type)
+    if (typeof window !== 'undefined' &&
+      (window.location.hash.includes('access_token') ||
+        window.location.hash.includes('type=recovery') ||
+        window.location.search.includes('code='))) {
+      console.log("OAuth/Auth redirect detected, waiting for auth listener...");
+      // We do not stop loading here. We let onAuthStateChange handle it.
+      // But we set a failsafe timeout just in case
+      setTimeout(() => {
+        if (isInitializingRef.current) {
+          console.log("Auth listener timeout, forcing load completion.");
+          setInitializing(false);
+          setShowLoading(false);
+        }
+      }, 8000); // 8 seconds timeout for auth processing
+      return;
+    }
+
     setInitializing(true);
     isInitializingRef.current = true;
     setShowLoading(true);
@@ -89,6 +107,7 @@ export default function Home() {
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       console.error("Initialization error:", err);
+      // In error case, we should probably allow access (maybe offline?) or show login
       setInitializing(false);
       setShowLoading(false);
       setIsFading(false);
@@ -100,6 +119,22 @@ export default function Home() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
+
+      // If we are stuck in loading state (e.g. from redirect wait), finish loading now
+      if (session && (showLoadingRef.current || isInitializingRef.current)) {
+        // Trigger the standard fade out logic
+        if (!isFading) { // Only if not already fading
+          setIsFading(true);
+          setTimeout(() => {
+            setShowLoading(false);
+            showLoadingRef.current = false;
+            setInitializing(false);
+            isInitializingRef.current = false;
+            setIsFading(false);
+          }, 800);
+        }
+      }
+
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData();
         if (unsubscribeRef.current) unsubscribeRef.current();

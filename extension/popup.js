@@ -130,19 +130,35 @@ async function init() {
     console.log("[Extension] Initializing...");
     updateTabInfo(); // Initial fetch
 
-    // Check Session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        state.user = session.user;
-        statusDot.classList.add('connected');
-        statusDot.title = "Connected";
-        if (userEmailDisplay && state.user) {
-            const email = state.user.email || "Unknown User";
-            userEmailDisplay.textContent = `Signed in as: ${email}`;
+    try {
+        // Add a timeout to session check to prevent hanging
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Session check timed out")), 5000)
+        );
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+
+        if (session) {
+            state.user = session.user;
+            statusDot.classList.add('connected');
+            statusDot.title = "Connected";
+            if (userEmailDisplay && state.user) {
+                const email = state.user.email || "Unknown User";
+                userEmailDisplay.textContent = `Signed in as: ${email}`;
+            }
+            navigate('main');
+        } else {
+            navigate('auth');
         }
-        navigate('main');
-    } else {
+    } catch (err) {
+        console.error("[Extension] Init failed:", err);
+        // Fallback to auth screen so user isn't stuck on blank
         navigate('auth');
+        if (authError) {
+            authError.textContent = "Initialization issue: " + err.message;
+            authError.classList.remove('hidden');
+        }
     }
 }
 

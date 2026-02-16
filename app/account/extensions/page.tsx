@@ -33,7 +33,7 @@ export default function ExtensionsPage() {
 
     const handleInstall = () => {
         setLoading(true);
-        const storeUrl = 'https://chrome.google.com/webstore/detail/your-extension-id';
+        const storeUrl = 'https://chromewebstore.google.com/detail/brainia/olebklhhlinlafohnefbacongnkpglea';
         window.open(storeUrl, '_blank');
         setTimeout(() => setLoading(false), 2000);
     };

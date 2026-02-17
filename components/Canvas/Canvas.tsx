@@ -145,27 +145,18 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                 let newX = currentPos.x - e.deltaX;
                 let newY = currentPos.y - e.deltaY;
 
-                // Strict limits logic
+                // Relaxed limits logic (Centers corners)
                 const viewportW = window.innerWidth;
                 const viewportH = window.innerHeight;
 
-                const minX = viewportW - (halfWidth * currentScale);
-                const maxX = halfWidth * currentScale;
+                const minX = (viewportW / 2) - (halfWidth * currentScale);
+                const maxX = (viewportW / 2) + (halfWidth * currentScale);
 
-                const minY = viewportH - (halfHeight * currentScale);
-                const maxY = halfHeight * currentScale;
+                const minY = (viewportH / 2) - (halfHeight * currentScale);
+                const maxY = (viewportH / 2) + (halfHeight * currentScale);
 
-                if (minX <= maxX) {
-                    newX = Math.max(minX, Math.min(maxX, newX));
-                } else {
-                    newX = viewportW / 2;
-                }
-
-                if (minY <= maxY) {
-                    newY = Math.max(minY, Math.min(maxY, newY));
-                } else {
-                    newY = viewportH / 2;
-                }
+                newX = Math.max(minX, Math.min(maxX, newX));
+                newY = Math.max(minY, Math.min(maxY, newY));
 
                 useCanvasStore.getState().setPosition(newX, newY);
             }
@@ -259,29 +250,21 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
             let newX = position.x + dx;
             let newY = position.y + dy;
 
-            // --- Strict Limits ---
+            // --- Relaxed Limits ---
             const viewportW = window.innerWidth;
             const viewportH = window.innerHeight;
 
-            const minX = viewportW - (halfWidth * scale);
-            const maxX = halfWidth * scale;
+            const minX = (viewportW / 2) - (halfWidth * scale);
+            const maxX = (viewportW / 2) + (halfWidth * scale);
 
-            const minY = viewportH - (halfHeight * scale);
-            const maxY = halfHeight * scale;
+            const minY = (viewportH / 2) - (halfHeight * scale);
+            const maxY = (viewportH / 2) + (halfHeight * scale);
 
-            if (minX > maxX) {
-                newX = viewportW / 2;
-            } else {
-                if (newX < minX) newX = minX;
-                if (newX > maxX) newX = maxX;
-            }
+            if (newX < minX) newX = minX;
+            if (newX > maxX) newX = maxX;
 
-            if (minY > maxY) {
-                newY = viewportH / 2;
-            } else {
-                if (newY < minY) newY = minY;
-                if (newY > maxY) newY = maxY;
-            }
+            if (newY < minY) newY = minY;
+            if (newY > maxY) newY = maxY;
 
             setPosition(newX, newY);
             lastMousePos.current = { x: e.clientX, y: e.clientY };

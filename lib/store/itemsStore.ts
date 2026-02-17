@@ -167,6 +167,7 @@ interface ItemsState {
     enterRoom: (id: string, title: string) => void;
     exitRoom: () => void;
     updateItemTags: (id: string, tags: Tag[]) => void;
+    hasLoadedOnce: boolean; // Add this
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -184,6 +185,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     vaultedItemsRevealed: [],
     roomHistory: [],
     currentRoomTitle: 'Canvas',
+    hasLoadedOnce: false, // Initialize as false
 
     enterRoom: (id, title) => {
         const state = get();
@@ -311,7 +313,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             if (err.name === 'AbortError') return;
             console.error('[ItemsStore] fetchData failed:', err);
         } finally {
-            set({ loading: false });
+            set({ loading: false, hasLoadedOnce: true }); // Set to true after first fetch
         }
     },
 

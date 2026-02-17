@@ -31,7 +31,7 @@ import { useCanvasStore } from "@/lib/store/canvasStore";
 import VaultAuthModal, { useVaultStore } from "@/components/Vault/VaultAuthModal";
 
 export default function Home() {
-  const { items, folders, fetchData, subscribeToChanges, clearSelection, currentRoomId } = useItemsStore();
+  const { items, folders, fetchData, subscribeToChanges, clearSelection, currentRoomId, hasLoadedOnce } = useItemsStore();
   const { openFolderId, setOpenFolderId } = useCanvasStore();
   const { isModalOpen, setModalOpen, checkVaultStatus } = useVaultStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -48,16 +48,17 @@ export default function Home() {
   };
 
   const isShareMode = checkShareIntentSync();
+  const shouldSkipLoad = isShareMode || hasLoadedOnce;
 
   const [session, setSession] = useState<any>(null);
-  const [initializing, setInitializing] = useState(!isShareMode);
-  const [showLoading, setShowLoading] = useState(!isShareMode);
+  const [initializing, setInitializing] = useState(!shouldSkipLoad);
+  const [showLoading, setShowLoading] = useState(!shouldSkipLoad);
   const [isFading, setIsFading] = useState(false);
   const [shouldShowAuth, setShouldShowAuth] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const isInitializingRef = useRef(!isShareMode);
-  const showLoadingRef = useRef(!isShareMode);
+  const isInitializingRef = useRef(!shouldSkipLoad);
+  const showLoadingRef = useRef(!shouldSkipLoad);
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -102,10 +103,12 @@ export default function Home() {
 
     if (checkRedirect()) return;
 
-    setInitializing(true);
-    isInitializingRef.current = true;
-    setShowLoading(true);
-    showLoadingRef.current = true;
+    if (!shouldSkipLoad) {
+      setInitializing(true);
+      isInitializingRef.current = true;
+      setShowLoading(true);
+      showLoadingRef.current = true;
+    }
     setIsFading(false);
 
     const checkMobileWidth = () => {
@@ -120,14 +123,14 @@ export default function Home() {
     const isCurrentlyMobile = checkMobileWidth();
 
     try {
-      if (isShareMode) {
+      if (shouldSkipLoad) {
         setShowLoading(false);
         showLoadingRef.current = false;
         setInitializing(false);
         isInitializingRef.current = false;
       }
 
-      const timerPromise = new Promise(resolve => setTimeout(resolve, isShareMode ? 0 : MIN_LOADING_TIME));
+      const timerPromise = new Promise(resolve => setTimeout(resolve, shouldSkipLoad ? 0 : MIN_LOADING_TIME));
       const { data, error } = await supabase.auth.getSession();
       const initialSession = data?.session;
 
@@ -166,7 +169,7 @@ export default function Home() {
       // The loading state in itemsStore will be false now due to await dataPromise
 
       // Start fade sequence
-      const fadeTime = isShareMode ? 0 : 800;
+      const fadeTime = shouldSkipLoad ? 0 : 800;
       if (fadeTime > 0) setIsFading(true);
 
       setTimeout(() => {

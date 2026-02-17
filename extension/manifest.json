@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Brainia",
-    "version": "1.5",
+    "version": "1.7",
     "description": "Capture to your Second Brain",
     "permissions": [
         "activeTab",
@@ -16,13 +16,11 @@
     },
     "host_permissions": [
         "https://mopfyefzzdtohfxczdke.supabase.co/*",
-        "https://www.brainia.space/*",
         "https://app.brainia.space/*"
     ],
     "content_scripts": [
         {
             "matches": [
-                "https://www.brainia.space/*",
                 "https://app.brainia.space/*"
             ],
             "js": [

@@ -1,8 +1,10 @@
 "use client";
+import React from 'react';
 
 import styles from './Downloads.module.css';
-import { Chrome, Apple, Smartphone, Layout } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Chrome, Apple, Smartphone, Layout, QrCode } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function Downloads() {
     const platforms = [
@@ -13,7 +15,12 @@ export default function Downloads() {
             link: "https://chromewebstore.google.com/detail/brainia/olebklhhlinlafohnefbacongnkpglea"
         },
         { name: "Desktop App", icon: <Layout size={20} />, status: "Coming Soon" },
-        { name: "Mobile App", icon: <Smartphone size={20} />, status: "Beta" }
+        {
+            name: "Mobile App (Android)",
+            icon: <Smartphone size={20} />,
+            status: "Download APK",
+            link: "https://github.com/mohia0/My-Brain/raw/main/Brainia_v1.7.apk"
+        }
     ];
 
     return (
@@ -34,31 +41,84 @@ export default function Downloads() {
 
                     <div className={styles.platforms}>
                         {platforms.map((p, i) => {
-                            const CardContent = (
-                                <motion.div
-                                    whileHover={{ y: -5, background: "rgba(255,255,255,0.08)" }}
-                                    className={styles.platformCard}
-                                    style={{ cursor: p.link ? 'pointer' : 'default' }}
-                                >
-                                    <div className={styles.icon}>{p.icon}</div>
-                                    <div className={styles.platformInfo}>
-                                        <span className={styles.name}>{p.name}</span>
-                                        <span className={styles.status}>{p.status}</span>
-                                    </div>
-                                </motion.div>
-                            );
-
-                            return p.link ? (
-                                <a key={i} href={p.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                                    {CardContent}
-                                </a>
-                            ) : (
-                                <div key={i}>{CardContent}</div>
-                            );
+                            return <PlatformCard key={i} platform={p} />;
                         })}
                     </div>
                 </motion.div>
             </div>
         </section>
+    );
+}
+
+function PlatformCard({ platform }: { platform: any }) {
+    const [isHovered, setIsHovered] = React.useState(false);
+
+    const CardContent = (
+        <motion.div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            whileHover={{ y: -5, background: "rgba(255,255,255,0.08)" }}
+            className={styles.platformCard}
+            style={{
+                cursor: platform.link ? 'pointer' : 'default',
+                position: 'relative'
+            }}
+        >
+            <div className={styles.icon}>{platform.icon}</div>
+            <div className={styles.platformInfo}>
+                <span className={styles.name}>{platform.name}</span>
+                <span className={styles.status}>{platform.status}</span>
+            </div>
+
+            <AnimatePresence>
+                {isHovered && platform.name.includes('Mobile') && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                        style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            marginBottom: '10px',
+                            background: 'white',
+                            padding: '10px',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                            zIndex: 100,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '5px'
+                        }}
+                    >
+                        <QRCodeSVG
+                            value={platform.link}
+                            size={120}
+                            level="H"
+                        />
+                        <div style={{ fontSize: '10px', color: '#000', fontWeight: 800, whiteSpace: 'nowrap' }}>SCAN TO DOWNLOAD</div>
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '-6px',
+                            left: '50%',
+                            transform: 'translateX(-50%) rotate(45deg)',
+                            width: '12px',
+                            height: '12px',
+                            background: 'white'
+                        }} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
+
+    return platform.link ? (
+        <a href={platform.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+            {CardContent}
+        </a>
+    ) : (
+        <div>{CardContent}</div>
     );
 }

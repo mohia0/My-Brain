@@ -85,7 +85,7 @@ const toast = document.getElementById('toast');
 
 // --- DASHBOARD LINK ---
 dashboardBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'https://www.brainia.space' });
+    chrome.tabs.create({ url: 'https://app.brainia.space' });
 });
 
 // --- TAB DETECTION ---
@@ -104,7 +104,7 @@ async function updateTabInfo() {
         console.log("[Extension] No chrome.tabs API found, using mock.");
         state.currentTab = {
             title: "Dev Tab",
-            url: "https://www.brainia.space",
+            url: "https://app.brainia.space",
             favIconUrl: "https://www.google.com/s2/favicons?domain=localhost"
         };
         renderTabInfo();
@@ -269,7 +269,7 @@ togglePasswordBtn.addEventListener('click', () => {
 
 signupLinkBtn.addEventListener('click', () => {
     // Open the app's signup page specifically
-    chrome.tabs.create({ url: 'https://www.brainia.space?signup=true' });
+    chrome.tabs.create({ url: 'https://app.brainia.space?signup=true' });
 });
 
 

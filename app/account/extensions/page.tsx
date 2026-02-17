@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Check, Chrome, Download, Smartphone } from 'lucide-react';
+import { Check, Chrome, Download, Smartphone, QrCode } from 'lucide-react';
 import Link from 'next/link';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function ExtensionsPage() {
     const [installed, setInstalled] = useState(false);
@@ -113,14 +114,34 @@ export default function ExtensionsPage() {
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                    <Link href="/android/brainia-latest.apk" target="_blank" style={{ textDecoration: 'none' }}>
-                        <Button style={{ minWidth: '140px', display: 'flex', gap: '8px' }}>
-                            <Download size={16} /> Download APK
-                        </Button>
-                    </Link>
-                    <div style={{ fontSize: '12px', color: '#888' }}>
-                        Version 0.9.5 • 12MB
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={{
+                        background: 'white',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        <QRCodeSVG
+                            value="https://github.com/mohia0/My-Brain/raw/main/Brainia_v1.7.apk"
+                            size={100}
+                            level="H"
+                            includeMargin={false}
+                        />
+                        <div style={{ fontSize: '10px', color: '#666', fontWeight: 600 }}>SCAN TO DOWNLOAD</div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                        <Link href="https://github.com/mohia0/My-Brain/raw/main/Brainia_v1.7.apk" target="_blank" style={{ textDecoration: 'none' }}>
+                            <Button style={{ minWidth: '140px', display: 'flex', gap: '8px' }}>
+                                <Download size={16} /> Download APK
+                            </Button>
+                        </Link>
+                        <div style={{ fontSize: '12px', color: '#888' }}>
+                            Version 1.7 • 10.2MB
+                        </div>
                     </div>
                 </div>
             </Card>

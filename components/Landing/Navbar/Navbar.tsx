@@ -26,13 +26,13 @@ export default function Navbar() {
         window.addEventListener('scroll', handleScroll, { passive: true });
 
         // Check session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session } }: any) => {
             setSession(session);
         });
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
             setSession(session);
         });
 

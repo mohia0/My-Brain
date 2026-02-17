@@ -1,0 +1,88 @@
+﻿
+> brainia-app@1.7.0 build
+> next build
+
+--- NEXT CONFIG ---
+IS_CAPACITOR_BUILD (env): "undefined"
+VERCEL (env): undefined
+isCapacitorBuild (final bool): false
+Output Mode: default (api supported)
+-------------------
+node.exe : ΓÜá Warning: Next.js inferred 
+your workspace root, but it may not be 
+correct.
+At C:\Program Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified 
+   : (ΓÜá Warning: Ne...not be correct.:S  
+  tring) [], RemoteException
+    + FullyQualifiedErrorId : NativeComman 
+   dError
+ 
+ We detected multiple lockfiles and 
+selected the directory of C:\Users\Mohi 
+Hassan\package-lock.json as the root 
+directory.
+ To silence this warning, set 
+`turbopack.root` in your Next.js config, 
+or consider removing one of the lockfiles 
+if it's not needed.
+   See https://nextjs.org/docs/app/api-refe
+rence/config/next-config-js/turbopack#root-
+directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Mohi Hassan\Desktop\My 
+Brain\package-lock.json
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env.production
+
+ΓÜá The "middleware" file convention is 
+deprecated. Please use "proxy" instead. 
+Learn more: https://nextjs.org/docs/message
+s/middleware-to-proxy
+  Creating an optimized production build ...
+--- NEXT CONFIG ---
+IS_CAPACITOR_BUILD (env): "undefined"
+VERCEL (env): undefined
+isCapacitorBuild (final bool): false
+Output Mode: default (api supported)
+-------------------
+Γ£ô Compiled successfully in 46s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/19) ...
+  Generating static pages using 11 workers (4/19) 
+  Generating static pages using 11 workers (9/19) 
+  Generating static pages using 11 workers (14/19) 
+Γ£ô Generating static pages using 11 workers (19/19) in 906.5ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /account
+Γö£ Γùï /account/extensions
+Γö£ Γùï /account/profile
+Γö£ Γùï /account/security
+Γö£ ╞Æ /api/metadata
+Γö£ ╞Æ /api/report-bug
+Γö£ ╞Æ /api/screenshot
+Γö£ Γùï /auth/reset-password
+Γö£ Γùï /home
+Γö£ Γùï /icon.png
+Γö£ Γùï /mobile
+Γö£ Γùï /privacy
+Γö£ Γùï /robots.txt
+Γö£ Γùï /sitemap.xml
+Γö£ Γùï /terms
+Γöö Γùï /waitlist
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

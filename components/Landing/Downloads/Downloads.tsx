@@ -14,12 +14,16 @@ export default function Downloads() {
             status: "Available",
             link: "https://chromewebstore.google.com/detail/brainia/olebklhhlinlafohnefbacongnkpglea"
         },
-        { name: "Desktop App", icon: <Layout size={20} />, status: "Coming Soon" },
         {
             name: "Mobile App (Android)",
             icon: <Smartphone size={20} />,
             status: "Download APK",
             link: "https://github.com/mohia0/My-Brain/raw/main/Brainia_v1.7.apk"
+        },
+        {
+            name: "Mobile App (iOS)",
+            icon: <Apple size={20} />,
+            status: "Coming Soon"
         }
     ];
 

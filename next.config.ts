@@ -19,10 +19,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: isCapacitorBuild,
   },
-  // @ts-ignore
-  eslint: {
-    ignoreDuringBuilds: isCapacitorBuild,
-  },
+
   async headers() {
     return [
       {

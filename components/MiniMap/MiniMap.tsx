@@ -271,7 +271,7 @@ export default function MiniMap() {
                 />
             </div>
 
-            <div className={styles.versionText}>VER 1.7</div>
+            <div className={styles.versionText}>Beta VER 1.7</div>
         </div>
     );
 }

@@ -45,7 +45,7 @@ export default function LoadingScreen({ isFading }: { isFading: boolean }) {
                     <div className={styles.loaderProgress}></div>
                 </div>
             </div>
-            <div className={styles.versionText}>VER 1.7</div>
+            <div className={styles.versionText}>Beta VER 1.7</div>
         </div>
     );
 }

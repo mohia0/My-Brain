@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Check, Chrome, Download, Smartphone, QrCode } from 'lucide-react';
+import { Check, Chrome, Download, Smartphone, QrCode, Apple } from 'lucide-react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -112,6 +112,18 @@ export default function ExtensionsPage() {
                         Capture ideas on the go. Share links, images, and text from any app directly to your Brainia inbox.
                         Includes offline support and quick capture widgets.
                     </p>
+                    <div style={{
+                        marginTop: '12px',
+                        fontSize: '13px',
+                        color: '#3DDC84',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}>
+                        <div style={{ width: '6px', height: '6px', background: '#3DDC84', borderRadius: '50%' }} />
+                        Publishing soon to Google Play Store
+                    </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -143,6 +155,35 @@ export default function ExtensionsPage() {
                             Version 1.7 • 10.2MB
                         </div>
                     </div>
+                </div>
+            </Card>
+
+            <Card style={{ display: 'flex', alignItems: 'center', gap: '24px', position: 'relative', overflow: 'hidden', opacity: 0.8 }}>
+                <div style={{
+                    width: '80px', height: '80px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #1C1C1E, #3A3A3C)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '32px', color: 'white'
+                }}>
+                    <Apple size={40} />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                        Brainia for iOS
+                        <span style={{ fontSize: '12px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>COMING SOON</span>
+                    </h3>
+                    <p style={{ color: 'var(--text-dim)', fontSize: '14px', marginTop: '4px', maxWidth: '500px' }}>
+                        The complete Brainia experience for iPhone and iPad.
+                        Seamlessly sync your thoughts across all your Apple devices.
+                    </p>
+                </div>
+
+                <div style={{ padding: '20px' }}>
+                    <Button disabled variant="secondary" style={{ minWidth: '160px' }}>
+                        App Store Soon
+                    </Button>
                 </div>
             </Card>
 

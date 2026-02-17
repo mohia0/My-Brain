@@ -6,9 +6,11 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import styles from './Navbar.module.css';
 import Orb from '@/components/Orb/Orb';
 import clsx from 'clsx';
+import { supabase } from '@/lib/supabase';
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
+    const [session, setSession] = useState<any>(null);
     const { scrollY } = useScroll();
 
     // Smooth scroll-based transforms
@@ -22,7 +24,22 @@ export default function Navbar() {
             setScrolled(window.scrollY > 50);
         };
         window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
+
+        // Check session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+        });
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            subscription.unsubscribe();
+        };
     }, []);
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -98,31 +115,49 @@ export default function Navbar() {
 
                     {/* Actions */}
                     <div className={styles.actions}>
-                        <motion.button
-                            disabled
-                            className={styles.cta}
-                            title="Easy there, tiger! 🐅"
-                            whileHover={{
-                                scale: 1.05,
-                                boxShadow: "0 0 30px rgba(110, 86, 207, 0.6)"
-                            }}
-                            whileTap={{ scale: 0.95 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                        >
-                            <motion.span
-                                animate={{
-                                    fontSize: scrolled ? "0.75rem" : "0.875rem"
+                        {session ? (
+                            <Link href="/" className={styles.cta}>
+                                <motion.span
+                                    animate={{
+                                        fontSize: scrolled ? "0.75rem" : "0.875rem"
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    Launch App
+                                </motion.span>
+                                <motion.div
+                                    className={styles.ctaGlow}
+                                    initial={{ opacity: 0 }}
+                                    whileHover={{ opacity: 1 }}
+                                />
+                            </Link>
+                        ) : (
+                            <motion.button
+                                disabled
+                                className={styles.cta}
+                                title="Easy there, tiger! 🐅"
+                                whileHover={{
+                                    scale: 1.05,
+                                    boxShadow: "0 0 30px rgba(110, 86, 207, 0.6)"
                                 }}
-                                transition={{ duration: 0.3 }}
+                                whileTap={{ scale: 0.95 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
                             >
-                                Launch App
-                            </motion.span>
-                            <motion.div
-                                className={styles.ctaGlow}
-                                initial={{ opacity: 0 }}
-                                whileHover={{ opacity: 1 }}
-                            />
-                        </motion.button>
+                                <motion.span
+                                    animate={{
+                                        fontSize: scrolled ? "0.75rem" : "0.875rem"
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    Get Access
+                                </motion.span>
+                                <motion.div
+                                    className={styles.ctaGlow}
+                                    initial={{ opacity: 0 }}
+                                    whileHover={{ opacity: 1 }}
+                                />
+                            </motion.button>
+                        )}
                     </div>
                 </div>
             </motion.nav>

@@ -2,17 +2,34 @@
 
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import styles from './Hero.module.css';
 import Orb from '@/components/Orb/Orb';
 import TextType from '@/components/ui/TextType';
+import { supabase } from '@/lib/supabase';
 
 export default function Hero() {
     const containerRef = useRef(null);
+    const [session, setSession] = useState<any>(null);
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end start"]
     });
+
+    useEffect(() => {
+        // Check session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+        });
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     const orbY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
     const orbScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
@@ -83,13 +100,19 @@ export default function Hero() {
                     transition={{ duration: 0.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     className={styles.actions}
                 >
-                    <button
-                        disabled
-                        className={styles.primary}
-                        title="Shhh... Coming Soon! 🤫"
-                    >
-                        Open Your Brainia
-                    </button>
+                    {session ? (
+                        <Link href="/" className={styles.primary}>
+                            Open Your Brainia
+                        </Link>
+                    ) : (
+                        <button
+                            disabled
+                            className={styles.primary}
+                            title="Shhh... Coming Soon! 🤫"
+                        >
+                            Open Your Brainia
+                        </button>
+                    )}
                     <a
                         href="#workflow"
                         className={styles.secondary}

@@ -121,6 +121,8 @@
 
 .actions {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 .ctaWrapper {
@@ -144,6 +146,15 @@
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     border: none;
+}
+
+.cta:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(110, 86, 207, 0.6);
+}
+
+.cta:active {
+    transform: scale(0.95);
 }
 
 .cta:disabled {

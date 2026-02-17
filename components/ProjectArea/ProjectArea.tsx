@@ -65,7 +65,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         width: item.metadata?.width || 300,
         height: item.metadata?.height || 200,
         transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined,
-        zIndex: isDragging ? 50 : 2, // Sufficiently high to catch events, but hopefully below ItemCards (usually 100+)
+        zIndex: (isDragging || showDeleteConfirm || showColorPicker) ? 500 : 2, // Boost z-index when interacting with menus so they appear above contents
         backgroundColor: (item.metadata?.color && item.metadata.color !== 'default')
             ? `${item.metadata.color}0D`
             : 'var(--project-area-bg, rgba(128, 128, 128, 0.05))',
@@ -113,7 +113,6 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         if (option === 'area') {
             removeItem(item.id);
         } else {
-            // Delete with contents
             const areaLeft = item.position_x;
             const areaRight = item.position_x + (item.metadata?.width || 300);
             const areaTop = item.position_y;
@@ -160,7 +159,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
             <div className={styles.labelContainer}>
                 <input
                     className={styles.labelInput}
-                    value={item.metadata?.title || 'Project Area'}
+                    value={item.metadata?.title || 'Mind Room'}
                     onChange={handleLabelChange}
                     onKeyDown={e => e.stopPropagation()}
                     onPointerDown={e => e.stopPropagation()}
@@ -207,7 +206,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                         <button
                             className={clsx(styles.controlBtn, styles.deleteBtn)}
                             onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(!showDeleteConfirm); }}
-                            data-tooltip="Delete Area"
+                            data-tooltip="Delete Mind Room"
                             data-tooltip-pos="bottom-left"
                             style={{ color: showDeleteConfirm ? 'var(--danger)' : undefined }}
                         >
@@ -215,11 +214,15 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                         </button>
 
                         {showDeleteConfirm && (
-                            <div className={styles.deletePopup} onPointerDown={(e) => e.stopPropagation()}>
-                                <div className={styles.deletePopupHeader}>Delete Project Area</div>
+                            <div
+                                className={styles.deletePopup}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseLeave={() => setShowDeleteConfirm(false)}
+                            >
+                                <div className={styles.deletePopupHeader}>Delete Mind Room</div>
                                 <button className={styles.deleteOption} onClick={(e) => handleDeleteOption(e, 'area')}>
                                     <span>Keep Items</span>
-                                    <span style={{ fontSize: '0.7em', opacity: 0.6 }}>(Remove Area Only)</span>
+                                    <span style={{ fontSize: '0.7em', opacity: 0.6 }}>(Remove Mind Room Only)</span>
                                 </button>
                                 <button className={clsx(styles.deleteOption, styles.deleteDestructive)} onClick={(e) => handleDeleteOption(e, 'all')}>
                                     <Trash2 size={12} />

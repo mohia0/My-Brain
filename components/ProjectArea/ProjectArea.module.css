@@ -147,8 +147,10 @@
 
 .deletePopup {
     position: absolute;
-    bottom: 36px;
+    top: 100%;
     right: 0;
+    margin-top: 4px;
+    bottom: auto;
     margin-top: 0;
     margin-bottom: 8px;
     width: 200px;
@@ -160,7 +162,7 @@
     flex-direction: column;
     gap: 4px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    z-index: 100;
+    z-index: 1000;
     backdrop-filter: blur(12px);
 }
 

@@ -129,6 +129,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     };
 
     const [isDeleting, setIsDeleting] = React.useState(false);
+    const [isDeletingItem, setIsDeletingItem] = React.useState<string | null>(null);
 
     const handleDeleteClick = () => {
         if (!isDeleting) {
@@ -368,12 +369,21 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                             <ArrowUpRight size={14} />
                                         </button>
                                         <button
-                                            className={clsx(styles.itemActionBtn, styles.deleteActionBtn)}
-                                            onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                                            data-tooltip="Delete"
+                                            className={clsx(styles.itemActionBtn, styles.deleteActionBtn, isDeletingItem === item.id && styles.confirmDelete)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (isDeletingItem === item.id) {
+                                                    removeItem(item.id);
+                                                    setIsDeletingItem(null);
+                                                } else {
+                                                    setIsDeletingItem(item.id);
+                                                }
+                                            }}
+                                            onMouseLeave={() => setIsDeletingItem(null)}
+                                            data-tooltip={isDeletingItem === item.id ? "Confirm?" : "Delete"}
                                             data-tooltip-pos="bottom"
                                         >
-                                            <Trash2 size={14} />
+                                            {isDeletingItem === item.id ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={14} />}
                                         </button>
                                     </div>
 

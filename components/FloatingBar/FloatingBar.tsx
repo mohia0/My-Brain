@@ -61,7 +61,7 @@ export default function FloatingBar() {
         selectedIds.forEach(id => {
             const isItem = items.some(i => i.id === id);
             if (isItem) {
-                updateItemContent(id, { folder_id: folderId });
+                updateItemContent(id, { folder_id: folderId, status: 'active' });
             } else {
                 useItemsStore.getState().updateFolderContent?.(id, { parent_id: folderId });
             }
@@ -102,7 +102,7 @@ export default function FloatingBar() {
             selectedIds.forEach(id => {
                 const isItem = items.some(i => i.id === id);
                 if (isItem) {
-                    updateItemContent(id, { folder_id: folderId });
+                    updateItemContent(id, { folder_id: folderId, status: 'active' });
                 } else {
                     // It's a folder (nesting support)
                     useItemsStore.getState().updateFolderContent?.(id, { parent_id: folderId });

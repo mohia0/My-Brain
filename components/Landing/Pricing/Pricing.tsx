@@ -16,16 +16,16 @@ export default function Pricing() {
             price: "$0",
             period: "forever",
             desc: "Perfect for personal quick capture.",
-            features: ["65 Cards", "4 Folders", "2 Project Areas", "Infinite Canvas", "Browser Extension"],
+            features: ["65 Cards", "2 Folders", "1 Mind Room", "Infinite Canvas", "Browser Extension"],
             btnText: "Get Started",
             highlight: false
         },
         {
             name: "Pro",
-            price: billingCycle === 'monthly' ? "$12" : "$10",
-            period: "per month",
+            price: billingCycle === 'monthly' ? "$8" : "$80",
+            period: billingCycle === 'monthly' ? "per month" : "per year",
             desc: "For power users building deep knowledge.",
-            features: ["Unlimited Items", "Nested Projects", "Advanced AI Extraction", "Priority Cloud Sync", "Custom Theme Engine"],
+            features: ["Unlimited Cards & Folders", "Unlimited Mind Rooms", "Vault (Secure Locker)", "Priority Cloud Sync", "Custom Theme Engine"],
             btnText: "Start Free Trial",
             highlight: true,
             badge: billingCycle === 'yearly' ? "2 Months Free" : null

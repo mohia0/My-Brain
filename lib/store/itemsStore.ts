@@ -629,7 +629,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 future: []
             }
         });
-        const { error } = await supabase.from('items').insert([newItem]);
+        const { syncStatus: _, item_tags: __, ...dbItem } = newItem as any;
+        const { error } = await supabase.from('items').insert([dbItem]);
 
         if (error) {
             console.error('[Store] duplicateItem failed:', error);
@@ -672,7 +673,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 future: []
             }
         });
-        const { error } = await supabase.from('folders').insert([folderToInsert]);
+        const { syncStatus: __, ...dbFolder } = folderToInsert;
+        const { error } = await supabase.from('folders').insert([dbFolder]);
 
         if (error) {
             console.error('[Store] duplicateFolder failed:', error);

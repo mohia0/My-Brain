@@ -159,7 +159,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
             <div className={styles.labelContainer}>
                 <input
                     className={styles.labelInput}
-                    value={item.metadata?.title || 'Mind Room'}
+                    value={item.metadata?.title || 'Project Area'}
                     onChange={handleLabelChange}
                     onKeyDown={e => e.stopPropagation()}
                     onPointerDown={e => e.stopPropagation()}
@@ -206,7 +206,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                         <button
                             className={clsx(styles.controlBtn, styles.deleteBtn)}
                             onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(!showDeleteConfirm); }}
-                            data-tooltip="Delete Mind Room"
+                            data-tooltip="Delete Project Area"
                             data-tooltip-pos="bottom-left"
                             style={{ color: showDeleteConfirm ? 'var(--danger)' : undefined }}
                         >
@@ -219,10 +219,10 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onMouseLeave={() => setShowDeleteConfirm(false)}
                             >
-                                <div className={styles.deletePopupHeader}>Delete Mind Room</div>
+                                <div className={styles.deletePopupHeader}>Delete Project Area</div>
                                 <button className={styles.deleteOption} onClick={(e) => handleDeleteOption(e, 'area')}>
                                     <span>Keep Items</span>
-                                    <span style={{ fontSize: '0.7em', opacity: 0.6 }}>(Remove Mind Room Only)</span>
+                                    <span style={{ fontSize: '0.7em', opacity: 0.6 }}>(Remove Area Only)</span>
                                 </button>
                                 <button className={clsx(styles.deleteOption, styles.deleteDestructive)} onClick={(e) => handleDeleteOption(e, 'all')}>
                                     <Trash2 size={12} />

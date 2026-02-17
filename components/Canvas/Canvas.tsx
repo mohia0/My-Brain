@@ -430,7 +430,7 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     metadata: {
                         width: worldW,
                         height: worldH,
-                        title: 'New Mind Room',
+                        title: 'New Project Area',
                         color: '#8b5cf6' // Default accent
                     }
                 });

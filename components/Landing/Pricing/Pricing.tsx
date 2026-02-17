@@ -16,7 +16,7 @@ export default function Pricing() {
             price: "$0",
             period: "forever",
             desc: "Perfect for personal quick capture.",
-            features: ["65 Cards", "2 Folders", "1 Mind Room", "Infinite Canvas", "Browser Extension"],
+            features: ["65 Cards", "2 Folders", "1 Mind Room", "2 Project Areas", "Global Search"],
             btnText: "Get Started",
             highlight: false
         },
@@ -25,7 +25,7 @@ export default function Pricing() {
             price: billingCycle === 'monthly' ? "$8" : "$80",
             period: billingCycle === 'monthly' ? "per month" : "per year",
             desc: "For power users building deep knowledge.",
-            features: ["Unlimited Cards & Folders", "Unlimited Mind Rooms", "Vault (Secure Locker)", "Priority Cloud Sync", "Custom Theme Engine"],
+            features: ["Unlimited Cards & Folders", "Unlimited Mind Rooms & Areas", "Vault (Secure Locker)", "Spatial Minimap", "Priority Support"],
             btnText: "Start Free Trial",
             highlight: true,
             badge: billingCycle === 'yearly' ? "2 Months Free" : null
@@ -106,7 +106,7 @@ export default function Pricing() {
                             <div className={styles.featuresList}>
                                 {plan.features.map((feature, fi) => (
                                     <div key={fi} className={styles.featureItem}>
-                                        <Check size={18} className="text-accent" strokeWidth={3} />
+                                        <Check size={18} style={{ color: plan.lifetime ? '#f4e5a1' : 'var(--accent)' }} strokeWidth={3} />
                                         <span>{feature}</span>
                                     </div>
                                 ))}

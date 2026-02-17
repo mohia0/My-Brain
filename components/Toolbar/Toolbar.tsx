@@ -194,7 +194,7 @@ export default function Toolbar() {
                         <button className={styles.addOption} onClick={() => handleAddItemClick('folder')} data-tooltip="Folder" data-tooltip-pos="top">
                             <FolderPlus size={16} />
                         </button>
-                        <button className={styles.addOption} onClick={() => { setIsAddOpen(false); setTool('area'); }} data-tooltip="Mind Room" data-tooltip-pos="top">
+                        <button className={styles.addOption} onClick={() => { setIsAddOpen(false); setTool('area'); }} data-tooltip="Project Area" data-tooltip-pos="top">
                             <Frame size={16} />
                         </button>
                         <button className={styles.addOption} onClick={() => handleAddItemClick('image')} data-tooltip="Image" data-tooltip-pos="top">

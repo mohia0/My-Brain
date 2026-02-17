@@ -32,7 +32,7 @@ export default function FeatureGrid() {
         },
         {
             title: "Logical Containers",
-            desc: "Group related items into Mind Rooms. Keep your workspace organized and focused.",
+            desc: "Group related items into Project Areas. Keep your workspace organized and focused.",
             icon: <LayoutGrid size={24} />,
             size: "large",
             color: "#30a46c",

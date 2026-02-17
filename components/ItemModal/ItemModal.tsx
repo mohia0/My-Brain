@@ -4,12 +4,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2 } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
 import { getApiUrl } from '@/lib/utils';
+import { suggestTags, extractTagsFromText } from '@/lib/services/taggingService';
+import { toast } from 'sonner';
 
 const BlockEditor = dynamic(() => import('@/components/BlockEditor/BlockEditor'), { ssr: false });
 
@@ -47,6 +49,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const swipeZoneRef = useRef<HTMLDivElement>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const hasAutoTagged = useRef(false);
 
     const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 150, [scrollBodyRef, modalContentRef], swipeZoneRef);
 
@@ -254,7 +257,18 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         if (!item) return;
         try {
             const { data } = await supabase.from('item_tags').select('tag_id, tags(*)').eq('item_id', item.id);
-            if (data) setTags(data.map((t: any) => t.tags).filter(Boolean) as Tag[]);
+            if (data) {
+                const fetchedTags = data.map((t: any) => t.tags).filter(Boolean) as Tag[];
+                setTags(fetchedTags);
+
+                // AUTO-TAGGING TRIGGER (Level 2)
+                // If item has NO tags, and we haven't tried yet, run smart tag
+                if (fetchedTags.length === 0 && !hasAutoTagged.current) {
+                    hasAutoTagged.current = true;
+                    // Small delay to ensure content is ready
+                    setTimeout(() => handleSmartTag(true), 500);
+                }
+            }
         } catch (err: any) {
             if (err.name === 'AbortError') return;
             console.error("Failed to fetch item tags:", err);
@@ -302,6 +316,58 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
         const newTags = tags.filter(t => t.id !== tagId);
         setTags(newTags);
         updateItemTags(item.id, newTags);
+    };
+
+    const handleSmartTag = async (silent = false) => {
+        let textToScan = '';
+        if (item.type === 'text') textToScan = item.content;
+        else if (item.type === 'link') textToScan = item.content + ' ' + (item.metadata?.title || '');
+        else if (item.metadata?.title) textToScan = item.metadata.title;
+
+        if (!textToScan) {
+            if (!silent) toast.error("No content to analyze");
+            return;
+        }
+
+        const { tags: explicitTags } = extractTagsFromText(textToScan);
+        const smartTags = suggestTags(textToScan);
+        const unique = Array.from(new Set([...explicitTags, ...smartTags]));
+
+        // Find existing tag objects or create new ones
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        let addedCount = 0;
+
+        for (const tagName of unique) {
+            // Check if already tagged with this name
+            if (tags.some(t => t.name.toLowerCase() === tagName.toLowerCase())) continue;
+
+            // Find strict global tag or create
+            let tag = existingTags.find(t => t.name.toLowerCase() === tagName.toLowerCase());
+            if (!tag) {
+                const { data } = await supabase.from('tags').insert({ user_id: user.id, name: tagName, color: 'var(--accent)' }).select().single();
+                if (data) {
+                    const newTag = data as Tag;
+                    tag = newTag;
+                    setExistingTags(prev => [...prev, newTag]);
+                }
+            }
+
+            if (tag) {
+                const { error } = await supabase.from('item_tags').insert({ item_id: item.id, tag_id: tag.id });
+                if (!error) {
+                    const newTag = tag;
+                    setTags(prev => [...prev, newTag]);
+                    addedCount++;
+                }
+            }
+        }
+
+        if (addedCount > 0) {
+            // Sync up store
+            fetchItemTags();
+        }
     };
 
 
@@ -534,7 +600,17 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     {isTypingTag ? (
                                         <input className={styles.tagInput} autoFocus value={newTagName} onChange={e => setNewTagName(e.target.value)} onBlur={handleAddTag} onKeyDown={e => e.key === 'Enter' && handleAddTag()} placeholder="Tag..." dir="auto" />
                                     ) : (
-                                        <button className={styles.addTagBtn} onClick={() => setIsTypingTag(true)}>+ Add</button>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            <button className={styles.addTagBtn} onClick={() => setIsTypingTag(true)}>+ Add</button>
+                                            <button
+                                                className={styles.addTagBtn}
+                                                onClick={() => handleSmartTag(false)}
+                                                title="Auto-tag with AI"
+                                                style={{ background: 'var(--accent-faint)', color: 'var(--accent)', borderColor: 'transparent' }}
+                                            >
+                                                <Sparkles size={12} />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>

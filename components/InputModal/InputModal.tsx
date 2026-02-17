@@ -5,6 +5,7 @@ import styles from './InputModal.module.css';
 import { X } from 'lucide-react';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
 import { toast } from "sonner";
+import { suggestTags } from '@/lib/services/taggingService';
 
 interface InputModalProps {
     isOpen: boolean;
@@ -30,6 +31,26 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
             setTimeout(() => inputRef.current?.focus(), 50);
         }
     }, [isOpen, defaultValue]);
+
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (!value || value.length < 3) {
+            setSuggestions([]);
+            return;
+        }
+
+        // Debounce slightly to avoid heavy NLP on every keystroke
+        const timer = setTimeout(() => {
+            const rawTags = suggestTags(value);
+            // Filter out tags already present in the text (case-insensitive)
+            const currentTextLower = value.toLowerCase();
+            const unique = rawTags.filter(t => !currentTextLower.includes(`#${t}`));
+            setSuggestions(unique.slice(0, 5)); // Limit to top 5
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [value]);
 
     // Handle ESC key
     useEffect(() => {
@@ -143,6 +164,22 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                             placeholder={placeholder}
                             dir="auto"
                         />
+                    )}
+
+                    {/* Suggestions Area */}
+                    {suggestions.length > 0 && (
+                        <div className={styles.suggestions}>
+                            {suggestions.map((tag, i) => (
+                                <span
+                                    key={tag}
+                                    className={styles.tagChip}
+                                    onClick={() => setValue(prev => `${prev.trim()} #${tag} `)}
+                                    style={{ animationDelay: `${i * 0.05}s` }}
+                                >
+                                    #{tag}
+                                </span>
+                            ))}
+                        </div>
                     )}
 
                     <div className={styles.footer}>

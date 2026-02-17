@@ -6,6 +6,7 @@ import styles from './Toolbar.module.css';
 import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame, DoorClosed } from 'lucide-react';
 import clsx from 'clsx';
 import InputModal from '@/components/InputModal/InputModal';
+import { extractTagsFromText } from '@/lib/services/taggingService';
 
 export default function Toolbar() {
     const { currentTool, setTool, position, scale } = useCanvasStore();
@@ -67,72 +68,81 @@ export default function Toolbar() {
         const id = generateId();
 
         if (type === 'folder') {
+            // Folders don't have metadata/tags support yet, so keep tags in the name
             addFolder({
                 id, user_id: 'unknown', name: value,
                 position_x: finalX, position_y: finalY,
                 created_at: new Date().toISOString(),
                 status: 'active'
             });
-        } else if (type === 'room') {
-            addItem({
-                id, user_id: 'unknown', type: 'room',
-                content: '',
-                position_x: finalX, position_y: finalY,
-                created_at: new Date().toISOString(),
-                status: 'active',
-                metadata: { title: value }
-            });
         } else {
-            let content = type === 'text' ? '' : value;
-            if (type === 'link' && content && !/^https?:\/\//i.test(content)) {
-                content = 'https://' + content;
-            }
-            const title = type === 'text' ? value : type === 'link' ? 'Capturing Snapshot...' : 'New Idea';
+            // For Items and Rooms, we utilize Smart Tagging
+            const { cleanText, tags } = extractTagsFromText(value);
 
-            addItem({
-                id, user_id: 'unknown', type: type as any,
-                content: content,
-                position_x: finalX, position_y: finalY,
-                created_at: new Date().toISOString(),
-                status: 'active',
-                metadata: { title }
-            });
+            if (type === 'room') {
+                addItem({
+                    id, user_id: 'unknown', type: 'room',
+                    content: '',
+                    position_x: finalX, position_y: finalY,
+                    created_at: new Date().toISOString(),
+                    status: 'active',
+                    metadata: { title: cleanText, tags }
+                });
+            } else {
+                let content = type === 'text' ? '' : cleanText;
 
+                // For links, ensure we use the cleaned URL
+                if (type === 'link' && content && !/^https?:\/\//i.test(content)) {
+                    content = 'https://' + content;
+                }
 
-            if (type === 'link') {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s Timeout
+                const title = type === 'text' ? cleanText : type === 'link' ? 'Capturing Snapshot...' : 'New Idea';
 
-                fetch(getApiUrl('/api/metadata'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: content, itemId: id, skipCapture: true }),
-                    signal: controller.signal
-                })
-                    .then(res => {
-                        clearTimeout(timeoutId);
-                        if (!res.ok) throw new Error('API Error');
-                        return res.json();
+                addItem({
+                    id, user_id: 'unknown', type: type as any,
+                    content: content,
+                    position_x: finalX, position_y: finalY,
+                    created_at: new Date().toISOString(),
+                    status: 'active',
+                    metadata: { title, tags }
+                });
+
+                if (type === 'link') {
+                    // (Fetch logic...)
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s Timeout
+
+                    fetch(getApiUrl('/api/metadata'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: content, itemId: id, skipCapture: true }),
+                        signal: controller.signal
                     })
-                    .then(data => {
-                        if (data.error) throw new Error(`${data.error}: ${data.details || 'Unknown error'}`);
-                        useItemsStore.getState().updateItemContent(id, { metadata: data, syncStatus: 'synced' });
-                    })
-                    .catch(err => {
-                        clearTimeout(timeoutId);
-                        console.error('Metadata fetch failed:', err);
+                        .then(res => {
+                            clearTimeout(timeoutId);
+                            if (!res.ok) throw new Error('API Error');
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.error) throw new Error(`${data.error}: ${data.details || 'Unknown error'}`);
+                            useItemsStore.getState().updateItemContent(id, { metadata: data, syncStatus: 'synced' });
+                        })
+                        .catch(err => {
+                            clearTimeout(timeoutId);
+                            console.error('Metadata fetch failed:', err);
 
-                        let fallbackTitle = 'Link';
-                        try {
-                            const urlObj = new URL(content);
-                            fallbackTitle = urlObj.hostname.replace('www.', '');
-                        } catch (e) { }
+                            let fallbackTitle = 'Link';
+                            try {
+                                const urlObj = new URL(content);
+                                fallbackTitle = urlObj.hostname.replace('www.', '');
+                            } catch (e) { }
 
-                        useItemsStore.getState().updateItemContent(id, {
-                            metadata: { title: fallbackTitle, description: '', image: '' },
-                            syncStatus: 'synced'
+                            useItemsStore.getState().updateItemContent(id, {
+                                metadata: { title: fallbackTitle, description: '', image: '' },
+                                syncStatus: 'synced'
+                            });
                         });
-                    });
+                }
             }
         }
         setModalConfig({ ...modalConfig, isOpen: false });

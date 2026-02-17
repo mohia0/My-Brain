@@ -144,6 +144,37 @@
     filter: brightness(1.1);
 }
 
+.suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 24px;
+    margin-top: -12px;
+    margin-bottom: 6px;
+    min-height: 28px;
+}
+
+.tagChip {
+    background: rgba(var(--accent-rgb), 0.1);
+    border: 1px dashed var(--accent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    animation: fadeIn 0.3s ease backwards;
+}
+
+.tagChip:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-1px);
+    border-style: solid;
+}
+
 
 @keyframes fadeIn {
     from {

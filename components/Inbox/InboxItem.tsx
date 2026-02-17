@@ -56,13 +56,22 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
         const cx = (viewportW / 2 - position.x) / scale;
         const cy = (viewportH / 2 - position.y) / scale;
 
-        // Add some "funny" random offset
-        const randomOffset = () => (Math.random() - 0.5) * 100;
+        // Approximate dimensions to center the item
+        let width = 200;
+        let height = 130;
+
+        if (item.type === 'image' || (item.type === 'link' && item.metadata?.image)) {
+            width = 300;
+            height = 200;
+        } else if (item.type === 'link') {
+            width = 300;
+            height = 100;
+        }
 
         updateItemContent(item.id, {
             status: 'active',
-            position_x: cx + randomOffset(),
-            position_y: cy + randomOffset()
+            position_x: cx - width / 2,
+            position_y: cy - height / 2
         });
     };
 

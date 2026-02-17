@@ -50,14 +50,26 @@ export default function Toolbar() {
         // Calculate center of screen
         const viewportW = window.innerWidth;
         const viewportH = window.innerHeight;
-        const centerX = ((viewportW / 2) - position.x) / scale;
-        const centerY = ((viewportH / 2) - position.y) / scale;
+        const cx = ((viewportW / 2) - position.x) / scale;
+        const cy = ((viewportH / 2) - position.y) / scale;
+
+        // Determine dimensions to center item
+        let w = 200;
+        let h = 130;
+        if (type === 'folder') { w = 280; h = 120; }
+        else if (type === 'room') { w = 300; h = 300; }
+        else if (type === 'image') { w = 300; h = 200; }
+        else if (type === 'link') { w = 300; h = 100; }
+
+        const finalX = cx - w / 2;
+        const finalY = cy - h / 2;
+
         const id = generateId();
 
         if (type === 'folder') {
             addFolder({
                 id, user_id: 'unknown', name: value,
-                position_x: centerX, position_y: centerY,
+                position_x: finalX, position_y: finalY,
                 created_at: new Date().toISOString(),
                 status: 'active'
             });
@@ -65,7 +77,7 @@ export default function Toolbar() {
             addItem({
                 id, user_id: 'unknown', type: 'room',
                 content: '',
-                position_x: centerX, position_y: centerY,
+                position_x: finalX, position_y: finalY,
                 created_at: new Date().toISOString(),
                 status: 'active',
                 metadata: { title: value }
@@ -80,7 +92,7 @@ export default function Toolbar() {
             addItem({
                 id, user_id: 'unknown', type: type as any,
                 content: content,
-                position_x: centerX, position_y: centerY,
+                position_x: finalX, position_y: finalY,
                 created_at: new Date().toISOString(),
                 status: 'active',
                 metadata: { title }

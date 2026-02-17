@@ -20,6 +20,8 @@
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === "SHOW_BRAINIA_TOAST") {
             showBrainiaToast(request.message, request.type);
+            sendResponse({ status: 'ok' });
+            return;
         }
 
         if (request.action === "GET_SELECTION_BLOCKS") {

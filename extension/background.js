@@ -9,14 +9,13 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 async function notifyTab(tabId, message, type = 'success') {
     try {
-        // Try simple message first
-        const sent = await chrome.tabs.sendMessage(tabId, {
+        const response = await chrome.tabs.sendMessage(tabId, {
             action: "SHOW_BRAINIA_TOAST",
             type,
             message
         }).catch(() => null);
 
-        if (sent) return;
+        if (response && response.status === 'ok') return;
 
         // If not sent, inject and try again
         await chrome.scripting.executeScript({
@@ -150,21 +149,18 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             // If we have an image URL, we treat it as a rich link or an image
             if (captureData.imageUrl || info.mediaType === 'image') {
                 const imgUrl = captureData.imageUrl || info.srcUrl;
-
-                // If we have a title or it's Pinterest, save as a 'link' item to preserve context
-                // This makes it a "Smart Capture" with image + data
-                const isRichCapture = !!(captureData.title || captureData.description || (tab?.url && new URL(tab.url).hostname.includes('pinterest')));
+                const sourceUrl = tab?.url || info.pageUrl;
 
                 const { error } = await supabase.from('items').insert({
                     id: crypto.randomUUID(),
                     user_id: user.id,
-                    type: isRichCapture ? 'link' : 'image',
-                    content: isRichCapture ? (tab?.url || imgUrl) : imgUrl,
+                    type: 'link', // Always treat as link to preserve source
+                    content: sourceUrl || imgUrl, // Use source URL as main content
                     metadata: {
                         title: captureData.title || tab?.title || "Captured Image",
                         description: captureData.description || "",
-                        image: imgUrl, // This acts as the preview image for the link
-                        url: tab?.url,
+                        image: imgUrl, // Keep image as preview
+                        url: sourceUrl,
                         source: "Extension Smart Capture"
                     },
                     status: 'inbox',

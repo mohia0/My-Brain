@@ -279,12 +279,12 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
             if (currentRoomId) {
                 // Fetch items for this room OR global items (inbox/archived)
-                dbItemsReq = dbItemsReq.or(`room_id.eq.${currentRoomId},status.eq.inbox,status.eq.archived`);
-                dbFoldersReq = dbFoldersReq.or(`room_id.eq.${currentRoomId},status.eq.archived`);
+                dbItemsReq = dbItemsReq.or(`room_id.eq.${currentRoomId},status.eq.inbox,status.eq.archived`).order('created_at', { ascending: false });
+                dbFoldersReq = dbFoldersReq.or(`room_id.eq.${currentRoomId},status.eq.archived`).order('created_at', { ascending: false });
             } else {
                 // Main canvas: items where room_id is NULL or global items
-                dbItemsReq = dbItemsReq.or(`room_id.is.null,status.eq.inbox,status.eq.archived`);
-                dbFoldersReq = dbFoldersReq.or(`room_id.is.null,status.eq.archived`);
+                dbItemsReq = dbItemsReq.or(`room_id.is.null,status.eq.inbox,status.eq.archived`).order('created_at', { ascending: false });
+                dbFoldersReq = dbFoldersReq.or(`room_id.is.null,status.eq.archived`).order('created_at', { ascending: false });
             }
 
             const [itemsRes, foldersRes] = await Promise.all([dbItemsReq, dbFoldersReq]);
@@ -1195,7 +1195,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                         };
                     }
 
-                    return { items: [...state.items, finalItem as Item] };
+                    // Prepend new items so they show up at the top of lists immediately
+                    return { items: [finalItem as Item, ...state.items] };
                 });
             } else if (payload.eventType === 'DELETE') {
                 set(state => ({ items: state.items.filter(i => i.id !== payload.old.id) }));
@@ -1225,7 +1226,8 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                             folders: state.folders.map(f => f.id === data.id ? { ...f, ...finalFolder } : f)
                         };
                     }
-                    return { folders: [...state.folders, finalFolder as Folder] };
+                    // Prepend new folders
+                    return { folders: [finalFolder as Folder, ...state.folders] };
                 });
             } else if (payload.eventType === 'DELETE') {
                 set(state => ({ folders: state.folders.filter(f => f.id !== payload.old.id) }));

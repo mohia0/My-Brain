@@ -40,15 +40,24 @@ export default function Home() {
     checkVaultStatus();
   }, []);
 
+  // Synchronous check for share intent to prevent first-render flashes
+  const checkShareIntentSync = () => {
+    if (typeof window === 'undefined') return false;
+    const url = window.location.search;
+    return url.includes('title=') || url.includes('text=') || url.includes('url=');
+  };
+
+  const isShareMode = checkShareIntentSync();
+
   const [session, setSession] = useState<any>(null);
-  const [initializing, setInitializing] = useState(true);
-  const [showLoading, setShowLoading] = useState(true);
+  const [initializing, setInitializing] = useState(!isShareMode);
+  const [showLoading, setShowLoading] = useState(!isShareMode);
   const [isFading, setIsFading] = useState(false);
   const [shouldShowAuth, setShouldShowAuth] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const isInitializingRef = useRef(true);
-  const showLoadingRef = useRef(true);
+  const isInitializingRef = useRef(!isShareMode);
+  const showLoadingRef = useRef(!isShareMode);
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -111,7 +120,14 @@ export default function Home() {
     const isCurrentlyMobile = checkMobileWidth();
 
     try {
-      const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
+      if (isShareMode) {
+        setShowLoading(false);
+        showLoadingRef.current = false;
+        setInitializing(false);
+        isInitializingRef.current = false;
+      }
+
+      const timerPromise = new Promise(resolve => setTimeout(resolve, isShareMode ? 0 : MIN_LOADING_TIME));
       const { data, error } = await supabase.auth.getSession();
       const initialSession = data?.session;
 
@@ -150,14 +166,16 @@ export default function Home() {
       // The loading state in itemsStore will be false now due to await dataPromise
 
       // Start fade sequence
-      setIsFading(true);
+      const fadeTime = isShareMode ? 0 : 800;
+      if (fadeTime > 0) setIsFading(true);
+
       setTimeout(() => {
         setShowLoading(false);
         showLoadingRef.current = false;
         setInitializing(false);
         isInitializingRef.current = false;
         setIsFading(false);
-      }, 800);
+      }, fadeTime);
 
     } catch (err: any) {
       if (err.name === 'AbortError') return;
@@ -175,52 +193,9 @@ export default function Home() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
+      if (session) localStorage.removeItem('isAuthenticating');
 
-      if (session) {
-        localStorage.removeItem('isAuthenticating');
-      }
-
-      // If we are stuck in loading state (e.g. from redirect wait), finish loading now
-      if (session && (showLoadingRef.current || isInitializingRef.current)) {
-        const isCurrentlyMobile = typeof window !== 'undefined' && (
-          (window as any).Capacitor?.isNativePlatform() ||
-          (window as any).Capacitor?.isNative ||
-          window.innerWidth <= 768
-        );
-
-        // Restore view if metadata exists
-        if (session.user?.user_metadata?.canvas_view && !isCurrentlyMobile) {
-          const { scale, x, y, isMinimapCollapsed } = session.user.user_metadata.canvas_view;
-          useCanvasStore.getState().restoreView(scale, { x, y });
-          if (isMinimapCollapsed !== undefined) {
-            useCanvasStore.getState().setIsMinimapCollapsed(isMinimapCollapsed);
-          }
-        } else {
-          useCanvasStore.getState().setViewRestored(true);
-        }
-
-        // IMPORTANT: Fetch data immediately if we have a session
-        fetchData(session.user).then(() => {
-          // Trigger the standard fade out logic ONLY after data is fetched
-          if (showLoadingRef.current && !isFading) {
-            setIsFading(true);
-            setTimeout(() => {
-              setShowLoading(false);
-              showLoadingRef.current = false;
-              setInitializing(false);
-              isInitializingRef.current = false;
-              setIsFading(false);
-            }, 800);
-          }
-        });
-      }
-
-      // If we found a session LATE (AuthModal was already visible), strictly handle the switch.
-      // We don't want to re-mount the loading screen if we can avoid it, but it might be cleaner to do so briefly
-      // than to jerk to content. However, the user complained about "appear and go and appear".
-      // We'll trust the logic above handles the 'loading' case. 
-      // If !showLoadingRef.current, we just let the useEffect below (session change) handle the UI update (AuthModal unmounts).
-
+      // If we already finished loading but session changed (e.g. login/logout), refresh data
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData(session.user);
         if (unsubscribeRef.current) unsubscribeRef.current();

@@ -435,12 +435,29 @@ export default function MobilePageContent({ session }: { session: any }) {
             }
 
             setShareState('saved');
-            setTimeout(() => {
+            setTimeout(async () => {
                 setIsOverlayFading(true);
                 // Safety sync removed to prevent overwriting optimistic updates with stale DB state
                 // fetchData().catch(() => { }); 
-                setTimeout(() => { setShareState('idle'); setIsOverlayFading(false); }, 500);
-            }, 1000);
+                setTimeout(async () => {
+                    setShareState('idle');
+                    setIsOverlayFading(false);
+
+                    // --- NEW: Seamless Exit ---
+                    // If running as a native app, exit after the overlay fades out
+                    // This returns the user to the original app (Instagram, etc.)
+                    if (Capacitor.isNativePlatform()) {
+                        setTimeout(async () => {
+                            try {
+                                const { App } = await import('@capacitor/app');
+                                await App.exitApp();
+                            } catch (e) {
+                                console.error("[MobileShare] Exit failed:", e);
+                            }
+                        }, 100);
+                    }
+                }, 500);
+            }, 1500); // Slightly longer "Saved" visibility before exit
 
         } catch (error: any) {
             console.error("[MobileShare] Failure:", error);
@@ -573,10 +590,10 @@ export default function MobilePageContent({ session }: { session: any }) {
                 paddingBottom: 'calc(100px + env(safe-area-inset-bottom))',
                 paddingTop: 'calc(64px + env(safe-area-inset-top))',
                 minHeight: '100vh',
-                background: 'var(--background)',
-                opacity: isSharing ? 0.4 : 1,
-                filter: isSharing ? 'blur(10px)' : 'none',
-                transition: 'all 0.3s ease'
+                background: isSharing ? 'transparent' : 'var(--background)',
+                opacity: isSharing ? 0 : 1,
+                filter: isSharing ? 'blur(20px)' : 'none',
+                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
             }}>
                 {activeTab === 'home' ? (
                     <MobileHome
@@ -612,7 +629,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 maxWidth: '600px',
                 maxHeight: '600px',
                 zIndex: -1,
-                opacity: 0.15,
+                opacity: isSharing ? 0 : 0.15,
                 filter: 'blur(40px)',
                 pointerEvents: 'none'
             }}>
@@ -666,11 +683,10 @@ export default function MobilePageContent({ session }: { session: any }) {
             <style jsx global>{`
                 body {
                     overflow-y: auto !important;
-                    background: ${shareState === 'idle' ? 'var(--background)' : 'transparent'};
-                    transition: background 0.3s ease;
+                    background: ${shareState === 'idle' ? 'var(--background)' : 'transparent'} !important;
                 }
                 .mobile-app {
-                    background: ${shareState === 'idle' ? 'var(--background)' : 'transparent'};
+                    background: ${shareState === 'idle' ? 'var(--background)' : 'transparent'} !important;
                 }
             `}</style>
         </div>

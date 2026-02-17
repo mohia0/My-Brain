@@ -1,9 +1,9 @@
 .overlay {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.85) 100%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     z-index: 10000;
     display: flex;
     flex-direction: column;
@@ -11,6 +11,10 @@
     justify-content: center;
     overflow: hidden;
     animation: slideAndFadeDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+:global([data-theme='light']) .overlay {
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 100%);
 }
 
 
@@ -99,6 +103,13 @@
     animation: fadeInUp 0.5s ease 0.2s both;
 }
 
+:global([data-theme='light']) .text {
+    background: linear-gradient(to bottom, #111, #444);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 .hint {
     color: #666;
     font-size: 0.9rem;
@@ -106,6 +117,10 @@
     letter-spacing: 0.02em;
     text-transform: uppercase;
     animation: fadeInUp 0.5s ease 0.4s both;
+}
+
+:global([data-theme='light']) .hint {
+    color: #444;
 }
 
 @keyframes slideAndFadeDown {

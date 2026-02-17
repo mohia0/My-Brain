@@ -1,5 +1,8 @@
 // Brainia Extension Detection Script
 (function () {
+    if (window.__brainia_injected) return;
+    window.__brainia_injected = true;
+
     // Inject a flag so the website knows Brainia is installed
     document.documentElement.setAttribute('data-brainia-installed', 'true');
 
@@ -215,29 +218,37 @@ function showBrainiaToast(message, type = 'success') {
             display: flex;
             align-items: center;
             gap: 12px;
-            background: rgba(15, 15, 20, 0.85);
+            background: rgba(15, 15, 20, 0.9);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
             padding: 12px 20px;
             box-shadow: 
-                0 4px 20px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.05);
+                0 10px 30px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: white;
             opacity: 0;
-            transform: translateY(-10px) scale(0.95);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateX(20px) scale(0.9);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             width: max-content;
-            pointer-events: none; /* Let clicks pass through if preferred, or auto to block */
+            pointer-events: auto; /* Enable interaction */
+            cursor: pointer;
             position: relative;
             overflow: hidden;
+            user-select: none;
+        }
+
+        .brainia-toast:hover {
+            background: rgba(25, 25, 35, 0.95);
+            border-color: rgba(110, 86, 207, 0.5);
+            transform: scale(1.02);
         }
 
         .brainia-toast.visible {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateX(0) scale(1);
         }
 
         /* Orb Gradient Background Effect */
@@ -249,16 +260,16 @@ function showBrainiaToast(message, type = 'success') {
             height: 200%;
             background: linear-gradient(
                 135deg,
-                rgba(97, 42, 254, 0.2), 
-                rgba(76, 194, 233, 0.2),
-                rgba(16, 20, 153, 0.1)
+                rgba(97, 42, 254, 0.3), 
+                rgba(76, 194, 233, 0.3),
+                rgba(16, 20, 153, 0.2)
             );
             z-index: -1;
             filter: blur(20px);
-            animation: rotate 10s linear infinite;
+            animation: rotate_orb 10s linear infinite;
         }
 
-        @keyframes rotate {
+        @keyframes rotate_orb {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
@@ -269,22 +280,23 @@ function showBrainiaToast(message, type = 'success') {
             justify-content: center;
             width: 24px;
             height: 24px;
-            background: ${type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(110, 86, 207, 0.3)'};
+            background: ${type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(110, 86, 207, 0.4)'};
             border-radius: 50%;
-            color: ${type === 'error' ? '#ef4444' : '#a78bfa'};
+            color: ${type === 'error' ? '#ff6b6b' : '#c4b5fd'};
         }
 
         .message {
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             line-height: 1.4;
-            color: #f3f3f3;
+            color: white;
         }
     `;
 
     // Content
     const toast = document.createElement('div');
     toast.className = 'brainia-toast';
+    toast.title = "Click to open Brainia";
 
     // SVG Icon
     const successIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
@@ -296,6 +308,11 @@ function showBrainiaToast(message, type = 'success') {
         </div>
         <span class="message">${message}</span>
     `;
+
+    // Interaction logic
+    toast.onclick = () => {
+        window.open('https://app.brainia.space', '_blank');
+    };
 
     shadow.appendChild(style);
     shadow.appendChild(toast);

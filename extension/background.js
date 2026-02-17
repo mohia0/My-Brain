@@ -7,10 +7,18 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 // --- UTILS ---
 
-async function notifyTab(tabId) {
+async function notifyTab(tabId, message, type = 'success') {
     try {
-        // Always inject the content script first
-        // This creates the "user gesture" or "activeTab" context needed
+        // Try simple message first
+        const sent = await chrome.tabs.sendMessage(tabId, {
+            action: "SHOW_BRAINIA_TOAST",
+            type,
+            message
+        }).catch(() => null);
+
+        if (sent) return;
+
+        // If not sent, inject and try again
         await chrome.scripting.executeScript({
             target: { tabId: tabId },
             files: ['content.js']
@@ -20,19 +28,18 @@ async function notifyTab(tabId) {
         setTimeout(() => {
             chrome.tabs.sendMessage(tabId, {
                 action: "SHOW_BRAINIA_TOAST",
-                type: 'success',
-                message: 'Text saved to your second brain'
-            }).catch(e => console.error("[Background] Toast message failed:", e));
-        }, 100);
+                type,
+                message
+            }).catch(e => console.error("[Background] Toast message failed after injection:", e));
+        }, 150);
 
     } catch (err) {
-        console.error("[Background] Failed to inject toast script:", err);
-        // Fallback to native notification if injection fails
+        console.error("[Background] Failed to notify tab:", err);
         chrome.notifications.create({
             type: 'basic',
             iconUrl: 'Icon.png',
-            title: 'Saved!',
-            message: 'Text saved to your second brain',
+            title: type === 'success' ? 'Saved!' : 'Notice',
+            message: message,
             priority: 2
         });
     }
@@ -166,7 +173,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 });
 
                 if (error) throw error;
-                if (tab?.id) notifyTab(tab.id);
+                if (tab?.id) notifyTab(tab.id, 'Image saved to Brainia');
                 return;
             }
 
@@ -178,11 +185,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 // 1. Try to get semantic blocks from content script
                 if (tab?.id) {
                     try {
-                        await chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            files: ['content.js']
-                        });
-
                         const response = await new Promise((resolve) => {
                             chrome.tabs.sendMessage(tab.id, { action: "GET_SELECTION_BLOCKS" }, (res) => {
                                 if (chrome.runtime.lastError) resolve(null);
@@ -232,7 +234,40 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 });
 
                 if (error) throw error;
-                if (tab?.id) notifyTab(tab.id);
+                if (tab?.id) notifyTab(tab.id, 'Text selection saved');
+                return;
+            }
+
+            // HANDLE LINK OR PAGE CAPTURE (Fallback if no image or text)
+            if (info.linkUrl || info.menuItemId === "save-to-brainia") {
+                const targetUrl = info.linkUrl || info.pageUrl || tab?.url;
+                if (!targetUrl) throw new Error("Could not determine URL to save.");
+
+                const { error } = await supabase.from('items').insert({
+                    id: crypto.randomUUID(),
+                    user_id: user.id,
+                    type: 'link',
+                    content: targetUrl,
+                    metadata: {
+                        title: captureData.title || tab?.title || "New Link",
+                        description: captureData.description || "",
+                        url: targetUrl,
+                        source: "Extension Context Menu"
+                    },
+                    status: 'inbox',
+                    position_x: 0,
+                    position_y: 0
+                });
+
+                if (error) throw error;
+                if (tab?.id) notifyTab(tab.id, 'Link saved to Brainia');
+                return;
+            }
+
+            // HANDLE TEXT SELECTION (Fallback or intentional)
+            if (info.selectionText) {
+                // ... logic remains same but uses notifyTab with message
+                // (Already handled by Link/Page above if no selection is detected first)
             }
 
         } catch (err) {

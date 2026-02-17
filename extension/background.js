@@ -146,7 +146,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
                 // If we have a title or it's Pinterest, save as a 'link' item to preserve context
                 // This makes it a "Smart Capture" with image + data
-                const isRichCapture = !!(captureData.title || captureData.description || window.location.hostname.includes('pinterest'));
+                const isRichCapture = !!(captureData.title || captureData.description || (tab?.url && new URL(tab.url).hostname.includes('pinterest')));
 
                 const { error } = await supabase.from('items').insert({
                     id: crypto.randomUUID(),

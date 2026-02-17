@@ -51,9 +51,8 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
     const handleSuccess = () => {
         setIsFading(true);
-        setTimeout(() => {
-            onLogin();
-        }, 800);
+        // Signal success immediately so parent knows we are starting the exit fade
+        onLogin();
     };
 
     const handleResetPassword = async (e: React.FormEvent) => {
@@ -133,7 +132,6 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
             });
             if (error) throw error;
         } catch (err: any) {
-            console.error("Google auth error:", err);
             setError(err.message);
             setLoading(false);
         }
@@ -143,8 +141,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
         e.preventDefault();
 
         if (!isSupabaseConfigured) {
-            setError("Configuration Error: NEXT_PUBLIC_SUPABASE_URL or ANAL_KEY is missing. Authentication is disabled.");
-            console.error("Supabase is not configured. Check your environment variables.");
+            setError("Configuration Error: NEXT_PUBLIC_SUPABASE_URL or ANON_KEY is missing. Authentication is disabled.");
             return;
         }
 
@@ -152,8 +149,6 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
         setError(null);
 
         try {
-            console.log(`Attempting ${isSignUp ? 'signup' : 'signin'} for ${email}...`);
-
             if (isSignUp) {
                 if (password !== confirmPassword) {
                     setError("Passwords do not match");
@@ -163,40 +158,42 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
 
                 const { data, error } = await supabase.auth.signUp({ email, password });
                 if (error) {
-                    console.error("Signup error details:", error);
                     setError(error.message);
                     setLoading(false);
                 } else if (data.session) {
-                    console.log("Signup successful, session created.");
                     handleSuccess();
                 } else {
-                    console.log("Signup successful, confirmation email sent.");
                     setSignupSuccess(true);
                     setLoading(false);
                 }
             } else {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) {
-                    console.error("Signin error details:", error);
+                    // Suppress console.error for standard auth failures to avoid dev overlays
                     setError(error.message);
                     setLoading(false);
                 } else if (data.session) {
-                    console.log("Signin successful.");
                     handleSuccess();
                 } else {
-                    // This case shouldn't really happen with signInWithPassword if error is null, 
-                    // unless session is missing for some reason.
-                    console.warn("Signin returned no error but no session either.");
                     handleSuccess();
                 }
             }
         } catch (err: any) {
-            console.error("Critical Auth error catch:", err);
+            console.error("Critical Auth error:", err);
             setError(err.message || "An unexpected error occurred during authentication.");
             setLoading(false);
         }
     };
 
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        if (recoveringPassword) {
+            await handleUpdatePassword(e);
+        } else if (showReset) {
+            await handleResetPassword(e);
+        } else {
+            await handleSubmit(e);
+        }
+    };
 
     return (
         <div className={`${styles.overlay} ${isFading ? styles.overlayFading : ''}`}>
@@ -237,7 +234,7 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className={styles.form}>
+                <form onSubmit={handleFormSubmit} className={styles.form}>
                     {!recoveringPassword && !showReset && (
                         <>
                             <button
@@ -325,7 +322,6 @@ export default function AuthModal({ onLogin }: { onLogin: () => void }) {
                         type="submit"
                         className={styles.button}
                         disabled={loading || !isSupabaseConfigured}
-                        onClick={recoveringPassword ? handleUpdatePassword : (showReset ? handleResetPassword : handleSubmit)}
                     >
                         {loading ? 'Processing...' : (recoveringPassword ? 'Set New Password' : (showReset ? 'Send Reset Link' : (isSignUp ? 'Create Account' : 'Sign In')))}
                     </button>

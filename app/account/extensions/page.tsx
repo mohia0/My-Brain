@@ -87,7 +87,7 @@ export default function ExtensionsPage() {
                         </Link>
                     )}
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        Version 1.0.2 • Free
+                        Version 1.7 • Free
                     </div>
                 </div>
             </Card>

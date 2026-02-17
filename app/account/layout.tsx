@@ -6,8 +6,20 @@ import { usePathname } from 'next/navigation';
 import { User, Shield, ArrowLeft, Brain, Chrome } from 'lucide-react';
 import styles from './layout.module.css';
 
+import { useRouter } from 'next/navigation';
+
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const [isExiting, setIsExiting] = React.useState(false);
+
+    const handleBack = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsExiting(true);
+        setTimeout(() => {
+            router.push('/');
+        }, 500);
+    };
 
     const navItems = [
         { name: 'Profile', href: '/account/profile', icon: User },
@@ -16,12 +28,15 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     ];
 
     return (
-        <div className={styles.container}>
+        <div className={`${styles.container} ${isExiting ? 'fade-out' : ''}`}>
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarHeader}>
-                    <Link href="/" className={styles.backLink}>
+                    <div
+                        className={styles.backLink}
+                        onClick={handleBack}
+                    >
                         <ArrowLeft size={16} /> Back to Brainia
-                    </Link>
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{
                             width: 32, height: 32,

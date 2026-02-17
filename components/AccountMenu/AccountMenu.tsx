@@ -3,17 +3,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './AccountMenu.module.css';
 import { LogOut, User, Sun, Moon, Download, AlertTriangle } from 'lucide-react';
 import NotificationCenter from './NotificationCenter';
 import ReportBugModal from '@/components/ReportBugModal/ReportBugModal';
 
+import { useRouter } from 'next/navigation';
+
 export default function AccountMenu() {
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [isBugModalOpen, setIsBugModalOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const containerRef = useRef<HTMLDivElement>(null);
+
+    const handleProtectedNavigation = (href: string) => {
+        setIsOpen(false);
+        // Dispatch event to main canvas to start fade-out
+        window.dispatchEvent(new CustomEvent('navigatingToSettings'));
+        setTimeout(() => {
+            router.push(href);
+        }, 500); // Match globals.css fade-out duration
+    };
 
     useEffect(() => {
         // Theme initialization
@@ -22,13 +35,15 @@ export default function AccountMenu() {
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         // Fetch initial user
-        supabase.auth.getUser().then(({ data: { user } }: any) => {
-            setUser(user);
+        supabase.auth.getSession().then(({ data: { session } }: any) => {
+            setUser(session?.user ?? null);
+            useItemsStore.getState().setSession(session);
         });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
             setUser(session?.user ?? null);
+            useItemsStore.getState().setSession(session);
         });
 
         // Click outside to close
@@ -97,15 +112,15 @@ export default function AccountMenu() {
                         <div className={styles.role}>{user.email?.includes('guest') ? 'Guest Account' : 'Synced Brainia'}</div>
                     </div>
 
-                    <Link href="/account" className={styles.menuItem} onClick={() => setIsOpen(false)}>
+                    <div className={styles.menuItem} onClick={() => handleProtectedNavigation('/account')}>
                         <User size={16} />
                         <span>Account Settings</span>
-                    </Link>
+                    </div>
 
-                    <Link href="/account/extensions" className={styles.menuItem} onClick={() => setIsOpen(false)}>
+                    <div className={styles.menuItem} onClick={() => handleProtectedNavigation('/account/extensions')}>
                         <Download size={16} />
                         <span>Apps & Downloads</span>
-                    </Link>
+                    </div>
 
                     <button
                         className={styles.menuItem}

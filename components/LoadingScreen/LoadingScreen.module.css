@@ -114,3 +114,16 @@
         transform: scale(1.05);
     }
 }
+
+.versionText {
+    position: absolute;
+    bottom: 22px;
+    left: 22px;
+    font-size: 9px;
+    font-family: monospace;
+    opacity: 0.4;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+    pointer-events: none;
+    z-index: 100;
+}

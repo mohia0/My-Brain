@@ -31,7 +31,7 @@ import { useCanvasStore } from "@/lib/store/canvasStore";
 import VaultAuthModal, { useVaultStore } from "@/components/Vault/VaultAuthModal";
 
 export default function Home() {
-  const { items, folders, fetchData, subscribeToChanges, clearSelection, currentRoomId, hasLoadedOnce } = useItemsStore();
+  const { items, folders, fetchData, subscribeToChanges, clearSelection, currentRoomId, hasLoadedOnce, session, setSession } = useItemsStore();
   const { openFolderId, setOpenFolderId } = useCanvasStore();
   const { isModalOpen, setModalOpen, checkVaultStatus } = useVaultStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -48,17 +48,30 @@ export default function Home() {
   };
 
   const isShareMode = checkShareIntentSync();
-  const shouldSkipLoad = isShareMode || hasLoadedOnce;
+  const shouldSkipLoad = isShareMode || hasLoadedOnce || items.length > 0 || folders.length > 0;
 
-  const [session, setSession] = useState<any>(null);
-  const [initializing, setInitializing] = useState(!shouldSkipLoad);
-  const [showLoading, setShowLoading] = useState(!shouldSkipLoad);
+  // Synchronous check to prevent first-render flash
+  const [initializing, setInitializing] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const state = useItemsStore.getState();
+    const isShare = window.location.search.includes('title=') || window.location.search.includes('text=') || window.location.search.includes('url=');
+    return !(isShare || state.hasLoadedOnce || state.items.length > 0 || state.folders.length > 0);
+  });
+
+  const [showLoading, setShowLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const state = useItemsStore.getState();
+    const isShare = window.location.search.includes('title=') || window.location.search.includes('text=') || window.location.search.includes('url=');
+    return !(isShare || state.hasLoadedOnce || state.items.length > 0 || state.folders.length > 0);
+  });
+
   const [isFading, setIsFading] = useState(false);
   const [shouldShowAuth, setShouldShowAuth] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isAuthExiting, setIsAuthExiting] = useState(false);
 
-  const isInitializingRef = useRef(!shouldSkipLoad);
-  const showLoadingRef = useRef(!shouldSkipLoad);
+  const isInitializingRef = useRef(initializing);
+  const showLoadingRef = useRef(showLoading);
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -68,6 +81,10 @@ export default function Home() {
     // Check for 'isAuthenticating' flag OR hash/search parameters
     const checkRedirect = () => {
       if (typeof window === 'undefined') return false;
+
+      // If we already have a session, we don't need to stay in redirect state
+      const currentSession = useItemsStore.getState().session;
+      if (currentSession) return false;
 
       const isAuthenticating = localStorage.getItem('isAuthenticating') === 'true';
       const hash = window.location.hash;
@@ -79,7 +96,15 @@ export default function Home() {
         search.includes('code=');
 
       if (isAuthenticating || hasAuthParams) {
-        console.log("Auth redirect or authenticating state detected, waiting for session...");
+        console.log("Auth redirect or authenticating state detected, showing loader...");
+
+        // Show loader immediately
+        if (!showLoadingRef.current) {
+          setShowLoading(true);
+          showLoadingRef.current = true;
+          setInitializing(true);
+          isInitializingRef.current = true;
+        }
 
         // Clear the flag after a delay to prevent getting stuck if auth fails
         setTimeout(() => {
@@ -92,6 +117,8 @@ export default function Home() {
               if (!result.data.session) {
                 setInitializing(false);
                 setShowLoading(false);
+                showLoadingRef.current = false;
+                isInitializingRef.current = false;
               }
             });
           }
@@ -131,15 +158,19 @@ export default function Home() {
       }
 
       const timerPromise = new Promise(resolve => setTimeout(resolve, shouldSkipLoad ? 0 : MIN_LOADING_TIME));
-      const { data, error } = await supabase.auth.getSession();
-      const initialSession = data?.session;
 
-      if (error) {
-        console.warn("Session check error (clearing invalid session):", error.message);
-        await supabase.auth.signOut();
-        setSession(null);
-      } else {
-        setSession(initialSession);
+      let initialSession = useItemsStore.getState().session;
+
+      if (!initialSession) {
+        const { data, error } = await supabase.auth.getSession();
+        initialSession = data?.session;
+        if (error) {
+          console.warn("Session check error (clearing invalid session):", error.message);
+          await supabase.auth.signOut();
+          setSession(null);
+        } else {
+          setSession(initialSession);
+        }
       }
 
       let dataPromise = Promise.resolve();
@@ -165,20 +196,23 @@ export default function Home() {
 
       await Promise.all([timerPromise, dataPromise]);
 
-      // Double check if data is actually loaded (items/folders might be empty, that's fine, but fetchData should have finished)
-      // The loading state in itemsStore will be false now due to await dataPromise
-
-      // Start fade sequence
-      const fadeTime = shouldSkipLoad ? 0 : 800;
-      if (fadeTime > 0) setIsFading(true);
-
-      setTimeout(() => {
+      const finishLoading = () => {
         setShowLoading(false);
         showLoadingRef.current = false;
         setInitializing(false);
         isInitializingRef.current = false;
         setIsFading(false);
-      }, fadeTime);
+      };
+
+      // Start fade sequence
+      const fadeTime = shouldSkipLoad ? 500 : 800;
+
+      if (fadeTime > 0) {
+        setIsFading(true);
+        setTimeout(finishLoading, fadeTime);
+      } else {
+        finishLoading();
+      }
 
     } catch (err: any) {
       if (err.name === 'AbortError') return;
@@ -196,9 +230,16 @@ export default function Home() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
-      if (session) localStorage.removeItem('isAuthenticating');
+      if (session) {
+        localStorage.removeItem('isAuthenticating');
+        // If we were waiting for redirect auth (initializing is true), 
+        // trigger runInit again to proceed with data fetching and finish loading
+        if (isInitializingRef.current) {
+          runInit();
+        }
+      }
 
-      // If we already finished loading but session changed (e.g. login/logout), refresh data
+      // If we already finished loading but session changed (e.g. login/logout manually), refresh data
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
         fetchData(session.user);
         if (unsubscribeRef.current) unsubscribeRef.current();
@@ -223,10 +264,10 @@ export default function Home() {
   useEffect(() => {
     if (!session && !showLoading && !initializing) {
       setShouldShowAuth(true);
-    } else if (session) {
+    } else if (session && !isAuthExiting) {
       setShouldShowAuth(false);
     }
-  }, [session, showLoading, initializing]);
+  }, [session, showLoading, initializing, isAuthExiting]);
 
   const _hasHydrated = useVaultStore(state => state._hasHydrated);
 
@@ -347,27 +388,42 @@ export default function Home() {
     return false;
   };
 
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  useEffect(() => {
+    const handleNavStart = () => setIsNavigating(true);
+    window.addEventListener('navigatingToSettings', handleNavStart);
+    return () => window.removeEventListener('navigatingToSettings', handleNavStart);
+  }, []);
+
   return (
     <DragWrapper>
       {/* Loading Screen: Only visible during initial load OR fading out */}
       {(showLoading || isFading) && <LoadingScreen isFading={isFading} />}
 
-      {/* Main Content: Rendered when loading is finished OR currently fading in */}
-      {(!showLoading || isFading) && (
+      {/* Main Content: Rendered when loading is finished OR currently fading in OR exiting auth */}
+      {(!showLoading || isFading || isAuthExiting) && (
         <>
-          {(!session || shouldShowAuth) ? (
+          {(!session || shouldShowAuth || isAuthExiting) ? (
             <AuthModal onLogin={() => {
-              setShouldShowAuth(false);
-              runInit();
+              setIsAuthExiting(true);
+              runInit(); // Start loading immediately behind the fading auth modal
+              setTimeout(() => {
+                setShouldShowAuth(false);
+                setIsAuthExiting(false);
+              }, 800);
             }} />
           ) : (
             <>
               {isMobile ? (
-                <MobilePageContent session={session} />
+                <div className={clsx(isFading ? 'fade-in' : 'opacity-100')}>
+                  <MobilePageContent session={session} />
+                </div>
               ) : (
                 <main className={clsx(
                   'desktop-version w-screen h-screen overflow-hidden',
-                  isFading ? 'fade-in' : 'opacity-100'
+                  isFading ? 'fade-in' : 'opacity-100',
+                  isNavigating && 'fade-out'
                 )}>
                   <Header />
                   <AccountMenu />

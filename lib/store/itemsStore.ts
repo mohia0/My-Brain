@@ -167,7 +167,9 @@ interface ItemsState {
     enterRoom: (id: string, title: string) => void;
     exitRoom: () => void;
     updateItemTags: (id: string, tags: Tag[]) => void;
-    hasLoadedOnce: boolean; // Add this
+    hasLoadedOnce: boolean;
+    session: any | null;
+    setSession: (session: any | null) => void;
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
@@ -185,7 +187,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     vaultedItemsRevealed: [],
     roomHistory: [],
     currentRoomTitle: 'Canvas',
-    hasLoadedOnce: false, // Initialize as false
+    hasLoadedOnce: false,
+    session: null,
+    setSession: (session) => set({ session }),
 
     enterRoom: (id, title) => {
         const state = get();
@@ -241,10 +245,12 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     fetchData: async (user?: any) => {
         set({ loading: true });
         try {
-            let targetUser = user;
+            let targetUser = user || get().session?.user;
+
             if (!targetUser) {
                 const { data: { session } } = await supabase.auth.getSession();
                 targetUser = session?.user;
+                if (session) set({ session });
             }
 
             if (!targetUser) {

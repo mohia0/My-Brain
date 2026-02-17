@@ -323,3 +323,14 @@ a {
   -webkit-user-select: none !important;
   pointer-events: none !important;
 }
+
+/* Interactive elements should be unselectable but CLICKABLE */
+.bn-drag-handle,
+.bn-side-menu,
+.bn-slash-menu-trigger,
+div[role="button"][class*="bn-"],
+.bn-drag-handle-wrapper {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: auto !important;
+}

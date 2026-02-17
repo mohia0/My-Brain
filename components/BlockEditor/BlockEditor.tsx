@@ -140,8 +140,23 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
             overflow: 'hidden',
             background: 'transparent',
             borderRadius: 'inherit',
-            position: 'relative'
-        }}>
+            position: 'relative',
+            userSelect: 'text'
+        }}
+            onCopy={(e) => {
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0) return;
+
+                // If selection is within our editor
+                if (e.currentTarget.contains(selection.anchorNode)) {
+                    e.preventDefault();
+                    // Use standard browser text selection to get WYSIWYG plain text
+                    // This avoids BlockNote's markdown serialization (which adds \ escapes and <> links)
+                    const text = selection.toString();
+                    e.clipboardData.setData('text/plain', text);
+                }
+            }}
+        >
             <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10, paddingLeft: 24, paddingRight: 24 }}>
                 <BlockNoteView
                     editor={editor}

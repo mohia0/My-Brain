@@ -603,9 +603,15 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                                         // Richer preview
                                         return <div className={styles.richPreview}>
                                             {blocks.slice(0, 3).map((b: any, i: number) => {
-                                                const text = Array.isArray(b.content)
-                                                    ? b.content.map((c: any) => c.text).join('')
-                                                    : b.content || '';
+                                                let text = '';
+                                                if (Array.isArray(b.content)) {
+                                                    text = b.content.map((c: any) => c.text || '').join('');
+                                                } else if (typeof b.content === 'string') {
+                                                    text = b.content;
+                                                } else {
+                                                    // Fallback for complex blocks like tables
+                                                    text = `[${b.type || 'Object'}]`;
+                                                }
 
                                                 const isCheckList = b.type === 'checkListItem';
                                                 if (!text && !isCheckList) return null;

@@ -86,3 +86,22 @@
         opacity: 1;
     }
 }
+
+:global([data-theme='light']) .selectionBar {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+:global([data-theme='light']) .countInfo {
+    color: #111;
+}
+
+:global([data-theme='light']) .actionBtn {
+    color: #444;
+}
+
+:global([data-theme='light']) .closeBtn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #666;
+}

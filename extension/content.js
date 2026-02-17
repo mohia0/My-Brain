@@ -34,6 +34,7 @@
             let title = null;
             let description = null;
             let videoUrl = null;
+            let postUrl = null;
 
             const extractJsonLd = () => {
                 const scripts = document.querySelectorAll('script[type="application/ld+json"]');
@@ -62,6 +63,7 @@
                 if (Array.isArray(imageUrl)) imageUrl = imageUrl[0];
                 if (typeof imageUrl === 'object') imageUrl = imageUrl.url;
                 videoUrl = jsonLd.contentUrl || jsonLd.embedUrl;
+                postUrl = jsonLd.url || jsonLd.mainEntityOfPage;
             }
 
             // 2. Specific Platform Hooks
@@ -103,9 +105,13 @@
                     }
 
                     // Description / Caption
-                    // Usually in a ul/li structure or span with specific class
                     const captionEl = article.querySelector('h1') || article.querySelector('span._aacl') || article.querySelector('div[data-testid="post-comment-root"] span');
                     if (captionEl) description = captionEl.textContent;
+
+                    // Post URL (Permalink) - often a time element or an 'a' tag wrapping the time.
+                    // New selector strategy: Look for links with /p/ or /reel/
+                    const permalink = article.querySelector('a[href^="/p/"], a[href^="/reel/"]');
+                    if (permalink) postUrl = permalink.href;
                 }
 
                 if (!title) title = "Instagram Post";
@@ -131,6 +137,17 @@
                     // Author / Title
                     const author = post.querySelector('h3') || post.querySelector('h2') || post.querySelector('strong');
                     if (author) title = "Post by " + author.textContent;
+
+                    // Post URL
+                    // Look for links that contain /posts/, /photo.php, /permalink.php, or /watch within the post container
+                    const dateLink = Array.from(post.querySelectorAll('a')).find(a =>
+                        a.href.includes('/posts/') ||
+                        a.href.includes('/photo.php') ||
+                        a.href.includes('/permalink.php') ||
+                        a.href.includes('/watch') ||
+                        (a.innerText && /\d+/.test(a.innerText)) // timestamp link often has numbers/time
+                    );
+                    if (dateLink) postUrl = dateLink.href;
                 }
 
                 // Fallback: Check if user right-clicked a specific image even if outside typical article structure (e.g. theater mode)
@@ -142,6 +159,10 @@
                 if (!imageUrl) {
                     const spotlight = document.querySelector('img[data-visualcompletion="media-vc-image"]');
                     if (spotlight) imageUrl = spotlight.src;
+                    // If likely in theater mode, current URL is the post URL
+                    if (window.location.href.includes('/photo') || window.location.href.includes('/posts/')) {
+                        postUrl = window.location.href;
+                    }
                 }
 
                 if (!title) title = "Facebook Post";
@@ -164,6 +185,13 @@
 
                     const authorEl = document.querySelector('[data-e2e="browse-user-details"] h3') || document.querySelector('[data-e2e="user-title"]');
                     if (authorEl) title = authorEl.textContent + " on TikTok";
+
+                    // Post URL
+                    // Usually the current URL if we are on the video page, but on feed it's different.
+                    // On feed, find the link to the video.
+                    const link = videoContainer.closest('a') || videoContainer.querySelector('a');
+                    if (link) postUrl = link.href;
+                    else if (window.location.href.includes('/video/')) postUrl = window.location.href;
                 }
                 if (!title) title = "TikTok Video";
             }
@@ -217,7 +245,7 @@
             // Cleanup
             if (title && title.length > 100) title = title.substring(0, 100) + "...";
 
-            sendResponse({ imageUrl, title, description, videoUrl });
+            sendResponse({ imageUrl, title, description, videoUrl, postUrl });
         }
     });
 })();

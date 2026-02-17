@@ -150,7 +150,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             // If we have an image URL or Video URL, we treat it as a rich link
             if (captureData.imageUrl || captureData.videoUrl || info.mediaType === 'image') {
                 const imgUrl = captureData.imageUrl || info.srcUrl;
-                const sourceUrl = tab?.url || info.pageUrl;
+                // Use captured post URL if available (e.g. specific tweet/post), otherwise fallback to tab URL
+                const sourceUrl = captureData.postUrl || tab?.url || info.pageUrl;
                 const isVideo = !!captureData.videoUrl;
 
                 const { error } = await supabase.from('items').insert({
@@ -162,7 +163,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                         title: captureData.title || tab?.title || (isVideo ? "Captured Video" : "Captured Image"),
                         description: captureData.description || "",
                         image: imgUrl, // Preview image
-                        url: sourceUrl,
+                        url: sourceUrl, // This links back to the post
                         isVideo: isVideo,
                         source: "Extension Smart Capture"
                     },

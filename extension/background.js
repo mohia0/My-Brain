@@ -84,7 +84,7 @@ function createMenus() {
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({
             id: "save-to-brainia",
-            title: ". Save to Brainia",
+            title: "→ Save to Brainia",
             contexts: ["selection", "image", "link", "page", "action", "editable"]
         });
     });
@@ -118,6 +118,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             // Initialize capture data
             let captureData = {
                 imageUrl: info.srcUrl,
+                videoUrl: null,
                 title: null,
                 description: null
             };
@@ -145,22 +146,24 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 }
             }
 
-            // HANDLE IMAGE/LINK CAPTURE (SMART MODE)
-            // If we have an image URL, we treat it as a rich link or an image
-            if (captureData.imageUrl || info.mediaType === 'image') {
+            // HANDLE IMAGE/VIDEO/LINK CAPTURE (SMART MODE)
+            // If we have an image URL or Video URL, we treat it as a rich link
+            if (captureData.imageUrl || captureData.videoUrl || info.mediaType === 'image') {
                 const imgUrl = captureData.imageUrl || info.srcUrl;
                 const sourceUrl = tab?.url || info.pageUrl;
+                const isVideo = !!captureData.videoUrl;
 
                 const { error } = await supabase.from('items').insert({
                     id: crypto.randomUUID(),
                     user_id: user.id,
-                    type: 'link', // Always treat as link to preserve source
-                    content: sourceUrl || imgUrl, // Use source URL as main content
+                    type: isVideo ? 'video' : 'link', // Use video type if we found one
+                    content: isVideo ? captureData.videoUrl : (sourceUrl || imgUrl), // Content for video is the source
                     metadata: {
-                        title: captureData.title || tab?.title || "Captured Image",
+                        title: captureData.title || tab?.title || (isVideo ? "Captured Video" : "Captured Image"),
                         description: captureData.description || "",
-                        image: imgUrl, // Keep image as preview
+                        image: imgUrl, // Preview image
                         url: sourceUrl,
+                        isVideo: isVideo,
                         source: "Extension Smart Capture"
                     },
                     status: 'inbox',

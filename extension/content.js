@@ -33,20 +33,150 @@
             let imageUrl = null;
             let title = null;
             let description = null;
+            let videoUrl = null;
 
-            // Pinterest specific extraction
-            if (window.location.hostname.includes('pinterest')) {
-                // Try to find the main pin container or the one under the mouse
-                const pinContainer = lastRightClickElement?.closest('[data-test-id="pin"]') ||
-                    lastRightClickElement?.closest('[data-test-id="visual-content-container"]') ||
+            const extractJsonLd = () => {
+                const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+                for (const script of scripts) {
+                    try {
+                        const data = JSON.parse(script.textContent);
+                        if (data && (data['@type'] === 'VideoObject' || data['@type'] === 'ImageObject' || data['@type'] === 'Article')) {
+                            return data;
+                        }
+                        // Handle array of objects
+                        if (Array.isArray(data)) {
+                            const item = data.find(d => d['@type'] === 'VideoObject' || d['@type'] === 'ImageObject' || d['@type'] === 'Article');
+                            if (item) return item;
+                        }
+                    } catch (e) { }
+                }
+                return null;
+            };
+
+            // 1. JSON-LD Extraction (High Priority for Schema-rich sites like TikTok, Insta)
+            const jsonLd = extractJsonLd();
+            if (jsonLd) {
+                title = jsonLd.name || jsonLd.headline || jsonLd.description;
+                description = jsonLd.description;
+                imageUrl = jsonLd.thumbnailUrl || jsonLd.image;
+                if (Array.isArray(imageUrl)) imageUrl = imageUrl[0];
+                if (typeof imageUrl === 'object') imageUrl = imageUrl.url;
+                videoUrl = jsonLd.contentUrl || jsonLd.embedUrl;
+            }
+
+            // 2. Specific Platform Hooks
+            const hostname = window.location.hostname;
+            const target = lastRightClickElement; // The element the user actually clicked
+
+            // --- INSTAGRAM ---
+            if (hostname.includes('instagram.com')) {
+                // Try to find the specific post container. If clicked on modal, 'article' might be higher up.
+                const article = target?.closest('article') || document.querySelector('article._aatb') || document.querySelector('article');
+
+                if (article) {
+                    // Image: Instagram often puts the real image in a srcset, but sometimes its buried.
+                    // We look for the first significant image that isn't a tiny profile pic.
+                    const images = Array.from(article.querySelectorAll('img'));
+                    // Filter for likely content images (larger than 100px)
+                    const contentImg = images.find(img => img.width > 200 || (img.srcset && img.sizes));
+
+                    // Video
+                    const video = article.querySelector('video');
+
+                    if (video) {
+                        imageUrl = video.poster;
+                        // Note: capturing actual video URL is hard due to blobs, but poster is good.
+                        // sometimes we can get lucky.
+                        if (video.src && !video.src.startsWith('blob:') && video.src.startsWith('http')) videoUrl = video.src;
+                    }
+
+                    if (!imageUrl && contentImg) {
+                        // Get highest res from srcset if available
+                        if (contentImg.srcset) {
+                            const sources = contentImg.srcset.split(',');
+                            // Last one is usually highest res
+                            const lastSource = sources[sources.length - 1].trim();
+                            imageUrl = lastSource.split(' ')[0];
+                        } else {
+                            imageUrl = contentImg.src;
+                        }
+                    }
+
+                    // Description / Caption
+                    // Usually in a ul/li structure or span with specific class
+                    const captionEl = article.querySelector('h1') || article.querySelector('span._aacl') || article.querySelector('div[data-testid="post-comment-root"] span');
+                    if (captionEl) description = captionEl.textContent;
+                }
+
+                if (!title) title = "Instagram Post";
+            }
+
+            // --- FACEBOOK ---
+            else if (hostname.includes('facebook.com')) {
+                // FB is complex due to randomized classes.
+                const post = target?.closest('[role="article"]') || document.querySelector('[role="article"]');
+
+                if (post) {
+                    // Image: FB uses specific image classes often inside a masked link
+                    const imgs = Array.from(post.querySelectorAll('img'));
+                    // Filter out small icons/emojis (FB often uses 16x16 or 24x24 icons)
+                    const contentImg = imgs.find(img => (img.width > 200 || img.height > 200) && img.src.includes('fbcdn'));
+
+                    if (contentImg) imageUrl = contentImg.src;
+
+                    // Text content
+                    const textContainer = post.querySelector('[data-ad-preview="message"]') || post.querySelector('div[dir="auto"]');
+                    if (textContainer) description = textContainer.textContent;
+
+                    // Author / Title
+                    const author = post.querySelector('h3') || post.querySelector('h2') || post.querySelector('strong');
+                    if (author) title = "Post by " + author.textContent;
+                }
+
+                // Fallback: Check if user right-clicked a specific image even if outside typical article structure (e.g. theater mode)
+                if (!imageUrl && target && target.tagName === 'IMG' && target.src.includes('fbcdn')) {
+                    imageUrl = target.src;
+                }
+
+                // Fallback for full page (e.g. photo view)
+                if (!imageUrl) {
+                    const spotlight = document.querySelector('img[data-visualcompletion="media-vc-image"]');
+                    if (spotlight) imageUrl = spotlight.src;
+                }
+
+                if (!title) title = "Facebook Post";
+            }
+
+            // --- TIKTOK ---
+            else if (hostname.includes('tiktok.com')) {
+                // TikTok usually has good JSON-LD, but if that fails:
+                const videoContainer = target?.closest('[data-e2e="tiktok-video"]') || document.querySelector('[data-e2e="video-container"]');
+
+                if (videoContainer || document) {
+                    const video = document.querySelector('video');
+                    if (video) {
+                        imageUrl = video.poster;
+                        if (video.src) videoUrl = video.src;
+                    }
+
+                    const descEl = document.querySelector('[data-e2e="browse-video-desc"]') || document.querySelector('[data-e2e="video-desc"]');
+                    if (descEl) description = descEl.textContent;
+
+                    const authorEl = document.querySelector('[data-e2e="browse-user-details"] h3') || document.querySelector('[data-e2e="user-title"]');
+                    if (authorEl) title = authorEl.textContent + " on TikTok";
+                }
+                if (!title) title = "TikTok Video";
+            }
+
+            // --- PINTEREST (Legacy support) ---
+            else if (hostname.includes('pinterest')) {
+                const pinContainer = target?.closest('[data-test-id="pin"]') ||
+                    target?.closest('[data-test-id="visual-content-container"]') ||
                     document.querySelector('[data-test-id="visual-content-container"]') ||
                     document.querySelector('main');
 
-                let pinImg = null;
                 if (pinContainer) {
-                    pinImg = pinContainer.querySelector('img');
-
-                    // 1. High-res Image Extraction
+                    const pinImg = pinContainer.querySelector('img');
                     if (pinImg) {
                         if (pinImg.srcset) {
                             const sources = pinImg.srcset.split(',');
@@ -55,31 +185,23 @@
                             imageUrl = pinImg.src;
                         }
                     }
-
-                    // 2. Title Extraction (Multiple selectors for different layout versions)
-                    title = pinContainer.querySelector('[data-test-id="pinTitle"] h1')?.textContent ||
-                        pinContainer.querySelector('[data-test-id="pin-title"]')?.textContent ||
-                        document.querySelector('[data-test-id="pinTitle"] h1')?.textContent ||
-                        document.querySelector('h1')?.textContent ||
-                        pinImg?.alt;
-
-                    // 3. Description Extraction
-                    description = pinContainer.querySelector('[data-test-id="main-pin-description-text"]')?.textContent ||
-                        pinContainer.querySelector('[data-test-id="pin-description"]')?.textContent ||
-                        document.querySelector('[data-test-id="main-pin-description-text"]')?.textContent;
+                    title = pinContainer.querySelector('h1')?.textContent || pinImg?.alt;
+                    description = pinContainer.querySelector('[data-test-id="main-pin-description-text"]')?.textContent;
                 }
-
-                // Final cleanup for Pinterest titles (remove branding)
                 if (title) title = title.replace(" - Pinterest", "").trim();
             }
 
-            // Generic fallback
-            if (!imageUrl && lastRightClickElement) {
-                if (lastRightClickElement.tagName === 'IMG') {
-                    imageUrl = lastRightClickElement.src;
-                    title = lastRightClickElement.alt;
+            // 3. Robust Generic Fallback
+            // If specific extractors failed, use generic but smart heuristics
+            if (!imageUrl && target) {
+                if (target.tagName === 'IMG') {
+                    imageUrl = target.src;
+                    title = target.alt;
+                } else if (target.tagName === 'VIDEO') {
+                    imageUrl = target.poster;
+                    videoUrl = target.src;
                 } else {
-                    const img = lastRightClickElement.querySelector('img');
+                    const img = target.querySelector('img');
                     if (img) {
                         imageUrl = img.src;
                         title = img.alt;
@@ -87,12 +209,15 @@
                 }
             }
 
-            // Final fallback to page meta
+            // 4. Meta Tags (Lowest priority but reliable)
             if (!imageUrl) imageUrl = document.querySelector('meta[property="og:image"]')?.content;
             if (!title) title = document.querySelector('meta[property="og:title"]')?.content || document.title;
             if (!description) description = document.querySelector('meta[property="og:description"]')?.content;
 
-            sendResponse({ imageUrl, title, description });
+            // Cleanup
+            if (title && title.length > 100) title = title.substring(0, 100) + "...";
+
+            sendResponse({ imageUrl, title, description, videoUrl });
         }
     });
 })();

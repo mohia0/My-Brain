@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Inbox as InboxIcon, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
+import { Inbox as InboxIcon, ChevronRight, ChevronLeft, Trash2, RotateCw } from 'lucide-react';
 import styles from './Inbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useDroppable } from '@dnd-kit/core';
@@ -11,10 +11,19 @@ interface InboxProps {
 }
 
 export default function Inbox({ onItemClick }: InboxProps) {
-    const { items, clearInbox } = useItemsStore();
+    const { items, clearInbox, fetchData } = useItemsStore();
     const inboxItems = items.filter(i => i.status === 'inbox')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     const [isClearing, setIsClearing] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        await fetchData();
+        setTimeout(() => setIsRefreshing(false), 600);
+    };
 
     const { setNodeRef, isOver } = useDroppable({
         id: 'inbox-area',
@@ -54,6 +63,19 @@ export default function Inbox({ onItemClick }: InboxProps) {
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
                     </button>
+                    {!isCollapsed && (
+                        <button
+                            className={styles.refreshBtn}
+                            onClick={handleRefresh}
+                            data-tooltip="Refresh"
+                            data-tooltip-pos="top"
+                        >
+                            <RotateCw
+                                size={14}
+                                className={isRefreshing ? styles.spinning : ''}
+                            />
+                        </button>
+                    )}
                     {!isCollapsed && inboxItems.length > 0 && (
                         <button
                             className={clsx(styles.clearBtn, isClearing && styles.confirmClear)}

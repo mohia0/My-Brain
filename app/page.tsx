@@ -431,12 +431,14 @@ export default function Home() {
                   <Inbox />
                   <Canvas>
 
-                    <AnimatePresence>
+                    <AnimatePresence mode="popLayout">
                       {projectAreas.map(area => (
                         <motion.div
                           key={area.id}
+                          initial={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                           exit={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
-                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
                           style={{
                             position: 'absolute',
                             pointerEvents: 'none',
@@ -452,8 +454,10 @@ export default function Home() {
                       {visibleFolders.map(folder => (
                         <motion.div
                           key={folder.id}
+                          initial={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                           exit={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
-                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
                           style={{
                             position: 'absolute',
                             pointerEvents: 'none',
@@ -476,8 +480,10 @@ export default function Home() {
                         return (
                           <motion.div
                             key={item.id}
+                            initial={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                             exit={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
-                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
                             style={{
                               position: 'absolute',
                               pointerEvents: 'none',

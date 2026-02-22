@@ -247,7 +247,6 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             >
                 <LockIcon size={12} />
             </button>
-            <ActionMoveMenu itemId={localItem.id} />
             <button
                 onClick={handleDeleteClick}
                 data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}

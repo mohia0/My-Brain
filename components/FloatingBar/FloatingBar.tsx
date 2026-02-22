@@ -142,7 +142,11 @@ export default function FloatingBar() {
 
     const isInsideRoom = !!currentRoomId;
     const parentRoomId = currentRoomId ? items.find(i => i.id === currentRoomId)?.room_id : null;
-    const moveOutLabel = parentRoomId ? 'Move to Outer Room' : 'Move to Main Canvas';
+    let moveOutLabel = 'Move to Main Canvas';
+    if (parentRoomId) {
+        const parentRoomName = items.find(i => i.id === parentRoomId)?.metadata?.title || 'Room';
+        moveOutLabel = `Move to ${parentRoomName}`;
+    }
 
     const handleGroupSubmit = (name: string) => {
         const selectedItems = items.filter(i => selectedIds.includes(i.id));
@@ -234,18 +238,6 @@ export default function FloatingBar() {
                                 >
                                     <Folder size={14} />
                                     <span>{folder.name}</span>
-                                </button>
-                            ))}
-
-                            {mindrooms.length > 0 && <div className={styles.menuGroupTitle}>Mind Rooms</div>}
-                            {mindrooms.map(room => (
-                                <button
-                                    key={room.id}
-                                    className={styles.menuOption}
-                                    onClick={() => handleMoveToRoom(room.id)}
-                                >
-                                    <DoorClosed size={14} />
-                                    <span>{room.metadata?.title || 'Untitled Room'}</span>
                                 </button>
                             ))}
 

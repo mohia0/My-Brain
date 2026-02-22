@@ -9,6 +9,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
+import ActionMoveMenu from '@/components/ActionMoveMenu/ActionMoveMenu';
 
 interface FolderItemProps {
     folder: Folder;
@@ -120,6 +121,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
             >
                 <Lock size={12} />
             </button>
+            <ActionMoveMenu itemId={folder.id} isFolder />
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
             <button
                 onClick={handleDeleteClick}

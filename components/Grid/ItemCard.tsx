@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+import ActionMoveMenu from '@/components/ActionMoveMenu/ActionMoveMenu';
 
 interface ItemCardProps {
     item: Item;
@@ -200,6 +201,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             >
                 <LockIcon size={12} />
             </button>
+            <ActionMoveMenu itemId={localItem.id} />
             <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
             <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom-left"><Copy size={12} /></button>
             <button
@@ -245,6 +247,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             >
                 <LockIcon size={12} />
             </button>
+            <ActionMoveMenu itemId={localItem.id} />
             <button
                 onClick={handleDeleteClick}
                 data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}

@@ -73,8 +73,10 @@
     letter-spacing: 0.02em;
 }
 
-.folder:hover {
+.folder:hover,
+.folder:focus-within {
     box-shadow: 0 8px 16px var(--shadow-color);
+    z-index: 9999;
 }
 
 .folder:active {
@@ -215,7 +217,8 @@
     z-index: 20;
 }
 
-.folder:hover .actions {
+.folder:hover .actions,
+.folder:focus-within .actions {
     opacity: 1;
 }
 

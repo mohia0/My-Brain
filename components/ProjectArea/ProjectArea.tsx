@@ -41,11 +41,32 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
             const dx = (moveEvent.clientX - startX) / scale;
             const dy = (moveEvent.clientY - startY) / scale;
 
+            let finalWidth = startWidth + dx;
+            let finalHeight = startHeight + dy;
+
+            const isSnapppingEnabled = useCanvasStore.getState().isSnappingEnabled;
+            if (isSnapppingEnabled) {
+                const projectAreas = useItemsStore.getState().items.filter(i => i.type === 'project' && i.id !== item.id);
+                let minWDiff = 20 / scale;
+                let minHDiff = 20 / scale;
+
+                projectAreas.forEach(p => {
+                    const pw = p.metadata?.width || 300;
+                    const ph = p.metadata?.height || 200;
+                    if (Math.abs(finalWidth - pw) < minWDiff) { finalWidth = pw; minWDiff = Math.abs(finalWidth - pw); }
+                    if (Math.abs(finalHeight - ph) < minHDiff) { finalHeight = ph; minHDiff = Math.abs(finalHeight - ph); }
+                });
+
+                // Fallback to 20px grid snapping
+                if (minWDiff === 20 / scale) finalWidth = Math.round(finalWidth / 20) * 20;
+                if (minHDiff === 20 / scale) finalHeight = Math.round(finalHeight / 20) * 20;
+            }
+
             updateItemContent(item.id, {
                 metadata: {
                     ...item.metadata,
-                    width: Math.max(100, startWidth + dx),
-                    height: Math.max(100, startHeight + dy)
+                    width: Math.max(100, finalWidth),
+                    height: Math.max(100, finalHeight)
                 }
             });
         };

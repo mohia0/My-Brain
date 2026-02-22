@@ -539,7 +539,38 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
                 }
             }
 
-            // 4. Global Canvas Boundaries
+            // 5. Room Back Button Exclusion Zone (only if inside a room)
+            if (isRoom) {
+                const backBtnRadius = 140;
+                // A box around (0,0) simulating the Back Button
+                const bLeft = -backBtnRadius;
+                const bRight = backBtnRadius;
+                const bTop = -backBtnRadius;
+                const bBottom = backBtnRadius;
+
+                const iLeft = finalX;
+                const iTop = finalY;
+                const iRight = finalX + w;
+                const iBottom = finalY + h;
+
+                // Check intersection
+                if (iRight > bLeft && iLeft < bRight && iBottom > bTop && iTop < bBottom) {
+                    // Push out to the closest edge of the exclusion zone
+                    const toLeft = iRight - bLeft;
+                    const toRight = bRight - iLeft;
+                    const toTop = iBottom - bTop;
+                    const toBottom = bBottom - iTop;
+
+                    const minDest = Math.min(toLeft, toRight, toTop, toBottom);
+
+                    if (minDest === toLeft) finalX -= toLeft;
+                    else if (minDest === toRight) finalX += toRight;
+                    else if (minDest === toTop) finalY -= toTop;
+                    else if (minDest === toBottom) finalY += toBottom;
+                }
+            }
+
+            // 6. Global Canvas Boundaries
             const canvasMinX = -HALF_WIDTH + PADDING;
             const canvasMaxX = HALF_WIDTH - PADDING - w;
             const canvasMinY = -HALF_HEIGHT + PADDING;

@@ -12,6 +12,7 @@ import { useState, useEffect, useRef } from "react";
 import clsx from 'clsx';
 import MiniMap from "@/components/MiniMap/MiniMap";
 import Header from "@/components/Header/Header";
+import { AnimatePresence, motion } from 'framer-motion';
 import AccountMenu from "@/components/AccountMenu/AccountMenu";
 import AuthModal from "@/components/AuthModal/AuthModal";
 import { supabase } from "@/lib/supabase";
@@ -430,34 +431,80 @@ export default function Home() {
                   <Inbox />
                   <Canvas>
 
-                    {projectAreas.map(area => (
-                      <ProjectArea key={area.id} item={area} />
-                    ))}
-                    {visibleFolders.map(folder => (
-                      <FolderItem
-                        key={folder.id}
-                        folder={folder}
-                        onClick={() => setOpenFolderId(folder.id)}
-                        isLocked={isInsideLockedArea(folder.position_x, folder.position_y, 200, 100)}
-                      />
-                    ))}
-                    {visibleItems.map(item => (
-                      <ItemCard
-                        key={item.id}
-                        item={item}
-                        onClick={item.type === 'room' ? undefined : () => {
-                          const isRevealedLocal = useItemsStore.getState().vaultedItemsRevealed.includes(item.id);
-                          const isUnlockedGlobal = !useVaultStore.getState().isVaultLocked;
-                          const isUnlockedIndividual = useVaultStore.getState().unlockedIds.includes(item.id);
-                          const isObscured = item.is_vaulted && !isRevealedLocal && !isUnlockedGlobal && !isUnlockedIndividual;
+                    <AnimatePresence>
+                      {projectAreas.map(area => (
+                        <motion.div
+                          key={area.id}
+                          exit={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          style={{
+                            position: 'absolute',
+                            pointerEvents: 'none',
+                            zIndex: 9999,
+                            transformOrigin: `${area.position_x + (area.metadata?.width || 300) / 2}px ${area.position_y + (area.metadata?.height || 200) / 2}px`
+                          }}
+                        >
+                          <div style={{ pointerEvents: 'auto' }}>
+                            <ProjectArea item={area} />
+                          </div>
+                        </motion.div>
+                      ))}
+                      {visibleFolders.map(folder => (
+                        <motion.div
+                          key={folder.id}
+                          exit={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          style={{
+                            position: 'absolute',
+                            pointerEvents: 'none',
+                            zIndex: 9999,
+                            transformOrigin: `${folder.position_x + 100}px ${folder.position_y + 60}px`
+                          }}
+                        >
+                          <div style={{ pointerEvents: 'auto' }}>
+                            <FolderItem
+                              folder={folder}
+                              onClick={() => setOpenFolderId(folder.id)}
+                              isLocked={isInsideLockedArea(folder.position_x, folder.position_y, 200, 100)}
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
+                      {visibleItems.map(item => {
+                        const w = item.metadata?.width || (item.type === 'room' ? 220 : 280);
+                        const h = item.metadata?.height || (item.type === 'room' ? 220 : 120);
+                        return (
+                          <motion.div
+                            key={item.id}
+                            exit={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            style={{
+                              position: 'absolute',
+                              pointerEvents: 'none',
+                              zIndex: 9999,
+                              transformOrigin: `${item.position_x + w / 2}px ${item.position_y + h / 2}px`
+                            }}
+                          >
+                            <div style={{ pointerEvents: 'auto' }}>
+                              <ItemCard
+                                item={item}
+                                onClick={item.type === 'room' ? undefined : () => {
+                                  const isRevealedLocal = useItemsStore.getState().vaultedItemsRevealed.includes(item.id);
+                                  const isUnlockedGlobal = !useVaultStore.getState().isVaultLocked;
+                                  const isUnlockedIndividual = useVaultStore.getState().unlockedIds.includes(item.id);
+                                  const isObscured = item.is_vaulted && !isRevealedLocal && !isUnlockedGlobal && !isUnlockedIndividual;
 
-                          if (!isObscured) {
-                            setSelectedItemId(item.id);
-                          }
-                        }}
-                        isLocked={isInsideLockedArea(item.position_x, item.position_y, item.metadata?.width || 280, item.metadata?.height || (item.type === 'room' ? 280 : 120))}
-                      />
-                    ))}
+                                  if (!isObscured) {
+                                    setSelectedItemId(item.id);
+                                  }
+                                }}
+                                isLocked={isInsideLockedArea(item.position_x, item.position_y, w, h)}
+                              />
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
                     <RoomBackButton />
                   </Canvas>
                   <MiniMap />
@@ -467,15 +514,6 @@ export default function Home() {
                   <ArchiveZone />
                   <ArchiveView />
 
-                  {selectedItemId && (
-                    <ItemModal
-                      itemId={selectedItemId}
-                      onClose={() => {
-                        setSelectedItemId(null);
-                        clearSelection();
-                      }}
-                    />
-                  )}
                   {openFolderId && (
                     <FolderModal
                       folderId={openFolderId}
@@ -484,6 +522,16 @@ export default function Home() {
                         clearSelection();
                       }}
                       onItemClick={(id) => setSelectedItemId(id)}
+                      isChildOpen={!!selectedItemId}
+                    />
+                  )}
+                  {selectedItemId && (
+                    <ItemModal
+                      itemId={selectedItemId}
+                      onClose={() => {
+                        setSelectedItemId(null);
+                        clearSelection();
+                      }}
                     />
                   )}
                 </main>

@@ -214,6 +214,28 @@
     background: var(--text-muted);
 }
 
+.footerNote {
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    border-top: 1px solid var(--card-border);
+    background: var(--card-bg);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    line-height: 1.4;
+    opacity: 0.8;
+    user-select: none;
+}
+
+.collapsed .footerNote {
+    display: none;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
 .emptyState {
     display: flex;
     flex-direction: column;

@@ -11,7 +11,7 @@ import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consist
 // If we re-use ItemCard, they might try to drag inside the modal which is tricky.
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
-export default function FolderModal({ folderId: initialFolderId, onClose, onItemClick, onFolderClick }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void, onFolderClick?: (id: string) => void }) {
+export default function FolderModal({ folderId: initialFolderId, onClose, onItemClick, onFolderClick, isChildOpen }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void, onFolderClick?: (id: string) => void, isChildOpen?: boolean }) {
     const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection, duplicateItem, archiveItem, removeItem } = useItemsStore();
     const [currentFolderId, setCurrentFolderId] = React.useState(initialFolderId);
     const folder = folders.find(f => f.id === currentFolderId);
@@ -102,11 +102,11 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     // Handle ESC key
     React.useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape' && !isChildOpen) onClose();
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose]);
+    }, [onClose, isChildOpen]);
 
     if (!folder) return null;
 
@@ -164,7 +164,6 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         if (hasModifier || isSelectionMode) {
             toggleSelection(id);
         } else {
-            onClose();
             onItemClick(id);
         }
     };

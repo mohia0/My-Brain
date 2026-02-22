@@ -9,7 +9,7 @@
     color: var(--foreground);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     transition: box-shadow 0.2s, background 0.2s, opacity 0.3s, filter 0.3s;
     cursor: grab;
     box-shadow: 0 4px 12px var(--shadow-color);
@@ -30,6 +30,8 @@
     width: 100%;
     height: 100%;
     min-width: 0;
+    overflow: hidden;
+    border-radius: inherit;
 }
 
 .outerDate {
@@ -48,10 +50,12 @@
     cursor: grabbing;
 }
 
-.card:hover {
+.card:hover,
+.card:focus-within {
     background: var(--card-hover);
     box-shadow: 0 8px 16px var(--shadow-color);
     border-color: var(--border-light);
+    z-index: 9999;
 }
 
 .header {
@@ -127,6 +131,7 @@
 }
 
 .card:hover .actions,
+.card:focus-within .actions,
 .portalCard:hover .actions {
     opacity: 1;
 }

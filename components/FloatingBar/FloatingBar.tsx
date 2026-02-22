@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './FloatingBar.module.css';
-import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder, Archive, CircleArrowOutUpRight, Inbox } from 'lucide-react';
+import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder, Archive, CircleArrowOutUpRight, Inbox, DoorClosed, Frame, CornerLeftUp } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { generateId } from '@/lib/utils';
 import InputModal from '@/components/InputModal/InputModal';
@@ -19,7 +19,8 @@ export default function FloatingBar() {
         folders, /**/
         updateItemContent,/* */
         layoutSelectedItems,/* */
-        archiveSelected
+        archiveSelected,
+        currentRoomId
     } = useItemsStore();
 
     const [isDeleting, setIsDeleting] = useState(false);
@@ -61,14 +62,87 @@ export default function FloatingBar() {
         selectedIds.forEach(id => {
             const isItem = items.some(i => i.id === id);
             if (isItem) {
-                updateItemContent(id, { folder_id: folderId, status: 'active' });
+                updateItemContent(id, { folder_id: folderId, room_id: null, status: 'active' });
             } else {
-                useItemsStore.getState().updateFolderContent?.(id, { parent_id: folderId });
+                useItemsStore.getState().updateFolderContent?.(id, { parent_id: folderId, room_id: null });
             }
         });
         clearSelection();
         setIsMoveMenuOpen(false);
     };
+
+    const handleMoveToRoom = (roomId: string) => {
+        selectedIds.forEach(id => {
+            const isItem = items.some(i => i.id === id);
+            if (isItem) {
+                updateItemContent(id, { room_id: roomId, folder_id: null, status: 'active' });
+            } else {
+                useItemsStore.getState().updateFolderContent?.(id, { room_id: roomId, parent_id: null });
+            }
+        });
+        clearSelection();
+        setIsMoveMenuOpen(false);
+    };
+
+    const handleMoveToArea = (areaId: string) => {
+        const area = items.find(i => i.id === areaId);
+        if (!area) return;
+
+        const centerX = area.position_x + (area.metadata?.width || 300) / 2;
+        const centerY = area.position_y + (area.metadata?.height || 200) / 2;
+
+        selectedIds.forEach((id, index) => {
+            const offset = index * 20;
+            const isItem = items.some(i => i.id === id);
+            if (isItem) {
+                updateItemContent(id, {
+                    position_x: centerX - 140 + offset,
+                    position_y: centerY - 60 + offset,
+                    room_id: null,
+                    folder_id: null,
+                    status: 'active'
+                });
+            } else {
+                useItemsStore.getState().updateFolderContent?.(id, {
+                    position_x: centerX - 140 + offset,
+                    position_y: centerY - 60 + offset,
+                    room_id: null,
+                    parent_id: null
+                });
+            }
+        });
+        clearSelection();
+        setIsMoveMenuOpen(false);
+    };
+
+    const handleMoveOut = () => {
+        const parentRoomId = currentRoomId ? items.find(i => i.id === currentRoomId)?.room_id || null : null;
+
+        selectedIds.forEach((id) => {
+            const isItem = items.some(i => i.id === id);
+            if (isItem) {
+                updateItemContent(id, {
+                    room_id: parentRoomId,
+                    folder_id: null,
+                    status: 'active'
+                });
+            } else {
+                useItemsStore.getState().updateFolderContent?.(id, {
+                    room_id: parentRoomId,
+                    parent_id: null
+                });
+            }
+        });
+        clearSelection();
+        setIsMoveMenuOpen(false);
+    };
+
+    const mindrooms = items.filter(i => i.type === 'room');
+    const projectAreas = items.filter(i => i.type === 'project');
+
+    const isInsideRoom = !!currentRoomId;
+    const parentRoomId = currentRoomId ? items.find(i => i.id === currentRoomId)?.room_id : null;
+    const moveOutLabel = parentRoomId ? 'Move to Outer Room' : 'Move to Main Canvas';
 
     const handleGroupSubmit = (name: string) => {
         const selectedItems = items.filter(i => selectedIds.includes(i.id));
@@ -137,6 +211,21 @@ export default function FloatingBar() {
 
 
                         <div className={styles.folderList}>
+                            {isInsideRoom && (
+                                <button
+                                    className={styles.menuOption}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveOut();
+                                    }}
+                                    style={{ color: 'var(--accent)' }}
+                                >
+                                    <CornerLeftUp size={14} />
+                                    <span>{moveOutLabel}</span>
+                                </button>
+                            )}
+
+                            {folders.length > 0 && <div className={styles.menuGroupTitle}>Folders</div>}
                             {folders.map(folder => (
                                 <button
                                     key={folder.id}
@@ -145,6 +234,30 @@ export default function FloatingBar() {
                                 >
                                     <Folder size={14} />
                                     <span>{folder.name}</span>
+                                </button>
+                            ))}
+
+                            {mindrooms.length > 0 && <div className={styles.menuGroupTitle}>Mind Rooms</div>}
+                            {mindrooms.map(room => (
+                                <button
+                                    key={room.id}
+                                    className={styles.menuOption}
+                                    onClick={() => handleMoveToRoom(room.id)}
+                                >
+                                    <DoorClosed size={14} />
+                                    <span>{room.metadata?.title || 'Untitled Room'}</span>
+                                </button>
+                            ))}
+
+                            {projectAreas.length > 0 && <div className={styles.menuGroupTitle}>Project Areas</div>}
+                            {projectAreas.map(area => (
+                                <button
+                                    key={area.id}
+                                    className={styles.menuOption}
+                                    onClick={() => handleMoveToArea(area.id)}
+                                >
+                                    <Frame size={14} />
+                                    <span>{area.metadata?.title || 'Project Area'}</span>
                                 </button>
                             ))}
                         </div>

@@ -109,33 +109,38 @@ export default function Inbox({ onItemClick }: InboxProps) {
                 </div>
             </div>
             {!isCollapsed && (
-                <div className={styles.content}>
-                    {inboxItems.length === 0 ? (
-                        <div className={styles.emptyState}>
-                            {isOver ? (
-                                <div className={styles.emptyDropZone}>
-                                    <InboxIcon size={48} />
-                                    <h3>Drop to move to Inbox</h3>
-                                    <p>Release items here to process them later.</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
-                                    <h3>Mind cleared.</h3>
-                                    <p>Space for your next big idea.</p>
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        inboxItems.map(item => (
-                            <InboxItem
-                                key={item.id}
-                                item={item}
-                                onClick={() => onItemClick?.(item.id)}
-                            />
-                        ))
-                    )}
-                </div>
+                <>
+                    <div className={styles.content}>
+                        {inboxItems.length === 0 ? (
+                            <div className={styles.emptyState}>
+                                {isOver ? (
+                                    <div className={styles.emptyDropZone}>
+                                        <InboxIcon size={48} />
+                                        <h3>Drop to move to Inbox</h3>
+                                        <p>Release items here to process them later.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
+                                        <h3>Mind cleared.</h3>
+                                        <p>Space for your next big idea.</p>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            inboxItems.map(item => (
+                                <InboxItem
+                                    key={item.id}
+                                    item={item}
+                                    onClick={() => onItemClick?.(item.id)}
+                                />
+                            ))
+                        )}
+                    </div>
+                    <div className={styles.footerNote}>
+                        Captures from the browser extension and mobile app appear here. Drag items to the canvas to organize them.
+                    </div>
+                </>
             )}
         </div>
     );

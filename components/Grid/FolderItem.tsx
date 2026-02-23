@@ -24,6 +24,7 @@ interface FolderItemViewProps {
     isDimmed?: boolean;
     isDragging?: boolean;
     isOverlay?: boolean;
+    isOver?: boolean;
     onClick?: (e: React.MouseEvent) => void;
     onDelete: (e: React.MouseEvent) => void;
     onArchive: (e: React.MouseEvent) => void;
@@ -40,6 +41,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
     isDimmed,
     isDragging,
     isOverlay,
+    isOver,
     onClick,
     onDelete,
     onArchive,
@@ -101,47 +103,50 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
         }
     };
 
-    const renderActions = () => (
-        <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (isVaulted && !isObscured) handleLockFolder(e);
-                    else if (isObscured) {
+    const renderActions = () => {
+        if (isDragging) return null;
+        return (
+            <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+                <button
+                    onClick={(e) => {
                         e.stopPropagation();
-                        setModalOpen(true, folder.id);
-                    } else handleVaultToggle(e);
-                }}
-                onPointerDown={e => e.stopPropagation()}
-                onMouseDown={e => e.stopPropagation()}
-                data-tooltip={isObscured ? "Hidden - Tap to Unlock" : (isVaulted ? "Re-Lock Folder" : "Lock Folder")}
-                data-tooltip-pos="bottom"
-                style={{ color: 'inherit' }}
-            >
-                <Lock size={12} />
-            </button>
-            <ActionMoveMenu itemId={folder.id} isFolder />
-            <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
-            <button
-                onClick={handleDeleteClick}
-                data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
-                data-tooltip-pos="bottom-left"
-                className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
-                onMouseLeave={() => setIsDeleting(false)}
-            >
-                {isDeleting ? "Sure?" : <Trash2 size={12} />}
-            </button>
-        </div>
-    );
-
+                        e.preventDefault();
+                        if (isVaulted && !isObscured) handleLockFolder(e);
+                        else if (isObscured) {
+                            e.stopPropagation();
+                            setModalOpen(true, folder.id);
+                        } else handleVaultToggle(e);
+                    }}
+                    onPointerDown={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                    data-tooltip={isObscured ? "Hidden - Tap to Unlock" : (isVaulted ? "Re-Lock Folder" : "Lock Folder")}
+                    data-tooltip-pos="bottom"
+                    style={{ color: 'inherit' }}
+                >
+                    <Lock size={12} />
+                </button>
+                <ActionMoveMenu itemId={folder.id} isFolder />
+                <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
+                <button
+                    onClick={handleDeleteClick}
+                    data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
+                    data-tooltip-pos="bottom-left"
+                    className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
+                    onMouseLeave={() => setIsDeleting(false)}
+                >
+                    {isDeleting ? "Sure?" : <Trash2 size={12} />}
+                </button>
+            </div>
+        );
+    };
 
     // Base class name
     const baseClassName = clsx(
         styles.folder,
         isSelected && styles.selected,
         isDimmed && styles.dimmed,
-        isObscured && styles.obscured
+        isObscured && styles.obscured,
+        isOver && styles.isOver
     );
 
     // Style adjustments for overlay (fixed type error)
@@ -257,7 +262,7 @@ export default function FolderItem({ folder, isLocked, onClick }: FolderItemProp
         disabled: isLocked,
     });
 
-    const { setNodeRef: setDroppableRef } = useDroppable({
+    const { setNodeRef: setDroppableRef, isOver } = useDroppable({
         id: folder.id,
         data: { type: 'folder', id: folder.id }
     });
@@ -300,6 +305,7 @@ export default function FolderItem({ folder, isLocked, onClick }: FolderItemProp
             isSelected={isSelected}
             isDimmed={isDimmed}
             isDragging={isDragging}
+            isOver={isOver}
             onClick={handleClick}
             onArchive={handleArchive}
             onDelete={handleDelete}

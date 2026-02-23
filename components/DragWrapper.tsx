@@ -372,12 +372,23 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         if (!activeData) return;
 
         // 1. Handle dropping an item INTO a folder
-        if (activeData.type !== 'folder' && over && over.data.current?.type === 'folder' && activeData.type !== 'inbox-item') {
-            updateItemContent(active.id as string, {
-                folder_id: over.id as string,
-                status: 'active',
-                room_id: over.data.current?.room_id || null
+        if (activeData.type !== 'folder' && over && over.data.current?.type === 'folder' && activeData.type !== 'project' && activeData.itemType !== 'room') {
+            const movingIds = currentSelectedIds.includes(active.id as string)
+                ? currentSelectedIds
+                : [active.id as string];
+
+            movingIds.forEach(id => {
+                // Prevent dropping folders or project areas into folders
+                const activeItem = useItemsStore.getState().items.find(i => i.id === id);
+                if (activeItem && activeItem.type !== 'room') {
+                    updateItemContent(id, {
+                        folder_id: over.id as string,
+                        status: 'active',
+                        room_id: over.data.current?.room_id || null
+                    });
+                }
             });
+            useItemsStore.getState().clearSelection();
             return;
         }
 

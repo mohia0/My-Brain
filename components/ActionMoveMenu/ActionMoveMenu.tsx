@@ -50,19 +50,20 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
 
         const centerX = area.position_x + (area.metadata?.width || 300) / 2;
         const centerY = area.position_y + (area.metadata?.height || 200) / 2;
+        const targetRoomId = area.room_id || null;
 
         if (isFolder) {
             useItemsStore.getState().updateFolderContent?.(itemId, {
                 position_x: centerX - 140,
                 position_y: centerY - 60,
-                room_id: null,
+                room_id: targetRoomId,
                 parent_id: null
             });
         } else {
             updateItemContent(itemId, {
                 position_x: centerX - 140,
                 position_y: centerY - 60,
-                room_id: null,
+                room_id: targetRoomId,
                 folder_id: null,
                 status: 'active'
             });
@@ -83,6 +84,7 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
 
     const mindrooms = items.filter(i => i.type === 'room');
     const projectAreas = items.filter(i => i.type === 'project');
+    const filteredFolders = folders.filter(f => f.id !== itemId); // Don't allow moving a folder into itself
 
     const isInsideRoom = !!currentRoomId;
     const parentRoomId = currentRoomId ? items.find(i => i.id === currentRoomId)?.room_id : null;
@@ -110,7 +112,7 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
             </button>
 
             {isOpen && (
-                <div className={styles.moveMenu} onPointerDown={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+                <div className={styles.moveMenu} onPointerDown={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} onWheel={e => e.stopPropagation()}>
                     <div className={styles.menuHeader}>Move to...</div>
                     <div className={styles.folderList}>
                         {isInsideRoom && (
@@ -127,8 +129,8 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
                             </button>
                         )}
 
-                        {folders.length > 0 && <div className={styles.menuGroupTitle}>Folders</div>}
-                        {folders.map(folder => (
+                        {filteredFolders.length > 0 && <div className={styles.menuGroupTitle}>Folders</div>}
+                        {filteredFolders.map(folder => (
                             <button
                                 key={folder.id}
                                 className={styles.menuOption}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { Item } from '@/types';
@@ -20,11 +20,21 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
     const [showColorPicker, setShowColorPicker] = React.useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
         id: item.id,
         data: { ...item, type: 'project' },
         disabled: currentTool !== 'mouse' || !!item.metadata?.locked
     });
+
+    const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+        id: item.id,
+        data: { type: 'project', id: item.id }
+    });
+
+    const setRefs = (element: HTMLElement | null) => {
+        setDraggableRef(element);
+        setDroppableRef(element);
+    };
 
     // Resize Logic
     const handleResizeStart = (e: React.PointerEvent, direction: string) => {
@@ -168,8 +178,8 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
     return (
         <div
             id={`draggable-item-${item.id}`}
-            ref={setNodeRef}
-            className={clsx(styles.area, isSelected && styles.selected)}
+            ref={setRefs}
+            className={clsx(styles.area, isSelected && styles.selected, isOver && styles.isOver)}
             style={style}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => { setIsHovered(false); setShowColorPicker(false); setShowDeleteConfirm(false); }}
@@ -188,7 +198,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
                 />
             </div>
 
-            {(isSelected || isHovered || showDeleteConfirm) && (
+            {!isDragging && (isSelected || isHovered || showDeleteConfirm) && (
                 <div className={styles.controls}>
                     <div style={{ position: 'relative' }}>
                         <button

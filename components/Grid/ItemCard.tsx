@@ -176,89 +176,94 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
         setIsEditingTitle(false);
     };
 
-    const renderActions = () => (
-        <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault(); // Add preventDefault
-                    if (isVaulted && !isObscured) {
-                        handleLockItem(e);
-                    } else if (isObscured) {
-                        setModalOpen(true, localItem.id);
-                    } else if (!isVaulted) {
-                        handleVaultToggle(e);
-                    }
-                }}
-                onPointerDown={(e) => {
-                    e.stopPropagation();
-                    // Don't stop immediate prop as it might need to bubble for some React events, but stopping propagation is usually key for dnd-kit
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                data-tooltip={isObscured ? "Hidden - Tap to Unlock" : (isVaulted ? "Re-Lock Item" : "Lock in Vault")}
-                data-tooltip-pos="bottom"
-                style={{ color: 'inherit' }}
-            >
-                <LockIcon size={12} />
-            </button>
-            <ActionMoveMenu itemId={localItem.id} />
-            <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
-            <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom-left"><Copy size={12} /></button>
-            <button
-                onClick={handleDeleteClick}
-                data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
-                data-tooltip-pos="bottom-left"
-                className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
-                onMouseLeave={() => setIsDeleting(false)}
-            >
-                {isDeleting ? "Sure?" : <Trash2 size={12} />}
-            </button>
-        </div>
-    );
+    const renderActions = () => {
+        if (isDragging) return null;
+        return (
+            <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault(); // Add preventDefault
+                        if (isVaulted && !isObscured) {
+                            handleLockItem(e);
+                        } else if (isObscured) {
+                            setModalOpen(true, localItem.id);
+                        } else if (!isVaulted) {
+                            handleVaultToggle(e);
+                        }
+                    }}
+                    onPointerDown={(e) => {
+                        e.stopPropagation();
+                        // Don't stop immediate prop as it might need to bubble for some React events, but stopping propagation is usually key for dnd-kit
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    data-tooltip={isObscured ? "Hidden - Tap to Unlock" : (isVaulted ? "Re-Lock Item" : "Lock in Vault")}
+                    data-tooltip-pos="bottom"
+                    style={{ color: 'inherit' }}
+                >
+                    <LockIcon size={12} />
+                </button>
+                <ActionMoveMenu itemId={localItem.id} />
+                <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
+                <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom-left"><Copy size={12} /></button>
+                <button
+                    onClick={handleDeleteClick}
+                    data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
+                    data-tooltip-pos="bottom-left"
+                    className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
+                    onMouseLeave={() => setIsDeleting(false)}
+                >
+                    {isDeleting ? "Sure?" : <Trash2 size={12} />}
+                </button>
+            </div>
+        );
+    };
 
-    const renderRoomActions = () => (
-        <>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditingTitle(true);
-                }}
-                data-tooltip="Rename"
-                data-tooltip-pos="bottom"
-            >
-                <Edit3 size={12} />
-            </button>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (isVaulted && !isObscured) {
-                        handleLockItem(e);
-                    } else if (isObscured) {
-                        setModalOpen(true, localItem.id);
-                    } else if (!isVaulted) {
-                        handleVaultToggle(e); // This now opens the modal if needed
-                    }
-                }}
-                onPointerDown={e => e.stopPropagation()}
-                onMouseDown={e => e.stopPropagation()}
-                data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
-                data-tooltip-pos="bottom"
-            >
-                <LockIcon size={12} />
-            </button>
-            <button
-                onClick={handleDeleteClick}
-                data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
-                data-tooltip-pos="bottom-left"
-                className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
-                onMouseLeave={() => setIsDeleting(false)}
-            >
-                {isDeleting ? "Sure?" : <Trash2 size={12} />}
-            </button>
-        </>
-    );
-
+    const renderRoomActions = () => {
+        if (isDragging) return null;
+        return (
+            <>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsEditingTitle(true);
+                    }}
+                    data-tooltip="Rename"
+                    data-tooltip-pos="bottom"
+                >
+                    <Edit3 size={12} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (isVaulted && !isObscured) {
+                            handleLockItem(e);
+                        } else if (isObscured) {
+                            setModalOpen(true, localItem.id);
+                        } else if (!isVaulted) {
+                            handleVaultToggle(e); // This now opens the modal if needed
+                        }
+                    }}
+                    onPointerDown={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                    data-tooltip={isObscured ? "Protected by Vault" : (isVaulted ? "Lock Item" : "Lock in Vault")}
+                    data-tooltip-pos="bottom"
+                >
+                    <LockIcon size={12} />
+                </button>
+                <button
+                    onClick={handleDeleteClick}
+                    data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
+                    data-tooltip-pos="bottom-left"
+                    className={clsx(styles.deleteAction, isDeleting && styles.confirmDelete)}
+                    onMouseLeave={() => setIsDeleting(false)}
+                >
+                    {isDeleting ? "Sure?" : <Trash2 size={12} />}
+                </button>
+            </>
+        );
+    };
 
     const safeHostname = (url: string) => {
         if (!url || !url.startsWith('http')) return null;

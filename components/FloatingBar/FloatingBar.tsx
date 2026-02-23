@@ -90,6 +90,7 @@ export default function FloatingBar() {
 
         const centerX = area.position_x + (area.metadata?.width || 300) / 2;
         const centerY = area.position_y + (area.metadata?.height || 200) / 2;
+        const targetRoomId = area.room_id || null;
 
         selectedIds.forEach((id, index) => {
             const offset = index * 20;
@@ -98,7 +99,7 @@ export default function FloatingBar() {
                 updateItemContent(id, {
                     position_x: centerX - 140 + offset,
                     position_y: centerY - 60 + offset,
-                    room_id: null,
+                    room_id: targetRoomId,
                     folder_id: null,
                     status: 'active'
                 });
@@ -106,7 +107,7 @@ export default function FloatingBar() {
                 useItemsStore.getState().updateFolderContent?.(id, {
                     position_x: centerX - 140 + offset,
                     position_y: centerY - 60 + offset,
-                    room_id: null,
+                    room_id: targetRoomId,
                     parent_id: null
                 });
             }
@@ -138,7 +139,8 @@ export default function FloatingBar() {
     };
 
     const mindrooms = items.filter(i => i.type === 'room');
-    const projectAreas = items.filter(i => i.type === 'project');
+    const projectAreas = items.filter(i => i.type === 'project' && !selectedIds.includes(i.id));
+    const filteredFolders = folders.filter(f => !selectedIds.includes(f.id)); // Don't allow moving an item into a folder that is part of the selection
 
     const isInsideRoom = !!currentRoomId;
     const parentRoomId = currentRoomId ? items.find(i => i.id === currentRoomId)?.room_id : null;
@@ -209,7 +211,7 @@ export default function FloatingBar() {
                 </button>
 
                 {isMoveMenuOpen && (
-                    <div className={styles.moveMenu}>
+                    <div className={styles.moveMenu} onWheel={e => e.stopPropagation()}>
 
                         <div className={styles.menuHeader}>Move to...</div>
 
@@ -229,8 +231,8 @@ export default function FloatingBar() {
                                 </button>
                             )}
 
-                            {folders.length > 0 && <div className={styles.menuGroupTitle}>Folders</div>}
-                            {folders.map(folder => (
+                            {filteredFolders.length > 0 && <div className={styles.menuGroupTitle}>Folders</div>}
+                            {filteredFolders.map(folder => (
                                 <button
                                     key={folder.id}
                                     className={styles.menuOption}

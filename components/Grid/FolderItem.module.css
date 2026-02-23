@@ -102,6 +102,24 @@
     box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
+.isOver {
+    z-index: 9999 !important;
+}
+
+.isOver .tab {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+}
+
+.isOver .mainBody {
+    border-color: var(--accent);
+    border-width: 2px;
+    background: var(--card-hover);
+    margin-top: -2px;
+    box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.4);
+    transform: scale(1.02);
+}
+
 .dimmed {
     opacity: 0.4;
     filter: grayscale(0.8) blur(1px);

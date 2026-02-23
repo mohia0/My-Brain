@@ -58,7 +58,7 @@ export default function Inbox({ onItemClick }: InboxProps) {
                             e.stopPropagation();
                             setIsCollapsed(!isCollapsed);
                         }}
-                        data-tooltip={isCollapsed ? "Expand Inbox" : "Collapse Inbox"}
+                        data-tooltip={isCollapsed ? "Expand Captures" : "Collapse Captures"}
                         data-tooltip-pos="top"
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -89,7 +89,7 @@ export default function Inbox({ onItemClick }: InboxProps) {
                                 }
                             }}
                             onMouseLeave={() => setIsClearing(false)}
-                            data-tooltip="Clear Inbox"
+                            data-tooltip="Clear Captures"
                             data-tooltip-pos="top"
                         >
                             {isClearing ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={16} />}
@@ -105,7 +105,7 @@ export default function Inbox({ onItemClick }: InboxProps) {
                             </div>
                         )}
                     </div>
-                    <span>Inbox ({inboxItems.length})</span>
+                    <span>Captures ({inboxItems.length})</span>
                 </div>
             </div>
             {!isCollapsed && (
@@ -117,7 +117,7 @@ export default function Inbox({ onItemClick }: InboxProps) {
                                     {isOver ? (
                                         <div className={styles.emptyDropZone}>
                                             <InboxIcon size={48} />
-                                            <h3>Drop to move to Inbox</h3>
+                                            <h3>Drop to move to Captures</h3>
                                             <p>Release items here to process them later.</p>
                                         </div>
                                     ) : (

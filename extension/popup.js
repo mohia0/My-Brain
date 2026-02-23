@@ -353,7 +353,7 @@ saveTabBtn.addEventListener('click', async () => {
 
         if (error) throw error;
 
-        showToast("Saved to Inbox!");
+        showToast("Saved to Captures!");
     } catch (e) {
         console.error(e);
         if (e.message?.includes('foreign key constraint') || e.code === '23503') {

@@ -305,7 +305,7 @@ export default function FolderItem({ folder, isLocked, onClick }: FolderItemProp
             isSelected={isSelected}
             isDimmed={isDimmed}
             isDragging={isDragging}
-            isOver={isOver}
+            isOver={isOver && !isSelected}
             onClick={handleClick}
             onArchive={handleArchive}
             onDelete={handleDelete}

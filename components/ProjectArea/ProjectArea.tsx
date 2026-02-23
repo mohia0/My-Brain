@@ -179,7 +179,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         <div
             id={`draggable-item-${item.id}`}
             ref={setRefs}
-            className={clsx(styles.area, isSelected && styles.selected, isOver && styles.isOver)}
+            className={clsx(styles.area, isSelected && styles.selected, (isOver && !isSelected) && styles.isOver)}
             style={style}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => { setIsHovered(false); setShowColorPicker(false); setShowDeleteConfirm(false); }}

@@ -77,7 +77,7 @@ export default function MobileSelectionBar() {
                 </div>
 
                 <div className={styles.actions}>
-                    {/* Move to Canvas / Move to Inbox Logic */}
+                    {/* Move to Canvas / Move to Captures Logic */}
                     {(() => {
                         const selectedItems = items.filter(i => selectedIds.includes(i.id));
                         if (selectedItems.length > 0) {
@@ -101,7 +101,7 @@ export default function MobileSelectionBar() {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'inbox', folder_id: null }));
                                         clearSelection();
                                     }}
-                                    data-tooltip="Move to Inbox"
+                                    data-tooltip="Move to Captures"
                                     data-tooltip-pos="top"
                                 >
                                     <Inbox size={20} />

@@ -49,7 +49,7 @@ export default function WorkflowShowcase() {
                         onClick={() => setStep(0)}
                     >
                         <strong>1. Capture</strong>
-                        <p>Save anything instantly into your Inbox.</p>
+                        <p>Save anything instantly into your Captures.</p>
                     </div>
                     <div
                         className={clsx(styles.stepItem, step === 1 && styles.active)}
@@ -73,7 +73,7 @@ export default function WorkflowShowcase() {
                 <div className={styles.inboxWrapper}>
                     <div className={styles.inboxHeader}>
                         <div className="flex items-center gap-2">
-                            <span>Inbox</span>
+                            <span>Captures</span>
                         </div>
                         <span className={styles.count}>{step >= 1 ? 2 : 3}</span>
                     </div>

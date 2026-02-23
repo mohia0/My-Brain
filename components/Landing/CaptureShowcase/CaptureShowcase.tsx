@@ -227,7 +227,7 @@ function ExtensionDemo({ step }: { step: number }) {
                                 transition={{ delay: 0.2 }}
                             >
                                 <img src="/icon.png" alt="" className={styles.miniOrbSmallImg} />
-                                <span>Saved to Inbox</span>
+                                <span>Saved to Captures</span>
                                 <Check size={14} className="text-accent" style={{ marginLeft: 'auto' }} />
                             </motion.div>
                         )}
@@ -377,7 +377,7 @@ function MobileDemo({ step }: { step: number }) {
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.4 }}
                                     >
-                                        Saved to Inbox
+                                        Saved to Captures
                                     </motion.div>
                                 </div>
                             </motion.div>

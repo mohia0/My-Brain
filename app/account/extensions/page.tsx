@@ -109,7 +109,7 @@ export default function ExtensionsPage() {
                         <span style={{ fontSize: '12px', background: 'rgba(110, 86, 207, 0.1)', color: 'var(--accent)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>BETA</span>
                     </h3>
                     <p style={{ color: 'var(--text-dim)', fontSize: '14px', marginTop: '4px', maxWidth: '500px' }}>
-                        Capture ideas on the go. Share links, images, and text from any app directly to your Brainia inbox.
+                        Capture ideas on the go. Share links, images, and text from any app directly to your Brainia Captures.
                         Includes offline support and quick capture widgets.
                     </p>
                     <div style={{
@@ -219,7 +219,7 @@ export default function ExtensionsPage() {
                         <div style={{ marginBottom: '12px', color: '#f59e0b' }}><Check size={24} /></div>
                         <h4 style={{ fontWeight: 600, marginBottom: '8px', fontSize: '15px', color: 'var(--foreground)' }}>Instant Sync</h4>
                         <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: '1.4' }}>
-                            Everything flows instantly into your central Inbox. No manual copying, no friction. Just pure capture.
+                            Everything flows instantly into your central Captures. No manual copying, no friction. Just pure capture.
                         </p>
                     </div>
                 </div>

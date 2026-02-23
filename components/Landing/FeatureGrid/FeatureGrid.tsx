@@ -15,7 +15,7 @@ export default function FeatureGrid() {
             type: "canvas"
         },
         {
-            title: "Smart Inbox",
+            title: "Smart Captures",
             desc: "Capture links, images, and notes instantly from any device. Triage them when you're ready.",
             icon: <Zap size={24} />,
             size: "small",

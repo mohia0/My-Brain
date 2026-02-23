@@ -43,7 +43,7 @@ export default function FloatingBar() {
         selectedItemsList.length === 2 &&
         selectedItemsList.every(i => i.type === 'project');
 
-    if (selectedIds.length <= 1 || isOnlyTwoProjectAreas) return null;
+    if (selectedIds.length === 0 || isOnlyTwoProjectAreas) return null;
 
     const handleDelete = () => {
         if (!isDeleting) {
@@ -290,11 +290,11 @@ export default function FloatingBar() {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'inbox', folder_id: null }));
                                         clearSelection();
                                     }}
-                                    data-tooltip="Move to Inbox"
+                                    data-tooltip="Move to Captures"
                                     data-tooltip-pos="top"
                                 >
                                     <Inbox size={18} />
-                                    <span className={styles.btnText}>To Inbox</span>
+                                    <span className={styles.btnText}>To Captures</span>
                                 </button>
                             );
                         }

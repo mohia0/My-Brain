@@ -43,7 +43,7 @@ export default function MobileNav({ activeTab, onTabChange, onAdd }: MobileNavPr
                     <Inbox size={22} />
                     {inboxCount > 0 && <span className={styles.badge}>{inboxCount}</span>}
                 </div>
-                <span>Inbox</span>
+                <span>Captures</span>
             </button>
         </nav>
     );

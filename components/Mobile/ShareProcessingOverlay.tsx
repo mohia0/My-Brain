@@ -33,7 +33,7 @@ export default function ShareProcessingOverlay({ status, isFadingOut }: ShareOve
                             'Saved to Brainia!'}
                 </div>
                 {status === 'saved' && (
-                    <div className={styles.hint}>Saved to Inbox</div>
+                    <div className={styles.hint}>Saved to Captures</div>
                 )}
             </div>
         </div>

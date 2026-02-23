@@ -5,6 +5,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { useDroppable } from '@dnd-kit/core';
 import clsx from 'clsx';
 import InboxItem from './InboxItem';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface InboxProps {
     onItemClick?: (id: string) => void;
@@ -111,36 +112,60 @@ export default function Inbox({ onItemClick }: InboxProps) {
             {!isCollapsed && (
                 <>
                     <div className={styles.content}>
-                        {inboxItems.length === 0 ? (
-                            <>
-                                <div className={styles.emptyState}>
-                                    {isOver ? (
-                                        <div className={styles.emptyDropZone}>
-                                            <InboxIcon size={48} />
-                                            <h3>Drop to move to Captures</h3>
-                                            <p>Release items here to process them later.</p>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
-                                            <h3>Mind cleared.</h3>
-                                            <p>Space for your next big idea.</p>
-                                        </>
-                                    )}
-                                </div>
-                                <div className={styles.footerNote}>
-                                    Captures from the browser extension and mobile app appear here. Drag items to the canvas to organize them.
-                                </div>
-                            </>
-                        ) : (
-                            inboxItems.map(item => (
-                                <InboxItem
-                                    key={item.id}
-                                    item={item}
-                                    onClick={() => onItemClick?.(item.id)}
-                                />
-                            ))
-                        )}
+                        <AnimatePresence mode="popLayout">
+                            {inboxItems.length === 0 ? (
+                                <motion.div
+                                    key="empty-state"
+                                    layout
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                                    transition={{ duration: 0.3 }}
+                                    className={styles.emptyStateContainer}
+                                >
+                                    <div className={styles.emptyState}>
+                                        {isOver ? (
+                                            <div className={styles.emptyDropZone}>
+                                                <InboxIcon size={48} />
+                                                <h3>Drop to move to Captures</h3>
+                                                <p>Release items here to process them later.</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
+                                                <h3>Mind cleared.</h3>
+                                                <p>Space for your next big idea.</p>
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className={styles.footerNote}>
+                                        Captures from the browser extension and mobile app appear here. Drag items to the canvas to organize them.
+                                    </div>
+                                </motion.div>
+                            ) : (
+                                inboxItems.map(item => (
+                                    <motion.div
+                                        key={item.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.9, y: -20 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.8, filter: 'blur(4px)' }}
+                                        transition={{
+                                            type: "spring",
+                                            stiffness: 400,
+                                            damping: 25,
+                                            mass: 0.8
+                                        }}
+                                        style={{ width: '100%', originY: 0 }}
+                                    >
+                                        <InboxItem
+                                            item={item}
+                                            onClick={() => onItemClick?.(item.id)}
+                                        />
+                                    </motion.div>
+                                ))
+                            )}
+                        </AnimatePresence>
                     </div>
                 </>
             )}

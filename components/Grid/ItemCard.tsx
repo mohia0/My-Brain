@@ -713,11 +713,12 @@ export default function ItemCard({ item, isLocked, onClick }: ItemCardProps) {
     };
 
     const handleClick = (e: React.MouseEvent) => {
-        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+        const { isSelectionMode, toggleSelection, selectItem } = useItemsStore.getState();
+        if (e.shiftKey || e.ctrlKey || e.metaKey || isSelectionMode) {
             e.stopPropagation();
-            useItemsStore.getState().toggleSelection(item.id);
+            toggleSelection(item.id);
         } else {
-            useItemsStore.getState().selectItem(item.id);
+            selectItem(item.id);
             onClick?.();
         }
     };

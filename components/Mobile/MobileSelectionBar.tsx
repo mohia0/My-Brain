@@ -37,8 +37,12 @@ export default function MobileSelectionBar() {
         setIsPickerOpen(true);
     };
 
-    const handleSelectFolder = (folderId: string | null) => {
-        moveSelectedToFolder(folderId);
+    const handleSelectFolder = (id: string | null, type: 'folder' | 'room') => {
+        if (type === 'room') {
+            useItemsStore.getState().moveSelectedToRoom(id);
+        } else {
+            useItemsStore.getState().moveSelectedToFolder(id);
+        }
         setIsPickerOpen(false);
     };
 
@@ -64,7 +68,10 @@ export default function MobileSelectionBar() {
         selectedItemsList.length === 2 &&
         selectedItemsList.every(i => i.type === 'project');
 
-    if (selectedIds.length === 0 || isOnlyTwoProjectAreas) return null;
+    const { isSelectionMode } = useItemsStore();
+    const shouldShow = selectedIds.length > 1 || (selectedIds.length === 1 && isSelectionMode);
+
+    if (!shouldShow || isOnlyTwoProjectAreas) return null;
 
     return (
         <div className={styles.barWrapper}>

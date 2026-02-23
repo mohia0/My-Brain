@@ -277,11 +277,12 @@ export default function FolderItem({ folder, isLocked, onClick }: FolderItemProp
     };
 
     const handleClick = (e: React.MouseEvent) => {
-        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+        const { isSelectionMode, toggleSelection, selectItem } = useItemsStore.getState();
+        if (e.shiftKey || e.ctrlKey || e.metaKey || isSelectionMode) {
             e.stopPropagation();
-            useItemsStore.getState().toggleSelection(folder.id);
+            toggleSelection(folder.id);
         } else {
-            useItemsStore.getState().selectItem(folder.id);
+            selectItem(folder.id);
             onClick?.();
         }
     };

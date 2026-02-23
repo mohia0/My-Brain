@@ -12,7 +12,7 @@ import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consist
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
 export default function FolderModal({ folderId: initialFolderId, onClose, onItemClick, onFolderClick, isChildOpen }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void, onFolderClick?: (id: string) => void, isChildOpen?: boolean }) {
-    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection, duplicateItem, archiveItem, removeItem } = useItemsStore();
+    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection, duplicateItem, archiveItem, removeItem, isSelectionMode, setSelectionMode } = useItemsStore();
     const [currentFolderId, setCurrentFolderId] = React.useState(initialFolderId);
     const folder = folders.find(f => f.id === currentFolderId);
     const folderItems = items.filter(i => i.folder_id === currentFolderId);
@@ -21,10 +21,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const titleRef = React.useRef<HTMLDivElement>(null);
     const scrollContentRef = React.useRef<HTMLDivElement>(null);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
-    const [manualSelectionMode, setManualSelectionMode] = React.useState(false);
     const [showColorPicker, setShowColorPicker] = React.useState(false);
-
-    const isSelectionMode = selectedIds.length > 0 || manualSelectionMode;
 
     // Clear selection on mount to ensure clean state
     React.useEffect(() => {
@@ -277,8 +274,8 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                             {isDeleting ? "Sure?" : "Delete"}
                         </button>
                         <button
-                            onClick={() => setManualSelectionMode(!manualSelectionMode)}
-                            className={clsx(styles.actionBtn, manualSelectionMode && styles.activeActionBtn)}
+                            onClick={() => setSelectionMode(!isSelectionMode)}
+                            className={clsx(styles.actionBtn, isSelectionMode && styles.activeActionBtn)}
                             data-tooltip="Select Items"
                             data-tooltip-pos="bottom"
                         >

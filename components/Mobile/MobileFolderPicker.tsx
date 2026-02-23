@@ -2,19 +2,20 @@
 
 import React from 'react';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { Folder, X, Search, ChevronRight, Inbox, FolderPlus } from 'lucide-react';
+import { Folder, X, Search, ChevronRight, Inbox, FolderPlus, DoorClosed } from 'lucide-react';
 import styles from './MobileFolderPicker.module.css';
 import { generateId } from '@/lib/utils';
 import clsx from 'clsx';
+import { Item } from '@/types';
 
 interface MobileFolderPickerProps {
     onClose: () => void;
-    onSelect: (folderId: string | null) => void;
+    onSelect: (id: string | null, type: 'folder' | 'room') => void;
     title?: string;
 }
 
 export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to Folder' }: MobileFolderPickerProps) {
-    const { folders, selectedIds, addFolder } = useItemsStore();
+    const { folders, items, selectedIds, addFolder } = useItemsStore();
     const [search, setSearch] = React.useState('');
 
     const handleCreateFolder = async () => {
@@ -52,6 +53,8 @@ export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to
             (search === '' || f.name.toLowerCase().includes(search.toLowerCase()))
     }).sort((a, b) => a.name.localeCompare(b.name));
 
+    const mindrooms = items.filter((i: Item) => i.type === 'room' && (search === '' || (i.metadata?.title || '').toLowerCase().includes(search.toLowerCase())));
+
     return (
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
@@ -73,7 +76,7 @@ export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to
                     <Search size={18} className={styles.searchIcon} />
                     <input
                         type="text"
-                        placeholder="Search folders..."
+                        placeholder="Search folders or rooms..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         autoFocus
@@ -84,7 +87,7 @@ export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to
                     {!search && (
                         <button
                             className={styles.folderItem}
-                            onClick={() => onSelect(null)}
+                            onClick={() => onSelect(null, 'folder')}
                         >
                             <div className={styles.folderIcon} style={{ background: 'rgba(255,255,255,0.05)' }}>
                                 <Inbox size={20} />
@@ -97,11 +100,30 @@ export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to
                         </button>
                     )}
 
+                    {mindrooms.length > 0 && <div className={styles.groupTitle}>Mind Rooms</div>}
+                    {mindrooms.map(room => (
+                        <button
+                            key={room.id}
+                            className={styles.folderItem}
+                            onClick={() => onSelect(room.id, 'room')}
+                        >
+                            <div className={styles.folderIcon} style={{ background: 'rgba(110, 86, 207, 0.1)', color: 'var(--accent)' }}>
+                                <DoorClosed size={20} />
+                            </div>
+                            <div className={styles.folderInfo}>
+                                <span className={styles.folderName}>{room.metadata?.title || 'Untitled Room'}</span>
+                                <span className={styles.folderPath}>Inside Brainia</span>
+                            </div>
+                            <ChevronRight size={18} className={styles.chevron} />
+                        </button>
+                    ))}
+
+                    {availableFolders.length > 0 && <div className={styles.groupTitle}>Folders</div>}
                     {availableFolders.map(folder => (
                         <button
                             key={folder.id}
                             className={styles.folderItem}
-                            onClick={() => onSelect(folder.id)}
+                            onClick={() => onSelect(folder.id, 'folder')}
                         >
                             <div className={styles.folderIcon} style={{ background: folder.color ? `${folder.color}15` : 'rgba(110, 86, 207, 0.1)', color: folder.color || 'var(--accent)' }}>
                                 <Folder size={20} />
@@ -114,9 +136,9 @@ export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to
                         </button>
                     ))}
 
-                    {availableFolders.length === 0 && search && (
+                    {availableFolders.length === 0 && mindrooms.length === 0 && search && (
                         <div className={styles.empty}>
-                            <p>No folders found matching "{search}"</p>
+                            <p>No matches found for "{search}"</p>
                         </div>
                     )}
                 </div>

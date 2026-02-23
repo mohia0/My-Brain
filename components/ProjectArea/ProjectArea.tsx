@@ -26,10 +26,14 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         disabled: currentTool !== 'mouse' || !!item.metadata?.locked
     });
 
-    const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    const { setNodeRef: setDroppableRef, isOver, active: activeDroppable } = useDroppable({
         id: item.id,
         data: { type: 'project', id: item.id }
     });
+
+    const isSelected = selectedIds.includes(item.id);
+    const isDraggingMe = activeDroppable?.id === item.id;
+    const shouldShowIsOver = isOver && !isDraggingMe && !isSelected;
 
     const setRefs = (element: HTMLElement | null) => {
         setDraggableRef(element);
@@ -121,8 +125,6 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         }
     };
 
-    const isSelected = selectedIds.includes(item.id);
-
     const toggleColorPicker = (e: React.MouseEvent) => {
         e.stopPropagation();
         setShowColorPicker(!showColorPicker);
@@ -179,7 +181,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         <div
             id={`draggable-item-${item.id}`}
             ref={setRefs}
-            className={clsx(styles.area, isSelected && styles.selected, (isOver && !isSelected) && styles.isOver)}
+            className={clsx(styles.area, isSelected && styles.selected, shouldShowIsOver && styles.isOver)}
             style={style}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => { setIsHovered(false); setShowColorPicker(false); setShowDeleteConfirm(false); }}

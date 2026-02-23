@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# build artifacts
+*.zip
+*.apk
+build_output.txt
+temp_large_zip_check/

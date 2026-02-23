@@ -89,7 +89,8 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
     const isSelected = selectedIds.includes(item.id);
 
     const handleClick = (e: React.MouseEvent) => {
-        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+        const { isSelectionMode, toggleSelection, selectItem } = useItemsStore.getState();
+        if (e.ctrlKey || e.metaKey || e.shiftKey || isSelectionMode) {
             e.stopPropagation();
             toggleSelection(item.id);
         } else {

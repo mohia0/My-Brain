@@ -276,7 +276,7 @@ export default function Home() {
     if (session && !isInitializingRef.current && _hasHydrated) {
       fetchData();
     }
-  }, [currentRoomId, session, fetchData, _hasHydrated]);
+  }, [session, fetchData, _hasHydrated]);
 
   useEffect(() => {
     const checkMobile = () => {

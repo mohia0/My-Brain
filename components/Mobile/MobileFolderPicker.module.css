@@ -167,6 +167,15 @@
     color: #555;
 }
 
+.groupTitle {
+    padding: 16px 12px 4px 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

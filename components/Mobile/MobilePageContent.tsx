@@ -7,6 +7,7 @@ import MobileHome from './MobileHome';
 import MobileInbox from './MobileInbox';
 import MobileArchive from './MobileArchive';
 import MobileAddButton from './MobileAddButton';
+import MobileWarning from './MobileWarning';
 import ShareProcessingOverlay from './ShareProcessingOverlay';
 import Orb from '../Orb/Orb';
 import ItemModal from '@/components/ItemModal/ItemModal';
@@ -595,6 +596,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 filter: isSharing ? 'blur(20px)' : 'none',
                 transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
             }}>
+                <MobileWarning />
                 {activeTab === 'home' ? (
                     <MobileHome
                         onItemClick={setSelectedItemId}

@@ -219,6 +219,92 @@
                 if (title) title = title.replace(" - Pinterest", "").trim();
             }
 
+            // --- BEHANCE ---
+            else if (hostname.includes('behance.net')) {
+                // Determine if we are inside a project or in the feed
+                if (window.location.pathname.includes('/gallery/')) {
+                    // Inside a project (gallery)
+                    let targetImg = (target?.tagName === 'IMG') ? target : null;
+                    if (!targetImg && target) {
+                        targetImg = target.querySelector('img') || target.closest('div, picture, figure, [class*="Image"]')?.querySelector('img');
+                    }
+
+                    if (targetImg && targetImg.src && !targetImg.src.startsWith('data:image')) {
+                        let srcSetTarget = targetImg.srcset?.split(',').pop().trim().split(' ')[0];
+                        if (!srcSetTarget && targetImg.parentElement?.tagName === 'PICTURE') {
+                            const source = targetImg.parentElement.querySelector('source');
+                            if (source && source.srcset) srcSetTarget = source.srcset.split(',').pop().trim().split(' ')[0];
+                        }
+                        imageUrl = srcSetTarget || targetImg.src || targetImg.dataset?.src;
+                    }
+
+                    if (!imageUrl || imageUrl.startsWith('data:image')) {
+                        // Fallback to the main project content area
+                        const projectContainer = document.querySelector('#project-modules, [class*="Project-content"], [class*="project-styles"]') || document.querySelector('main') || document;
+                        const images = Array.from(projectContainer.querySelectorAll('img'));
+                        const contentImg = images.find(img => img.width > 200 && img.src && !img.src.startsWith('data:image') && !img.src.includes('avatar') && !img.src.includes('profile'));
+                        if (contentImg) {
+                            let srcSetTarget = contentImg.srcset?.split(',').pop().trim().split(' ')[0];
+                            if (!srcSetTarget && contentImg.parentElement?.tagName === 'PICTURE') {
+                                const source = contentImg.parentElement.querySelector('source');
+                                if (source && source.srcset) srcSetTarget = source.srcset.split(',').pop().trim().split(' ')[0];
+                            }
+                            imageUrl = srcSetTarget || contentImg.src || contentImg.dataset?.src;
+                        }
+                    }
+                    postUrl = window.location.href;
+                    title = document.querySelector('h1')?.textContent?.trim() || document.title;
+                } else {
+                    // Feed or Profile: User right-clicks a project cover
+                    // 1. Identify the project container (js-project-cover is a stable Behance class for covers)
+                    const container = target?.closest('.js-project-cover') || target?.closest('[class*="ProjectCover-root"]');
+
+                    if (container) {
+                        // 2. Link & Post URL
+                        const overlayLink = container.querySelector('a[class*="coverLink"]');
+                        const titleLink = container.querySelector('a[class*="Title-title"]');
+                        const link = overlayLink || titleLink || container.querySelector('a');
+
+                        if (link) postUrl = link.href;
+
+                        // 3. Image URL (High res from picture/source)
+                        let img = container.querySelector('img[class*="image"]') || container.querySelector('img');
+                        if (img) {
+                            let srcSetTarget = null;
+                            const picture = img.closest('picture');
+                            if (picture) {
+                                const source = picture.querySelector('source');
+                                if (source && source.srcset) srcSetTarget = source.srcset.split(',').shift().trim().split(' ')[0];
+                            }
+                            imageUrl = srcSetTarget || img.srcset?.split(',').shift().trim().split(' ')[0] || img.src;
+                        }
+
+                        // 4. Title Extraction
+                        // Strategy A: Title Link text (most accurate)
+                        if (titleLink) {
+                            title = titleLink.innerText?.trim();
+                        }
+
+                        // Strategy B: Overlay link title attribute (clean it up)
+                        if (!title && overlayLink && overlayLink.title) {
+                            title = overlayLink.title.replace(/^Link to project\s*-\s*/i, '').trim();
+                        }
+
+                        // Strategy C: Img Alt
+                        if (!title && img && img.alt) {
+                            title = img.alt;
+                        }
+                    } else if (target?.tagName === 'A' && target.href.includes('/gallery/')) {
+                        // Direct link fallback
+                        postUrl = target.href;
+                        title = target.innerText?.trim();
+                    }
+                }
+
+                if (!title || title.length > 200 || title === "title") title = "Behance Project";
+                if (imageUrl && (imageUrl.startsWith('data:image') || imageUrl.includes('placeholder'))) imageUrl = null;
+            }
+
             // 3. Robust Generic Fallback
             // If specific extractors failed, use generic but smart heuristics
             if (!imageUrl && target) {

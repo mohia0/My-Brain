@@ -54,18 +54,19 @@ export default function Toolbar() {
         const cx = ((viewportW / 2) - position.x) / scale;
         const cy = ((viewportH / 2) - position.y) / scale;
 
-        // Determine dimensions to center item
-        let w = 200;
-        let h = 130;
-        if (type === 'folder') { w = 280; h = 120; }
-        else if (type === 'room') { w = 300; h = 300; }
-        else if (type === 'image') { w = 300; h = 200; }
-        else if (type === 'link') { w = 300; h = 100; }
+        // Determine dimensions to center item (matching getItemDimensions in store)
+        let w = 280;
+        let h = 120;
+        if (type === 'room') { w = 300; h = 300; }
+        else if (type === 'image') { h = 280; }
+        else if (type === 'link') { h = 100; }
+        else if (type === 'text') { h = 130; }
 
         const finalX = cx - w / 2;
         const finalY = cy - h / 2;
 
         const id = generateId();
+        const currentRoomId = useItemsStore.getState().currentRoomId;
 
         if (type === 'folder') {
             // Folders don't have metadata/tags support yet, so keep tags in the name
@@ -73,7 +74,8 @@ export default function Toolbar() {
                 id, user_id: 'unknown', name: value,
                 position_x: finalX, position_y: finalY,
                 created_at: new Date().toISOString(),
-                status: 'active'
+                status: 'active',
+                room_id: currentRoomId
             });
         } else {
             // For Items and Rooms, we utilize Smart Tagging
@@ -86,6 +88,7 @@ export default function Toolbar() {
                     position_x: finalX, position_y: finalY,
                     created_at: new Date().toISOString(),
                     status: 'active',
+                    room_id: currentRoomId,
                     metadata: { title: cleanText, tags }
                 });
             } else {
@@ -104,6 +107,7 @@ export default function Toolbar() {
                     position_x: finalX, position_y: finalY,
                     created_at: new Date().toISOString(),
                     status: 'active',
+                    room_id: currentRoomId,
                     metadata: { title, tags }
                 });
 

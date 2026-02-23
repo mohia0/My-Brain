@@ -93,9 +93,6 @@ function createMenus() {
 chrome.runtime.onInstalled.addListener(createMenus);
 chrome.runtime.onStartup.addListener(createMenus);
 
-// Also call it directly to be sure
-createMenus();
-
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (info.menuItemId === "save-to-brainia") {
         try {

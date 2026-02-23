@@ -53,7 +53,8 @@ const getSafePosition = (
     targetY: number,
     itemOrFolder: Partial<Item> | Folder,
     items: Item[],
-    folders: Folder[]
+    folders: Folder[],
+    currentRoomId?: string | null
 ) => {
     const obstacleBuffer = 40; // Padding for "beside" feel
     const myDims = getItemDimensions(itemOrFolder);
@@ -65,6 +66,12 @@ const getSafePosition = (
         }),
         ...folders.filter(f => f.id !== id && f.status === 'active' && !f.parent_id).map(f => ({ x: f.position_x, y: f.position_y, w: 280, h: 120 }))
     ];
+
+    // If inside a room, the "Exit Room" button (at 0,0) is a permanent obstacle
+    if (currentRoomId) {
+        // Exit button is approx 200x50, centered at 0,0
+        obstacles.push({ x: -100, y: -25, w: 200, h: 50 });
+    }
 
     const isSpotFree = (tx: number, ty: number) => {
         return !obstacles.some(obs => isOverlapping(
@@ -110,11 +117,12 @@ interface ItemsState {
 
     addItem: (item: Item) => void;
     updateItemPosition: (id: string, x: number, y: number) => void;
-    updateItemContent: (id: string, updates: Partial<Item>) => void;
+    updateItemContent: (id: string, updates: Partial<Item>, options?: { skipCollision?: boolean }) => Promise<void>;
     duplicateItem: (id: string) => void;
     duplicateFolder: (id: string) => void;
     duplicateSelected: () => void;
     moveSelectedToFolder: (targetFolderId: string | null) => void;
+    moveSelectedToRoom: (targetRoomId: string | null) => void;
     removeItem: (id: string) => void;
 
     // Folders
@@ -143,6 +151,8 @@ interface ItemsState {
 
     // Selection
     selectedIds: string[];
+    isSelectionMode: boolean;
+    setSelectionMode: (val: boolean) => void;
     selectItem: (id: string) => void;
     toggleSelection: (id: string) => void;
     clearSelection: () => void;
@@ -180,6 +190,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     history: { past: [], future: [] },
     loading: false,
     realtimeStatus: 'disconnected',
+    selectedIds: [],
+    isSelectionMode: false,
+    setSelectionMode: (val) => set({ isSelectionMode: val }),
 
     setLoading: (loading) => set({ loading }),
     isLimitExceeded: false,
@@ -325,7 +338,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
     addItem: async (item) => {
         const state = get();
-        const safePos = getSafePosition(item.id, item.position_x, item.position_y, item, state.items, state.folders);
+        const safePos = getSafePosition(item.id, item.position_x, item.position_y, item, state.items, state.folders, state.currentRoomId);
 
         // Inject current room context
         const finalItem = {
@@ -539,7 +552,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         }
     },
 
-    updateItemContent: async (id, updates) => {
+    updateItemContent: async (id, updates, options) => {
         const state = get();
         // Add updated_at to track last edit
         let finalUpdates = {
@@ -549,7 +562,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
         // If movement is involved (e.g. from Inbox) or item becomes active, resolve collisions
         const item = state.items.find(i => i.id === id);
-        if (item && (updates.position_x !== undefined || updates.position_y !== undefined || (updates.status === 'active' && item.status !== 'active'))) {
+        if (item && !options?.skipCollision && (updates.position_x !== undefined || updates.position_y !== undefined || (updates.status === 'active' && item.status !== 'active'))) {
             const targetX = updates.position_x ?? item.position_x;
             const targetY = updates.position_y ?? item.position_y;
             const safe = getSafePosition(id, targetX, targetY, { ...item, ...updates }, state.items, state.folders);
@@ -610,7 +623,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         if (!user) return;
 
         const newItemId = generateId();
-        const safePos = getSafePosition(newItemId, item.position_x + 30, item.position_y + 30, item, state.items, state.folders);
+        const safePos = getSafePosition(newItemId, item.position_x + 30, item.position_y + 30, item, state.items, state.folders, state.currentRoomId);
 
         const newItem = {
             ...item,
@@ -651,12 +664,12 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const newId = generateId();
-        const safePos = getSafePosition(newId, folder.position_x + 30, folder.position_y + 30, folder, state.items, state.folders);
+        const newFolderId = generateId();
+        const safePos = getSafePosition(newFolderId, folder.position_x + 30, folder.position_y + 30, folder, state.items, state.folders, state.currentRoomId);
 
         const folderToInsert = {
             ...folder,
-            id: newId,
+            id: newFolderId,
             user_id: user.id,
             position_x: safePos.x,
             position_y: safePos.y,
@@ -680,17 +693,17 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             console.error('[Store] duplicateFolder failed:', error);
             if (error.message?.includes('limit exceeded') || error.code === 'P0001') {
                 set(state => ({
-                    folders: state.folders.filter(f => f.id !== newId),
+                    folders: state.folders.filter(f => f.id !== newFolderId),
                     isLimitExceeded: true
                 }));
             } else {
                 set(state => ({
-                    folders: state.folders.map(f => f.id === newId ? { ...f, syncStatus: 'error' } : f)
+                    folders: state.folders.map(f => f.id === newFolderId ? { ...f, syncStatus: 'error' } : f)
                 }));
             }
         } else {
             set(state => ({
-                folders: state.folders.map(f => f.id === newId ? { ...f, syncStatus: 'synced' } : f)
+                folders: state.folders.map(f => f.id === newFolderId ? { ...f, syncStatus: 'synced' } : f)
             }));
         }
     },
@@ -709,11 +722,36 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         for (const id of selectedIds) {
             // Check if it's an item
             if (items.some(i => i.id === id)) {
-                await updateItemContent(id, { folder_id: targetFolderId, status: 'active' });
+                await updateItemContent(id, { folder_id: targetFolderId, room_id: null, status: 'active' });
             }
             // Check if it's a folder (and not moving into itself)
             else if (folders.some(f => f.id === id) && id !== targetFolderId) {
-                await updateFolderContent(id, { parent_id: targetFolderId, status: 'active' });
+                await updateFolderContent(id, { parent_id: targetFolderId, room_id: null, status: 'active' });
+            }
+        }
+        clearSelection();
+    },
+
+    moveSelectedToRoom: async (targetRoomId) => {
+        const { selectedIds, items, folders, updateItemContent, updateFolderContent, clearSelection } = get();
+        for (const id of selectedIds) {
+            if (items.some(i => i.id === id)) {
+                await updateItemContent(id, {
+                    room_id: targetRoomId,
+                    folder_id: null,
+                    status: 'active',
+                    position_x: 200, // Place beside exit button
+                    position_y: 0
+                });
+            }
+            else if (folders.some(f => f.id === id)) {
+                await updateFolderContent(id, {
+                    room_id: targetRoomId,
+                    parent_id: null,
+                    status: 'active',
+                    position_x: 200,
+                    position_y: 0
+                });
             }
         }
         clearSelection();
@@ -737,7 +775,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     // Folders
     addFolder: async (folder) => {
         const state = get();
-        const safePos = getSafePosition(folder.id, folder.position_x, folder.position_y, folder, state.items, state.folders);
+        const safePos = getSafePosition(folder.id, folder.position_x, folder.position_y, folder, state.items, state.folders, state.currentRoomId);
 
         const safeFolder = {
             ...folder,
@@ -924,15 +962,15 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     // Selection (Local Only)
-    selectedIds: [],
-    selectItem: (id) => set({ selectedIds: [id] }),
+    selectItem: (id) => set({ selectedIds: [id], isSelectionMode: false }),
     toggleSelection: (id) => set((state) => ({
+        isSelectionMode: true,
         selectedIds: state.selectedIds.includes(id)
             ? state.selectedIds.filter(sid => sid !== id)
             : [...state.selectedIds, id]
     })),
-    clearSelection: () => set({ selectedIds: [] }),
-    setSelection: (ids) => set({ selectedIds: ids }),
+    clearSelection: () => set({ selectedIds: [], isSelectionMode: false }),
+    setSelection: (ids) => set({ selectedIds: ids, isSelectionMode: ids.length > 0 }),
     clearInbox: async () => {
         const state = get();
         const inboxItemIds = state.items.filter(i => i.status === 'inbox').map(i => i.id);
@@ -1182,7 +1220,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
                     // Collision prevention for remote arrivals on canvas
                     if (data.status === 'active' && !data.folder_id) {
-                        const safe = getSafePosition(data.id, data.position_x, data.position_y, data, state.items, state.folders);
+                        const safe = getSafePosition(data.id, data.position_x, data.position_y, data, state.items, state.folders, state.currentRoomId);
                         if (safe.x !== data.position_x || safe.y !== data.position_y) {
                             finalItem.position_x = safe.x;
                             finalItem.position_y = safe.y;
@@ -1215,7 +1253,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
 
                     // Collision prevention for remote folders
                     if (data.status === 'active' && !data.parent_id) {
-                        const safe = getSafePosition(data.id, data.position_x, data.position_y, data, state.items, state.folders);
+                        const safe = getSafePosition(data.id, data.position_x, data.position_y, data, state.items, state.folders, state.currentRoomId);
                         if (safe.x !== data.position_x || safe.y !== data.position_y) {
                             finalFolder.position_x = safe.x;
                             finalFolder.position_y = safe.y;

@@ -45,11 +45,21 @@ export default function AddButton() {
         const centerY = ((viewportH / 2) - position.y) / scale;
         const id = generateId();
 
+        // Determine dimensions to center item (matching getItemDimensions in store)
+        let w = 280;
+        let h = 120;
+        if (type === 'image') { h = 280; }
+        else if (type === 'link') { h = 100; }
+        else if (type === 'text') { h = 130; }
+
+        const finalX = centerX - w / 2;
+        const finalY = centerY - h / 2;
+
         if (type === 'folder') {
             addFolder({
                 id, name: value,
                 status: 'active',
-                position_x: centerX, position_y: centerY,
+                position_x: finalX, position_y: finalY,
                 created_at: new Date().toISOString()
             } as any);
         } else {
@@ -67,7 +77,7 @@ export default function AddButton() {
                 id, type: type as any,
                 content: content,
                 status: 'active',
-                position_x: centerX, position_y: centerY,
+                position_x: finalX, position_y: finalY,
                 created_at: new Date().toISOString(),
                 metadata: { title }
             } as any);

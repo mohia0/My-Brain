@@ -69,7 +69,7 @@ export default function RoomPortal({ item, isLocked, onClick }: RoomPortalProps)
 import styles from './RoomPortal.module.css';
 
 export function RoomBackButton() {
-    const { currentRoomId, roomHistory, exitRoom } = useItemsStore();
+    const { currentRoomId, roomHistory, exitRoom, items } = useItemsStore();
     const { setPosition, setScale } = useCanvasStore();
 
     if (!currentRoomId) return null;
@@ -78,10 +78,32 @@ export function RoomBackButton() {
     const destinationName = lastRoom ? lastRoom.title : 'Canvas';
 
     const handleBack = () => {
+        const exitingRoomId = currentRoomId;
+        const roomItem = items.find(i => i.id === exitingRoomId);
+
         exitRoom();
-        // Always center when going back
-        setPosition(window.innerWidth / 2, window.innerHeight / 2);
-        setScale(0.65);
+
+        if (roomItem) {
+            const targetScale = 0.65;
+            const w = 220; // RoomPortal width
+            const h = 320; // Room item height (door visual is taller)
+
+            // Center exactly on the door
+            const cx = roomItem.position_x + w / 2;
+            const cy = roomItem.position_y + h / 2;
+
+            setTimeout(() => {
+                setPosition(
+                    (window.innerWidth / 2) - (cx * targetScale),
+                    (window.innerHeight / 2) - (cy * targetScale)
+                );
+                setScale(targetScale);
+            }, 50); // Small timeout to ensure canvas dimensions are ready after room change
+        } else {
+            // Always center when going back if item not found
+            setPosition(window.innerWidth / 2, window.innerHeight / 2);
+            setScale(0.65);
+        }
     };
 
     return (

@@ -11,6 +11,7 @@ import clsx from 'clsx';
 export default function FloatingBar() {
     const {
         selectedIds,
+        isSelectionMode,
         clearSelection,
         removeItem,
         removeFolder,
@@ -43,7 +44,9 @@ export default function FloatingBar() {
         selectedItemsList.length === 2 &&
         selectedItemsList.every(i => i.type === 'project');
 
-    if (selectedIds.length === 0 || isOnlyTwoProjectAreas) return null;
+    const shouldShow = selectedIds.length > 1 || (selectedIds.length === 1 && isSelectionMode);
+
+    if (!shouldShow || isOnlyTwoProjectAreas) return null;
 
     const handleDelete = () => {
         if (!isDeleting) {
@@ -240,6 +243,21 @@ export default function FloatingBar() {
                                 >
                                     <Folder size={14} />
                                     <span>{folder.name}</span>
+                                </button>
+                            ))}
+
+                            {mindrooms.length > 0 && <div className={styles.menuGroupTitle}>Mind Rooms</div>}
+                            {mindrooms.map(room => (
+                                <button
+                                    key={room.id}
+                                    className={styles.menuOption}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveToRoom(room.id);
+                                    }}
+                                >
+                                    <DoorClosed size={14} />
+                                    <span>{room.metadata?.title || 'Mind Room'}</span>
                                 </button>
                             ))}
 

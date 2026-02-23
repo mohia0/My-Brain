@@ -8,7 +8,7 @@ import { Map as MapIcon, Minimize2, HelpCircle, X, ArrowRight } from 'lucide-rea
 import clsx from 'clsx';
 
 export default function MiniMap() {
-    const { items, folders, roomHistory, exitRoom } = useItemsStore(); // Increased destructuring
+    const { items, folders, roomHistory, exitRoom, currentRoomId } = useItemsStore();
     const { position, scale, setScale, isMinimapCollapsed, setIsMinimapCollapsed, setPosition } = useCanvasStore();
 
     // Determine destination for tooltip
@@ -37,7 +37,6 @@ export default function MiniMap() {
     const ROOM_WIDTH = 5000;
     const ROOM_HEIGHT = 2500;
 
-    const currentRoomId = useItemsStore.getState().currentRoomId; // Get current room ID
     const CURRENT_WORLD_WIDTH = currentRoomId ? ROOM_WIDTH : WORLD_WIDTH;
     const CURRENT_WORLD_HEIGHT = currentRoomId ? ROOM_HEIGHT : WORLD_HEIGHT;
 
@@ -151,7 +150,7 @@ export default function MiniMap() {
                     <HelpCircle size={14} />
                 </button>
 
-                {useItemsStore.getState().currentRoomId && (
+                {currentRoomId && (
                     <button
                         className={styles.homeBtn}
                         onClick={() => {
@@ -182,12 +181,11 @@ export default function MiniMap() {
                 onMouseUp={() => isDragging.current = false}
                 onMouseLeave={() => isDragging.current = false}
             >
-                <div style={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: 2, background: 'rgba(255,255,255,0.3)', transform: 'translate(-50%, -50%)' }} />
+
 
                 {/* Areas / Projects */}
                 {mount && items.filter(i => {
-                    const room = useItemsStore.getState().currentRoomId;
-                    return (i.room_id || null) === room && i.type === 'project' && i.status !== 'inbox';
+                    return (i.room_id || null) === currentRoomId && i.type === 'project' && i.status !== 'inbox';
                 }).map(item => (
                     <div
                         key={item.id}
@@ -203,8 +201,7 @@ export default function MiniMap() {
 
                 {/* Items & Rooms */}
                 {mount && items.filter(i => {
-                    const room = useItemsStore.getState().currentRoomId;
-                    return (i.room_id || null) === room && !i.folder_id && i.status !== 'inbox' && i.type !== 'project';
+                    return (i.room_id || null) === currentRoomId && !i.folder_id && i.status !== 'inbox' && i.type !== 'project';
                 }).map(item => {
                     const isRoom = item.type === 'room';
 
@@ -242,8 +239,7 @@ export default function MiniMap() {
 
                 {/* Folders as small rectangles (scaled) */}
                 {mount && useItemsStore.getState().folders.filter(f => {
-                    const room = useItemsStore.getState().currentRoomId;
-                    return (f.room_id || null) === room && !f.parent_id;
+                    return (f.room_id || null) === currentRoomId && !f.parent_id;
                 }).map(folder => (
                     <div
                         key={folder.id}

@@ -7,6 +7,7 @@ import styles from './MobileCard.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
+import { getPlainText } from '@/lib/utils';
 
 interface MobileCardProps {
     item: Item;
@@ -307,7 +308,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
 
                             <div className={styles.titleRow}>
                                 <div className={styles.title}>
-                                    {isFolder ? (item as any).name : (item.metadata?.title || item.content.slice(0, 50))}
+                                    {isFolder ? (item as any).name : (item.metadata?.title || getPlainText(item.content).slice(0, 50))}
                                 </div>
                                 <SyncIndicator />
                             </div>

@@ -4,6 +4,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { Archive, X, RotateCcw, Trash2, Search, FileText, Link, Image as ImageIcon, Folder } from 'lucide-react';
 import clsx from 'clsx';
 import { HighlightText } from '../ui/HighlightText';
+import { getPlainText } from '@/lib/utils';
 
 interface ArchiveCardProps {
     id: string;
@@ -107,11 +108,11 @@ export default function ArchiveView() {
     const filteredItems = archivedItems.filter(item => {
         if (searchTokens.length === 0) return true;
         const title = (item.metadata?.title || '').toString().toLowerCase();
-        const content = (item.content || '').toString().toLowerCase();
+        const plainText = item.type === 'text' ? getPlainText(item.content).toLowerCase() : (item.content || '').toString().toLowerCase();
         const description = (item.metadata?.description || '').toString().toLowerCase();
 
         return searchTokens.every(token =>
-            title.includes(token) || content.includes(token) || description.includes(token)
+            title.includes(token) || plainText.includes(token) || description.includes(token)
         );
     });
 
@@ -173,8 +174,8 @@ export default function ArchiveView() {
                                     key={item.id}
                                     id={item.id}
                                     type={item.type.toUpperCase()}
-                                    title={item.metadata?.title || (item.type === 'text' ? item.content.substring(0, 50) : item.type)}
-                                    description={item.metadata?.description || (item.type === 'text' ? item.content.substring(0, 100) : undefined)}
+                                    title={item.metadata?.title || (item.type === 'text' ? getPlainText(item.content).substring(0, 50) : item.type)}
+                                    description={item.metadata?.description || (item.type === 'text' ? getPlainText(item.content).substring(0, 100) : undefined)}
                                     image={item.type === 'image' ? item.content : item.metadata?.image}
                                     date={item.created_at}
                                     onUnarchive={() => unarchiveItem(item.id)}

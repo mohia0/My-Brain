@@ -5,6 +5,7 @@ import styles from './MobileInbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
+import { getPlainText } from '@/lib/utils';
 
 interface MobileInboxItemProps {
     item: Item;
@@ -251,7 +252,7 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                         </div>
                         <div className={styles.info}>
                             <div className={styles.titleRow}>
-                                <div className={styles.title}>{localItem.metadata?.title || localItem.content.slice(0, 50) || 'Idea'}</div>
+                                <div className={styles.title}>{localItem.metadata?.title || getPlainText(localItem.content).slice(0, 50) || 'Idea'}</div>
                                 <SyncIndicator />
                             </div>
                             <div className={styles.subRow}>

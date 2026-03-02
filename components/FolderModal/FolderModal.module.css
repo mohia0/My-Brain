@@ -26,6 +26,44 @@
         overflow: hidden;
         position: relative;
         animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .expandedModal {
+        width: 95vw;
+        height: 95vh;
+        max-width: 1600px;
+        max-height: 95vh;
+    }
+
+    .closingOverlay {
+        animation: fadeOut 0.2s ease-in forwards !important;
+    }
+
+    .closingModal {
+        animation: modalOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+
+        to {
+            opacity: 0;
+        }
+    }
+
+    @keyframes modalOut {
+        from {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        to {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+        }
     }
 
     .swipeHandle {
@@ -243,21 +281,21 @@
         transform: scale(1.05);
     }
 
-    .deleteBtn {
-        background: rgba(225, 29, 72, 0.05);
-        border: 1px solid rgba(225, 29, 72, 0.15);
+    .deleteBtnIcon {
         color: var(--danger);
-        padding: 8px 16px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
+        background: rgba(225, 29, 72, 0.05);
+        border-color: rgba(225, 29, 72, 0.15);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .deleteBtn:hover {
-        background: var(--danger);
-        color: white;
+    .deleteBtnIcon:hover {
+        background: var(--danger) !important;
+        color: white !important;
+        border-color: var(--danger) !important;
+    }
+
+    .deleteBtnIcon.confirmDelete {
+        padding: 8px 16px;
     }
 
     .confirmDelete {
@@ -711,11 +749,6 @@
             width: 36px !important;
             height: 36px !important;
             padding: 0 !important;
-        }
-
-        .deleteBtn {
-            padding: 8px 14px !important;
-            font-size: 0.8rem !important;
         }
 
         /* Floating confirm delete for mobile */

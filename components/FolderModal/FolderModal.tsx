@@ -2,7 +2,7 @@
 
 import React from 'react';
 import styles from './FolderModal.module.css';
-import { X, FolderOpen, LogOut, Check, CheckCircle2, Archive, Copy, Trash2, ArrowUpRight } from 'lucide-react';
+import { X, FolderOpen, LogOut, Check, CheckCircle2, Archive, Copy, Trash2, ArrowUpRight, Maximize2, Minimize2 } from 'lucide-react';
 import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
@@ -29,7 +29,14 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         return () => clearSelection(); // Clear on unmount too
     }, []);
 
-    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 120, scrollContentRef);
+    const [isClosing, setIsClosing] = React.useState(false);
+
+    const handleClose = React.useCallback(() => {
+        setIsClosing(true);
+        setTimeout(() => onClose(), 200); // Wait for the 0.2s animation to finish
+    }, [onClose]);
+
+    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(handleClose, 120, scrollContentRef);
 
     const [isEditingName, setIsEditingName] = React.useState(false);
     const [tempName, setTempName] = React.useState('');
@@ -44,7 +51,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         if (folder?.parent_id) {
             setCurrentFolderId(folder.parent_id);
         } else {
-            onClose();
+            handleClose();
         }
     };
 
@@ -99,7 +106,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     // Handle ESC key
     React.useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !isChildOpen) onClose();
+            if (e.key === 'Escape' && !isChildOpen) handleClose();
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
@@ -127,6 +134,20 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
 
     const [isDeleting, setIsDeleting] = React.useState(false);
     const [isDeletingItem, setIsDeletingItem] = React.useState<string | null>(null);
+    const [isExpanded, setIsExpanded] = React.useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('brainia_folder_expanded') === 'true';
+        }
+        return false;
+    });
+
+    const toggleExpand = () => {
+        const next = !isExpanded;
+        setIsExpanded(next);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('brainia_folder_expanded', next.toString());
+        }
+    };
 
     const handleDeleteClick = () => {
         if (!isDeleting) {
@@ -150,7 +171,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
             });
         });
         removeFolder(currentFolderId);
-        onClose();
+        handleClose();
     };
 
     const handleItemClick = (id: string, e: React.MouseEvent) => {
@@ -189,20 +210,23 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
     };
 
+    const canExpand = folderItems.length + subFolders.length > 5;
+    const shouldExpand = isExpanded && canExpand;
+
     return (
         <div
-            className={styles.overlay}
-            onClick={onClose}
+            className={clsx(styles.overlay, isClosing && styles.closingOverlay)}
+            onClick={handleClose}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
         >
             <div
-                className={styles.modal}
+                className={clsx(styles.modal, shouldExpand && styles.expandedModal, isClosing && styles.closingModal)}
                 onClick={e => e.stopPropagation()}
                 style={{
                     transform: offset > 0 ? `translateY(${offset}px)` : undefined,
-                    transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
+                    transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
                 }}
             >
                 <div className={styles.swipeHandle} />
@@ -267,11 +291,11 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                     <div className={styles.actions}>
                         <button
                             onClick={handleDeleteClick}
-                            className={`${styles.deleteBtn} ${isDeleting ? styles.confirmDelete : ''}`}
+                            className={clsx(styles.actionBtn, styles.deleteBtnIcon, isDeleting && styles.confirmDelete)}
                             data-tooltip={isDeleting ? "Confirm Delete" : "Remove Folder"}
                             data-tooltip-pos="bottom"
                         >
-                            {isDeleting ? "Sure?" : "Delete"}
+                            {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={20} />}
                         </button>
                         <button
                             onClick={() => setSelectionMode(!isSelectionMode)}
@@ -281,6 +305,16 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                         >
                             <CheckCircle2 size={20} />
                         </button>
+                        {(folderItems.length + subFolders.length > 5) && (
+                            <button
+                                onClick={toggleExpand}
+                                className={clsx(styles.actionBtn, isExpanded && styles.activeActionBtn)}
+                                data-tooltip={isExpanded ? "Collapse" : "Expand"}
+                                data-tooltip-pos="bottom"
+                            >
+                                {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                            </button>
+                        )}
                         <button onClick={handleBack} className={styles.closeBtn}>
                             {folder.parent_id ? <LogOut size={20} style={{ transform: 'rotate(180deg)' }} /> : <X size={20} />}
                         </button>

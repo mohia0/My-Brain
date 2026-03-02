@@ -40,7 +40,7 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                             </div>
                             <div className={styles.folderGrid}>
                                 {visibleFolders.map(folder => {
-                                    const itemCount = items.filter(i => i.folder_id === folder.id).length;
+                                    const itemCount = items.filter(i => i.folder_id === folder.id && i.status !== 'archived').length;
                                     return (
                                         <MobileCard
                                             key={folder.id}

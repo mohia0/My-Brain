@@ -67,7 +67,7 @@ export default function MobileArchive({ onItemClick, onFolderClick, onBack }: Mo
                             </div>
                             <div className={styles.folderGrid}>
                                 {archivedFolders.map(folder => {
-                                    const itemCount = items.filter(i => i.folder_id === folder.id).length;
+                                    const itemCount = items.filter(i => i.folder_id === folder.id && i.status !== 'archived').length;
                                     return (
                                         <MobileCard
                                             key={folder.id}

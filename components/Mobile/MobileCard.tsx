@@ -28,7 +28,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
     const isObscured = isVaulted && isVaultLocked && !isUnlockedLocally;
 
     const isFolder = 'type' in item && (item as any).type === 'folder';
-    const folderItems = isFolder ? items.filter(i => i.folder_id === item.id) : [];
+    const folderItems = isFolder ? items.filter(i => i.folder_id === item.id && i.status !== 'archived') : [];
 
     const isVideo = item.type === 'video' || item.metadata?.isVideo;
     const isImage = (item.type === 'image' || (item.type === 'link' && item.metadata?.image)) && !isVideo;

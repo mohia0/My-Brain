@@ -15,8 +15,8 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection, duplicateItem, archiveItem, removeItem, isSelectionMode, setSelectionMode } = useItemsStore();
     const [currentFolderId, setCurrentFolderId] = React.useState(initialFolderId);
     const folder = folders.find(f => f.id === currentFolderId);
-    const folderItems = items.filter(i => i.folder_id === currentFolderId);
-    const subFolders = folders.filter(f => f.parent_id === currentFolderId);
+    const folderItems = items.filter(i => i.folder_id === currentFolderId && i.status !== 'archived');
+    const subFolders = folders.filter(f => f.parent_id === currentFolderId && f.status !== 'archived');
     const [isOverflowing, setIsOverflowing] = React.useState(false);
     const titleRef = React.useRef<HTMLDivElement>(null);
     const scrollContentRef = React.useRef<HTMLDivElement>(null);

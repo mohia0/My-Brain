@@ -251,7 +251,7 @@ FolderItemView.displayName = 'FolderItemView';
 export default function FolderItem({ folder, isLocked, onClick }: FolderItemProps) {
     const { items, selectedIds, archiveFolder, removeFolder } = useItemsStore();
     const { scale } = useCanvasStore(); // Need scale for transform
-    const folderItems = items.filter(i => i.folder_id === folder.id);
+    const folderItems = items.filter(i => i.folder_id === folder.id && i.status !== 'archived');
 
     const isSelected = selectedIds.includes(folder.id);
     const isDimmed = selectedIds.length > 1 && !isSelected;

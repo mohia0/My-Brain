@@ -62,27 +62,51 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, onClose]);
 
+    const [isDragging, setIsDragging] = useState(false);
+
     if (!isOpen) return null;
+
+    const processFile = (file: File) => {
+        const MAX_SIZE = 3 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            toast.error("File too large", {
+                description: "Maximum size allowed is 3MB.",
+            });
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const result = e.target?.result as string;
+            setValue(result);
+        };
+        reader.readAsDataURL(file);
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Limit to 3MB
-            const MAX_SIZE = 3 * 1024 * 1024;
-            if (file.size > MAX_SIZE) {
-                toast.error("File too large", {
-                    description: "Maximum size allowed is 3MB.",
-                });
-                e.target.value = ''; // Reset input
-                return;
-            }
+            processFile(file);
+        }
+    };
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const result = e.target?.result as string;
-                setValue(result);
-            };
-            reader.readAsDataURL(file);
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type.startsWith('image/')) {
+            processFile(file);
         }
     };
 
@@ -138,11 +162,18 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                                 capture={mode === 'camera' ? 'environment' : undefined}
                                 onChange={handleFileChange}
                                 id="file-upload"
+                                className={styles.fileInput}
                                 dir="auto"
                             />
                             {!value && (
-                                <label htmlFor="file-upload" className={styles.fileLabel}>
-                                    Click to Upload Image
+                                <label
+                                    htmlFor="file-upload"
+                                    className={`${styles.fileLabel} ${isDragging ? styles.dragging : ''}`}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                >
+                                    Click or Drag & Drop to Upload Image
                                 </label>
                             )}
                             {/* Or paste URL fallback */}

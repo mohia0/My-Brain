@@ -222,7 +222,8 @@
     font-size: 0.9rem;
 }
 
-.fileLabel:hover {
+.fileLabel:hover,
+.dragging {
     background: var(--card-hover);
     border-color: var(--accent);
     color: var(--foreground);

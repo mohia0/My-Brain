@@ -154,9 +154,30 @@ export default function MiniMap() {
                     <button
                         className={styles.homeBtn}
                         onClick={() => {
+                            const exitingRoomId = currentRoomId;
+                            const roomItem = items.find(i => i.id === exitingRoomId);
+
                             exitRoom();
-                            setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                            setScale(0.65);
+
+                            if (roomItem) {
+                                const targetScale = 0.65;
+                                const w = 220; // RoomPortal width
+                                const h = 320; // Room item height
+
+                                const cx = roomItem.position_x + w / 2;
+                                const cy = roomItem.position_y + h / 2;
+
+                                setTimeout(() => {
+                                    setPosition(
+                                        (window.innerWidth / 2) - (cx * targetScale),
+                                        (window.innerHeight / 2) - (cy * targetScale)
+                                    );
+                                    setScale(targetScale);
+                                }, 50);
+                            } else {
+                                setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                                setScale(0.65);
+                            }
                         }}
                         data-tooltip={`Return to ${destinationTitle}`}
                         data-tooltip-pos="top"

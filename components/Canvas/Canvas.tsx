@@ -138,6 +138,11 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     useCanvasStore.getState().zoomAt(newScale, { x: mouseX, y: mouseY });
                 }
             } else {
+                // Check if we should lock scroll (if mouse is over a locked element)
+                const target = e.target as HTMLElement;
+                const isLocked = !!target.closest('[data-scroll-lock="true"]');
+                if (isLocked) return;
+
                 // Pan with wheel
                 const currentPos = useCanvasStore.getState().position;
                 const currentScale = useCanvasStore.getState().scale;

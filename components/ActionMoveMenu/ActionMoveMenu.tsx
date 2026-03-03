@@ -64,19 +64,23 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
         }
 
         if (isFolder) {
+            const folder = folders.find(f => f.id === itemId);
+            const safe = useItemsStore.getState().getSafePosition?.(itemId, tx, ty, { ...folder, room_id: roomId }, items, folders, roomId) || { x: tx, y: ty };
             useItemsStore.getState().updateFolderContent?.(itemId, {
                 room_id: roomId,
                 parent_id: null,
-                position_x: tx,
-                position_y: ty
+                position_x: safe.x,
+                position_y: safe.y
             });
         } else {
+            const item = items.find(i => i.id === itemId);
+            const safe = useItemsStore.getState().getSafePosition?.(itemId, tx, ty, { ...item, room_id: roomId }, items, folders, roomId) || { x: tx, y: ty };
             updateItemContent(itemId, {
                 room_id: roomId,
                 folder_id: null,
                 status: 'active',
-                position_x: tx,
-                position_y: ty
+                position_x: safe.x,
+                position_y: safe.y
             });
         }
         setIsOpen(false);
@@ -147,6 +151,7 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
                     onPointerDown={e => e.stopPropagation()}
                     onMouseDown={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
+                    data-scroll-lock="true"
                 >
                     <div className={styles.menuHeader}>Move to...</div>
                     <div className={styles.folderList} onWheel={e => e.stopPropagation()}>

@@ -45,6 +45,7 @@
     animation: menuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 9999;
     max-height: 250px;
+    touch-action: none;
 }
 
 @keyframes menuFadeIn {
@@ -82,6 +83,7 @@
 .folderList {
     overflow-y: auto;
     flex: 1;
+    touch-action: pan-y;
 }
 
 .folderList::-webkit-scrollbar {

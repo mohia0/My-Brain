@@ -10,7 +10,10 @@ type HistoryAction =
     | { type: 'ADD_ITEM', item: Item }
     | { type: 'DELETE_ITEM', item: Item }
     | { type: 'ADD_FOLDER', folder: Folder }
-    | { type: 'DELETE_FOLDER', folder: Folder };
+    | { type: 'DELETE_FOLDER', folder: Folder }
+    | { type: 'UPDATE_ITEM', id: string, prevUpdates: Partial<Item>, newUpdates: Partial<Item> }
+    | { type: 'UPDATE_FOLDER', id: string, prevUpdates: Partial<Folder>, newUpdates: Partial<Folder> }
+    | { type: 'BATCH_UPDATE', updates: { id: string, type: 'item' | 'folder', prev: any, new: any }[] };
 
 // Helper to check for collision between two rects
 const isOverlapping = (r1: { x: number, y: number, w: number, h: number }, r2: { x: number, y: number, w: number, h: number }) => {
@@ -60,11 +63,11 @@ const getSafePosition = (
     const myDims = getItemDimensions(itemOrFolder);
 
     const obstacles = [
-        ...items.filter(i => i.id !== id && i.status === 'active' && !i.folder_id).map(i => {
+        ...items.filter(i => i.id !== id && i.status === 'active' && i.room_id === (currentRoomId || null) && !i.folder_id).map(i => {
             const dims = getItemDimensions(i);
             return { x: i.position_x, y: i.position_y, w: dims.w, h: dims.h };
         }),
-        ...folders.filter(f => f.id !== id && f.status === 'active' && !f.parent_id).map(f => ({ x: f.position_x, y: f.position_y, w: 280, h: 120 }))
+        ...folders.filter(f => f.id !== id && f.status === 'active' && f.room_id === (currentRoomId || null) && !f.parent_id).map(f => ({ x: f.position_x, y: f.position_y, w: 280, h: 120 }))
     ];
 
     // If inside a room, the "Exit Room" button (at 0,0) is a permanent obstacle
@@ -117,7 +120,7 @@ interface ItemsState {
 
     addItem: (item: Item) => void;
     updateItemPosition: (id: string, x: number, y: number) => void;
-    updateItemContent: (id: string, updates: Partial<Item>, options?: { skipCollision?: boolean }) => Promise<void>;
+    updateItemContent: (id: string, updates: Partial<Item>, options?: { skipCollision?: boolean, skipHistory?: boolean }) => Promise<void>;
     duplicateItem: (id: string) => void;
     duplicateFolder: (id: string) => void;
     duplicateSelected: () => void;
@@ -128,7 +131,7 @@ interface ItemsState {
     // Folders
     addFolder: (folder: Folder) => void;
     updateFolderPosition: (id: string, x: number, y: number) => void;
-    updateFolderContent: (id: string, updates: Partial<Folder>) => void;
+    updateFolderContent: (id: string, updates: Partial<Folder>, options?: { skipHistory?: boolean }) => void;
     removeFolder: (id: string) => void;
 
     // Archive
@@ -177,6 +180,7 @@ interface ItemsState {
     enterRoom: (id: string, title: string) => void;
     exitRoom: () => void;
     updateItemTags: (id: string, tags: Tag[]) => void;
+    getSafePosition: (id: string, targetX: number, targetY: number, itemOrFolder: Partial<Item> | Folder, items: Item[], folders: Folder[], currentRoomId?: string | null) => { x: number, y: number };
     hasLoadedOnce: boolean;
     session: any | null;
     setSession: (session: any | null) => void;
@@ -506,7 +510,51 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 }));
                 supabase.from('items').insert([action.item]).then();
                 break;
-            // Folders cases would be similar
+            case 'ADD_FOLDER':
+                set(s => ({
+                    folders: s.folders.filter(f => f.id !== action.folder.id),
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                supabase.from('folders').delete().eq('id', action.folder.id).then();
+                break;
+            case 'DELETE_FOLDER':
+                set(s => ({
+                    folders: [...s.folders, action.folder],
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                supabase.from('folders').insert([action.folder]).then();
+                break;
+            case 'UPDATE_ITEM':
+                set(s => ({
+                    items: s.items.map(i => i.id === action.id ? { ...i, ...action.prevUpdates } : i),
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                supabase.from('items').update(action.prevUpdates).eq('id', action.id).then();
+                break;
+            case 'UPDATE_FOLDER':
+                set(s => ({
+                    folders: s.folders.map(f => f.id === action.id ? { ...f, ...action.prevUpdates } : f),
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                supabase.from('folders').update(action.prevUpdates).eq('id', action.id).then();
+                break;
+            case 'BATCH_UPDATE':
+                set(s => ({
+                    items: s.items.map(i => {
+                        const u = action.updates.find(up => up.id === i.id && up.type === 'item');
+                        return u ? { ...i, ...u.prev } : i;
+                    }),
+                    folders: s.folders.map(f => {
+                        const u = action.updates.find(up => up.id === f.id && up.type === 'folder');
+                        return u ? { ...f, ...u.prev } : f;
+                    }),
+                    history: { past: newPast, future: [action, ...s.history.future] }
+                }));
+                action.updates.forEach(u => {
+                    if (u.type === 'item') supabase.from('items').update(u.prev).eq('id', u.id).then();
+                    else supabase.from('folders').update(u.prev).eq('id', u.id).then();
+                });
+                break;
         }
     },
 
@@ -549,11 +597,59 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 }));
                 supabase.from('items').delete().eq('id', action.item.id).then();
                 break;
+            case 'ADD_FOLDER':
+                set(s => ({
+                    folders: [...s.folders, action.folder],
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                supabase.from('folders').insert([action.folder]).then();
+                break;
+            case 'DELETE_FOLDER':
+                set(s => ({
+                    folders: s.folders.filter(f => f.id !== action.folder.id),
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                supabase.from('folders').delete().eq('id', action.folder.id).then();
+                break;
+            case 'UPDATE_ITEM':
+                set(s => ({
+                    items: s.items.map(i => i.id === action.id ? { ...i, ...action.newUpdates } : i),
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                supabase.from('items').update(action.newUpdates).eq('id', action.id).then();
+                break;
+            case 'UPDATE_FOLDER':
+                set(s => ({
+                    folders: s.folders.map(f => f.id === action.id ? { ...f, ...action.newUpdates } : f),
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                supabase.from('folders').update(action.newUpdates).eq('id', action.id).then();
+                break;
+            case 'BATCH_UPDATE':
+                set(s => ({
+                    items: s.items.map(i => {
+                        const u = action.updates.find(up => up.id === i.id && up.type === 'item');
+                        return u ? { ...i, ...u.new } : i;
+                    }),
+                    folders: s.folders.map(f => {
+                        const u = action.updates.find(up => up.id === f.id && up.type === 'folder');
+                        return u ? { ...f, ...u.new } : f;
+                    }),
+                    history: { past: [...s.history.past, action], future: newFuture }
+                }));
+                action.updates.forEach(u => {
+                    if (u.type === 'item') supabase.from('items').update(u.new).eq('id', u.id).then();
+                    else supabase.from('folders').update(u.new).eq('id', u.id).then();
+                });
+                break;
         }
     },
 
     updateItemContent: async (id, updates, options) => {
         const state = get();
+        const item = state.items.find(i => i.id === id);
+        if (!item) return;
+
         // Add updated_at to track last edit
         let finalUpdates = {
             ...updates,
@@ -561,13 +657,29 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         };
 
         // If movement is involved (e.g. from Inbox) or item becomes active, resolve collisions
-        const item = state.items.find(i => i.id === id);
-        if (item && !options?.skipCollision && (updates.position_x !== undefined || updates.position_y !== undefined || (updates.status === 'active' && item.status !== 'active'))) {
+        if (!options?.skipCollision && (updates.position_x !== undefined || updates.position_y !== undefined || (updates.status === 'active' && item.status !== 'active'))) {
             const targetX = updates.position_x ?? item.position_x;
             const targetY = updates.position_y ?? item.position_y;
-            const safe = getSafePosition(id, targetX, targetY, { ...item, ...updates }, state.items, state.folders);
+            // Use currentRoomId if moving to current room, otherwise use target room if provided
+            const targetRoomId = updates.room_id !== undefined ? (updates.room_id || null) : (state.currentRoomId || null);
+            const safe = getSafePosition(id, targetX, targetY, { ...item, ...updates }, state.items, state.folders, targetRoomId);
             finalUpdates.position_x = safe.x;
             finalUpdates.position_y = safe.y;
+        }
+
+        // Record history if not skipped
+        if (!options?.skipHistory) {
+            const prevUpdates: Partial<Item> = {};
+            Object.keys(updates).forEach(key => {
+                (prevUpdates as any)[key] = (item as any)[key];
+            });
+
+            set(state => ({
+                history: {
+                    past: [...state.history.past, { type: 'UPDATE_ITEM', id, prevUpdates, newUpdates: finalUpdates }],
+                    future: []
+                }
+            }));
         }
 
         set((state) => ({
@@ -718,42 +830,108 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     moveSelectedToFolder: async (targetFolderId) => {
-        const { selectedIds, items, folders, updateItemContent, updateFolderContent, clearSelection } = get();
+        const { selectedIds, items, folders, clearSelection } = get();
+        const batchUpdates: { id: string, type: 'item' | 'folder', prev: any, new: any }[] = [];
+
+        const now = new Date().toISOString();
+
         for (const id of selectedIds) {
-            // Check if it's an item
-            if (items.some(i => i.id === id)) {
-                await updateItemContent(id, { folder_id: targetFolderId, room_id: null, status: 'active' });
-            }
-            // Check if it's a folder (and not moving into itself)
-            else if (folders.some(f => f.id === id) && id !== targetFolderId) {
-                await updateFolderContent(id, { parent_id: targetFolderId, room_id: null, status: 'active' });
+            const item = items.find(i => i.id === id);
+            if (item) {
+                const prev = { folder_id: item.folder_id, room_id: item.room_id, status: item.status, updated_at: item.updated_at };
+                const next = { folder_id: targetFolderId, room_id: null, status: 'active' as const, updated_at: now };
+                batchUpdates.push({ id, type: 'item', prev, new: next });
+            } else {
+                const folder = folders.find(f => f.id === id);
+                if (folder && id !== targetFolderId) {
+                    const prev = { parent_id: folder.parent_id, room_id: folder.room_id, status: folder.status, updated_at: folder.updated_at };
+                    const next = { parent_id: targetFolderId, room_id: null, status: 'active' as const, updated_at: now };
+                    batchUpdates.push({ id, type: 'folder', prev, new: next });
+                }
             }
         }
+
+        if (batchUpdates.length === 0) return;
+
+        set(state => ({
+            items: state.items.map(i => {
+                const u = batchUpdates.find(up => up.id === i.id && up.type === 'item');
+                return u ? { ...i, ...u.new } : i;
+            }),
+            folders: state.folders.map(f => {
+                const u = batchUpdates.find(up => up.id === f.id && up.type === 'folder');
+                return u ? { ...f, ...u.new } : f;
+            }),
+            history: {
+                past: [...state.history.past, { type: 'BATCH_UPDATE', updates: batchUpdates }],
+                future: []
+            }
+        }));
+
+        // DB batch updates (Supabase doesn't have a clean multi-row multi-column update, so loop for now or use RPC)
+        for (const u of batchUpdates) {
+            if (u.type === 'item') supabase.from('items').update(u.new).eq('id', u.id).then();
+            else supabase.from('folders').update(u.new).eq('id', u.id).then();
+        }
+
         clearSelection();
     },
 
     moveSelectedToRoom: async (targetRoomId) => {
-        const { selectedIds, items, folders, updateItemContent, updateFolderContent, clearSelection } = get();
+        const { selectedIds, items, folders, clearSelection } = get();
+        const batchUpdates: { id: string, type: 'item' | 'folder', prev: any, new: any }[] = [];
+
+        // Track local positions for collision prevention within the batch
+        let currentItems = [...items];
+        let currentFolders = [...folders];
+
+        const now = new Date().toISOString();
+
         for (const id of selectedIds) {
-            if (items.some(i => i.id === id)) {
-                await updateItemContent(id, {
-                    room_id: targetRoomId,
-                    folder_id: null,
-                    status: 'active',
-                    position_x: 200, // Place beside exit button
-                    position_y: 0
-                });
-            }
-            else if (folders.some(f => f.id === id)) {
-                await updateFolderContent(id, {
-                    room_id: targetRoomId,
-                    parent_id: null,
-                    status: 'active',
-                    position_x: 200,
-                    position_y: 0
-                });
+            const item = items.find(i => i.id === id);
+            if (item) {
+                const safe = getSafePosition(id, 200, 0, { ...item, room_id: targetRoomId }, currentItems, currentFolders, targetRoomId);
+                const prev = { room_id: item.room_id, folder_id: item.folder_id, status: item.status, position_x: item.position_x, position_y: item.position_y, updated_at: item.updated_at };
+                const next = { room_id: targetRoomId, folder_id: null, status: 'active' as const, position_x: safe.x, position_y: safe.y, updated_at: now };
+
+                batchUpdates.push({ id, type: 'item', prev, new: next });
+                // Update local tracking
+                currentItems = currentItems.map(i => i.id === id ? { ...i, ...next } : i);
+            } else {
+                const folder = folders.find(f => f.id === id);
+                if (folder) {
+                    const safe = getSafePosition(id, 200, 0, { ...folder, room_id: targetRoomId }, currentItems, currentFolders, targetRoomId);
+                    const prev = { room_id: folder.room_id, parent_id: folder.parent_id, status: folder.status, position_x: folder.position_x, position_y: folder.position_y, updated_at: folder.updated_at };
+                    const next = { room_id: targetRoomId, parent_id: null, status: 'active' as const, position_x: safe.x, position_y: safe.y, updated_at: now };
+
+                    batchUpdates.push({ id, type: 'folder', prev, new: next });
+                    currentFolders = currentFolders.map(f => f.id === id ? { ...f, ...next } : f);
+                }
             }
         }
+
+        if (batchUpdates.length === 0) return;
+
+        set(state => ({
+            items: state.items.map(i => {
+                const u = batchUpdates.find(up => up.id === i.id && up.type === 'item');
+                return u ? { ...i, ...u.new } : i;
+            }),
+            folders: state.folders.map(f => {
+                const u = batchUpdates.find(up => up.id === f.id && up.type === 'folder');
+                return u ? { ...f, ...u.new } : f;
+            }),
+            history: {
+                past: [...state.history.past, { type: 'BATCH_UPDATE', updates: batchUpdates }],
+                future: []
+            }
+        }));
+
+        for (const u of batchUpdates) {
+            if (u.type === 'item') supabase.from('items').update(u.new).eq('id', u.id).then();
+            else supabase.from('folders').update(u.new).eq('id', u.id).then();
+        }
+
         clearSelection();
     },
 
@@ -866,8 +1044,11 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         }));
     },
 
-    updateFolderContent: async (id, updates) => {
+    updateFolderContent: async (id, updates, options?: { skipHistory?: boolean }) => {
         const state = get();
+        const folder = state.folders.find(f => f.id === id);
+        if (!folder) return;
+
         // Add updated_at for tracking last edit
         let finalUpdates = {
             ...updates,
@@ -875,11 +1056,26 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         };
 
         // Resolve collisions if becoming active
-        const folder = state.folders.find(f => f.id === id);
         if (folder && (updates.status === 'active' && folder.status !== 'active')) {
-            const safe = getSafePosition(id, folder.position_x, folder.position_y, folder, state.items, state.folders);
+            const targetRoomId = updates.room_id !== undefined ? (updates.room_id || null) : (state.currentRoomId || null);
+            const safe = getSafePosition(id, folder.position_x, folder.position_y, folder, state.items, state.folders, targetRoomId);
             finalUpdates.position_x = safe.x;
             finalUpdates.position_y = safe.y;
+        }
+
+        // Record history
+        if (!options?.skipHistory) {
+            const prevUpdates: Partial<Folder> = {};
+            Object.keys(updates).forEach(key => {
+                (prevUpdates as any)[key] = (folder as any)[key];
+            });
+
+            set(state => ({
+                history: {
+                    past: [...state.history.past, { type: 'UPDATE_FOLDER', id, prevUpdates, newUpdates: finalUpdates }],
+                    future: []
+                }
+            }));
         }
 
         set((state) => ({
@@ -939,23 +1135,50 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     },
 
     archiveSelected: async () => {
-        const { selectedIds, items, folders, updateItemContent, updateFolderContent, clearSelection } = get();
+        const { selectedIds, items, folders, clearSelection } = get();
+        const batchUpdates: { id: string, type: 'item' | 'folder', prev: any, new: any }[] = [];
+        const now = new Date().toISOString();
 
-        const itemIds = items.filter(i => selectedIds.includes(i.id)).map(i => i.id);
-        const folderIds = folders.filter(f => selectedIds.includes(f.id)).map(f => f.id);
+        for (const id of selectedIds) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                batchUpdates.push({
+                    id, type: 'item',
+                    prev: { status: item.status, updated_at: item.updated_at },
+                    new: { status: 'archived' as const, updated_at: now }
+                });
+            } else {
+                const folder = folders.find(f => f.id === id);
+                if (folder) {
+                    batchUpdates.push({
+                        id, type: 'folder',
+                        prev: { status: folder.status, updated_at: folder.updated_at },
+                        new: { status: 'archived' as const, updated_at: now }
+                    });
+                }
+            }
+        }
 
-        // Batch update in store
+        if (batchUpdates.length === 0) return;
+
         set(state => ({
-            items: state.items.map(i => itemIds.includes(i.id) ? { ...i, status: 'archived' } : i),
-            folders: state.folders.map(f => folderIds.includes(f.id) ? { ...f, status: 'archived' } : f)
+            items: state.items.map(i => {
+                const u = batchUpdates.find(up => up.id === i.id && up.type === 'item');
+                return u ? { ...i, ...u.new } : i;
+            }),
+            folders: state.folders.map(f => {
+                const u = batchUpdates.find(up => up.id === f.id && up.type === 'folder');
+                return u ? { ...f, ...u.new } : f;
+            }),
+            history: {
+                past: [...state.history.past, { type: 'BATCH_UPDATE', updates: batchUpdates }],
+                future: []
+            }
         }));
 
-        // DB updates
-        if (itemIds.length > 0) {
-            await supabase.from('items').update({ status: 'archived' }).in('id', itemIds);
-        }
-        if (folderIds.length > 0) {
-            await supabase.from('folders').update({ status: 'archived' }).in('id', folderIds);
+        for (const u of batchUpdates) {
+            if (u.type === 'item') supabase.from('items').update(u.new).eq('id', u.id).then();
+            else supabase.from('folders').update(u.new).eq('id', u.id).then();
         }
 
         clearSelection();
@@ -1202,6 +1425,9 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
                 }
             } : i)
         }));
+    },
+    getSafePosition: (id, targetX, targetY, itemOrFolder, items, folders, currentRoomId) => {
+        return getSafePosition(id, targetX, targetY, itemOrFolder, items, folders, currentRoomId);
     },
 
     subscribeToChanges: () => {

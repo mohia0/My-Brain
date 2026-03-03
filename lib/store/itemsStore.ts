@@ -260,7 +260,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
     setItems: (items) => set({ items }),
 
     fetchData: async (user?: any) => {
-        set({ loading: true });
+        if (!get().hasLoadedOnce) set({ loading: true });
         try {
             let targetUser = user || get().session?.user;
 
@@ -287,22 +287,10 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
             const persistedUnlockedIds = vaultStore?.getState()?.unlockedIds || [];
             const isVaultLockedGlobal = vaultStore?.getState()?.isVaultLocked ?? true;
 
-            // Parallel fetch for speed
-            // If in a room, only fetch items for that room.
-            // If not, fetch items where room_id IS NULL or not set.
-            // JOIN with tags via item_tags
-            let dbItemsReq = supabase.from('items').select('*, item_tags(tags(*))');
-            let dbFoldersReq = supabase.from('folders').select('*');
-
-            if (currentRoomId) {
-                // Fetch items for this room OR global items (inbox/archived)
-                dbItemsReq = dbItemsReq.or(`room_id.eq.${currentRoomId},status.eq.inbox,status.eq.archived`).order('created_at', { ascending: false });
-                dbFoldersReq = dbFoldersReq.or(`room_id.eq.${currentRoomId},status.eq.archived`).order('created_at', { ascending: false });
-            } else {
-                // Main canvas: items where room_id is NULL or global items
-                dbItemsReq = dbItemsReq.or(`room_id.is.null,status.eq.inbox,status.eq.archived`).order('created_at', { ascending: false });
-                dbFoldersReq = dbFoldersReq.or(`room_id.is.null,status.eq.archived`).order('created_at', { ascending: false });
-            }
+            // Fetch all items and folders for this user at once
+            // This makes navigation between rooms instant because all data is already local
+            let dbItemsReq = supabase.from('items').select('*, item_tags(tags(*))').order('created_at', { ascending: false });
+            let dbFoldersReq = supabase.from('folders').select('*').order('created_at', { ascending: false });
 
             const [itemsRes, foldersRes] = await Promise.all([dbItemsReq, dbFoldersReq]);
 

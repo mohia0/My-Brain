@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import styles from './ActionMoveMenu.module.css';
-import { MoveRight, Folder, DoorClosed, Frame, CornerLeftUp } from 'lucide-react';
+import { MoveRight, Folder, DoorClosed, Frame, CornerLeftUp, Search } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import clsx from 'clsx';
 
@@ -14,7 +14,9 @@ interface ActionMoveMenuProps {
 export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps) {
     const { items, folders, updateItemContent, currentRoomId, roomHistory } = useItemsStore();
     const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const menuRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -25,6 +27,14 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Focus search input on open
+    useEffect(() => {
+        if (isOpen) {
+            setSearchQuery('');
+            setTimeout(() => searchInputRef.current?.focus(), 50);
+        }
+    }, [isOpen]);
 
     const handleMoveToFolder = (folderId: string) => {
         if (isFolder) {
@@ -119,9 +129,22 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
         handleMoveToRoom(parentRoomId);
     };
 
-    const mindrooms = items.filter(i => i.type === 'room' && i.id !== itemId && i.id !== currentRoomId);
-    const projectAreas = items.filter(i => i.type === 'project');
-    const filteredFolders = folders.filter(f => f.id !== itemId); // Don't allow moving a folder into itself
+    const mindrooms = useMemo(() => items.filter(i =>
+        i.type === 'room' &&
+        i.id !== itemId &&
+        i.id !== currentRoomId &&
+        (i.metadata?.title || 'Untitled Room').toLowerCase().includes(searchQuery.toLowerCase())
+    ), [items, itemId, currentRoomId, searchQuery]);
+
+    const projectAreas = useMemo(() => items.filter(i =>
+        i.type === 'project' &&
+        (i.metadata?.title || 'Project Area').toLowerCase().includes(searchQuery.toLowerCase())
+    ), [items, searchQuery]);
+
+    const filteredFolders = useMemo(() => folders.filter(f =>
+        f.id !== itemId &&
+        f.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [folders, itemId, searchQuery]);
 
     const isInsideRoom = !!currentRoomId;
 
@@ -154,6 +177,19 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
                     data-scroll-lock="true"
                 >
                     <div className={styles.menuHeader}>Move to...</div>
+
+                    <div className={styles.searchContainer}>
+                        <Search size={10} className={styles.searchIcon} />
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            placeholder="Search..."
+                            className={styles.searchInput}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </div>
                     <div className={styles.folderList} onWheel={e => e.stopPropagation()}>
                         {isInsideRoom && (
                             <div style={{ borderBottom: '1px solid var(--border-color)', marginBottom: 8, paddingBottom: 4 }}>
@@ -183,21 +219,6 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
                             </div>
                         )}
 
-                        {filteredFolders.length > 0 && <div className={styles.menuGroupTitle}>Folders</div>}
-                        {filteredFolders.map(folder => (
-                            <button
-                                key={folder.id}
-                                className={styles.menuOption}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveToFolder(folder.id);
-                                }}
-                            >
-                                <Folder size={14} />
-                                <span>{folder.name}</span>
-                            </button>
-                        ))}
-
                         {mindrooms.length > 0 && <div className={styles.menuGroupTitle}>Mind Rooms</div>}
                         {mindrooms.map(room => (
                             <button
@@ -225,6 +246,21 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
                             >
                                 <Frame size={14} />
                                 <span>{area.metadata?.title || 'Project Area'}</span>
+                            </button>
+                        ))}
+
+                        {filteredFolders.length > 0 && <div className={styles.menuGroupTitle}>Folders</div>}
+                        {filteredFolders.map(folder => (
+                            <button
+                                key={folder.id}
+                                className={styles.menuOption}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveToFolder(folder.id);
+                                }}
+                            >
+                                <Folder size={14} />
+                                <span>{folder.name}</span>
                             </button>
                         ))}
                     </div>

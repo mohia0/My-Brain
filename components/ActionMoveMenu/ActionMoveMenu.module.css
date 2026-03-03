@@ -61,12 +61,52 @@
 }
 
 .menuHeader {
-    padding: 8px 12px;
+    padding: 8px 12px 4px 12px;
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.searchContainer {
+    padding: 4px 8px;
+    margin-bottom: 4px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin: 4px 8px 8px 8px;
+    border: 1px solid var(--card-border);
+    transition: all 0.2s ease;
+}
+
+.searchContainer:focus-within {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.1);
+}
+
+.searchIcon {
+    color: var(--text-muted);
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.searchInput {
+    background: transparent;
+    border: none;
+    color: var(--foreground);
+    font-size: 0.75rem;
+    width: 100%;
+    outline: none;
+    padding: 4px 0;
+}
+
+.searchInput::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
 }
 
 .menuGroupTitle {

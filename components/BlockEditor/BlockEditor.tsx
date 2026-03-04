@@ -10,7 +10,7 @@ import {
     getDefaultReactSlashMenuItems,
     SuggestionMenuController
 } from "@blocknote/react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Undo, Redo } from "lucide-react";
 import { toast } from "sonner";
 
@@ -114,22 +114,30 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
         uploadFile, // Enable image uploads
     });
 
+    const lastPushedContent = useRef<string>(initialContent || "");
+
     const handleChange = () => {
         const json = JSON.stringify(editor.document);
-        onChange(json);
+        if (json !== lastPushedContent.current) {
+            lastPushedContent.current = json;
+            onChange(json);
+        }
     };
 
     // Keep editor in sync if initialContent changes externally, but avoid loops
     useEffect(() => {
-        if (!initialContent) return;
+        if (initialContent === undefined || initialContent === lastPushedContent.current) return;
+
         const currentJson = JSON.stringify(editor.document);
         if (initialContent !== currentJson) {
             const blocks = getInitialBlocks();
             if (blocks) {
+                // Use a non-destructive update if possible, but replaceBlocks is standard for major changes
                 editor.replaceBlocks(editor.document, blocks);
+                lastPushedContent.current = initialContent;
             }
         }
-    }, [initialContent]);
+    }, [initialContent, editor]);
 
     // CSS-only solution is safer for performance
     return (

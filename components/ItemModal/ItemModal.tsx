@@ -53,6 +53,8 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 150, [scrollBodyRef, modalContentRef], swipeZoneRef);
 
+    const prevItemId = useRef<string | null>(null);
+
     useEffect(() => {
         if (item) {
             // Live Sync Title
@@ -60,7 +62,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 setTitle(item.metadata.title);
             } else if (!isEditingTitle && (!title || title === "Idea Title" || /^Capturing/.test(title)) && item.type === 'text') {
                 // Fallback: Deriving title from content
-                let displayContent = item.content;
+                let displayContent = content || item.content; // Use local content if available
                 if (displayContent.startsWith('[') || displayContent.startsWith('{')) {
                     try {
                         const blocks = JSON.parse(displayContent);
@@ -80,7 +82,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                 setDescription(item.metadata.description);
             }
 
-            if (content !== item.content) {
+            // Sync content ONLY when switching items, to prevent overwriting user typing
+            if (prevItemId.current !== item.id) {
+                setContent(item.content);
+                prevItemId.current = item.id;
+            } else if (!content && item.content) {
                 setContent(item.content);
             }
             if (item.type === 'link') setUrl(item.content);

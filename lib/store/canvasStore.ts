@@ -20,6 +20,8 @@ interface CanvasState {
     toggleSnapping: () => void;
     isViewRestored: boolean;
     setViewRestored: (restored: boolean) => void;
+    isHydrated: boolean;
+    setHydrated: (hydrated: boolean) => void;
 }
 
 export const useCanvasStore = create<CanvasState>()(
@@ -49,9 +51,18 @@ export const useCanvasStore = create<CanvasState>()(
             toggleSnapping: () => set((state) => ({ isSnappingEnabled: !state.isSnappingEnabled })),
             isViewRestored: false,
             setViewRestored: (restored) => set({ isViewRestored: restored }),
+            isHydrated: false,
+            setHydrated: (hydrated) => set({ isHydrated: hydrated }),
         }),
         {
             name: 'brainia-canvas-storage',
+            onRehydrateStorage: (state) => {
+                return (state, error) => {
+                    if (state) {
+                        state.setHydrated(true);
+                    }
+                };
+            },
             partialize: (state) => ({
                 scale: state.scale,
                 position: state.position,

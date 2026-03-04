@@ -15,10 +15,9 @@ const ROOM_WIDTH = 5000;
 const ROOM_HEIGHT = 2500;
 
 export default function Canvas({ children }: { children: React.ReactNode }) {
-    const { scale, position, setPosition, setScale, currentTool } = useCanvasStore();
+    const { scale, position, setPosition, setScale, currentTool, isHydrated } = useCanvasStore();
     const { items, setSelection, clearSelection, addItem, undo, redo, history, currentRoomId } = useItemsStore();
 
-    // Derived Canvas Dimensions & Colors
     const isRoom = !!currentRoomId;
     const currentCanvasWidth = isRoom ? ROOM_WIDTH : MAIN_WIDTH;
     const currentCanvasHeight = isRoom ? ROOM_HEIGHT : MAIN_HEIGHT;
@@ -59,14 +58,14 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
         updateCursor();
     }, [currentTool, isSpacePressed, isPanning]);
 
-    // Initial load - Center canvas
+    // Initial load - Center canvas only if it's never been moved (at 0,0) and storage is hydrated
     useEffect(() => {
-        if (position.x === 0 && position.y === 0) {
+        if (isHydrated && position.x === 0 && position.y === 0) {
             const viewportW = window.innerWidth;
             const viewportH = window.innerHeight;
             setPosition(viewportW / 2, viewportH / 2);
         }
-    }, []);
+    }, [isHydrated, position.x, position.y, setPosition]);
 
     // Global Event Listeners for Spacebar
     useEffect(() => {

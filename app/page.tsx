@@ -73,90 +73,87 @@ export default function Home() {
 
   const isInitializingRef = useRef(initializing);
   const showLoadingRef = useRef(showLoading);
+  const isRunningInitRef = useRef(false);
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const runInit = async () => {
-    const MIN_LOADING_TIME = 800; // Increased to ensure smooth visual
-
-    // Check for 'isAuthenticating' flag OR hash/search parameters
-    const checkRedirect = () => {
-      if (typeof window === 'undefined') return false;
-
-      // If we already have a session, we don't need to stay in redirect state
-      const currentSession = useItemsStore.getState().session;
-      if (currentSession) return false;
-
-      const isAuthenticating = localStorage.getItem('isAuthenticating') === 'true';
-      const hash = window.location.hash;
-      const search = window.location.search;
-
-      const hasAuthParams = hash.includes('access_token') ||
-        hash.includes('type=recovery') ||
-        hash.includes('error_description') ||
-        search.includes('code=');
-
-      if (isAuthenticating || hasAuthParams) {
-        console.log("Auth redirect or authenticating state detected, showing loader...");
-
-        // Show loader immediately
-        if (!showLoadingRef.current) {
-          setShowLoading(true);
-          showLoadingRef.current = true;
-          setInitializing(true);
-          isInitializingRef.current = true;
-        }
-
-        // Clear the flag after a delay to prevent getting stuck if auth fails
-        setTimeout(() => {
-          if (isInitializingRef.current) {
-            console.log("Auth timeout reached, verifying state.");
-            localStorage.removeItem('isAuthenticating');
-
-            // Re-check session one last time
-            supabase.auth.getSession().then((result: any) => {
-              if (!result.data.session) {
-                setInitializing(false);
-                setShowLoading(false);
-                showLoadingRef.current = false;
-                isInitializingRef.current = false;
-              }
-            });
-          }
-        }, 10000); // 10 seconds timeout for full auth flow
-        return true;
-      }
-      return false;
-    }
-
-    if (checkRedirect()) return;
-
-    if (!shouldSkipLoad) {
-      setInitializing(true);
-      isInitializingRef.current = true;
-      setShowLoading(true);
-      showLoadingRef.current = true;
-    }
-    setIsFading(false);
-
-    const checkMobileWidth = () => {
-      if (typeof window === 'undefined') return false;
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('view') === 'desktop') return false;
-      if (params.get('view') === 'mobile') return true;
-      const isCapacitor = ((window as any).Capacitor?.isNativePlatform() || (window as any).Capacitor?.isNative);
-      return isCapacitor || window.innerWidth <= 768;
-    };
-
-    const isCurrentlyMobile = checkMobileWidth();
+    if (isRunningInitRef.current) return;
+    isRunningInitRef.current = true;
 
     try {
-      if (shouldSkipLoad) {
-        setShowLoading(false);
-        showLoadingRef.current = false;
-        setInitializing(false);
-        isInitializingRef.current = false;
+      const MIN_LOADING_TIME = 800; // Increased to ensure smooth visual
+
+      // Check for 'isAuthenticating' flag OR hash/search parameters
+      const checkRedirect = () => {
+        if (typeof window === 'undefined') return false;
+
+        // If we already have a session, we don't need to stay in redirect state
+        const currentSession = useItemsStore.getState().session;
+        if (currentSession) return false;
+
+        const isAuthenticating = localStorage.getItem('isAuthenticating') === 'true';
+        const hash = window.location.hash;
+        const search = window.location.search;
+
+        const hasAuthParams = hash.includes('access_token') ||
+          hash.includes('type=recovery') ||
+          hash.includes('error_description') ||
+          search.includes('code=');
+
+        if (isAuthenticating || hasAuthParams) {
+          console.log("Auth redirect or authenticating state detected, showing loader...");
+
+          // Show loader immediately
+          if (!showLoadingRef.current) {
+            setShowLoading(true);
+            showLoadingRef.current = true;
+            setInitializing(true);
+            isInitializingRef.current = true;
+          }
+
+          // Clear the flag after a delay to prevent getting stuck if auth fails
+          setTimeout(() => {
+            if (isInitializingRef.current) {
+              console.log("Auth timeout reached, verifying state.");
+              localStorage.removeItem('isAuthenticating');
+
+              // Re-check session one last time
+              supabase.auth.getSession().then((result: any) => {
+                if (!result.data.session) {
+                  setInitializing(false);
+                  setShowLoading(false);
+                  showLoadingRef.current = false;
+                  isInitializingRef.current = false;
+                }
+              }).catch(() => { });
+            }
+          }, 10000); // 10 seconds timeout for full auth flow
+          return true;
+        }
+        return false;
       }
+
+      if (checkRedirect()) return;
+
+      if (!shouldSkipLoad) {
+        setInitializing(true);
+        isInitializingRef.current = true;
+        setShowLoading(true);
+        showLoadingRef.current = true;
+      }
+      setIsFading(false);
+
+      const checkMobileWidth = () => {
+        if (typeof window === 'undefined') return false;
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'desktop') return false;
+        if (params.get('view') === 'mobile') return true;
+        const isCapacitor = ((window as any).Capacitor?.isNativePlatform() || (window as any).Capacitor?.isNative);
+        return isCapacitor || window.innerWidth <= 768;
+      };
+
+      const isCurrentlyMobile = checkMobileWidth();
 
       const timerPromise = new Promise(resolve => setTimeout(resolve, shouldSkipLoad ? 0 : MIN_LOADING_TIME));
 
@@ -167,7 +164,7 @@ export default function Home() {
         initialSession = data?.session;
         if (error) {
           console.warn("Session check error (clearing invalid session):", error.message);
-          await supabase.auth.signOut();
+          await supabase.auth.signOut().catch(() => { });
           setSession(null);
         } else {
           setSession(initialSession);
@@ -178,10 +175,17 @@ export default function Home() {
       if (initialSession) {
         // View restoration logic integrated here
         if (initialSession.user?.user_metadata?.canvas_view && !isCurrentlyMobile) {
-          const { scale, x, y, isMinimapCollapsed } = initialSession.user.user_metadata.canvas_view;
+          const { scale, x, y, isMinimapCollapsed, currentRoomId, currentRoomTitle, roomHistory } = initialSession.user.user_metadata.canvas_view;
           useCanvasStore.getState().restoreView(scale, { x, y });
           if (isMinimapCollapsed !== undefined) {
             useCanvasStore.getState().setIsMinimapCollapsed(isMinimapCollapsed);
+          }
+          if (currentRoomId !== undefined) {
+            useItemsStore.setState({
+              currentRoomId: currentRoomId || null,
+              currentRoomTitle: currentRoomTitle || (currentRoomId ? 'Room' : 'Canvas'),
+              roomHistory: roomHistory || []
+            });
           }
         } else {
           useCanvasStore.getState().setViewRestored(true);
@@ -190,6 +194,9 @@ export default function Home() {
         dataPromise = fetchData(initialSession.user).then(() => {
           if (unsubscribeRef.current) unsubscribeRef.current();
           unsubscribeRef.current = subscribeToChanges();
+        }).catch((err: any) => {
+          if (err.name === 'AbortError') return;
+          console.error("fetchData error:", err);
         });
       } else {
         useCanvasStore.getState().setViewRestored(true);
@@ -223,6 +230,8 @@ export default function Home() {
       setInitializing(false);
       setShowLoading(false);
       setIsFading(false);
+    } finally {
+      isRunningInitRef.current = false;
     }
   };
 
@@ -242,7 +251,10 @@ export default function Home() {
 
       // If we already finished loading but session changed (e.g. login/logout manually), refresh data
       if (session && !showLoadingRef.current && !isInitializingRef.current) {
-        fetchData(session.user);
+        fetchData(session.user).catch((err: any) => {
+          if (err.name === 'AbortError') return;
+          console.error('[AuthChange] fetchData failed:', err);
+        });
         if (unsubscribeRef.current) unsubscribeRef.current();
         unsubscribeRef.current = subscribeToChanges();
       }
@@ -312,10 +324,17 @@ export default function Home() {
   useEffect(() => {
     // This effect handles updates when session changes but loading screen is ALREADY gone
     if (session?.user?.user_metadata?.canvas_view && !isMobile && !showLoading) {
-      const { scale, x, y, isMinimapCollapsed } = session.user.user_metadata.canvas_view;
+      const { scale, x, y, isMinimapCollapsed, currentRoomId, currentRoomTitle, roomHistory } = session.user.user_metadata.canvas_view;
       useCanvasStore.getState().restoreView(scale, { x, y });
       if (isMinimapCollapsed !== undefined) {
         useCanvasStore.getState().setIsMinimapCollapsed(isMinimapCollapsed);
+      }
+      if (currentRoomId !== undefined) {
+        useItemsStore.setState({
+          currentRoomId: currentRoomId || null,
+          currentRoomTitle: currentRoomTitle || (currentRoomId ? 'Room' : 'Canvas'),
+          roomHistory: roomHistory || []
+        });
       }
     }
   }, [session, isMobile, showLoading]);
@@ -326,18 +345,27 @@ export default function Home() {
     let timer: NodeJS.Timeout;
     const unsubscribe = useCanvasStore.subscribe((state) => {
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        supabase.auth.updateUser({
-          data: {
-            ...session.user.user_metadata,
-            canvas_view: {
-              scale: state.scale,
-              x: state.position.x,
-              y: state.position.y,
-              isMinimapCollapsed: state.isMinimapCollapsed
+      timer = setTimeout(async () => {
+        try {
+          const itemState = useItemsStore.getState();
+          await supabase.auth.updateUser({
+            data: {
+              ...session.user.user_metadata,
+              canvas_view: {
+                scale: state.scale,
+                x: state.position.x,
+                y: state.position.y,
+                isMinimapCollapsed: state.isMinimapCollapsed,
+                currentRoomId: itemState.currentRoomId,
+                currentRoomTitle: itemState.currentRoomTitle,
+                roomHistory: itemState.roomHistory
+              }
             }
-          }
-        });
+          });
+        } catch (e: any) {
+          if (e.name === 'AbortError') return;
+          console.error('[MetadataSync] Failed to update user metadata:', e);
+        }
       }, 3000);
     });
 

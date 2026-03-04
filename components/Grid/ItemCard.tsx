@@ -59,10 +59,21 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const [imageError, setImageError] = React.useState(false);
     const [localItem, setLocalItem] = React.useState(item);
     const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
+    const [editorTheme, setEditorTheme] = React.useState<'light' | 'dark' | 'auto'>('auto');
     const pollTimer = React.useRef<any>(null);
     const { isVaultLocked, setModalOpen, hasPassword, lock, unlockedIds, lockItem } = useVaultStore();
     const { toggleVaultItem, duplicateItem, removeItem, archiveItem, vaultedItemsRevealed, reLockVaulted } = useItemsStore();
     const { scale } = useCanvasStore();
+
+    React.useEffect(() => {
+        if (typeof document !== 'undefined') {
+            const getTheme = () => document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+            setEditorTheme(getTheme());
+            const observer = new MutationObserver(() => setEditorTheme(getTheme()));
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+            return () => observer.disconnect();
+        }
+    }, []);
 
     React.useEffect(() => {
         setLocalItem(item);
@@ -115,9 +126,11 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const getIcon = () => {
         if (localItem.type === 'text') {
             const iconContent = localItem.metadata?.emoji ? (
-                <span style={{ fontSize: '16px', lineHeight: 1, display: 'flex' }}>{localItem.metadata.emoji}</span>
+                <span style={{ fontSize: '14px', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{localItem.metadata.emoji}</span>
             ) : (
-                <FileText size={16} />
+                <span style={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <FileText size={16} />
+                </span>
             );
 
             return (
@@ -138,7 +151,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                                     const newMetadata = { ...localItem.metadata, emoji: e.native };
                                     useItemsStore.getState().updateItemContent(localItem.id, { metadata: newMetadata });
                                     setShowEmojiPicker(false);
-                                }} theme="light" />
+                                }} theme={editorTheme} />
                                 {localItem.metadata?.emoji && (
                                     <button
                                         className={styles.removeEmojiBtn}

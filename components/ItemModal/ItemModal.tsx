@@ -32,7 +32,6 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [content, setContent] = useState('');
-    const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [url, setUrl] = useState('');
     const [tags, setTags] = useState<Tag[]>([]);
@@ -41,11 +40,30 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const [newTagName, setNewTagName] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [title, setTitle] = useState('');
     const [isOverflowing, setIsOverflowing] = useState(false);
     const [isOverflowingHeader, setIsOverflowingHeader] = useState(false);
+    const [imageError, setImageError] = useState(false);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const titleRef = useRef<HTMLDivElement>(null);
     const titleInputRef = useRef<HTMLInputElement>(null);
+    const [editorTheme, setEditorTheme] = useState<'light' | 'dark' | 'auto'>('auto');
+
+    // Emoji picker theme observer
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            const getTheme = () => document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+            setEditorTheme(getTheme());
+
+            const observer = new MutationObserver(() => {
+                setEditorTheme(getTheme());
+            });
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+            return () => observer.disconnect();
+        }
+    }, []);
+
+    // Effect for handling image fetching from Supabase
     const headerTitleRef = useRef<HTMLDivElement>(null);
     const scrollBodyRef = useRef<HTMLDivElement>(null);
     const modalContentRef = useRef<HTMLDivElement>(null);
@@ -455,9 +473,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             <Popover.Trigger asChild>
                                                 <button className={styles.emojiBtn}>
                                                     {item.metadata?.emoji ? (
-                                                        <span>{item.metadata.emoji}</span>
+                                                        <span style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>{item.metadata.emoji}</span>
                                                     ) : (
-                                                        <Smile size={28} />
+                                                        <span style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <Smile size={28} />
+                                                        </span>
                                                     )}
                                                 </button>
                                             </Popover.Trigger>
@@ -468,7 +488,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                                             const newMetadata = { ...item.metadata, emoji: e.native };
                                                             updateItemContent(item.id, { metadata: newMetadata });
                                                             setShowEmojiPicker(false);
-                                                        }} theme="light" />
+                                                        }} theme={editorTheme} />
 
                                                         {item.metadata?.emoji && (
                                                             <button

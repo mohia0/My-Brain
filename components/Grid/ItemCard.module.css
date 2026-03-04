@@ -790,3 +790,57 @@
 .roomCardOuter:hover .roomDoor {
     transform: rotateY(-115deg);
 }
+
+.emojiCardBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    margin: 0;
+    margin-right: -2px;
+    color: var(--text-dim);
+    transition: all 0.2s;
+    border-radius: 4px;
+}
+
+.emojiCardBtn:hover {
+    color: var(--foreground);
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.emojiPickerContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--card-bg);
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.removeEmojiBtn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.removeEmojiBtn:hover {
+    background: rgba(255, 0, 0, 0.1);
+    color: #e55353;
+    border-color: rgba(255, 0, 0, 0.2);
+}

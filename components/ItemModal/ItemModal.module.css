@@ -1096,3 +1096,57 @@
     padding: 16px !important;
     gap: 12px !important;
 }
+
+/* --- EMOJI PICKER --- */
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.emojiBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.8rem;
+    padding: 6px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: var(--text-muted);
+}
+
+.emojiBtn:hover {
+    background: rgba(110, 86, 207, 0.1);
+    color: var(--accent);
+    transform: scale(1.05);
+}
+
+.emojiBtn span {
+    line-height: 1;
+}
+
+.removeEmojiBtn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.removeEmojiBtn:hover {
+    background: rgba(255, 0, 0, 0.1);
+    color: #e55353;
+    border-color: rgba(255, 0, 0, 0.2);
+}

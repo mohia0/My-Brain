@@ -12,6 +12,11 @@ import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import ActionMoveMenu from '@/components/ActionMoveMenu/ActionMoveMenu';
+import data from '@emoji-mart/data';
+import * as Popover from '@radix-ui/react-popover';
+import dynamic from 'next/dynamic';
+
+const Picker = dynamic(() => import('@emoji-mart/react'), { ssr: false });
 
 interface ItemCardProps {
     item: Item;
@@ -53,6 +58,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const [tempTitle, setTempTitle] = React.useState(item.metadata?.title || '');
     const [imageError, setImageError] = React.useState(false);
     const [localItem, setLocalItem] = React.useState(item);
+    const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
     const pollTimer = React.useRef<any>(null);
     const { isVaultLocked, setModalOpen, hasPassword, lock, unlockedIds, lockItem } = useVaultStore();
     const { toggleVaultItem, duplicateItem, removeItem, archiveItem, vaultedItemsRevealed, reLockVaulted } = useItemsStore();
@@ -107,6 +113,53 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     };
 
     const getIcon = () => {
+        if (localItem.type === 'text') {
+            const iconContent = localItem.metadata?.emoji ? (
+                <span style={{ fontSize: '16px', lineHeight: 1, display: 'flex' }}>{localItem.metadata.emoji}</span>
+            ) : (
+                <FileText size={16} />
+            );
+
+            return (
+                <Popover.Root open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                    <Popover.Trigger asChild>
+                        <button
+                            className={styles.emojiCardBtn}
+                            onClick={(e) => { e.stopPropagation(); }}
+                            onPointerDown={(e) => { e.stopPropagation(); }}
+                        >
+                            {iconContent}
+                        </button>
+                    </Popover.Trigger>
+                    <Popover.Portal>
+                        <Popover.Content side="top" align="start" sideOffset={5} style={{ zIndex: 99999 }}>
+                            <div className={styles.emojiPickerContainer} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                                <Picker data={data} onEmojiSelect={(e: any) => {
+                                    const newMetadata = { ...localItem.metadata, emoji: e.native };
+                                    useItemsStore.getState().updateItemContent(localItem.id, { metadata: newMetadata });
+                                    setShowEmojiPicker(false);
+                                }} theme="light" />
+                                {localItem.metadata?.emoji && (
+                                    <button
+                                        className={styles.removeEmojiBtn}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newMetadata = { ...localItem.metadata };
+                                            delete newMetadata.emoji;
+                                            useItemsStore.getState().updateItemContent(localItem.id, { metadata: newMetadata });
+                                            setShowEmojiPicker(false);
+                                        }}
+                                    >
+                                        <Trash2 size={12} /> Reset Icon
+                                    </button>
+                                )}
+                            </div>
+                        </Popover.Content>
+                    </Popover.Portal>
+                </Popover.Root>
+            );
+        }
+
         if (isVideo) return <Video size={16} />;
         switch (localItem.type) {
             case 'link': return <Link size={16} />;

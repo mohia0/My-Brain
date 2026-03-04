@@ -136,6 +136,7 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                                 ref={titleRef}
                                 className={clsx(styles.title, isOverflowing && styles.canAnimate)}
                             >
+                                {(item.type === 'text' && item.metadata?.emoji) && <span style={{ marginRight: 6, fontSize: '0.9em' }}>{item.metadata.emoji}</span>}
                                 {(() => {
                                     if (item.metadata?.title) return item.metadata.title;
 
@@ -185,6 +186,7 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
                                 ref={titleRef}
                                 className={clsx(styles.title, isOverflowing && styles.canAnimate)}
                             >
+                                {(item.type === 'text' && item.metadata?.emoji) && <span style={{ marginRight: 6, fontSize: '0.9em' }}>{item.metadata.emoji}</span>}
                                 {(() => {
                                     if (item.metadata?.title) return item.metadata.title;
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -12,8 +12,11 @@ import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
 import { getApiUrl } from '@/lib/utils';
 import { suggestTags, extractTagsFromText } from '@/lib/services/taggingService';
 import { toast } from 'sonner';
+import data from '@emoji-mart/data';
+import * as Popover from '@radix-ui/react-popover';
 
 const BlockEditor = dynamic(() => import('@/components/BlockEditor/BlockEditor'), { ssr: false });
+const Picker = dynamic(() => import('@emoji-mart/react'), { ssr: false });
 
 interface ItemModalProps {
     itemId: string | null;
@@ -50,6 +53,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const hasAutoTagged = useRef(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 150, [scrollBodyRef, modalContentRef], swipeZoneRef);
 
@@ -446,23 +450,65 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                         {isNote ? (
                             <div className={styles.noteLayout}>
                                 <div className={styles.noteTitleSection}>
-                                    {isEditingTitle ? (
-                                        <input
-                                            ref={titleInputRef}
-                                            autoFocus
-                                            className={styles.noteTitleInput}
-                                            value={title}
-                                            onChange={e => setTitle(e.target.value)}
-                                            onBlur={() => setIsEditingTitle(false)}
-                                            onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
-                                            placeholder="Idea Title"
-                                            dir="auto"
-                                        />
-                                    ) : (
-                                        <div className={styles.noteTitleDisplay} onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }} dir="auto">
-                                            {title || "Idea Title"}
+                                    <div className={styles.titleRow}>
+                                        <Popover.Root open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                                            <Popover.Trigger asChild>
+                                                <button className={styles.emojiBtn}>
+                                                    {item.metadata?.emoji ? (
+                                                        <span>{item.metadata.emoji}</span>
+                                                    ) : (
+                                                        <Smile size={28} />
+                                                    )}
+                                                </button>
+                                            </Popover.Trigger>
+                                            <Popover.Portal>
+                                                <Popover.Content sideOffset={5} style={{ zIndex: 99999 }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--card-bg)', padding: '8px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+                                                        <Picker data={data} onEmojiSelect={(e: any) => {
+                                                            const newMetadata = { ...item.metadata, emoji: e.native };
+                                                            updateItemContent(item.id, { metadata: newMetadata });
+                                                            setShowEmojiPicker(false);
+                                                        }} theme="light" />
+
+                                                        {item.metadata?.emoji && (
+                                                            <button
+                                                                className={styles.removeEmojiBtn}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const newMetadata = { ...item.metadata };
+                                                                    delete newMetadata.emoji;
+                                                                    updateItemContent(item.id, { metadata: newMetadata });
+                                                                    setShowEmojiPicker(false);
+                                                                }}
+                                                            >
+                                                                <Trash2 size={12} /> Reset Icon
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </Popover.Content>
+                                            </Popover.Portal>
+                                        </Popover.Root>
+
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            {isEditingTitle ? (
+                                                <input
+                                                    ref={titleInputRef}
+                                                    autoFocus
+                                                    className={styles.noteTitleInput}
+                                                    value={title}
+                                                    onChange={e => setTitle(e.target.value)}
+                                                    onBlur={() => setIsEditingTitle(false)}
+                                                    onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
+                                                    placeholder="Idea Title"
+                                                    dir="auto"
+                                                />
+                                            ) : (
+                                                <div className={styles.noteTitleDisplay} onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }} dir="auto">
+                                                    {title || "Idea Title"}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                                 <div className={styles.editorWrapper}>
                                     <BlockEditor initialContent={content} onChange={setContent} />

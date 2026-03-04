@@ -228,14 +228,15 @@
     display: flex;
     gap: 4px;
     opacity: 0;
-    transition: opacity 0.2s, transform 0.2s;
+    transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     padding: 4px;
     border-radius: 8px;
     backdrop-filter: blur(8px);
     z-index: 20;
-    transform: translateY(4px);
+    transform: translateY(4px) scale(1);
+    transform-origin: bottom right;
     box-shadow: 0 4px 12px var(--shadow-color);
 }
 
@@ -251,7 +252,12 @@
 .folder:hover .actions,
 .folder:focus-within .actions {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+}
+
+.folder:hover .actions:hover,
+.folder:focus-within .actions:hover {
+    transform: translateY(0) scale(var(--inv-scale, 1));
 }
 
 .actions button {

@@ -22,6 +22,8 @@ interface CanvasState {
     setViewRestored: (restored: boolean) => void;
     isHydrated: boolean;
     setHydrated: (hydrated: boolean) => void;
+    roomViews: Record<string, { scale: number; position: { x: number; y: number } }>;
+    saveRoomView: (roomId: string | null, scale: number, position: { x: number; y: number }) => void;
 }
 
 export const useCanvasStore = create<CanvasState>()(
@@ -53,6 +55,13 @@ export const useCanvasStore = create<CanvasState>()(
             setViewRestored: (restored) => set({ isViewRestored: restored }),
             isHydrated: false,
             setHydrated: (hydrated) => set({ isHydrated: hydrated }),
+            roomViews: {},
+            saveRoomView: (roomId, scale, position) => set((state) => ({
+                roomViews: {
+                    ...state.roomViews,
+                    [roomId || 'root']: { scale, position }
+                }
+            })),
         }),
         {
             name: 'brainia-canvas-storage',
@@ -67,7 +76,8 @@ export const useCanvasStore = create<CanvasState>()(
                 scale: state.scale,
                 position: state.position,
                 isMinimapCollapsed: state.isMinimapCollapsed,
-                isSnappingEnabled: state.isSnappingEnabled
+                isSnappingEnabled: state.isSnappingEnabled,
+                roomViews: state.roomViews
             }),
         }
     )

@@ -124,13 +124,14 @@
     display: flex;
     gap: 4px;
     opacity: 0;
-    transition: opacity 0.2s, transform 0.2s;
+    transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     padding: 4px;
     border-radius: 8px;
     backdrop-filter: blur(8px);
-    transform: translateY(4px);
+    transform: translateY(4px) scale(1);
+    transform-origin: bottom right;
     box-shadow: 0 4px 12px var(--shadow-color);
 }
 
@@ -147,7 +148,13 @@
 .card:focus-within .actions,
 .portalCard:hover .actions {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+}
+
+.card:hover .actions:hover,
+.card:focus-within .actions:hover,
+.portalCard:hover .actions:hover {
+    transform: translateY(0) scale(var(--inv-scale, 1));
 }
 
 .actions button {
@@ -745,12 +752,19 @@
     position: absolute;
     bottom: 20px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(1);
+    transform-origin: bottom center;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     gap: 8px;
     z-index: 5;
     opacity: 1;
     /* Always visible from "inside" */
+}
+
+.roomCardOuter:hover .roomInsideActions:hover {
+    transform: translateX(-50%) scale(var(--inv-scale, 1));
+    z-index: 50;
 }
 
 .roomInsideActions button {

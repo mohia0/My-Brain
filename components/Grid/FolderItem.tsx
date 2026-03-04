@@ -54,6 +54,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
 
     const { isVaultLocked, setModalOpen, hasPassword, lock, unlockedIds, lockItem } = useVaultStore();
     const { toggleVaultFolder } = useItemsStore();
+    const { scale } = useCanvasStore();
 
     const isVaulted = folder.is_vaulted;
     const isObscured = isVaulted && isVaultLocked && !unlockedIds.includes(folder.id);
@@ -105,8 +106,9 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
 
     const renderActions = () => {
         if (isDragging) return null;
+        const invScale = Math.min(3, Math.max(1, 1 / scale));
         return (
-            <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+            <div className={styles.actions} style={{ '--inv-scale': invScale } as React.CSSProperties} onPointerDown={e => e.stopPropagation()}>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();

@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { generateId } from '@/lib/utils';
 import { Item, Folder, Tag } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { useCanvasStore } from './canvasStore';
 
 type PositionUpdate = { id: string, type: 'item' | 'folder', x: number, y: number, prevX: number, prevY: number };
 
@@ -216,28 +217,56 @@ export const useItemsStore = create<ItemsState>()(
                 const prevId = state.currentRoomId;
                 const prevTitle = state.currentRoomTitle;
 
+                const canvasState = useCanvasStore.getState();
+                canvasState.saveRoomView(prevId, canvasState.scale, canvasState.position);
+
                 set({
                     roomHistory: [...state.roomHistory, { id: prevId, title: prevTitle }],
                     currentRoomId: id,
                     currentRoomTitle: title
                 });
+
+                const targetView = canvasState.roomViews[id];
+                if (targetView) {
+                    canvasState.restoreView(targetView.scale, targetView.position);
+                } else {
+                    canvasState.setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                    canvasState.setScale(1);
+                }
             },
 
             exitRoom: () => {
                 const state = get();
+                const canvasState = useCanvasStore.getState();
+                canvasState.saveRoomView(state.currentRoomId, canvasState.scale, canvasState.position);
+
                 if (state.roomHistory.length === 0) {
                     set({ currentRoomId: null, currentRoomTitle: 'Canvas' });
+                    const rootRoomView = canvasState.roomViews['root'];
+                    if (rootRoomView) {
+                        canvasState.restoreView(rootRoomView.scale, rootRoomView.position);
+                    }
                     return;
                 }
 
                 const newHistory = [...state.roomHistory];
                 const lastEntry = newHistory.pop();
+                const newId = lastEntry?.id ?? null;
 
                 set({
-                    currentRoomId: lastEntry?.id ?? null,
+                    currentRoomId: newId,
                     currentRoomTitle: lastEntry?.title || 'Canvas',
                     roomHistory: newHistory
                 });
+
+                const viewKey = newId || 'root';
+                const targetView = canvasState.roomViews[viewKey];
+                if (targetView) {
+                    canvasState.restoreView(targetView.scale, targetView.position);
+                } else {
+                    canvasState.setPosition(window.innerWidth / 2, window.innerHeight / 2);
+                    canvasState.setScale(1);
+                }
             },
 
             revealVaulted: async (id: string) => {

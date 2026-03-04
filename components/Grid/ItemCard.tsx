@@ -244,8 +244,9 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
     const renderActions = () => {
         if (isDragging) return null;
+        const invScale = Math.min(3, Math.max(1, 1 / scale));
         return (
-            <div className={styles.actions} onPointerDown={e => e.stopPropagation()}>
+            <div className={styles.actions} style={{ '--inv-scale': invScale } as React.CSSProperties} onPointerDown={e => e.stopPropagation()}>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -541,9 +542,6 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
                         // Enter Room
                         useItemsStore.getState().enterRoom(localItem.id, localItem.metadata?.title || 'Mind Room');
-                        // Reset view for new room - CENTER IT
-                        useCanvasStore.getState().setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                        useCanvasStore.getState().setScale(1);
                     }}
                 >
                     {/* The Inside (Revealed when door opens) */}
@@ -556,6 +554,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         {!isObscured && (
                             <div
                                 className={styles.roomInsideActions}
+                                style={{ '--inv-scale': Math.min(3, Math.max(1, 1 / scale)) } as React.CSSProperties}
                                 onPointerDown={e => e.stopPropagation()}
                                 onClick={e => e.stopPropagation()}
                             >

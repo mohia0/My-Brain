@@ -83,7 +83,12 @@
 }
 
 .noteModal .modalContent {
-    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) !important;
+    transition: grid-template-columns 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.noteModal .sidebarClosedContent {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr) !important;
 }
 
 @keyframes slideUp {
@@ -105,6 +110,23 @@
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     height: 100%;
     overflow: hidden;
+    transition: grid-template-columns 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebarClosedContent {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr) !important;
+}
+
+.sidebarClosedContent .rightColumn {
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    min-width: 0;
+    transition: opacity 0.2s ease;
+}
+
+.sidebarClosedContent .leftColumn {
+    border-right-color: transparent !important;
 }
 
 .compactContent {
@@ -333,6 +355,8 @@
     height: 100%;
     overflow: hidden;
     position: relative;
+    transition: opacity 0.3s ease 0.1s;
+    opacity: 1;
 }
 
 /* --- RIGHT COLUMN SECTIONS --- */
@@ -583,6 +607,29 @@
     box-sizing: border-box;
 }
 
+.sidebarToggleBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebarToggleBtn:hover {
+    background: rgba(110, 86, 207, 0.1);
+    color: var(--accent);
+    transform: scale(1.05);
+}
+
+.sidebarToggleBtn:active {
+    transform: scale(0.95);
+}
+
 .editorWrapper {
     flex: 1;
     width: 100%;
@@ -769,104 +816,149 @@
 }
 
 .tag {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 6px 12px;
-    border-radius: 100px;
-    font-size: 0.85rem;
-    color: var(--foreground);
+    padding: 4px 6px 4px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-bright);
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+}
+
+.tag::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
 }
 
 .tag:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.07);
     border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tag:hover::before {
+    opacity: 1;
 }
 
 :global([data-theme='light']) .tag {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    color: #333;
 }
 
 :global([data-theme='light']) .tag:hover {
-    background: rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.2);
+    background: #fafafa;
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .tagDot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     filter: brightness(1.2);
+    flex-shrink: 0;
 }
 
 :global([data-theme='light']) .tagDot {
     filter: brightness(0.9);
 }
 
+.tagText {
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
 .removeTag {
-    background: none;
+    background: transparent;
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    transition: all 0.2s;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0.4;
+    padding: 0;
+}
+
+.tag:hover .removeTag {
+    opacity: 1;
 }
 
 .removeTag:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(225, 29, 72, 0.15);
     color: var(--danger);
+    opacity: 1;
 }
 
 .addTagBtn {
-    background: transparent;
-    border: 1.5px dashed var(--card-border);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
     color: var(--text-muted);
-    padding: 6px 14px;
-    border-radius: 100px;
-    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 4px;
 }
 
 .addTagBtn:hover {
     border-color: var(--accent);
     color: var(--accent);
-    background: var(--accent-glow);
+    background: rgba(110, 86, 207, 0.1);
+    transform: translateY(-1px);
 }
 
 :global([data-theme='light']) .addTagBtn {
-    background: rgba(0, 0, 0, 0.02);
-    border: 1.5px dashed rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.01);
+    border: 1px dashed rgba(0, 0, 0, 0.15);
+}
+
+:global([data-theme='light']) .addTagBtn:hover {
+    background: rgba(110, 86, 207, 0.05);
 }
 
 .tagInput {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1.5px solid var(--accent);
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--accent);
     color: var(--foreground);
-    padding: 6px 14px;
-    border-radius: 100px;
-    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     width: 120px;
     outline: none;
+    box-shadow: 0 0 0 3px rgba(110, 86, 207, 0.15);
+    font-family: inherit;
+    transition: all 0.2s;
 }
 
 :global([data-theme='light']) .tagInput {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1.5px solid var(--accent);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(110, 86, 207, 0.1);
 }
 
 /* --- FOOTER --- */

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -48,6 +48,25 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const titleRef = useRef<HTMLDivElement>(null);
     const titleInputRef = useRef<HTMLInputElement>(null);
     const [editorTheme, setEditorTheme] = useState<'light' | 'dark' | 'auto'>('auto');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // Initialize sidebar state from localStorage on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('brainia_note_sidebar_open');
+            if (stored !== null) {
+                setIsSidebarOpen(stored === 'true');
+            }
+        }
+    }, []);
+
+    const toggleSidebar = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newState = !isSidebarOpen;
+        setIsSidebarOpen(newState);
+        localStorage.setItem('brainia_note_sidebar_open', String(newState));
+    };
+
 
     // Emoji picker theme observer
     useEffect(() => {
@@ -450,7 +469,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
                 }}
             >
-                <div className={clsx(styles.modalContent, isLink && styles.compactContent)} ref={modalContentRef}>
+                <div className={clsx(
+                    styles.modalContent,
+                    isLink && styles.compactContent,
+                    (!isSidebarOpen && isNote) && styles.sidebarClosedContent
+                )} ref={modalContentRef}>
 
                     {/* Swipe Zone Wrapper - scrolls with content */}
                     <div
@@ -528,6 +551,25 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                                 </div>
                                             )}
                                         </div>
+
+                                        <button
+                                            className={styles.sidebarToggleBtn}
+                                            onClick={toggleSidebar}
+                                            title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+                                        >
+                                            {isSidebarOpen ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
+                                        </button>
+
+                                        {!isSidebarOpen && (
+                                            <button
+                                                className={styles.sidebarToggleBtn}
+                                                onClick={onClose}
+                                                title="Close Window"
+                                                style={{ marginLeft: -4 }}
+                                            >
+                                                <X size={20} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                                 <div className={styles.editorWrapper}>
@@ -664,16 +706,19 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 <div className={styles.tagsWrapper}>
                                     {tags.map(tag => (
                                         <div key={tag.id} className={styles.tag}>
-                                            <div className={styles.tagDot} style={{ background: tag.color }} />
-                                            {tag.name}
-                                            <button className={styles.removeTag} onClick={() => handleRemoveTag(tag.id)}>×</button>
+                                            <div className={styles.tagDot} style={{ background: tag.color, boxShadow: `0 0 6px ${tag.color}` }} />
+                                            <span className={styles.tagText}>{tag.name}</span>
+                                            <button className={styles.removeTag} onClick={() => handleRemoveTag(tag.id)}><X size={12} strokeWidth={2.5} /></button>
                                         </div>
                                     ))}
                                     {isTypingTag ? (
                                         <input className={styles.tagInput} autoFocus value={newTagName} onChange={e => setNewTagName(e.target.value)} onBlur={handleAddTag} onKeyDown={e => e.key === 'Enter' && handleAddTag()} placeholder="Tag..." dir="auto" />
                                     ) : (
                                         <div style={{ display: 'flex', gap: 6 }}>
-                                            <button className={styles.addTagBtn} onClick={() => setIsTypingTag(true)}>+ Add</button>
+                                            <button className={styles.addTagBtn} onClick={() => setIsTypingTag(true)}>
+                                                <Plus size={12} strokeWidth={3} />
+                                                <span>Add</span>
+                                            </button>
                                             <button
                                                 className={styles.addTagBtn}
                                                 onClick={() => handleSmartTag(false)}

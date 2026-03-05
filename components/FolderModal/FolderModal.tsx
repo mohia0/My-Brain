@@ -267,7 +267,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                 {(isSaving || folder.syncStatus === 'syncing') && <span className={styles.savingIndicator}>Saving...</span>}
                                 {showColorPicker && (
                                     <div className={styles.colorDots} onClick={e => e.stopPropagation()}>
-                                        {['#6E56CF', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
+                                        {['#8B5CF6', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
                                             <button
                                                 key={color}
                                                 className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}

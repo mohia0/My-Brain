@@ -31,20 +31,19 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
             setMessage('');
             setStatus('idle');
             setTimeout(() => inputRef.current?.focus(), 50);
+
+            const handleEsc = (e: KeyboardEvent) => {
+                if (e.key === 'Escape') handleClose();
+            };
+            window.addEventListener('keydown', handleEsc);
+            return () => window.removeEventListener('keydown', handleEsc);
+        } else {
+            // Ensure state is clean when closed
+            setIsClosing(false);
         }
     }, [isOpen, userEmail]);
 
-    // Handle ESC key
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') handleClose();
-        };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, [isOpen, onClose]);
-
-    if (!isOpen) return null;
+    if (!isOpen && !isClosing) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,75 +74,77 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
     };
 
     return (
-        <div className={`${styles.overlay} ${isClosing ? styles.closingOverlay : ''}`} onClick={handleClose}>
-            <div className={`${styles.modal} ${isClosing ? styles.closingModal : ''}`} onClick={e => e.stopPropagation()}>
-                <header className={styles.header}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <AlertTriangle size={20} color="var(--accent)" />
-                        <span className={styles.title}>Report a Bug</span>
-                    </div>
-                    <button onClick={handleClose} className={styles.closeBtn}><X size={18} /></button>
-                </header>
-
-                <form onSubmit={handleSubmit} className={styles.body}>
-                    {status === 'success' ? (
-                        <div style={{ textAlign: 'center', padding: 40, color: 'var(--success, #22c55e)' }}>
-                            <p style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Thank you!</p>
-                            <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>We received your report.</p>
+        <React.Fragment>
+            <div className={`${styles.overlay} ${isClosing ? styles.closingOverlay : ''}`} onClick={handleClose}>
+                <div className={`${styles.modal} ${isClosing ? styles.closingModal : ''}`} onClick={e => e.stopPropagation()}>
+                    <header className={styles.header}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <AlertTriangle size={20} color="var(--accent)" />
+                            <span className={styles.title}>Report a Bug</span>
                         </div>
-                    ) : (
-                        <>
-                            <div>
-                                <label className={styles.label}>Your Email</label>
-                                <input
-                                    ref={inputRef}
-                                    type="email"
-                                    className={styles.input}
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    placeholder="name@example.com"
-                                    required
-                                />
+                        <button onClick={handleClose} className={styles.closeBtn}><X size={18} /></button>
+                    </header>
+
+                    <form onSubmit={handleSubmit} className={styles.body}>
+                        {status === 'success' ? (
+                            <div style={{ textAlign: 'center', padding: 40, color: 'var(--success, #22c55e)' }}>
+                                <p style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Thank you!</p>
+                                <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>We received your report.</p>
                             </div>
+                        ) : (
+                            <>
+                                <div>
+                                    <label className={styles.label}>Your Email</label>
+                                    <input
+                                        ref={inputRef}
+                                        type="email"
+                                        className={styles.input}
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        placeholder="name@example.com"
+                                        required
+                                    />
+                                </div>
 
-                            <div>
-                                <label className={styles.label}>What went wrong?</label>
-                                <textarea
-                                    className={styles.textarea}
-                                    value={message}
-                                    onChange={e => setMessage(e.target.value)}
-                                    placeholder="Please describe the issue..."
-                                    required
-                                />
-                            </div>
+                                <div>
+                                    <label className={styles.label}>What went wrong?</label>
+                                    <textarea
+                                        className={styles.textarea}
+                                        value={message}
+                                        onChange={e => setMessage(e.target.value)}
+                                        placeholder="Please describe the issue..."
+                                        required
+                                    />
+                                </div>
 
-                            {status === 'error' && (
-                                <p style={{ color: 'var(--danger, #ef4444)', fontSize: '0.9rem' }}>
-                                    Something went wrong. Please try again.
-                                </p>
-                            )}
-                        </>
-                    )}
-
-                    {status !== 'success' && (
-                        <div className={styles.footer} style={{ padding: 0 }}>
-                            <button type="button" onClick={handleClose} className={styles.cancelBtn}>Cancel</button>
-                            <button
-                                type="submit"
-                                className={styles.submitBtn}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? 'Sending...' : (
-                                    <>
-                                        <span>Send Report</span>
-                                        <Send size={16} />
-                                    </>
+                                {status === 'error' && (
+                                    <p style={{ color: 'var(--danger, #ef4444)', fontSize: '0.9rem' }}>
+                                        Something went wrong. Please try again.
+                                    </p>
                                 )}
-                            </button>
-                        </div>
-                    )}
-                </form>
+                            </>
+                        )}
+
+                        {status !== 'success' && (
+                            <div className={styles.footer} style={{ padding: 0 }}>
+                                <button type="button" onClick={handleClose} className={styles.cancelBtn}>Cancel</button>
+                                <button
+                                    type="submit"
+                                    className={styles.submitBtn}
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? 'Sending...' : (
+                                        <>
+                                            <span>Send Report</span>
+                                            <Send size={16} />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </form>
+                </div>
             </div>
-        </div>
+        </React.Fragment>
     );
 }

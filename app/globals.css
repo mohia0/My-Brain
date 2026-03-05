@@ -13,9 +13,9 @@
   --card-border: rgba(255, 255, 255, 0.08);
   --card-hover: rgba(255, 255, 255, 0.06);
 
-  --accent: #6e56cf;
-  /* Premium Purple */
-  --accent-glow: rgba(110, 86, 207, 0.4);
+  --accent: #8b5cf6;
+  /* Premium Purple aligned with Project Area */
+  --accent-glow: rgba(139, 92, 246, 0.4);
 
   --danger: #e11d48;
   --danger-glow: rgba(225, 29, 72, 0.2);
@@ -58,8 +58,8 @@
   --card-border: rgba(0, 0, 0, 0.06);
   --card-hover: rgba(0, 0, 0, 0.03);
 
-  --accent: #6e56cf;
-  --accent-glow: rgba(110, 86, 207, 0.15);
+  --accent: #8b5cf6;
+  --accent-glow: rgba(139, 92, 246, 0.15);
 
   --danger: #e11d48;
   --danger-glow: rgba(225, 29, 72, 0.1);

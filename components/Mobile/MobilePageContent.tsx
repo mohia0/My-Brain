@@ -490,7 +490,7 @@ export default function MobilePageContent({ session }: { session: any }) {
             addFolder({
                 id, user_id: userId, name: value,
                 parent_id: null,
-                color: '#6e56cf',
+                color: 'var(--accent)',
                 position_x: 0, position_y: 0, status: 'active',
                 created_at: new Date().toISOString()
             });

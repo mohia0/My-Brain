@@ -183,10 +183,7 @@ export default function Header() {
 
     return (
         <header className={styles.header}>
-            <div className={styles.logo} onClick={() => {
-                setPosition(window.innerWidth / 2, window.innerHeight / 2);
-                setScale(0.65);
-            }}>
+            <div className={styles.logo}>
                 <div className={styles.logoDotWrapper}>
                     <Orb
                         hue={280}

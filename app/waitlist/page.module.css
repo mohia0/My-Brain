@@ -103,8 +103,8 @@
 
 .input:focus {
     background: rgba(0, 0, 0, 0.5);
-    border-color: var(--accent, #6e56cf);
-    box-shadow: 0 0 0 4px rgba(110, 86, 207, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 .input::placeholder {
@@ -113,7 +113,7 @@
 
 .button {
     width: 100%;
-    background: var(--accent, #6e56cf);
+    background: var(--accent);
     color: #fff;
     border: none;
     border-radius: 1rem;
@@ -131,9 +131,9 @@
 }
 
 .button:hover:not(:disabled) {
-    background: #7c66e3;
+    background: #9d76ff;
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px -5px rgba(110, 86, 207, 0.4);
+    box-shadow: 0 10px 30px -5px var(--accent-glow);
 }
 
 .button:active:not(:disabled) {

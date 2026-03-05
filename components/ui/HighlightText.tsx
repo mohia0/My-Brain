@@ -27,8 +27,8 @@ export const HighlightText = ({ text, query }: HighlightTextProps) => {
                     <span
                         key={i}
                         style={{
-                            backgroundColor: 'rgba(110, 86, 207, 0.12)',
-                            color: '#6e56cf',
+                            backgroundColor: 'var(--accent-glow)',
+                            color: 'var(--accent)',
                             padding: '0 2px',
                             borderRadius: '3px',
                             fontWeight: '600'

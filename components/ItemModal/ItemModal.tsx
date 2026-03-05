@@ -48,17 +48,27 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     const titleRef = useRef<HTMLDivElement>(null);
     const titleInputRef = useRef<HTMLInputElement>(null);
     const [editorTheme, setEditorTheme] = useState<'light' | 'dark' | 'auto'>('auto');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('brainia_note_sidebar_open');
+            if (stored !== null) return stored === 'true';
+        }
+        return true;
+    });
+    const [isInitialized, setIsInitialized] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
 
-    // Initialize sidebar state from localStorage on mount
+    // Initialize layout setup delay to prevent edge-case animation pops
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const storedSidebar = localStorage.getItem('brainia_note_sidebar_open');
-            if (storedSidebar !== null) {
-                setIsSidebarOpen(storedSidebar === 'true');
-            }
+            requestAnimationFrame(() => requestAnimationFrame(() => setIsInitialized(true)));
         }
     }, []);
+
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => onClose(), 200); // Wait for the 0.2s animation to finish
+    };
 
     const toggleSidebar = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -450,8 +460,8 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
 
     return (
         <div
-            className={styles.overlay}
-            onClick={onClose}
+            className={clsx(styles.overlay, isClosing && styles.closing)}
+            onClick={handleClose}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -462,19 +472,22 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     isLink && styles.compactModal,
                     isNote && styles.noteModal,
                     (!isSidebarOpen && isNote) && styles.sidebarClosedModal,
-                    ((item.type === 'image' || item.type === 'video') || item.metadata?.isVideo) && styles.imageModal
+                    ((item.type === 'image' || item.type === 'video') || item.metadata?.isVideo) && styles.imageModal,
+                    isClosing && styles.closing
                 )}
                 onClick={e => e.stopPropagation()}
                 style={{
                     transform: offset > 0 ? `translateY(${offset}px)` : undefined,
-                    transition: offset === 0 ? 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
+                    transition: (!isInitialized || offset !== 0) ? 'none' : 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}
             >
                 <div className={clsx(
                     styles.modalContent,
                     isLink && styles.compactContent,
                     (!isSidebarOpen && isNote) && styles.sidebarClosedContent
-                )} ref={modalContentRef}>
+                )}
+                    style={{ transition: !isInitialized ? 'none' : undefined }}
+                    ref={modalContentRef}>
 
                     {/* Swipe Zone Wrapper - scrolls with content */}
                     <div
@@ -565,7 +578,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                         {!isSidebarOpen && (
                                             <button
                                                 className={styles.sidebarToggleBtn}
-                                                onClick={onClose}
+                                                onClick={handleClose}
                                                 data-tooltip="Close Window"
                                                 data-tooltip-pos="bottom"
                                                 style={{ marginLeft: -4 }}

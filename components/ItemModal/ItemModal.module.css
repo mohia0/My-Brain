@@ -35,6 +35,36 @@
     display: none;
 }
 
+.overlay.closing {
+    animation: fadeOutOverlay 0.2s ease-in forwards !important;
+}
+
+.modal.closing {
+    animation: fadeDownModal 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes fadeOutOverlay {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeDownModal {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+    }
+}
+
 @media (max-width: 768px) {
     .swipeZone {
         display: flex;

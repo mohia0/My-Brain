@@ -27,40 +27,36 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 12px 20px;
     border-radius: 9999px;
-    /* Full pill shape */
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     cursor: pointer;
-    color: white;
+    color: #000000;
 }
 
 .backButton:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(168, 85, 247, 0.5);
-    /* Purple hint */
+    background: #f4f4f5;
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(168, 85, 247, 0.2);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.1);
 }
 
 .iconWrapper {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
     padding: 8px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.3s ease, color 0.3s ease;
+    color: #000000;
 }
 
 .backButton:hover .iconWrapper {
-    background: #a855f7;
-    /* Purple-500 */
-    color: white;
+    background: #000000;
+    color: #ffffff;
 }
 
 .textColumn {
@@ -73,49 +69,46 @@
     font-weight: 700;
     font-size: 14px;
     letter-spacing: 0.05em;
-    color: white;
+    color: #000000;
 }
 
 .subText {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #71717a;
-    /* Zinc-500 */
+    color: #52525b;
     transition: color 0.3s ease;
 }
 
 .backButton:hover .subText {
-    color: #d4d4d8;
-    /* Zinc-300 */
+    color: #27272a;
 }
 
 /* Light Mode Support */
 :global([data-theme='light']) .backButton {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #e4e4e7;
-    color: #18181b;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: #18181b;
+    border: 1px solid #27272a;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 :global([data-theme='light']) .backButton:hover {
-    background: #ffffff;
-    border-color: #a855f7;
-    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.15);
+    background: #000000;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 :global([data-theme='light']) .iconWrapper {
-    background: #f4f4f5;
-    color: #71717a;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
 }
 
 :global([data-theme='light']) .backButton:hover .iconWrapper {
-    background: #a855f7;
-    color: white;
+    background: #ffffff;
+    color: #000000;
 }
 
 :global([data-theme='light']) .mainText {
-    color: #18181b;
+    color: #ffffff;
 }
 
 :global([data-theme='light']) .subText {
@@ -123,5 +116,5 @@
 }
 
 :global([data-theme='light']) .backButton:hover .subText {
-    color: #71717a;
+    color: #e4e4e7;
 }

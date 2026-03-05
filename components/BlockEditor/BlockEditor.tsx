@@ -195,6 +195,13 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                     .brainia-editor .bn-editor [data-placeholder]:empty:before {
                         text-align: inherit;
                     }
+
+                    /* Typography Polish for focus reading */
+                    .brainia-editor .bn-editor {
+                        font-size: 1.15rem;
+                        line-height: 1.7;
+                        letter-spacing: -0.01em;
+                    }
                 `}</style>
             </div>
 

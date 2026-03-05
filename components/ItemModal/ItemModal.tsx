@@ -53,9 +53,9 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
     // Initialize sidebar state from localStorage on mount
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('brainia_note_sidebar_open');
-            if (stored !== null) {
-                setIsSidebarOpen(stored === 'true');
+            const storedSidebar = localStorage.getItem('brainia_note_sidebar_open');
+            if (storedSidebar !== null) {
+                setIsSidebarOpen(storedSidebar === 'true');
             }
         }
     }, []);
@@ -461,12 +461,13 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     styles.modal,
                     isLink && styles.compactModal,
                     isNote && styles.noteModal,
+                    (!isSidebarOpen && isNote) && styles.sidebarClosedModal,
                     ((item.type === 'image' || item.type === 'video') || item.metadata?.isVideo) && styles.imageModal
                 )}
                 onClick={e => e.stopPropagation()}
                 style={{
                     transform: offset > 0 ? `translateY(${offset}px)` : undefined,
-                    transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
+                    transition: offset === 0 ? 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
                 }}
             >
                 <div className={clsx(
@@ -555,7 +556,8 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                         <button
                                             className={styles.sidebarToggleBtn}
                                             onClick={toggleSidebar}
-                                            title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+                                            data-tooltip={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+                                            data-tooltip-pos="bottom"
                                         >
                                             {isSidebarOpen ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
                                         </button>
@@ -564,7 +566,8 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             <button
                                                 className={styles.sidebarToggleBtn}
                                                 onClick={onClose}
-                                                title="Close Window"
+                                                data-tooltip="Close Window"
+                                                data-tooltip-pos="bottom"
                                                 style={{ marginLeft: -4 }}
                                             >
                                                 <X size={20} />

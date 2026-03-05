@@ -76,6 +76,11 @@
 .noteModal {
     width: 1150px;
     height: 85vh;
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebarClosedModal {
+    width: 850px !important;
 }
 
 .noteModal .leftColumn {
@@ -83,12 +88,12 @@
 }
 
 .noteModal .modalContent {
-    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) 340px !important;
     transition: grid-template-columns 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .noteModal .sidebarClosedContent {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr) !important;
+    grid-template-columns: minmax(0, 1fr) 0px !important;
 }
 
 @keyframes slideUp {
@@ -107,14 +112,14 @@
 
 .modalContent {
     display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 340px;
     height: 100%;
     overflow: hidden;
     transition: grid-template-columns 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebarClosedContent {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr) !important;
+    grid-template-columns: minmax(0, 1fr) 0px !important;
 }
 
 .sidebarClosedContent .rightColumn {
@@ -238,6 +243,7 @@
     display: flex;
     flex-direction: column;
 }
+
 
 .imageOverlay {
     position: absolute;

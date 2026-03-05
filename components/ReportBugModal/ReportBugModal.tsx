@@ -17,9 +17,16 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const inputRef = useRef<HTMLInputElement>(null);
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => onClose(), 200);
+    };
 
     useEffect(() => {
         if (isOpen) {
+            setIsClosing(false);
             setEmail(userEmail || '');
             setMessage('');
             setStatus('idle');
@@ -31,7 +38,7 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
     useEffect(() => {
         if (!isOpen) return;
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') handleClose();
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
@@ -57,7 +64,7 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
 
             setStatus('success');
             setTimeout(() => {
-                onClose();
+                handleClose();
             }, 1500);
         } catch (error) {
             console.error('Report failed:', error);
@@ -68,14 +75,14 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={`${styles.overlay} ${isClosing ? styles.closingOverlay : ''}`} onClick={handleClose}>
+            <div className={`${styles.modal} ${isClosing ? styles.closingModal : ''}`} onClick={e => e.stopPropagation()}>
                 <header className={styles.header}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <AlertTriangle size={20} color="var(--accent)" />
                         <span className={styles.title}>Report a Bug</span>
                     </div>
-                    <button onClick={onClose} className={styles.closeBtn}><X size={18} /></button>
+                    <button onClick={handleClose} className={styles.closeBtn}><X size={18} /></button>
                 </header>
 
                 <form onSubmit={handleSubmit} className={styles.body}>
@@ -120,7 +127,7 @@ export default function ReportBugModal({ isOpen, onClose, userEmail }: ReportBug
 
                     {status !== 'success' && (
                         <div className={styles.footer} style={{ padding: 0 }}>
-                            <button type="button" onClick={onClose} className={styles.cancelBtn}>Cancel</button>
+                            <button type="button" onClick={handleClose} className={styles.cancelBtn}>Cancel</button>
                             <button
                                 type="submit"
                                 className={styles.submitBtn}

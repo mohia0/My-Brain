@@ -579,8 +579,6 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             <button
                                                 className={styles.sidebarToggleBtn}
                                                 onClick={handleClose}
-                                                data-tooltip="Close Window"
-                                                data-tooltip-pos="bottom"
                                                 style={{ marginLeft: -4 }}
                                             >
                                                 <X size={20} />
@@ -664,7 +662,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 {(isSaving || item.syncStatus === 'syncing') && <div className={styles.savingIndicator}>Saving...</div>}
                                 {item.metadata?.author && <div className={styles.authorBadge}>by {item.metadata.author}</div>}
                             </div>
-                            <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
+                            <button className={styles.closeBtn} onClick={handleClose}><X size={20} /></button>
                         </div>
 
                         <div className={styles.scrollBody} ref={scrollBodyRef}>

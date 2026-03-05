@@ -23,10 +23,18 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
 
-    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(onClose, 80, formRef);
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => onClose(), 200);
+    };
+
+    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(handleClose, 80, formRef);
 
     useEffect(() => {
         if (isOpen) {
+            setIsClosing(false);
             setValue(defaultValue);
             setTimeout(() => inputRef.current?.focus(), 50);
         }
@@ -56,7 +64,7 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
     useEffect(() => {
         if (!isOpen) return;
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') handleClose();
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
@@ -115,20 +123,20 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
         // For file mode, value should be the base64 string
         if (value.trim()) {
             onSubmit(value);
-            onClose();
+            handleClose();
         }
     };
 
     return (
         <div
-            className={styles.overlay}
-            onClick={onClose}
+            className={`${styles.overlay} ${isClosing ? styles.closingOverlay : ''}`}
+            onClick={handleClose}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
         >
             <div
-                className={styles.modal}
+                className={`${styles.modal} ${isClosing ? styles.closingModal : ''}`}
                 onClick={e => e.stopPropagation()}
                 style={{
                     transform: offset > 0 ? `translateY(${offset}px)` : undefined,
@@ -138,7 +146,7 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                 <div className={styles.swipeHandle} />
                 <header className={styles.header}>
                     <span className={styles.title}>{title}</span>
-                    <button onClick={onClose} className={styles.closeBtn}><X size={18} /></button>
+                    <button onClick={handleClose} className={styles.closeBtn}><X size={18} /></button>
                 </header>
                 <form onSubmit={handleSubmit} className={styles.body} ref={formRef}>
                     {(mode === 'file' || mode === 'camera') ? (
@@ -214,7 +222,7 @@ export default function InputModal({ isOpen, onClose, onSubmit, title, placehold
                     )}
 
                     <div className={styles.footer}>
-                        <button type="button" onClick={onClose} className={styles.cancelBtn}>Cancel</button>
+                        <button type="button" onClick={handleClose} className={styles.cancelBtn}>Cancel</button>
                         <button type="submit" className={styles.submitBtn}>Confirm</button>
                     </div>
                 </form>

@@ -4,6 +4,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './MobileSelectionBar.module.css';
 import { clsx } from 'clsx';
 import MobileFolderPicker from './MobileFolderPicker';
+// FORCE HOT RELOAD 2
 
 export default function MobileSelectionBar() {
     const {
@@ -68,8 +69,7 @@ export default function MobileSelectionBar() {
         selectedItemsList.length === 2 &&
         selectedItemsList.every(i => i.type === 'project');
 
-    const { isSelectionMode } = useItemsStore();
-    const shouldShow = selectedIds.length > 1 || (selectedIds.length === 1 && isSelectionMode);
+    const shouldShow = selectedIds.length > 1;
 
     if (!shouldShow || isOnlyTwoProjectAreas) return null;
 

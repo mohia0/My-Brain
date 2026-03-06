@@ -20,6 +20,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const [isOverflowing, setIsOverflowing] = React.useState(false);
     const titleRef = React.useRef<HTMLDivElement>(null);
     const scrollContentRef = React.useRef<HTMLDivElement>(null);
+    const swipeZoneRef = React.useRef<HTMLDivElement>(null);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
     const [showColorPicker, setShowColorPicker] = React.useState(false);
 
@@ -36,7 +37,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         setTimeout(() => onClose(), 200); // Wait for the 0.2s animation to finish
     }, [onClose]);
 
-    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(handleClose, 120, scrollContentRef);
+    const { onTouchStart, onTouchMove, onTouchEnd, offset } = useSwipeDown(handleClose, 120, scrollContentRef, swipeZoneRef);
 
     const [isEditingName, setIsEditingName] = React.useState(false);
     const [tempName, setTempName] = React.useState('');
@@ -229,7 +230,15 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                     transition: offset === 0 ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
                 }}
             >
-                <div className={styles.swipeHandle} />
+                <div
+                    ref={swipeZoneRef}
+                    className={styles.swipeZone}
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
+                >
+                    <div className={styles.swipeHandle} />
+                </div>
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
                         <div
@@ -335,21 +344,33 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                     className={clsx(
                                         styles.itemWrapper,
                                         styles.folderItem,
-                                        selectedIds.includes(sf.id) && styles.selected
+                                        selectedIds.includes(sf.id) && styles.selected,
+                                        selectedIds.includes(sf.id) && selectedIds.length === 1 && styles.singleSelected
                                     )}
                                     onClick={(e) => handleSubFolderClick(sf.id, e)}
                                     onTouchStart={() => handleTouchStart(sf.id)}
                                     onTouchEnd={handleTouchEnd}
                                     onTouchMove={handleTouchEnd}
                                 >
-                                    <button
-                                        className={styles.removeBtn}
-                                        onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
-                                        data-tooltip="Move out of folder"
-                                        data-tooltip-pos="bottom"
+                                    <div
+                                        onClick={e => e.stopPropagation()}
+                                        onTouchStart={e => e.stopPropagation()}
+                                        onTouchEnd={e => e.stopPropagation()}
+                                        onTouchMove={e => e.stopPropagation()}
+                                        onPointerDown={e => e.stopPropagation()}
+                                        onPointerUp={e => e.stopPropagation()}
                                     >
-                                        <LogOut size={14} />
-                                    </button>
+                                        <button
+                                            className={styles.removeBtn}
+                                            onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
+                                            onTouchStart={e => e.stopPropagation()}
+                                            onTouchEnd={e => e.stopPropagation()}
+                                            onTouchMove={e => e.stopPropagation()}
+                                            data-tooltip="Move out of folder"
+                                            data-tooltip-pos="bottom"
+                                        >
+                                        </button>
+                                    </div>
                                     <div className={styles.itemPreview} style={{ color: sf.color || 'var(--accent)' }}>
                                         <FolderOpen size={32} />
                                     </div>
@@ -366,14 +387,23 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                     key={item.id}
                                     className={clsx(
                                         styles.itemWrapper,
-                                        selectedIds.includes(item.id) && styles.selected
+                                        selectedIds.includes(item.id) && styles.selected,
+                                        selectedIds.includes(item.id) && selectedIds.length === 1 && styles.singleSelected
                                     )}
                                     onClick={(e) => handleItemClick(item.id, e)}
                                     onTouchStart={() => handleTouchStart(item.id)}
                                     onTouchEnd={handleTouchEnd}
                                     onTouchMove={handleTouchEnd}
                                 >
-                                    <div className={styles.itemActions}>
+                                    <div
+                                        className={styles.itemActions}
+                                        onClick={e => e.stopPropagation()}
+                                        onTouchStart={e => { e.stopPropagation(); }}
+                                        onTouchEnd={e => { e.stopPropagation(); }}
+                                        onTouchMove={e => e.stopPropagation()}
+                                        onPointerDown={e => e.stopPropagation()}
+                                        onPointerUp={e => e.stopPropagation()}
+                                    >
                                         <button
                                             className={styles.itemActionBtn}
                                             onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}

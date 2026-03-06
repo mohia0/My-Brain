@@ -1174,6 +1174,23 @@
         background: rgba(255, 255, 255, 0.95) !important;
         box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
     }
+
+    .sidebarToggleBtn {
+        display: none !important;
+    }
+
+    .noteTitleSection {
+        padding: 42px 16px 8px 16px !important;
+    }
+
+    .noteTitleDisplay,
+    .noteTitleInput {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: block !important;
+        width: 100% !important;
+    }
 }
 
 /* Mobile override for height */

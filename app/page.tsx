@@ -24,6 +24,7 @@ import ArchiveView from "@/components/ArchiveView/ArchiveView";
 import FloatingBar from "@/components/FloatingBar/FloatingBar";
 import FolderItem from "@/components/Grid/FolderItem";
 import FolderModal from "@/components/FolderModal/FolderModal";
+import { MonitorSmartphone } from 'lucide-react';
 import ProjectArea from "@/components/ProjectArea/ProjectArea";
 
 import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
@@ -69,6 +70,7 @@ export default function Home() {
   const [isFading, setIsFading] = useState(false);
   const [shouldShowAuth, setShouldShowAuth] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isSmallScreenWeb, setIsSmallScreenWeb] = useState(false);
   const [isAuthExiting, setIsAuthExiting] = useState(false);
 
   const isInitializingRef = useRef(initializing);
@@ -150,7 +152,7 @@ export default function Home() {
         if (params.get('view') === 'desktop') return false;
         if (params.get('view') === 'mobile') return true;
         const isCapacitor = ((window as any).Capacitor?.isNativePlatform() || (window as any).Capacitor?.isNative);
-        return isCapacitor || window.innerWidth <= 768;
+        return isCapacitor; // Only return true for actual mobile builds, not small screens
       };
 
       const isCurrentlyMobile = checkMobileWidth();
@@ -312,7 +314,11 @@ export default function Home() {
 
       // 3. Fallback to screen size
       const isSmallScreen = window.innerWidth <= 768;
-      setIsMobile(isSmallScreen);
+      // We no longer fallback to Mobile View for small screens on desktop
+      setIsMobile(isCapacitor);
+
+      // But we will use a separate state to show the redirect
+      setIsSmallScreenWeb(!isCapacitor && isSmallScreen);
     };
 
     checkMobile();
@@ -444,7 +450,28 @@ export default function Home() {
             }} />
           ) : (
             <>
-              {isMobile ? (
+              {isSmallScreenWeb ? (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100vw',
+                  height: '100vh',
+                  backgroundColor: '#09090b',
+                  color: '#ffffff',
+                  padding: '24px',
+                  textAlign: 'center',
+                  zIndex: 9999,
+                  position: 'fixed',
+                  top: 0,
+                  left: 0
+                }}>
+                  <MonitorSmartphone size={64} style={{ color: '#a1a1aa', marginBottom: '24px' }} />
+                  <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '16px' }}>Please use a larger screen</h1>
+                  <p style={{ color: '#a1a1aa', maxWidth: '400px', lineHeight: '1.5' }}>Brainia is currently optimized for desktop view. Please open this app on a larger screen, or download our Android App.</p>
+                </div>
+              ) : isMobile ? (
                 <div className={clsx(isFading ? 'fade-in' : 'opacity-100')}>
                   <MobilePageContent session={session} />
                 </div>

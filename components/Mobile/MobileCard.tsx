@@ -295,7 +295,7 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                 {isVideo ? (
                     <div className={styles.imageLayout}>
                         <div className={styles.videoThumbnailWrapper}>
-                            <video src={item.content} className={styles.thumb} />
+                            <video src={item.content} className={clsx(styles.thumb, styles.videoThumb)} />
                             <div className={styles.playOverlay}><Play size={24} fill="white" /></div>
                         </div>
                         <div className={styles.info}>
@@ -316,7 +316,10 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                             <img
                                 src={imageUrl}
                                 alt=""
-                                className={styles.thumb}
+                                className={clsx(
+                                    styles.thumb,
+                                    (item.metadata?.isSocial || item.metadata?.platform === 'instagram') && styles.socialThumb
+                                )}
                                 onError={() => setImageError(true)}
                             />
                         ) : (

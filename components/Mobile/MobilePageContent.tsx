@@ -35,18 +35,18 @@ export default function MobilePageContent({ session }: { session: any }) {
     const [activeTab, setActiveTab] = useState<'home' | 'inbox' | 'archive'>('home');
     const [shareState, setShareState] = useState<'idle' | 'saving' | 'saved' | 'capturing'>('idle');
     const [isOverlayFading, setIsOverlayFading] = useState(false);
+
     const { isModalOpen, setModalOpen, checkVaultStatus } = useVaultStore();
+    const { items, folders, selectedIds, addItem, addFolder, clearSelection, updateItemContent, fetchData, setSharing } = useItemsStore();
+
+    // Sync local share state with global store
+    useEffect(() => {
+        setSharing(shareState !== 'idle');
+    }, [shareState, setSharing]);
 
     useEffect(() => {
         checkVaultStatus();
     }, []);
-
-    useEffect(() => {
-        checkVaultStatus();
-    }, []);
-
-    // API URL handling is now centralized in @/lib/utils/getApiUrl
-    // ensuring consistent behavior across web and mobile builds
 
     // Modal states
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -64,8 +64,6 @@ export default function MobilePageContent({ session }: { session: any }) {
     const selectedFolderIdRef = React.useRef<string | null>(null);
     const inputModalOpenRef = React.useRef<boolean>(false);
     const selectionCountRef = React.useRef<number>(0);
-
-    const { items, folders, selectedIds, addItem, addFolder, clearSelection, updateItemContent, fetchData } = useItemsStore();
 
     useEffect(() => { selectedItemIdRef.current = selectedItemId; }, [selectedItemId]);
     useEffect(() => { selectedFolderIdRef.current = selectedFolderId; }, [selectedFolderId]);
@@ -645,13 +643,6 @@ export default function MobilePageContent({ session }: { session: any }) {
 
             <MobileSelectionBar />
 
-            {isSharing && (
-                <ShareProcessingOverlay
-                    status={shareState}
-                    isFadingOut={isOverlayFading}
-                />
-            )}
-
 
             {/* Modals */}
             {isModalOpen && (
@@ -660,17 +651,18 @@ export default function MobilePageContent({ session }: { session: any }) {
                     onSuccess={() => { }}
                 />
             )}
-            {selectedItemId && (
-                <ItemModal
-                    itemId={selectedItemId}
-                    onClose={() => { setSelectedItemId(null); clearSelection(); }}
-                />
-            )}
             {selectedFolderId && (
                 <FolderModal
                     folderId={selectedFolderId}
                     onClose={() => { setSelectedFolderId(null); clearSelection(); }}
                     onItemClick={setSelectedItemId}
+                    isChildOpen={!!selectedItemId}
+                />
+            )}
+            {selectedItemId && (
+                <ItemModal
+                    itemId={selectedItemId}
+                    onClose={() => { setSelectedItemId(null); clearSelection(); }}
                 />
             )}
             <InputModal
@@ -681,6 +673,13 @@ export default function MobilePageContent({ session }: { session: any }) {
                 placeholder={inputModalConfig.placeholder}
                 mode={inputModalConfig.mode}
             />
+
+            {isSharing && (
+                <ShareProcessingOverlay
+                    status={shareState}
+                    isFadingOut={isOverlayFading}
+                />
+            )}
 
             <style jsx global>{`
                 body {

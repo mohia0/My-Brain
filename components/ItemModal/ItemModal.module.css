@@ -9,7 +9,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 20000;
+    z-index: 30000;
     touch-action: none;
     /* Prevent scroll chaining/propagation */
     overscroll-behavior: none;

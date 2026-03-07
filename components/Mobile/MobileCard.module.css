@@ -165,11 +165,27 @@
 .thumb {
     width: 100%;
     height: 180px;
-    /* Restore height for list items */
+    /* Basic height fallback */
+    aspect-ratio: 16 / 9;
+    /* Professional landscape-first default */
     object-fit: cover;
+    object-position: center;
     border-radius: 12px;
     background: var(--background);
     border: 1px solid var(--card-border);
+}
+
+.socialThumb {
+    aspect-ratio: 4 / 5 !important;
+    height: auto !important;
+    max-height: 520px;
+    object-position: top;
+    /* Show the face/main content of posts */
+}
+
+.videoThumb {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
 }
 
 .noSnapshotThumb {

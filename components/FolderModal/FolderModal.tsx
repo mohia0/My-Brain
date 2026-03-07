@@ -216,7 +216,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
 
     return (
         <div
-            className={clsx(styles.overlay, isClosing && styles.closingOverlay)}
+            className={clsx(styles.overlay, isClosing && styles.closingOverlay, isChildOpen && styles.childOpen)}
             onClick={handleClose}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}

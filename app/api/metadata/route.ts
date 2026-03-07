@@ -102,7 +102,18 @@ export async function POST(req: NextRequest) {
         if ((isSocial || !metadata.image || !metadata.title) && !url.includes('localhost')) {
             console.log(`[SmartMetadata] Tier 2: Microlink Starting... skipCapture: ${skipCapture}`);
             try {
-                const mlUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&meta=true${skipCapture ? '' : '&screenshot=true'}`;
+                const mlParams = new URLSearchParams({
+                    url: url,
+                    meta: 'true',
+                    ...(skipCapture ? {} : { screenshot: 'true' }),
+                    ...(isSocial ? {
+                        'screenshot.viewport.isMobile': 'true',
+                        'screenshot.viewport.width': '414',
+                        'screenshot.viewport.height': '1200',
+                        'screenshot.fullPage': 'false', // Limit height but still better than landscape
+                    } : {})
+                });
+                const mlUrl = `https://api.microlink.io?${mlParams.toString()}`;
 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 6000);

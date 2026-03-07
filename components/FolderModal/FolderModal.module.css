@@ -13,6 +13,17 @@
         animation: fadeIn 0.3s ease-out;
     }
 
+    .childOpen {
+        background: transparent !important;
+        backdrop-filter: none !important;
+    }
+
+    .childOpen .modal {
+        transform: scale(0.95);
+        opacity: 0.8;
+        pointer-events: none;
+    }
+
     .modal {
         width: 600px;
         max-width: 90vw;
@@ -26,7 +37,7 @@
         overflow: hidden;
         position: relative;
         animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .expandedModal {

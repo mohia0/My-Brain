@@ -416,7 +416,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         {!imageError ? (
                             <img
                                 src={localItem.metadata.image}
-                                className={styles.captureThumb}
+                                className={clsx(styles.captureThumb, localItem.metadata.isSocial && styles.socialThumb)}
                                 draggable={false}
                                 onError={() => setImageError(true)}
                             />

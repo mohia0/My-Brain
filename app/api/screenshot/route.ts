@@ -64,7 +64,17 @@ export async function POST(req: NextRequest) {
         if (forceMicrolink || isSocial) {
             console.log('[LinkTruth] Social/Hard site detected, using Microlink natively');
             try {
-                const mlRes = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=true`);
+                const mlParams = new URLSearchParams({
+                    url: url,
+                    screenshot: 'true',
+                    meta: 'true',
+                    ...(isSocial ? {
+                        'screenshot.viewport.isMobile': 'true',
+                        'screenshot.viewport.width': '414',
+                        'screenshot.viewport.height': '1200'
+                    } : {})
+                });
+                const mlRes = await fetch(`https://api.microlink.io?${mlParams.toString()}`);
                 const mlData = await mlRes.json();
 
                 if (mlData.status === 'success') {
@@ -99,7 +109,17 @@ export async function POST(req: NextRequest) {
             if (!finalImageUrl) {
                 console.log('[LinkTruth] Image still missing, triggering Microlink fallback');
                 try {
-                    const mlRes = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=true`);
+                    const mlParams = new URLSearchParams({
+                        url: url,
+                        screenshot: 'true',
+                        meta: 'true',
+                        ...(isSocial ? {
+                            'screenshot.viewport.isMobile': 'true',
+                            'screenshot.viewport.width': '414',
+                            'screenshot.viewport.height': '1200'
+                        } : {})
+                    });
+                    const mlRes = await fetch(`https://api.microlink.io?${mlParams.toString()}`);
                     const mlData = await mlRes.json();
                     if (mlData.status === 'success') {
                         const d = mlData.data;

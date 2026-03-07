@@ -186,6 +186,8 @@ interface ItemsState {
     hasLoadedOnce: boolean;
     session: any | null;
     setSession: (session: any | null) => void;
+    isSharing: boolean;
+    setSharing: (val: boolean) => void;
 }
 
 export const useItemsStore = create<ItemsState>()(
@@ -211,6 +213,8 @@ export const useItemsStore = create<ItemsState>()(
             hasLoadedOnce: false,
             session: null,
             setSession: (session) => set({ session }),
+            isSharing: false,
+            setSharing: (val) => set({ isSharing: val }),
 
             enterRoom: (id, title) => {
                 const state = get();

@@ -9,7 +9,7 @@ interface ShareOverlayProps {
 }
 
 export default function ShareProcessingOverlay({ status, isFadingOut }: ShareOverlayProps) {
-    if (status === 'idle') return null;
+    if (status !== 'saved') return null;
 
     return (
         <div className={clsx(styles.overlay, isFadingOut && styles.fadeOut)}>
@@ -19,24 +19,15 @@ export default function ShareProcessingOverlay({ status, isFadingOut }: ShareOve
 
             <div className={styles.content}>
                 <div className={styles.iconWrapper}>
-                    {status === 'saving' || status === 'capturing' ? (
-                        <div className={styles.spinner}></div>
-                    ) : (
-                        <div className={styles.successIcon}>
-                            <Check size={36} strokeWidth={3} />
-                        </div>
-                    )}
+                    <div className={styles.successIcon}>
+                        <Check size={36} strokeWidth={3} />
+                    </div>
                 </div>
                 <div className={styles.text}>
-                    {status === 'saving' ? 'Saving to Brainia...' :
-                        status === 'capturing' ? 'Capturing Link...' :
-                            'Saved to Brainia!'}
+                    Saved to Brainia!
                 </div>
-                {status === 'saved' && (
-                    <div className={styles.hint}>Saved to Captures</div>
-                )}
+                <div className={styles.hint}>Saved to Captures</div>
             </div>
         </div>
     );
-
 }

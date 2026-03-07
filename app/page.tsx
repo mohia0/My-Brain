@@ -33,7 +33,7 @@ import { useCanvasStore } from "@/lib/store/canvasStore";
 import VaultAuthModal, { useVaultStore } from "@/components/Vault/VaultAuthModal";
 
 export default function Home() {
-  const { items, folders, fetchData, subscribeToChanges, clearSelection, currentRoomId, hasLoadedOnce, session, setSession } = useItemsStore();
+  const { items, folders, fetchData, subscribeToChanges, clearSelection, currentRoomId, hasLoadedOnce, session, setSession, isSharing } = useItemsStore();
   const { openFolderId, setOpenFolderId } = useCanvasStore();
   const { isModalOpen, setModalOpen, checkVaultStatus } = useVaultStore();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -55,16 +55,18 @@ export default function Home() {
   // Synchronous check to prevent first-render flash
   const [initializing, setInitializing] = useState(() => {
     if (typeof window === 'undefined') return true;
-    const state = useItemsStore.getState();
     const isShare = window.location.search.includes('title=') || window.location.search.includes('text=') || window.location.search.includes('url=');
-    return !(isShare || state.hasLoadedOnce || state.items.length > 0 || state.folders.length > 0);
+    if (isShare) return false;
+    const state = useItemsStore.getState();
+    return !(state.hasLoadedOnce || state.items.length > 0 || state.folders.length > 0);
   });
 
   const [showLoading, setShowLoading] = useState(() => {
     if (typeof window === 'undefined') return true;
-    const state = useItemsStore.getState();
     const isShare = window.location.search.includes('title=') || window.location.search.includes('text=') || window.location.search.includes('url=');
-    return !(isShare || state.hasLoadedOnce || state.items.length > 0 || state.folders.length > 0);
+    if (isShare) return false;
+    const state = useItemsStore.getState();
+    return !(state.hasLoadedOnce || state.items.length > 0 || state.folders.length > 0);
   });
 
   const [isFading, setIsFading] = useState(false);
@@ -434,7 +436,7 @@ export default function Home() {
   return (
     <DragWrapper>
       {/* Loading Screen: Only visible during initial load OR fading out */}
-      {(showLoading || isFading) && <LoadingScreen isFading={isFading} />}
+      {((showLoading || isFading) && !isSharing) && <LoadingScreen isFading={isFading} />}
 
       {/* Main Content: Rendered when loading is finished OR currently fading in OR exiting auth */}
       {(!showLoading || isFading || isAuthExiting) && (

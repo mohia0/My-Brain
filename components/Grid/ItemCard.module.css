@@ -240,6 +240,10 @@
     pointer-events: none;
 }
 
+.socialThumb {
+    object-position: top;
+}
+
 .noSnapshot {
     width: 100%;
     height: 100%;

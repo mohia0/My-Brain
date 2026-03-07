@@ -66,7 +66,19 @@ const MobileFolderSortableItem = ({ folder, items, onFolderClick }: { folder: an
 
 export default function MobileHome({ onItemClick, onFolderClick }: MobileHomeProps) {
     const { items, folders, selectedIds } = useItemsStore();
-    const [isFoldersCollapsed, setIsFoldersCollapsed] = React.useState(false);
+    const [isFoldersCollapsed, setIsFoldersCollapsed] = React.useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('mobile_folders_collapsed') === 'true';
+        }
+        return false;
+    });
+
+    const toggleFoldersCollapsed = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newState = !isFoldersCollapsed;
+        setIsFoldersCollapsed(newState);
+        localStorage.setItem('mobile_folders_collapsed', String(newState));
+    };
 
     const visibleItems = items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id && (i as any).type !== 'room' && (i as any).type !== 'project')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -146,15 +158,19 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                         <section className={styles.section}>
                             <div
                                 className={styles.sectionHeader}
-                                onClick={() => setIsFoldersCollapsed(!isFoldersCollapsed)}
+                                onClick={toggleFoldersCollapsed}
                                 style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer', paddingBottom: '4px' }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Folder size={16} />
                                     <span>Folders</span>
                                 </div>
-                                <div style={{ color: 'var(--text-muted)' }}>
-                                    {isFoldersCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, letterSpacing: '0.05em' }}>
+                                    {isFoldersCollapsed ? (
+                                        <><span>EXPAND</span><ChevronDown size={14} /></>
+                                    ) : (
+                                        <><span>COLLAPSE</span><ChevronUp size={14} /></>
+                                    )}
                                 </div>
                             </div>
                             {!isFoldersCollapsed && (

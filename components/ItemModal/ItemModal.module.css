@@ -832,8 +832,7 @@
     padding: 12px 16px;
     color: var(--foreground);
     width: 100%;
-    min-height: 200px;
-    flex: 1;
+    min-height: 120px;
     resize: vertical;
     font-size: 0.95rem;
     font-family: inherit;
@@ -846,6 +845,17 @@
     background: rgba(255, 255, 255, 0.02);
     outline: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.descriptionInput::-webkit-resizer {
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 2L2 10M10 6L6 10' stroke='rgba(150,150,150,0.5)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+:global([data-theme='light']) .descriptionInput::-webkit-resizer {
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 2L2 10M10 6L6 10' stroke='rgba(100,100,100,0.5)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
 /* --- TAGS --- */
@@ -1182,8 +1192,8 @@
         flex: none !important;
         overflow-y: visible !important;
         /* Let parent scroll handle it */
-        padding: 4px 10px 180px 10px !important;
-        /* Massive padding to clear fixed footer */
+        padding: 4px 10px 100px 10px !important;
+        /* Balanced padding to clear fixed footer without being huge */
         gap: 12px !important;
         min-height: 0 !important;
     }
@@ -1202,6 +1212,9 @@
         background: var(--modal-bg) !important;
         backdrop-filter: blur(20px) !important;
         border-top: 1px solid var(--border-light) !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 
     :global([data-theme='light']) .footer {
@@ -1341,25 +1354,19 @@
     .noteModal .archiveBtn,
     .noteModal .deleteBtn,
     .noteModal .linkBtn {
-        width: 100% !important;
-        height: 48px !important;
         border-radius: 12px !important;
         font-size: 0.9rem !important;
         font-weight: 700 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 8px !important;
-        padding: 0 16px !important;
+        height: 48px !important;
+        width: 100% !important;
     }
 
-    .noteModal .archiveBtn span,
-    .noteModal .deleteBtn span,
-    .noteModal .linkBtn span {
-        display: inline !important;
-    }
-
-    .noteModal .archiveBtn {
+    .noteModal .archiveBtn,
+    .noteModal .deleteBtn {
+        padding: 0 !important;
         background: var(--card-bg) !important;
     }
 

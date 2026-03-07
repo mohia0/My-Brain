@@ -2,7 +2,7 @@
 
 import React from 'react';
 import styles from './FolderModal.module.css';
-import { X, FolderOpen, LogOut, Check, CheckCircle2, Archive, Copy, Trash2, ArrowUpRight, Maximize2, Minimize2 } from 'lucide-react';
+import { X, FolderOpen, LogOut, Check, CheckCircle2, Archive, Copy, Trash2, ArrowUpRight, Maximize2, Minimize2, Palette } from 'lucide-react';
 import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
@@ -242,13 +242,11 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                 <header className={styles.header}>
                     <div className={styles.titleInfo}>
                         <div
-                            className={clsx(styles.iconCircle, showColorPicker && styles.activeIcon)}
+                            className={styles.iconCircle}
                             style={{
                                 backgroundColor: folder.color?.startsWith('var') ? folder.color : (folder.color ? `${folder.color}22` : undefined),
-                                color: folder.color || 'var(--accent)',
-                                cursor: 'pointer'
+                                color: folder.color || 'var(--accent)'
                             }}
-                            onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                         >
                             <FolderOpen size={22} />
                         </div>
@@ -273,23 +271,6 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                         </span>
                                     )}
                                 </div>
-                                {(isSaving || folder.syncStatus === 'syncing') && <span className={styles.savingIndicator}>Saving...</span>}
-                                {showColorPicker && (
-                                    <div className={styles.colorDots} onClick={e => e.stopPropagation()}>
-                                        {['#8B5CF6', '#E11D48', '#059669', '#D97706', '#2563EB', '#7C3AED'].map(color => (
-                                            <button
-                                                key={color}
-                                                className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}
-                                                style={{ backgroundColor: color }}
-                                                onClick={() => {
-                                                    updateFolderContent(currentFolderId, { color });
-                                                    // Optional: Hide after selection
-                                                    // setShowColorPicker(false);
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                             <span className={styles.itemMetaHeader}>
                                 {folderItems.length} ideas • Created {getRelativeTime(folder.created_at)}
@@ -298,6 +279,39 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                         </div>
                     </div>
                     <div className={styles.actions}>
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
+                                className={clsx(styles.actionBtn, showColorPicker && styles.activeActionBtn)}
+                                data-tooltip="Change Color"
+                                data-tooltip-pos="bottom"
+                            >
+                                <Palette size={20} />
+                            </button>
+                            {showColorPicker && (
+                                <>
+                                    <div className={styles.colorOverlay} onClick={() => setShowColorPicker(false)} />
+                                    <div className={styles.colorDropdown} onClick={e => e.stopPropagation()}>
+                                        <div className={styles.colorGrid}>
+                                            {[
+                                                '#6B7280', '#8B5CF6', '#EC4899', '#F43F5E', '#F97316', '#F59E0B',
+                                                '#84CC16', '#14B8A6', '#0EA5E9', '#3B82F6'
+                                            ].map(color => (
+                                                <button
+                                                    key={color}
+                                                    className={clsx(styles.colorDot, folder.color === color && styles.activeColor)}
+                                                    style={{ backgroundColor: color }}
+                                                    onClick={() => {
+                                                        updateFolderContent(currentFolderId, { color });
+                                                        setShowColorPicker(false);
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                         <button
                             onClick={handleDeleteClick}
                             className={clsx(styles.actionBtn, styles.deleteBtnIcon, isDeleting && styles.confirmDelete)}

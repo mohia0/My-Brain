@@ -392,11 +392,7 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                                 </div>
                             )}
 
-                            {isFolder ? (
-                                <div className={styles.folderMeta}>
-                                    <span className={styles.itemCount}>{(item as any).itemCount || folderItems.length} items</span>
-                                </div>
-                            ) : (
+                            {isFolder ? null : (
                                 <div className={styles.metaRow}>
                                     <span className={styles.sub}>
                                         {isVideo ? 'Video' : (item.type === 'link' ? (hostname(item.content) || 'Link') : (item.type === 'image' ? 'Image' : 'Idea'))}

@@ -770,21 +770,20 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     rel="noopener noreferrer"
                                     className={styles.linkBtn}
                                 >
-                                    <ExternalLink size={18} />
                                     <span>Open Link</span>
                                 </a>
                             )}
-                            <button className={styles.archiveBtn} onClick={handleArchive}>
+                            <button className={styles.archiveBtn} onClick={handleArchive} data-tooltip="Archive" data-tooltip-pos="top">
                                 <Archive size={18} />
-                                <span>Archive</span>
                             </button>
                             <button
                                 className={clsx(styles.deleteBtn, isDeleting && styles.confirmDelete)}
                                 onClick={handleDelete}
                                 onMouseLeave={() => setIsDeleting(false)}
+                                data-tooltip={isDeleting ? "Confirm Delete" : "Delete"}
+                                data-tooltip-pos="top"
                             >
-                                <Trash2 size={18} />
-                                <span>{isDeleting ? "Sure?" : "Delete"}</span>
+                                {isDeleting ? <span>Sure?</span> : <Trash2 size={18} />}
                             </button>
                         </div>
                     </div>

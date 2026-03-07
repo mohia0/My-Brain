@@ -981,6 +981,7 @@ export const useItemsStore = create<ItemsState>()(
 
                 const safeFolder = {
                     ...folder,
+                    color: folder.color && folder.color !== 'var(--accent)' ? folder.color : '#6B7280',
                     position_x: safePos.x,
                     position_y: safePos.y,
                     syncStatus: 'syncing' as const,

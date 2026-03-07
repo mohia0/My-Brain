@@ -25,7 +25,8 @@ export function getApiUrl(endpoint: string): string {
     const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
     if (isNative) {
-        return `https://www.brainia.space${cleanEndpoint}`;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://my-brain-sepia.vercel.app';
+        return `${baseUrl}${cleanEndpoint}`;
     }
 
     return cleanEndpoint;

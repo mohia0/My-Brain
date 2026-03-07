@@ -321,7 +321,10 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                             {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={20} />}
                         </button>
                         <button
-                            onClick={() => setSelectionMode(!isSelectionMode)}
+                            onClick={() => {
+                                if (isSelectionMode) clearSelection();
+                                setSelectionMode(!isSelectionMode);
+                            }}
                             className={clsx(styles.actionBtn, isSelectionMode && styles.activeActionBtn)}
                             data-tooltip="Select Items"
                             data-tooltip-pos="bottom"
@@ -331,7 +334,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                         {(folderItems.length + subFolders.length > 5) && (
                             <button
                                 onClick={toggleExpand}
-                                className={clsx(styles.actionBtn, isExpanded && styles.activeActionBtn)}
+                                className={clsx(styles.actionBtn, styles.expandBtn, isExpanded && styles.activeActionBtn)}
                                 data-tooltip={isExpanded ? "Collapse" : "Expand"}
                                 data-tooltip-pos="bottom"
                             >

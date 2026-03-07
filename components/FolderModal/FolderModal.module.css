@@ -634,6 +634,10 @@
     }
 
     @media (max-width: 768px) {
+        .expandBtn {
+            display: none !important;
+        }
+
         .modal {
             width: 100vw !important;
             height: 85vh !important;

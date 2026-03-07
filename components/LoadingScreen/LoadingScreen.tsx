@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import styles from './LoadingScreen.module.css';
 import Orb from '../Orb/Orb';
+import clsx from 'clsx';
 
-export default function LoadingScreen({ isFading }: { isFading: boolean }) {
+export default function LoadingScreen({ isFading, isTransparent }: { isFading: boolean, isTransparent?: boolean }) {
     const [status, setStatus] = useState('Initializing quantum sync');
     const [dots, setDots] = useState('');
 
@@ -33,8 +34,15 @@ export default function LoadingScreen({ isFading }: { isFading: boolean }) {
         };
     }, []);
 
+    // If it's a transparent loading screen (like for share intents), we don't want to show the UI either
+    if (isTransparent) {
+        return (
+            <div className={clsx(styles.container, styles.transparentBg, isFading && styles.fading)} />
+        );
+    }
+
     return (
-        <div className={`${styles.container} ${isFading ? styles.fading : ''}`}>
+        <div className={clsx(styles.container, isFading && styles.fading)}>
             <Orb hue={280} hoverIntensity={0.5} forceHoverState={true} backgroundColor="transparent" />
             <div className={styles.content}>
                 <h1 className={styles.logo}>Brainia</h1>

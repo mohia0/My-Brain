@@ -13,6 +13,10 @@
     animation: fadeIn 0.5s ease-out;
 }
 
+.transparentBg {
+    background: transparent !important;
+}
+
 .content {
     position: relative;
     z-index: 10;

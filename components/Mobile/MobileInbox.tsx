@@ -96,7 +96,7 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
                     <p>{filterStatus === 'archived' ? 'Items you archive will appear here.' : 'Ready for your next epiphany? Share links or ideas and they\'ll wait here for you.'}</p>
                     {filterStatus === 'inbox' && (
                         <div className={styles.tinyMessage}>
-                            This is your inbox. things you capture will wait here until you organize them.
+                            This is your captures page! Ideas you capture will wait here safely. Be creative!
                         </div>
                     )}
                 </div>

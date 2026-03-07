@@ -49,7 +49,7 @@ export const useCanvasStore = create<CanvasState>()(
             setOpenFolderId: (id) => set({ openFolderId: id }),
             isMinimapCollapsed: false,
             setIsMinimapCollapsed: (collapsed) => set({ isMinimapCollapsed: collapsed }),
-            isSnappingEnabled: true,
+            isSnappingEnabled: false,
             toggleSnapping: () => set((state) => ({ isSnappingEnabled: !state.isSnappingEnabled })),
             isViewRestored: false,
             setViewRestored: (restored) => set({ isViewRestored: restored }),

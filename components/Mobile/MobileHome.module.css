@@ -182,7 +182,10 @@
 }
 
 .tinyMessage {
-    margin-top: 32px;
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
     background: var(--card-hover);
     border: 1px solid var(--card-border);
     padding: 12px 16px;
@@ -192,5 +195,5 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    max-width: 260px;
+    max-width: 280px;
 }

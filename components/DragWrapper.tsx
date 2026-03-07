@@ -34,6 +34,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     const [snapLines, setSnapLines] = useState<{ vertical: number | null, horizontal: number | null }>({ vertical: null, horizontal: null });
     const draggedProjectContentsRef = React.useRef<string[]>([]);
     const lastSnapDeltaRef = React.useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+    const snapRafIdRef = React.useRef<number | null>(null);
 
     const isHandTool = currentTool === 'hand';
 
@@ -66,7 +67,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         if (!isSnappingEnabled) {
             // Check if we need to clear guides (only if they are currently set)
             // Use rAF to avoid "setState during render" error
-            requestAnimationFrame(() => {
+            if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+            snapRafIdRef.current = requestAnimationFrame(() => {
                 setSnapLines(prev => {
                     if (prev.vertical === null && prev.horizontal === null) return prev;
                     return { vertical: null, horizontal: null };
@@ -84,7 +86,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const subject = activeItemObj || activeFolderObj;
 
         if (!subject || !draggingNodeRect) {
-            requestAnimationFrame(() => {
+            if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+            snapRafIdRef.current = requestAnimationFrame(() => {
                 setSnapLines(prev => {
                     if (prev.vertical === null && prev.horizontal === null) return prev;
                     return { vertical: null, horizontal: null };
@@ -183,7 +186,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
         // 5. Update State (Throttled effect essentially since this runs frame-by-frame)
         // Use requestAnimationFrame to avoid "setState during render" error
-        requestAnimationFrame(() => {
+        if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+        snapRafIdRef.current = requestAnimationFrame(() => {
             // Check current value to avoid unnecessary re-renders (and loops)
             // leveraging the closure to read the latest 'snapLines' state is risky if closure is stale,
             // but since DragWrapper re-renders on state change, this function is recreated with fresh scope.
@@ -338,6 +342,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
         // Use the final snapped delta
         const delta = lastSnapDeltaRef.current; // { x, y } in scaled pixels (screen deltas)
+
+        if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
 
         // Clear guides
         setSnapLines({ vertical: null, horizontal: null });
@@ -718,6 +724,36 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         return null;
     };
 
+    const handleDragCancel = () => {
+        if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+        setSnapLines({ vertical: null, horizontal: null });
+        lastSnapDeltaRef.current = { x: 0, y: 0 };
+        
+        const currentSelectedIds = useItemsStore.getState().selectedIds;
+        
+        const clearTransform = (id: string) => {
+            const el = document.getElementById(`draggable-item-${id}`) || document.getElementById(`draggable-folder-${id}`);
+            if (el) {
+                el.style.transform = '';
+                el.style.zIndex = '';
+            }
+        };
+
+        if (activeId && currentSelectedIds.includes(activeId as string)) {
+            currentSelectedIds.forEach(id => clearTransform(id));
+        } else if (activeId) {
+            clearTransform(activeId as string);
+        }
+
+        if (draggedProjectContentsRef.current) {
+            draggedProjectContentsRef.current.forEach(id => clearTransform(id));
+        }
+
+        draggedProjectContentsRef.current = [];
+        setActiveId(null);
+        setActiveItem(null);
+    };
+
     return (
         <DndContext
             sensors={sensors}
@@ -726,6 +762,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
         >
             {snapLines.vertical !== null && (
                 <div

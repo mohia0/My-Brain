@@ -123,27 +123,29 @@
 
 .dragHandle {
     position: absolute;
-    top: -10px;
-    right: -1px;
+    top: 8px;
+    right: 8px;
     z-index: 50;
-    color: var(--accent);
+    color: var(--text-muted);
     cursor: grab;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
-    border-radius: 0 12px 0 0;
-    background: var(--accent-glow);
-    border: 1px solid var(--accent);
-    border-bottom: none;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s;
+    padding: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    /* very subtle so it looks integrated */
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .dragHandle:active {
     cursor: grabbing;
-    background: var(--accent);
-    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--foreground);
+    transform: scale(1.1);
 }
 
 .folderCard {

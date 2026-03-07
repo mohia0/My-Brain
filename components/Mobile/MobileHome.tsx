@@ -5,45 +5,62 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import MobileCard from './MobileCard';
 import styles from './MobileHome.module.css';
 import { Folder, Inbox, LayoutGrid, ChevronDown, ChevronUp } from 'lucide-react';
-import { Reorder, useDragControls } from 'framer-motion';
+import {
+    DndContext,
+    closestCenter,
+    TouchSensor,
+    MouseSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    rectSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface MobileHomeProps {
     onItemClick: (id: string) => void;
     onFolderClick: (id: string) => void;
 }
 
-const MobileFolderItem = ({ folder, items, onFolderClick }: { folder: any, items: any[], onFolderClick: (id: string) => void }) => {
-    const dragControls = useDragControls();
-    const [isThisDragging, setIsThisDragging] = React.useState(false);
+const MobileFolderSortableItem = ({ folder, items, onFolderClick }: { folder: any, items: any[], onFolderClick: (id: string) => void }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: folder.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        width: 'calc(50% - 6px)',
+        position: 'relative' as any,
+        zIndex: isDragging ? 30000 : 1,
+        ...(isDragging ? {
+            opacity: 0
+        } : {})
+    };
+
     const itemCount = items.filter(i => i.folder_id === folder.id && i.status !== 'archived').length;
 
     return (
-        <Reorder.Item
-            key={folder.id}
-            value={folder}
-            as="div"
-            dragListener={false}
-            dragControls={dragControls}
-            onDragStart={() => setIsThisDragging(true)}
-            onDragEnd={() => setIsThisDragging(false)}
-            style={{ width: 'calc(50% - 6px)', position: 'relative' }}
-            whileDrag={{
-                scale: 1.05,
-                zIndex: 30000,
-                cursor: 'grabbing',
-                boxShadow: '0 25px 50px rgba(0,0,0,0.6)',
-                filter: 'brightness(1.1)'
-            }}
-            dragMomentum={false}
-            dragElastic={0.1}
-        >
+        <div ref={setNodeRef} style={style}>
             <MobileCard
                 item={{ ...folder, type: 'folder', itemCount } as any}
                 onClick={() => onFolderClick(folder.id)}
-                onDragStartRequested={(e) => dragControls.start(e)}
-                isDragging={isThisDragging}
+                isDragging={isDragging}
+                dragHandleProps={{ ...listeners, ...attributes }}
             />
-        </Reorder.Item>
+        </div>
     );
 };
 
@@ -88,6 +105,31 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
         localStorage.setItem('mobile_folder_order', JSON.stringify(newOrder.map(f => f.id)));
     };
 
+    const [activeId, setActiveId] = React.useState<string | null>(null);
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        setActiveId(null);
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = orderedFolders.findIndex(f => f.id === active.id);
+            const newIndex = orderedFolders.findIndex(f => f.id === over.id);
+            handleReorder(arrayMove(orderedFolders, oldIndex, newIndex));
+        }
+    };
+
+    const handleDragCancel = () => {
+        setActiveId(null);
+    };
+
+    const sensors = useSensors(
+        useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 10 } })
+    );
+
     const hasContent = visibleItems.length > 0 || orderedFolders.length > 0;
 
     return (
@@ -116,23 +158,51 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                 </div>
                             </div>
                             {!isFoldersCollapsed && (
-                                <Reorder.Group
-                                    layoutScroll
-                                    className={styles.folderGrid}
-                                    values={orderedFolders}
-                                    onReorder={handleReorder}
-                                    as="div"
-                                    style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', width: '100%' }}
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragStart={handleDragStart}
+                                    onDragEnd={handleDragEnd}
+                                    onDragCancel={handleDragCancel}
                                 >
-                                    {orderedFolders.map(folder => (
-                                        <MobileFolderItem
-                                            key={folder.id}
-                                            folder={folder}
-                                            items={items}
-                                            onFolderClick={onFolderClick}
-                                        />
-                                    ))}
-                                </Reorder.Group>
+                                    <div className={styles.folderGrid} style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', width: '100%', position: 'relative' }}>
+                                        <SortableContext
+                                            items={orderedFolders.map(f => f.id)}
+                                            strategy={rectSortingStrategy}
+                                        >
+                                            {orderedFolders.map(folder => (
+                                                <MobileFolderSortableItem
+                                                    key={folder.id}
+                                                    folder={folder}
+                                                    items={items}
+                                                    onFolderClick={onFolderClick}
+                                                />
+                                            ))}
+                                        </SortableContext>
+                                    </div>
+                                    <DragOverlay dropAnimation={null}>
+                                        {activeId ? (() => {
+                                            const folder = orderedFolders.find(f => f.id === activeId);
+                                            if (!folder) return null;
+                                            const itemCount = items.filter(i => i.folder_id === folder.id && i.status !== 'archived').length;
+                                            return (
+                                                <div style={{
+                                                    width: 'calc(50vw - 23px)', // roughly matches the 50% width inside the grid container on mobile
+                                                    transform: 'rotate(-2deg) scale(1.05)',
+                                                    boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+                                                    filter: 'brightness(1.15)',
+                                                    opacity: 0.95,
+                                                    borderRadius: 16
+                                                }}>
+                                                    <MobileCard
+                                                        item={{ ...folder, type: 'folder', itemCount } as any}
+                                                        isDragging={true}
+                                                    />
+                                                </div>
+                                            );
+                                        })() : null}
+                                    </DragOverlay>
+                                </DndContext>
                             )}
                         </section>
                     )}

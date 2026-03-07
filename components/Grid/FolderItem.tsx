@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { Folder as FolderIcon, Archive, Copy, Trash2, Lock, Unlock } from 'lucide-react';
+import { Folder as FolderIcon, Archive, Copy, Trash2, Lock, Unlock, GripVertical } from 'lucide-react';
 import { Folder } from '@/types';
 import styles from './FolderItem.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
@@ -21,6 +21,7 @@ interface FolderItemViewProps {
     folder: Folder;
     folderItems: any[];
     isSelected?: boolean;
+    isSingleSelected?: boolean;
     isDimmed?: boolean;
     isDragging?: boolean;
     isOverlay?: boolean;
@@ -38,6 +39,7 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
     folder,
     folderItems,
     isSelected,
+    isSingleSelected,
     isDimmed,
     isDragging,
     isOverlay,
@@ -168,14 +170,34 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
             style={finalStyle}
         >
             {!isObscured && renderActions()}
+
+            {/* Grip Handle - Premium Desktop Look */}
+            {isSingleSelected && !isObscured && (
+                <div
+                    className={styles.dragHandle}
+                    {...listeners}
+                    {...attributes}
+                    onPointerDown={(e) => {
+                        e.stopPropagation();
+                        listeners?.onPointerDown?.(e);
+                    }}
+                    style={{
+                        opacity: isDragging ? 0 : 1,
+                        pointerEvents: isDragging ? 'none' : 'auto'
+                    }}
+                >
+                    <GripVertical size={16} />
+                </div>
+            )}
+
             <div className={styles.tab} style={{ background: folder.color || 'var(--card-bg)' }} />
             <div
                 className={styles.mainBody}
-                {...listeners}
-                {...attributes}
+                {...(!isSingleSelected ? listeners : {})}
+                {...(!isSingleSelected ? attributes : {})}
                 onPointerDown={(e) => {
                     e.stopPropagation();
-                    listeners?.onPointerDown?.(e);
+                    if (!isSingleSelected) listeners?.onPointerDown?.(e);
                 }}
                 onClick={onClick}
             >
@@ -306,6 +328,7 @@ export default function FolderItem({ folder, isLocked, onClick }: FolderItemProp
             folder={folder}
             folderItems={folderItems}
             isSelected={isSelected}
+            isSingleSelected={isSelected && selectedIds.length === 1}
             isDimmed={isDimmed}
             isDragging={isDragging}
             isOver={isOver && !isSelected}

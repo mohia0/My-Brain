@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video, Lock, Unlock, GripVertical } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video, Lock, Unlock, GripVertical, GripHorizontal } from 'lucide-react';
 import styles from './MobileCard.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
@@ -14,9 +14,10 @@ interface MobileCardProps {
     onClick?: () => void;
     onDragStartRequested?: (e: React.PointerEvent) => void;
     isDragging?: boolean;
+    dragHandleProps?: any;
 }
 
-export default function MobileCard({ item, onClick, onDragStartRequested, isDragging }: MobileCardProps) {
+export default function MobileCard({ item, onClick, onDragStartRequested, isDragging, dragHandleProps }: MobileCardProps) {
     const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection, vaultedItemsRevealed, toggleVaultItem, toggleVaultFolder } = useItemsStore();
     const { isVaultLocked, unlockedIds, setModalOpen, lockItem, hasPassword } = useVaultStore();
     const [isDeleting, setIsDeleting] = useState(false);
@@ -130,11 +131,7 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                 toggleSelection(item.id);
                 if (window.navigator.vibrate) window.navigator.vibrate(50);
             }
-
-            // For folders, if they are already selected, we want to allow immediate drag
-            // If they just got selected, we'll wait for the next move to trigger drag if needed
-            // but for now let's ensure the native event is ready
-        }, 500);
+        }, 300); // Reduced to 300ms for a more responsive "pick up" feel
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
@@ -278,17 +275,28 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                 touchAction: isSelected ? 'none' : 'pan-y'
             } : {}}
         >
-            {isFolder && isSelected && selectedIds.length === 1 && !isDragging && (
+            {isFolder && isSelected && selectedIds.length === 1 && (!!onDragStartRequested || dragHandleProps) && (
                 <div
                     className={styles.dragHandle}
+                    {...dragHandleProps}
                     onPointerDown={(e) => {
                         e.stopPropagation();
-                        // Use native event to ensure framer-motion captures it correctly
-                        if (onDragStartRequested) onDragStartRequested(e.nativeEvent as any);
+                        // For framer-motion compat
+                        if (onDragStartRequested) {
+                            onDragStartRequested(e.nativeEvent as any);
+                        }
+                        // For dnd-kit compat
+                        if (dragHandleProps?.onPointerDown) {
+                            dragHandleProps.onPointerDown(e);
+                        }
                     }}
-                    style={{ touchAction: 'none' }}
+                    style={{
+                        touchAction: 'none',
+                        opacity: isDragging ? 0 : 1,
+                        pointerEvents: isDragging ? 'none' : 'auto'
+                    }}
                 >
-                    <GripVertical size={20} />
+                    <GripHorizontal size={18} />
                 </div>
             )}
             <div className={styles.mainContent}>

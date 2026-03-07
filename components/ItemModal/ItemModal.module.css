@@ -768,7 +768,13 @@
     cursor: pointer;
 }
 
-.copyBtn:hover,
+.copyBtn:hover {
+    color: var(--foreground);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
 .externalLinkIcon:hover {
     color: var(--foreground);
     background: rgba(255, 255, 255, 0.1);
@@ -1003,6 +1009,8 @@
     padding: 20px 24px;
     border-top: 1px solid var(--border-light);
     display: flex;
+    justify-content: flex-end;
+    /* Keep buttons pushed to the right on desktop */
     gap: 12px;
     align-items: center;
     background: var(--modal-bg);
@@ -1011,20 +1019,19 @@
 }
 
 .deleteBtn {
-    flex: 1;
     background: rgba(225, 29, 72, 0.05);
     color: var(--danger);
     border: 1px solid rgba(225, 29, 72, 0.15);
-    padding: 12px;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    padding: 0;
     border-radius: 12px;
-    font-weight: 650;
-    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
 }
 
 .deleteBtn:hover {
@@ -1033,21 +1040,26 @@
     box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
 }
 
+.confirmDelete {
+    background: var(--danger) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3) !important;
+}
+
 .archiveBtn {
-    flex: 1;
     background: var(--card-bg);
     color: var(--text-muted);
     border: 1px solid var(--border-light);
-    padding: 12px;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    padding: 0;
     border-radius: 12px;
-    font-weight: 650;
-    font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
 }
 
 .archiveBtn:hover {
@@ -1057,10 +1069,29 @@
     box-shadow: 0 0 15px var(--accent-glow);
 }
 
-.confirmDelete {
-    background: var(--danger) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3) !important;
+.linkBtn {
+    background: var(--accent);
+    color: white;
+    filter: drop-shadow(0 4px 8px var(--accent-glow));
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.linkBtn:hover {
+    background: var(--accent-light, #8b5cf6);
+    filter: drop-shadow(0 6px 16px var(--accent-glow));
+    transform: translateY(-2px);
 }
 
 /* --- MOBILE & COMPACT OVERRIDES --- */

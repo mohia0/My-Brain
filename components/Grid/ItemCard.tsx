@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import styles from './ItemCard.module.css';
 import { Item } from '@/types';
-import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorClosed, ArrowRight, Unlock, Edit3, Check } from 'lucide-react';
+import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorClosed, ArrowRight, Unlock, Edit3, Check, ExternalLink } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
@@ -270,6 +270,18 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 >
                     <LockIcon size={12} />
                 </button>
+                {(localItem.type === 'link' || localItem.metadata?.url) && (
+                    <a
+                        href={localItem.metadata?.url || localItem.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className={styles.linkAction}
+                    >
+                        <ExternalLink size={12} />
+                        <span>Open Link</span>
+                    </a>
+                )}
                 <ActionMoveMenu itemId={localItem.id} />
                 <button onClick={onArchive} data-tooltip="Archive" data-tooltip-pos="bottom-left"><Archive size={12} /></button>
                 <button onClick={onDuplicate} data-tooltip="Duplicate" data-tooltip-pos="bottom-left"><Copy size={12} /></button>

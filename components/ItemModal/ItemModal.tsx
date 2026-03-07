@@ -703,10 +703,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 <div className={styles.section}>
                                     <div className={styles.labelRow}>
                                         <span className={styles.label}>Source</span>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            <button className={styles.copyBtn} onClick={handleCopy}>{copied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}</button>
-                                            <a href={url} target="_blank" className={styles.externalLinkIcon}><ExternalLink size={14} /></a>
-                                        </div>
+                                        <button className={styles.copyBtn} onClick={handleCopy}>{copied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}</button>
                                     </div>
                                     <div className={styles.linkInputWrapper}>
                                         <Link size={16} className={styles.inputIcon} />
@@ -765,22 +762,32 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                         </div>
 
                         <div className={styles.footer}>
-                            <button className={styles.archiveBtn} onClick={handleArchive}>
+                            {isLink && (
+                                <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.linkBtn}
+                                >
+                                    <ExternalLink size={18} />
+                                    <span>Open Link</span>
+                                </a>
+                            )}
+                            <button className={styles.archiveBtn} onClick={handleArchive} title="Archive">
                                 <Archive size={18} />
-                                <span>Archive</span>
                             </button>
                             <button
                                 className={clsx(styles.deleteBtn, isDeleting && styles.confirmDelete)}
                                 onClick={handleDelete}
                                 onMouseLeave={() => setIsDeleting(false)}
+                                title={isDeleting ? "Confirm deletion" : "Delete"}
                             >
                                 <Trash2 size={18} />
-                                <span>{isDeleting ? "Confirm?" : "Delete"}</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

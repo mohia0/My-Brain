@@ -62,16 +62,24 @@
     gap: 4px;
     z-index: 10;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     background: var(--card-bg);
     padding: 2px;
     border-radius: 6px;
     border: 1px solid var(--border-light);
+    transform: translateY(4px) scale(1);
+    transform-origin: top right;
 }
 
 .area:hover .controls,
 .selected .controls {
     opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.area:hover .controls:hover,
+.selected .controls:hover {
+    transform: translateY(0) scale(var(--inv-scale, 1));
 }
 
 .controlBtn {
@@ -91,11 +99,13 @@
 .controlBtn:hover {
     background: var(--card-hover);
     color: var(--text);
+    transform: scale(1.1);
 }
 
 .deleteBtn:hover {
     background: rgba(225, 29, 72, 0.1);
     color: var(--danger);
+    transform: scale(1.1);
 }
 
 .resizeHandle {

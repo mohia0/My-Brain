@@ -201,7 +201,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
             </div>
 
             {!isDragging && (isSelected || isHovered || showDeleteConfirm) && (
-                <div className={styles.controls}>
+                <div className={styles.controls} style={{ '--inv-scale': Math.min(3, Math.max(1, 1 / scale)) } as React.CSSProperties}>
                     <div style={{ position: 'relative' }}>
                         <button
                             className={styles.controlBtn}

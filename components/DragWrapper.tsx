@@ -425,8 +425,8 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
         // 3. Handle Dropping ONTO Inbox
         if (over && over.id === 'inbox-area') {
-            // Prevent rooms and project areas from being moved to inbox
-            if (activeData.type === 'project' || activeData.itemType === 'room' || activeData.type === 'room') {
+            // Prevent rooms, project areas, and folders from being moved to inbox
+            if (activeData.type === 'project' || activeData.itemType === 'room' || activeData.type === 'room' || activeData.type === 'folder') {
                 return;
             }
 

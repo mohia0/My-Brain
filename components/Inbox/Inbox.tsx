@@ -13,7 +13,7 @@ interface InboxProps {
 
 export default function Inbox({ onItemClick }: InboxProps) {
     const { items, clearInbox, fetchData } = useItemsStore();
-    const inboxItems = items.filter(i => i.status === 'inbox')
+    const inboxItems = items.filter(i => i.status === 'inbox' && i.type !== 'project' && i.type !== 'room')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     const [isClearing, setIsClearing] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);

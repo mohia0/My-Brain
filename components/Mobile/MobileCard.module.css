@@ -508,3 +508,99 @@
     font-weight: 700;
     background: rgba(239, 68, 68, 0.1) !important;
 }
+
+/* --- OBSCURED / LOCKED CARD --- */
+.obscuredCard {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 130px !important;
+    background: rgba(20, 20, 20, 0.4) !important;
+    border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+    position: relative;
+    overflow: hidden;
+    gap: 0 !important;
+}
+
+:global([data-theme='light']) .obscuredCard {
+    background: rgba(240, 240, 240, 0.4) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.obscuredBlur {
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1;
+}
+
+.obscuredUI {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+}
+
+.lockRing {
+    width: 44px;
+    height: 44px;
+    background: rgba(110, 86, 207, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    box-shadow: 0 0 20px rgba(110, 86, 207, 0.1);
+    margin-bottom: 2px;
+}
+
+.obscuredTitle {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    opacity: 0.9;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vaultLabel {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+}
+
+.unlockBtn {
+    background: var(--accent) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 100px !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.05em !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 12px var(--accent-glow) !important;
+    margin-top: 4px;
+}
+
+.unlockBtn svg {
+    width: 14px;
+    height: 14px;
+}

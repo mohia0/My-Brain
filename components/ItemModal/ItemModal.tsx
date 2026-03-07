@@ -469,10 +469,11 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
             <div
                 className={clsx(
                     styles.modal,
-                    isLink && styles.compactModal,
+                    isLink && styles.imageModal,
+                    item?.type === 'image' && styles.imageModal,
+                    item?.type === 'video' && styles.imageModal,
                     isNote && styles.noteModal,
                     (!isSidebarOpen && isNote) && styles.sidebarClosedModal,
-                    ((item.type === 'image' || item.type === 'video') || item.metadata?.isVideo) && styles.imageModal,
                     isClosing && styles.closing
                 )}
                 onClick={e => e.stopPropagation()}
@@ -773,16 +774,17 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     <span>Open Link</span>
                                 </a>
                             )}
-                            <button className={styles.archiveBtn} onClick={handleArchive} title="Archive">
+                            <button className={styles.archiveBtn} onClick={handleArchive}>
                                 <Archive size={18} />
+                                <span>Archive</span>
                             </button>
                             <button
                                 className={clsx(styles.deleteBtn, isDeleting && styles.confirmDelete)}
                                 onClick={handleDelete}
                                 onMouseLeave={() => setIsDeleting(false)}
-                                title={isDeleting ? "Confirm deletion" : "Delete"}
                             >
                                 <Trash2 size={18} />
+                                <span>{isDeleting ? "Sure?" : "Delete"}</span>
                             </button>
                         </div>
                     </div>

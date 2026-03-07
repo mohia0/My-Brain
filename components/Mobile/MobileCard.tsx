@@ -194,10 +194,10 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
             <div
                 className={clsx(
                     styles.card,
+                    styles.obscuredCard,
                     isFolder && styles.gridCard,
                     isRemoving && styles.removing,
                     isSelected && styles.selected,
-                    isSelected && selectedIds.length === 1 && styles.singleSelected,
                     isDragging && styles.isDragging
                 )}
                 onClick={handleClick}
@@ -205,49 +205,28 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
-                style={isFolder ? {
-                    ...(isFolder && (item as any).color ? {
-                        backgroundColor: isSelected ? `${(item as any).color}40` : `${(item as any).color}15`,
-                        borderColor: isSelected ? (item as any).color : `${(item as any).color}30`,
-                    } : {}),
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 100,
-                    gap: 4,
-                    touchAction: isSelected ? 'none' : 'pan-y'
-                } : {}}
             >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', textAlign: 'center', padding: '0 20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
-                        {isFolder ? (item as any).name : (item.metadata?.title || 'Untitled Idea')}
+                <div className={styles.obscuredBlur} />
+                <div className={styles.obscuredUI}>
+                    <div className={styles.lockRing}>
+                        <Lock size={20} />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.5 }}>
-                        <Lock size={14} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Vault Protected</span>
+                    <div className={styles.vaultLabel}>
+                        Vault Protected
                     </div>
+                    <div className={styles.obscuredTitle}>
+                        {isFolder ? (item as any).name : (item.metadata?.title || 'Private Idea')}
+                    </div>
+                    <button
+                        className={styles.unlockBtn}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalOpen(true, item.id);
+                        }}
+                    >
+                        <Unlock size={14} /> UNLOCK
+                    </button>
                 </div>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setModalOpen(true, item.id);
-                    }}
-                    style={{
-                        background: 'var(--accent)',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: 8,
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6
-                    }}
-                >
-                    <Unlock size={14} /> UNLOCK
-                </button>
             </div>
         );
     }

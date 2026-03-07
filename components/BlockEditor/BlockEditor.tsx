@@ -8,7 +8,8 @@ import { Block, BlockNoteEditor } from "@blocknote/core";
 import { filterSuggestionItems } from "@blocknote/core/extensions";
 import {
     getDefaultReactSlashMenuItems,
-    SuggestionMenuController
+    SuggestionMenuController,
+    SideMenuController
 } from "@blocknote/react";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { Undo, Redo } from "lucide-react";
@@ -165,7 +166,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                 }
             }}
         >
-            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10, paddingLeft: 'clamp(8px, 4vw, 24px)', paddingRight: 'clamp(8px, 4vw, 24px)' }}>
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10, paddingLeft: 'clamp(18px, 3vw, 24px)', paddingRight: 'clamp(4px, 2vw, 24px)' }}>
                 <BlockNoteView
                     editor={editor}
                     onChange={handleChange}
@@ -183,6 +184,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                             )
                         }
                     />
+                    <SideMenuController />
                 </BlockNoteView>
                 <style jsx global>{`
                     /* Smart RTL detection using standard unicode-bidi */
@@ -196,11 +198,23 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                         text-align: inherit;
                     }
 
-                    /* Typography Polish for focus reading */
-                    .brainia-editor .bn-editor {
-                        font-size: 1.15rem;
-                        line-height: 1.7;
-                        letter-spacing: -0.01em;
+                    /* Maximize line width on mobile specifically but keep room for handles */
+                    @media (max-width: 768px) {
+                        .brainia-editor .bn-editor .bn-block-content {
+                            padding-left: 6px !important;
+                            padding-right: 6px !important;
+                        }
+                        
+                        /* Force Side Menu handles to appear more reliably on mobile */
+                        .brainia-editor .bn-side-menu {
+                            display: flex !important;
+                            opacity: 1 !important;
+                            visibility: visible !important;
+                            margin-left: -24px !important;
+                            z-index: 1000 !important;
+                            transform: scale(0.8) !important;
+                            transform-origin: center right !important;
+                        }
                     }
                 `}</style>
             </div>

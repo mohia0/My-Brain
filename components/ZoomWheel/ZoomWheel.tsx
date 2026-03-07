@@ -3,7 +3,7 @@
 import React from 'react';
 import styles from './ZoomWheel.module.css';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { Plus, Minus, Target, Magnet } from 'lucide-react';
+import { Plus, Minus, Maximize, Magnet } from 'lucide-react';
 
 export default function ZoomWheel() {
     const { scale, zoomAt, isSnappingEnabled, toggleSnapping } = useCanvasStore();
@@ -69,7 +69,7 @@ export default function ZoomWheel() {
                 data-tooltip="Reset to 100%"
                 data-tooltip-pos="left"
             >
-                <Target size={18} />
+                <Maximize size={18} />
             </button>
 
             <button

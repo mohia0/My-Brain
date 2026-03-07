@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import styles from './ActionMoveMenu.module.css';
-import { MoveRight, Folder, DoorClosed, Frame, CornerLeftUp, Search } from 'lucide-react';
+import { ArrowRightToLine, Folder, DoorClosed, Frame, CornerLeftUp, Search } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import clsx from 'clsx';
 
@@ -165,7 +165,7 @@ export default function ActionMoveMenu({ itemId, isFolder }: ActionMoveMenuProps
                 data-tooltip="Move to..."
                 data-tooltip-pos="bottom"
             >
-                <MoveRight size={12} />
+                <ArrowRightToLine size={12} />
             </button>
 
             {isOpen && (

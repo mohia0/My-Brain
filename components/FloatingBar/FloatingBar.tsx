@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './FloatingBar.module.css';
-import { Trash2, FolderPlus, Sparkles, X, ChevronUp, Folder, Archive, CircleArrowOutUpRight, Inbox, DoorClosed, Frame, CornerLeftUp } from 'lucide-react';
+import { Trash2, ArrowRightToLine, Sparkles, X, ChevronUp, Folder, Archive, CircleArrowOutUpRight, Inbox, DoorClosed, Frame, CornerLeftUp, Search } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { generateId } from '@/lib/utils';
 import InputModal from '@/components/InputModal/InputModal';
@@ -27,7 +27,9 @@ export default function FloatingBar() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
     const [isMoveMenuOpen, setIsMoveMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const menuRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -38,6 +40,14 @@ export default function FloatingBar() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Focus search input on open
+    useEffect(() => {
+        if (isMoveMenuOpen) {
+            setSearchQuery('');
+            setTimeout(() => searchInputRef.current?.focus(), 50);
+        }
+    }, [isMoveMenuOpen]);
 
     const selectedItemsList = items.filter(i => selectedIds.includes(i.id));
     const isOnlyTwoProjectAreas = selectedIds.length === 2 &&
@@ -141,9 +151,19 @@ export default function FloatingBar() {
         setIsMoveMenuOpen(false);
     };
 
-    const mindrooms = items.filter(i => i.type === 'room');
-    const projectAreas = items.filter(i => i.type === 'project' && !selectedIds.includes(i.id));
-    const filteredFolders = folders.filter(f => !selectedIds.includes(f.id)); // Don't allow moving an item into a folder that is part of the selection
+    const mindrooms = items.filter(i =>
+        i.type === 'room' &&
+        (i.metadata?.title || 'Untitled Room').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const projectAreas = items.filter(i =>
+        i.type === 'project' &&
+        !selectedIds.includes(i.id) &&
+        (i.metadata?.title || 'Project Area').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const filteredFolders = folders.filter(f =>
+        !selectedIds.includes(f.id) &&
+        f.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ); // Don't allow moving an item into a folder that is part of the selection
 
     const isInsideRoom = !!currentRoomId;
     const parentRoomId = currentRoomId ? items.find(i => i.id === currentRoomId)?.room_id : null;
@@ -206,10 +226,10 @@ export default function FloatingBar() {
                 <button
                     className={clsx(styles.actionBtn, isMoveMenuOpen && styles.activeBtn)}
                     onClick={() => setIsMoveMenuOpen(!isMoveMenuOpen)}
-                    data-tooltip="Move to Folder"
+                    data-tooltip="Move to..."
                     data-tooltip-pos="top"
                 >
-                    <FolderPlus size={18} />
+                    <ArrowRightToLine size={18} />
                     <ChevronUp size={12} className={clsx(styles.chevron, isMoveMenuOpen && styles.chevronOpen)} />
                 </button>
 
@@ -218,6 +238,18 @@ export default function FloatingBar() {
 
                         <div className={styles.menuHeader}>Move to...</div>
 
+                        <div className={styles.searchContainer}>
+                            <Search size={10} className={styles.searchIcon} />
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                placeholder="Search..."
+                                className={styles.searchInput}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onClick={e => e.stopPropagation()}
+                            />
+                        </div>
 
                         <div className={styles.folderList}>
                             {isInsideRoom && (

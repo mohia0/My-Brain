@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Archive, Copy, X, FolderInput, CircleArrowOutUpRight, Inbox } from 'lucide-react';
+import { Trash2, Archive, Copy, X, ArrowRightToLine, CircleArrowOutUpRight, Inbox } from 'lucide-react';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import styles from './MobileSelectionBar.module.css';
 import { clsx } from 'clsx';
@@ -118,8 +118,8 @@ export default function MobileSelectionBar() {
                         return null;
                     })()}
 
-                    <button className={styles.actionBtn} onClick={handleMoveClick} data-tooltip="Move to Folder" data-tooltip-pos="top">
-                        <FolderInput size={20} />
+                    <button className={styles.actionBtn} onClick={handleMoveClick} data-tooltip="Move to..." data-tooltip-pos="top">
+                        <ArrowRightToLine size={20} />
                     </button>
                     <button className={styles.actionBtn} onClick={handleDuplicate} data-tooltip="Duplicate" data-tooltip-pos="top">
                         <Copy size={20} />

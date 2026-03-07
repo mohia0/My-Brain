@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile, PanelRightClose, PanelRightOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -648,7 +648,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                     </div>
 
                     {/* RIGHT COLUMN: METADATA */}
-                    <div className={clsx(styles.rightColumn, (isNote || item.type === 'image') && styles.compactMetadata)}>
+                    <div className={clsx(styles.rightColumn, (isNote || item.type === 'image') && styles.compactMetadata, isNote && styles.superCompactNoteMetadata)}>
                         <div className={styles.header}>
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div className={styles.timestamp}>

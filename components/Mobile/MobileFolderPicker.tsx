@@ -14,7 +14,7 @@ interface MobileFolderPickerProps {
     title?: string;
 }
 
-export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to Folder' }: MobileFolderPickerProps) {
+export default function MobileFolderPicker({ onClose, onSelect, title = 'Move to...' }: MobileFolderPickerProps) {
     const { folders, items, selectedIds, addFolder } = useItemsStore();
     const [search, setSearch] = React.useState('');
 

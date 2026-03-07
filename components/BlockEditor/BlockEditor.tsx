@@ -166,7 +166,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                 }
             }}
         >
-            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10, paddingLeft: 'clamp(18px, 3vw, 24px)', paddingRight: 'clamp(4px, 2vw, 24px)' }}>
+            <div className="editor-container" style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10 }}>
                 <BlockNoteView
                     editor={editor}
                     onChange={handleChange}
@@ -198,11 +198,20 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                         text-align: inherit;
                     }
 
+                    .editor-container {
+                        padding-left: clamp(24px, 3vw, 36px);
+                        padding-right: clamp(12px, 2vw, 24px);
+                    }
                     /* Maximize line width on mobile specifically but keep room for handles */
                     @media (max-width: 768px) {
+                        .editor-container {
+                            padding-left: 5px;
+                            padding-right: 5px;
+                        }
+
                         .brainia-editor .bn-editor .bn-block-content {
-                            padding-left: 6px !important;
-                            padding-right: 6px !important;
+                            padding-left: 0px !important;
+                            padding-right: 0px !important;
                         }
                         
                         /* Force Side Menu handles to appear more reliably on mobile */
@@ -210,10 +219,10 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                             display: flex !important;
                             opacity: 1 !important;
                             visibility: visible !important;
-                            margin-left: -24px !important;
+                            margin-left: -10px !important;
                             z-index: 1000 !important;
-                            transform: scale(0.8) !important;
-                            transform-origin: center right !important;
+                            transform: scale(0.85) !important;
+                            transform-origin: center left !important;
                         }
                     }
                 `}</style>

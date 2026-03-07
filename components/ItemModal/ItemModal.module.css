@@ -1265,14 +1265,12 @@
     }
 
     .noteModal .scrollBody {
-        padding: 0 16px !important;
+        padding: 4px 16px !important;
         margin: 0 !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        display: flex !important;
-        align-items: center !important;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        display: block !important;
+        max-height: 100px !important;
     }
 
     .noteModal .scrollBody::-webkit-scrollbar {
@@ -1282,10 +1280,10 @@
     .noteModal .tagsWrapper {
         display: flex !important;
         flex-direction: row !important;
-        flex-wrap: nowrap !important;
+        flex-wrap: wrap !important;
         margin: 0 !important;
-        gap: 4px !important;
-        padding-bottom: 2px !important;
+        gap: 6px !important;
+        padding-bottom: 8px !important;
     }
 
     .noteModal .tag {

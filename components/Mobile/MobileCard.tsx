@@ -209,13 +209,15 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                 <div className={styles.obscuredBlur} />
                 <div className={styles.obscuredUI}>
                     <div className={styles.lockRing}>
-                        <Lock size={20} />
+                        <Lock size={18} />
                     </div>
-                    <div className={styles.vaultLabel}>
-                        Vault Protected
-                    </div>
-                    <div className={styles.obscuredTitle}>
-                        {isFolder ? (item as any).name : (item.metadata?.title || 'Private Idea')}
+                    <div className={styles.obscuredInfo}>
+                        <div className={styles.vaultLabel}>
+                            Vault Protected
+                        </div>
+                        <div className={styles.obscuredTitle}>
+                            {isFolder ? (item as any).name : (item.metadata?.title || 'Private Idea')}
+                        </div>
                     </div>
                     <button
                         className={styles.unlockBtn}

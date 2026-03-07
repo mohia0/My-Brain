@@ -2,26 +2,27 @@
 
 import React, { useState } from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video, Lock, Unlock } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video, Lock, Unlock, GripVertical } from 'lucide-react';
 import styles from './MobileCard.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
 import clsx from 'clsx';
 import { getPlainText } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Clipboard } from '@capacitor/clipboard';
-
 interface MobileCardProps {
     item: Item;
     onClick?: () => void;
+    onDragStartRequested?: (e: React.PointerEvent) => void;
+    isDragging?: boolean;
 }
 
-export default function MobileCard({ item, onClick }: MobileCardProps) {
+export default function MobileCard({ item, onClick, onDragStartRequested, isDragging }: MobileCardProps) {
     const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection, vaultedItemsRevealed, toggleVaultItem, toggleVaultFolder } = useItemsStore();
     const { isVaultLocked, unlockedIds, setModalOpen, lockItem, hasPassword } = useVaultStore();
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRemoving, setIsRemoving] = useState(false);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
+    const pointerStartPos = React.useRef<{ x: number, y: number } | null>(null);
     const isSelected = selectedIds.includes(item.id);
     const inSelectionMode = selectedIds.length > 0;
 
@@ -60,14 +61,33 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
         e.stopPropagation();
         e.preventDefault();
 
-        try {
-            await Clipboard.write({
-                string: item.content
-            });
-            toast.success("Link copied");
-        } catch (err) {
-            console.error("Failed to copy link:", err);
-            toast.error("Failed to copy link");
+        const doCopy = (text: string) => {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                toast.success("Link copied");
+            } catch (err) {
+                console.error("Fallback copy failed", err);
+                toast.error("Failed to copy link");
+            }
+            document.body.removeChild(textArea);
+        };
+
+        if (navigator?.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(item.content);
+                toast.success("Link copied");
+            } catch (err) {
+                doCopy(item.content);
+            }
+        } else {
+            doCopy(item.content);
         }
     };
 
@@ -98,31 +118,45 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
         }, 500);
     };
 
-    const touchStartPos = React.useRef<{ x: number, y: number } | null>(null);
+    const handlePointerDown = (e: React.PointerEvent) => {
+        // Only trigger on primary touch/mouse button
+        if (e.button !== 0) return;
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        const touch = e.touches[0];
-        touchStartPos.current = { x: Math.round(touch.clientX), y: Math.round(touch.clientY) };
+        pointerStartPos.current = { x: Math.round(e.clientX), y: Math.round(e.clientY) };
+        const nativeEvent = e.nativeEvent;
 
         longPressTimer.current = setTimeout(() => {
-            toggleSelection(item.id);
-            if (window.navigator.vibrate) window.navigator.vibrate(50);
+            if (!isSelected) {
+                toggleSelection(item.id);
+                if (window.navigator.vibrate) window.navigator.vibrate(50);
+            }
+
+            // For folders, if they are already selected, we want to allow immediate drag
+            // If they just got selected, we'll wait for the next move to trigger drag if needed
+            // but for now let's ensure the native event is ready
         }, 500);
     };
 
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!touchStartPos.current) return;
-        const touch = e.touches[0];
-        const dx = Math.abs(Math.round(touch.clientX) - touchStartPos.current.x);
-        const dy = Math.abs(Math.round(touch.clientY) - touchStartPos.current.y);
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!pointerStartPos.current) return;
+        const dx = Math.abs(Math.round(e.clientX) - pointerStartPos.current.x);
+        const dy = Math.abs(Math.round(e.clientY) - pointerStartPos.current.y);
+
+        // If they move significantly, cancel the long press
         if (dx > 10 || dy > 10) {
-            if (longPressTimer.current) clearTimeout(longPressTimer.current);
+            if (longPressTimer.current) {
+                clearTimeout(longPressTimer.current);
+                longPressTimer.current = null;
+            }
         }
     };
 
-    const handleTouchEnd = () => {
-        if (longPressTimer.current) clearTimeout(longPressTimer.current);
-        touchStartPos.current = null;
+    const handlePointerUp = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+        pointerStartPos.current = null;
     };
 
     const handleClick = (e: React.MouseEvent) => {
@@ -166,28 +200,27 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                     isFolder && styles.gridCard,
                     isRemoving && styles.removing,
                     isSelected && styles.selected,
-                    isSelected && selectedIds.length === 1 && styles.singleSelected
+                    isSelected && selectedIds.length === 1 && styles.singleSelected,
+                    isDragging && styles.isDragging
                 )}
                 onClick={handleClick}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onTouchMove={handleTouchMove}
-                style={isFolder && (item as any).color ? {
-                    backgroundColor: `${(item as any).color}15`,
-                    borderColor: `${(item as any).color}30`,
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                style={isFolder ? {
+                    ...(isFolder && (item as any).color ? {
+                        backgroundColor: isSelected ? `${(item as any).color}40` : `${(item as any).color}15`,
+                        borderColor: isSelected ? (item as any).color : `${(item as any).color}30`,
+                    } : {}),
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 12
-                } : {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 120,
-                    gap: 12
-                }}
+                    minHeight: 100,
+                    gap: 4,
+                    touchAction: isSelected ? 'none' : 'pan-y'
+                } : {}}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                     <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)', textAlign: 'center', padding: '0 20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
@@ -229,17 +262,35 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                 isFolder && styles.gridCard,
                 isRemoving && styles.removing,
                 isSelected && styles.selected,
-                isSelected && selectedIds.length === 1 && styles.singleSelected
+                isSelected && selectedIds.length === 1 && styles.singleSelected,
+                isDragging && styles.isDragging
             )}
             onClick={handleClick}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchMove}
-            style={isFolder && (item as any).color ? {
-                backgroundColor: `${(item as any).color}15`,
-                borderColor: `${(item as any).color}30`
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            style={isFolder ? {
+                ...(isFolder && (item as any).color ? {
+                    backgroundColor: isSelected ? `${(item as any).color}40` : `${(item as any).color}15`,
+                    borderColor: isSelected ? (item as any).color : `${(item as any).color}30`
+                } : {}),
+                touchAction: isSelected ? 'none' : 'pan-y'
             } : {}}
         >
+            {isFolder && isSelected && selectedIds.length === 1 && !isDragging && (
+                <div
+                    className={styles.dragHandle}
+                    onPointerDown={(e) => {
+                        e.stopPropagation();
+                        // Use native event to ensure framer-motion captures it correctly
+                        if (onDragStartRequested) onDragStartRequested(e.nativeEvent as any);
+                    }}
+                    style={{ touchAction: 'none' }}
+                >
+                    <GripVertical size={20} />
+                </div>
+            )}
             <div className={styles.mainContent}>
                 {isVideo ? (
                     <div className={styles.imageLayout}>
@@ -352,8 +403,6 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                             {isFolder ? (
                                 <div className={styles.folderMeta}>
                                     <span className={styles.itemCount}>{(item as any).itemCount || folderItems.length} items</span>
-                                    <span className={styles.dot}>•</span>
-                                    <span className={styles.time}>{getRelativeTime(item.created_at)}</span>
                                 </div>
                             ) : (
                                 <div className={styles.metaRow}>
@@ -372,11 +421,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
             <div
                 className={styles.actions}
                 onClick={e => e.stopPropagation()}
-                onTouchStart={e => { e.stopPropagation(); }}
-                onTouchEnd={e => { e.stopPropagation(); }}
-                onTouchMove={e => e.stopPropagation()}
                 onPointerDown={e => e.stopPropagation()}
-                onPointerUp={e => e.stopPropagation()}
             >
                 <button
                     onClick={(e) => {
@@ -404,7 +449,7 @@ export default function MobileCard({ item, onClick }: MobileCardProps) {
                     <Lock size={14} />
                 </button>
                 <button onClick={handleArchive} className={styles.actionBtn} data-tooltip="Archive" data-tooltip-pos="left"><Archive size={14} /></button>
-                {!isFolder && item.type === 'link' && <button onClick={handleCopyLink} className={styles.actionBtn} data-tooltip="Copy Link" data-tooltip-pos="left"><LinkIcon size={14} /></button>}
+                {!isFolder && item.type === 'link' && <button onPointerDown={handleCopyLink} onClick={e => { e.stopPropagation(); e.preventDefault(); }} className={styles.actionBtn} data-tooltip="Copy Link" data-tooltip-pos="left"><LinkIcon size={14} /></button>}
                 <button
                     onClick={handleDelete}
                     className={clsx(styles.actionBtn, styles.delete, isDeleting && styles.confirmDelete)}

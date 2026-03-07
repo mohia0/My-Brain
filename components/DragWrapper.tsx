@@ -67,13 +67,15 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         if (!isSnappingEnabled) {
             // Check if we need to clear guides (only if they are currently set)
             // Use rAF to avoid "setState during render" error
-            if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
-            snapRafIdRef.current = requestAnimationFrame(() => {
-                setSnapLines(prev => {
-                    if (prev.vertical === null && prev.horizontal === null) return prev;
-                    return { vertical: null, horizontal: null };
+            if (typeof window !== 'undefined') {
+                if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+                snapRafIdRef.current = requestAnimationFrame(() => {
+                    setSnapLines(prev => {
+                        if (prev.vertical === null && prev.horizontal === null) return prev;
+                        return { vertical: null, horizontal: null };
+                    });
                 });
-            });
+            }
             lastSnapDeltaRef.current = { x: transform.x, y: transform.y };
             return transform;
         }
@@ -86,13 +88,15 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const subject = activeItemObj || activeFolderObj;
 
         if (!subject || !draggingNodeRect) {
-            if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
-            snapRafIdRef.current = requestAnimationFrame(() => {
-                setSnapLines(prev => {
-                    if (prev.vertical === null && prev.horizontal === null) return prev;
-                    return { vertical: null, horizontal: null };
+            if (typeof window !== 'undefined') {
+                if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+                snapRafIdRef.current = requestAnimationFrame(() => {
+                    setSnapLines(prev => {
+                        if (prev.vertical === null && prev.horizontal === null) return prev;
+                        return { vertical: null, horizontal: null };
+                    });
                 });
-            });
+            }
             lastSnapDeltaRef.current = { x: transform.x, y: transform.y };
             return transform;
         }
@@ -186,16 +190,18 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
         // 5. Update State (Throttled effect essentially since this runs frame-by-frame)
         // Use requestAnimationFrame to avoid "setState during render" error
-        if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
-        snapRafIdRef.current = requestAnimationFrame(() => {
-            // Check current value to avoid unnecessary re-renders (and loops)
-            // leveraging the closure to read the latest 'snapLines' state is risky if closure is stale,
-            // but since DragWrapper re-renders on state change, this function is recreated with fresh scope.
-            setSnapLines(prev => {
-                if (prev.vertical === guideX && prev.horizontal === guideY) return prev;
-                return { vertical: guideX, horizontal: guideY };
+        if (typeof window !== 'undefined') {
+            if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+            snapRafIdRef.current = requestAnimationFrame(() => {
+                // Check current value to avoid unnecessary re-renders (and loops)
+                // leveraging the closure to read the latest 'snapLines' state is risky if closure is stale,
+                // but since DragWrapper re-renders on state change, this function is recreated with fresh scope.
+                setSnapLines(prev => {
+                    if (prev.vertical === guideX && prev.horizontal === guideY) return prev;
+                    return { vertical: guideX, horizontal: guideY };
+                });
             });
-        });
+        }
 
         // 6. Return Modified Transform (Delta)
         const finalDeltaX = (snappedX - subject.position_x) * scale;
@@ -343,7 +349,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         // Use the final snapped delta
         const delta = lastSnapDeltaRef.current; // { x, y } in scaled pixels (screen deltas)
 
-        if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+        if (typeof window !== 'undefined' && snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
 
         // Clear guides
         setSnapLines({ vertical: null, horizontal: null });
@@ -725,7 +731,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     };
 
     const handleDragCancel = () => {
-        if (snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
+        if (typeof window !== 'undefined' && snapRafIdRef.current) cancelAnimationFrame(snapRafIdRef.current);
         setSnapLines({ vertical: null, horizontal: null });
         lastSnapDeltaRef.current = { x: 0, y: 0 };
         

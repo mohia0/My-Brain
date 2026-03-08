@@ -32,6 +32,7 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
     });
 
     const isSelected = selectedIds.includes(item.id);
+    const isDimmed = selectedIds.length > 1 && !isSelected;
     const isDraggingMe = activeDroppable?.id === item.id;
     const shouldShowIsOver = isOver && !isDraggingMe && !isSelected;
 
@@ -181,7 +182,12 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         <div
             id={`draggable-item-${item.id}`}
             ref={setRefs}
-            className={clsx(styles.area, isSelected && styles.selected, shouldShowIsOver && styles.isOver)}
+            className={clsx(
+                styles.area,
+                isSelected && styles.selected,
+                isDimmed && styles.dimmed,
+                shouldShowIsOver && styles.isOver
+            )}
             style={style}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => { setIsHovered(false); setShowColorPicker(false); setShowDeleteConfirm(false); }}

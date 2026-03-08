@@ -337,10 +337,9 @@ export default function Canvas({ children }: { children: React.ReactNode }) {
                     const currentRoomId = useItemsStore.getState().currentRoomId;
 
                     // Filter by room and hierarchy
+                    // Allow selection of all item types including project and room
                     if (item.status === 'inbox' || item.folder_id) return false;
                     if ((item.room_id || null) !== currentRoomId) return false;
-                    if (item.type === 'room') return false;
-                    // Intentionally allowing 'project' type to be selected
 
                     return (
                         item.position_x < worldX + worldW &&

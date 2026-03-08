@@ -40,7 +40,6 @@
 
 .card.dimmed {
     opacity: 0.4;
-    filter: grayscale(0.8) blur(1px);
     transform: scale(0.98);
     pointer-events: none;
     /* Optional: prevent interaction with dimmed items */
@@ -191,10 +190,10 @@
 }
 
 .selected {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent) !important;
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px var(--accent-glow);
-    z-index: 10;
+    box-shadow: 0 0 0 4px var(--accent-glow) !important;
+    z-index: 100;
 }
 
 /* Link Card Variant */

@@ -85,21 +85,15 @@
 }
 
 .selected {
-    z-index: 10;
-    filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.4));
+    z-index: 100 !important;
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 4px var(--accent-glow) !important;
 }
 
-.selected .tab {
+.selected .tab, .selected .mainBody {
     border-color: var(--accent);
     border-width: 2px;
-    opacity: 1;
-}
-
-.selected .mainBody {
-    border-color: var(--accent);
-    border-width: 2px;
-    background: var(--card-hover);
-    margin-top: -2px;
 }
 
 .isOver {
@@ -122,7 +116,6 @@
 
 .dimmed {
     opacity: 0.4;
-    filter: grayscale(0.8) blur(1px);
     transform: scale(0.98);
     pointer-events: none;
 }

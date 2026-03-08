@@ -21,6 +21,10 @@
 .selected {
     border-style: solid;
     border-width: 1px;
+    z-index: 100 !important;
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 4px var(--accent-glow) !important;
 }
 
 .isOver {
@@ -217,4 +221,8 @@
 
 .deleteDestructive:hover {
     background: var(--danger-glow);
+}
+.dimmed {
+    opacity: 0.3;
+    pointer-events: none;
 }

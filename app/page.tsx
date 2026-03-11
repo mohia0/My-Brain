@@ -479,7 +479,7 @@ export default function Home() {
                 </div>
               ) : (
                 <main className={clsx(
-                  'desktop-version w-screen h-screen overflow-hidden',
+                  'relative desktop-version w-screen h-screen overflow-hidden',
                   isFading ? 'fade-in' : 'opacity-100',
                   isNavigating && 'fade-out'
                 )}>

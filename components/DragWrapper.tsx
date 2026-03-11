@@ -767,11 +767,12 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
+            autoScroll={false}
         >
             {snapLines.vertical !== null && (
                 <div
                     style={{
-                        position: 'absolute',
+                        position: 'fixed',
                         top: 0,
                         bottom: 0,
                         left: (snapLines.vertical * scale) + useCanvasStore.getState().position.x,
@@ -786,7 +787,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             {snapLines.horizontal !== null && (
                 <div
                     style={{
-                        position: 'absolute',
+                        position: 'fixed',
                         left: 0,
                         right: 0,
                         top: (snapLines.horizontal * scale) + useCanvasStore.getState().position.y,

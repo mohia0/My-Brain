@@ -9,8 +9,12 @@ import { filterSuggestionItems } from "@blocknote/core/extensions";
 import {
     getDefaultReactSlashMenuItems,
     SuggestionMenuController,
-    SideMenuController
+    SideMenuController,
+    LinkToolbarController,
+    LinkToolbar,
+    createReactInlineContentSpec
 } from "@blocknote/react";
+import { BlockNoteSchema, defaultInlineContentSpecs } from "@blocknote/core";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { Undo, Redo } from "lucide-react";
 import { toast } from "sonner";
@@ -43,7 +47,7 @@ const uploadFile = async (file: File) => {
 };
 
 // Custom Slash Menu Item Filtering
-const getCustomSlashMenuItems = (editor: BlockNoteEditor) => {
+const getCustomSlashMenuItems = (editor: any) => {
     const items = getDefaultReactSlashMenuItems(editor);
 
     // Filter out unwanted media items (Video, Audio, File)
@@ -53,6 +57,63 @@ const getCustomSlashMenuItems = (editor: BlockNoteEditor) => {
         !["Video", "Audio", "File"].includes(item.title)
     );
 };
+
+// Custom Mention Inline Content
+const Mention = createReactInlineContentSpec(
+    {
+        type: "mention",
+        propSchema: {
+            id: { default: "unknown" },
+            title: { default: "Card" },
+        },
+        content: "none",
+    },
+    {
+        render: (props) => (
+            <span
+                contentEditable={false}
+                style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    background: "var(--accent-faint, rgba(120, 120, 120, 0.15))",
+                    color: "var(--accent, inherit)",
+                    padding: "2px 8px",
+                    borderRadius: "12px",
+                    fontWeight: 500,
+                    fontSize: "0.95em",
+                    cursor: "pointer",
+                    verticalAlign: "baseline",
+                    userSelect: "none",
+                }}
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.dispatchEvent(
+                        new CustomEvent("openItem", { detail: { id: props.inlineContent.props.id } })
+                    );
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--accent, #666)";
+                    e.currentTarget.style.color = "var(--background, #fff)";
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "var(--accent-faint, rgba(120, 120, 120, 0.15))";
+                    e.currentTarget.style.color = "var(--accent, inherit)";
+                }}
+            >
+                {props.inlineContent.props.title}
+            </span>
+        ),
+    }
+);
+
+const schema = BlockNoteSchema.create({
+    inlineContentSpecs: {
+        ...defaultInlineContentSpecs,
+        mention: Mention,
+    },
+});
 
 export default function BlockEditor({ initialContent, onChange, editable = true }: BlockEditorProps) {
     const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('dark');
@@ -111,6 +172,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
     };
 
     const editor = useCreateBlockNote({
+        schema,
         initialContent: getInitialBlocks(),
         uploadFile, // Enable image uploads
     });
@@ -166,7 +228,21 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                 }
             }}
         >
-            <div className="editor-container" style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10 }}>
+            <div className="editor-container" style={{ flex: 1, overflowY: 'auto', paddingBottom: 40, paddingTop: 10 }}
+                 onClickCapture={(e) => {
+                     const target = e.target as HTMLElement;
+                     const a = target.closest('a');
+                     if (a) {
+                         const href = a.getAttribute('href');
+                         if (href && href.startsWith('brainia://item/')) {
+                             e.preventDefault();
+                             e.stopPropagation();
+                             const itemId = href.replace('brainia://item/', '');
+                             window.dispatchEvent(new CustomEvent('openItem', { detail: { id: itemId } }));
+                         }
+                     }
+                 }}
+            >
                 <BlockNoteView
                     editor={editor}
                     onChange={handleChange}
@@ -184,9 +260,49 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                             )
                         }
                     />
+                    <SuggestionMenuController
+                        triggerCharacter={"@"}
+                        getItems={async (query) => {
+                            // Using a dynamic import or accessing window/store directly to avoid circular deps if any
+                            const { useItemsStore } = await import('@/lib/store/itemsStore');
+                            const items = useItemsStore.getState().items;
+                            const filtered = items.filter((item: any) => {
+                                const title = item.metadata?.title || item.content || "Untitled";
+                                return title.toLowerCase().includes(query.toLowerCase());
+                            }).slice(0, 10);
+
+                            return filtered.map((item: any) => {
+                                const fullTitle = item.metadata?.title || "Untitled Card";
+                                const isLong = fullTitle.length > 35;
+                                const displayTitle = isLong ? fullTitle.substring(0, 35) + "..." : fullTitle;
+
+                                return {
+                                    title: displayTitle,
+                                    id: item.id,
+                                    onItemClick: () => {
+                                        editor.insertInlineContent([
+                                            {
+                                                type: "mention",
+                                                props: {
+                                                    id: item.id,
+                                                    title: displayTitle,
+                                                }
+                                            },
+                                            {
+                                                type: "text",
+                                                text: " ",
+                                                styles: {}
+                                            }
+                                        ]);
+                                    }
+                                };
+                            });
+                        }}
+                    />
                     <SideMenuController />
                 </BlockNoteView>
                 <style jsx global>{`
+
                     /* Smart RTL detection using standard unicode-bidi */
                     .brainia-editor .bn-editor .bn-block-content .bn-inline-content {
                         unicode-bidi: plaintext;

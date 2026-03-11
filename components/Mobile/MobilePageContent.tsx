@@ -148,8 +148,12 @@ export default function MobilePageContent({ session }: { session: any }) {
         };
 
         initCapacitor();
+        
+        const handleOpenItem = (e: any) => setSelectedItemId(e.detail?.id);
+        window.addEventListener('openItem', handleOpenItem);
 
         return () => {
+            window.removeEventListener('openItem', handleOpenItem);
             if (intentListener) intentListener.remove();
             try {
                 const cap = (window as any).Capacitor;

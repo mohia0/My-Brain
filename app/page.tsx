@@ -429,8 +429,15 @@ export default function Home() {
 
   useEffect(() => {
     const handleNavStart = () => setIsNavigating(true);
+    const handleOpenItem = (e: any) => setSelectedItemId(e.detail?.id);
+    
     window.addEventListener('navigatingToSettings', handleNavStart);
-    return () => window.removeEventListener('navigatingToSettings', handleNavStart);
+    window.addEventListener('openItem', handleOpenItem);
+    
+    return () => {
+        window.removeEventListener('navigatingToSettings', handleNavStart);
+        window.removeEventListener('openItem', handleOpenItem);
+    };
   }, []);
 
   return (

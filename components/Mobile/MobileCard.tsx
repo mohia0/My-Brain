@@ -32,7 +32,7 @@ export default function MobileCard({
     onReorderModeChange,
     dragControls
 }: MobileCardProps) {
-    const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection, vaultedItemsRevealed, toggleVaultItem, toggleVaultFolder } = useItemsStore();
+    const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection, vaultedItemsRevealed, toggleVaultItem, toggleVaultFolder, clearSelection } = useItemsStore();
     const { isVaultLocked, unlockedIds, setModalOpen, lockItem, hasPassword } = useVaultStore();
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRemoving, setIsRemoving] = useState(false);
@@ -136,11 +136,14 @@ export default function MobileCard({
     const handleLongPress = () => {
         if (isReordering) {
             onReorderModeChange?.(false);
+            clearSelection();
         } else if (inSelectionMode) {
             toggleSelection(item.id);
         } else {
             if (onReorderModeChange) {
                 onReorderModeChange(true);
+                // Select the item so it shows its handle and actions
+                toggleSelection(item.id);
                 if (window.navigator.vibrate) window.navigator.vibrate(50);
             } else {
                 toggleSelection(item.id);
@@ -210,8 +213,9 @@ export default function MobileCard({
     };
 
     const [imageError, setImageError] = useState(false);
+    const displayTitle = isObscured ? (isFolder ? (item as any).name : (item.metadata?.title || 'Private Idea')) : (isFolder ? (item as any).name : (item.metadata?.title || getPlainText(item.content).slice(0, 50)));
 
-    if (isObscured) {
+    if (isObscured && !isReordering) {
         return (
             <div
                 className={clsx(
@@ -289,9 +293,10 @@ export default function MobileCard({
             style={{
                 ...style,
                 zIndex: isReordering ? 10 : 1,
-            }}
+                '--folder-color': isFolder && (item as any).color ? (item as any).color : undefined
+            } as any}
         >
-            {isReordering && (
+            {isReordering && isSelected && (
                 <div 
                     className={styles.reorderHandle}
                     onPointerDown={(e) => dragControls?.start(e)}
@@ -300,7 +305,7 @@ export default function MobileCard({
                     <GripVertical size={20} />
                 </div>
             )}
-            {isFolder && isSelected && selectedIds.length === 1 && (!!onDragStartRequested || dragHandleProps) && (
+            {isFolder && isSelected && selectedIds.length === 1 && !isReordering && (!!onDragStartRequested || dragHandleProps) && (
                 <div
                     className={styles.dragHandle}
                     {...dragHandleProps}
@@ -328,8 +333,16 @@ export default function MobileCard({
                 {isVideo ? (
                     <div className={styles.imageLayout}>
                         <div className={styles.videoThumbnailWrapper}>
-                            <video src={item.content} className={clsx(styles.thumb, styles.videoThumb)} />
-                            <div className={styles.playOverlay}><Play size={24} fill="white" /></div>
+                            {isObscured ? (
+                                <div className={styles.noSnapshotThumb} style={{ background: 'rgba(110, 86, 207, 0.1)' }}>
+                                    <Lock size={20} className={styles.pulseIcon} />
+                                </div>
+                            ) : (
+                                <>
+                                    <video src={item.content} className={clsx(styles.thumb, styles.videoThumb)} />
+                                    <div className={styles.playOverlay}><Play size={24} fill="white" /></div>
+                                </>
+                            )}
                         </div>
                         <div className={styles.info}>
                             <div className={styles.titleRow}>
@@ -345,7 +358,11 @@ export default function MobileCard({
                     </div>
                 ) : isImage && imageUrl ? (
                     <div className={styles.imageLayout}>
-                        {!imageError ? (
+                        {isObscured ? (
+                            <div className={styles.noSnapshotThumb} style={{ background: 'rgba(110, 86, 207, 0.1)' }}>
+                                <Lock size={20} className={styles.pulseIcon} />
+                            </div>
+                        ) : !imageError ? (
                             <img
                                 src={imageUrl}
                                 alt=""
@@ -378,24 +395,28 @@ export default function MobileCard({
                             <div
                                 className={clsx(styles.iconBox, isFolder && styles.folderIconBox)}
                                 style={isFolder && (item as any).color ? {
-                                    backgroundColor: `${(item as any).color}25`,
-                                    color: (item as any).color
+                                    backgroundColor: isObscured ? 'rgba(110,86,207,0.1)' : `${(item as any).color}25`,
+                                    color: isObscured ? 'var(--accent)' : (item as any).color
                                 } : {}}
                             >
-                                {item.type === 'text' && (item.metadata?.emoji ? <span style={{ fontSize: '22px' }}>{item.metadata.emoji}</span> : <FileText size={20} />)}
-                                {item.type === 'link' && !isFolder && (
-                                    hostname(item.content) ? (
-                                        <img
-                                            src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
-                                            className={styles.favicon}
-                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                        />
-                                    ) : (
-                                        <LinkIcon size={20} />
-                                    )
+                                {isObscured ? <Lock size={20} /> : (
+                                    <>
+                                        {item.type === 'text' && (item.metadata?.emoji ? <span style={{ fontSize: '22px' }}>{item.metadata.emoji}</span> : <FileText size={20} />)}
+                                        {item.type === 'link' && !isFolder && (
+                                            hostname(item.content) ? (
+                                                <img
+                                                    src={`https://www.google.com/s2/favicons?domain=${hostname(item.content)}&sz=64`}
+                                                    className={styles.favicon}
+                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                />
+                                            ) : (
+                                                <LinkIcon size={20} />
+                                            )
+                                        )}
+                                        {item.type === 'image' && <ImageIcon size={20} />}
+                                        {item.type === 'video' && <Video size={20} />}
+                                    </>
                                 )}
-                                {item.type === 'image' && <ImageIcon size={20} />}
-                                {item.type === 'video' && <Video size={20} />}
                             </div>
                         )}
                         <div className={styles.info}>
@@ -425,12 +446,12 @@ export default function MobileCard({
 
                             <div className={styles.titleRow}>
                                 <div className={styles.title}>
-                                    {isFolder ? (item as any).name : (item.metadata?.title || getPlainText(item.content).slice(0, 50))}
+                                    {displayTitle}
                                 </div>
                                 <SyncIndicator />
                             </div>
 
-                            {!isFolder && item.type === 'text' && (item.metadata?.title ? getPlainText(item.content).length > 0 : getPlainText(item.content).length > 50) && (
+                            {!isFolder && !isObscured && item.type === 'text' && (item.metadata?.title ? getPlainText(item.content).length > 0 : getPlainText(item.content).length > 50) && (
                                 <div className={styles.bodyPreview}>
                                     {item.metadata?.title ? getPlainText(item.content).slice(0, 100) : getPlainText(item.content).slice(50, 150)}
                                 </div>

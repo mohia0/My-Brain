@@ -28,6 +28,8 @@ import { Item } from '@/types';
 interface MobileHomeProps {
     onItemClick: (id: string) => void;
     onFolderClick: (id: string) => void;
+    isFolderReordering?: boolean;
+    setIsFolderReordering?: (val: boolean) => void;
 }
 
 const MobileFolderSortableItem = ({ folder, items, onFolderClick }: { folder: any, items: any[], onFolderClick: (id: string) => void }) => {
@@ -89,8 +91,9 @@ const ReorderableCard = ({ item, onItemClick, isReordering, onReorderModeChange 
 };
 
 export default function MobileHome({ onItemClick, onFolderClick }: MobileHomeProps) {
-    const { items, folders, selectedIds, reorderInboxItems } = useItemsStore();
+    const { items, folders, selectedIds, reorderInboxItems, clearSelection } = useItemsStore();
     const [isReordering, setIsReordering] = React.useState(false);
+    const [isFolderReordering, setIsFolderReordering] = React.useState(false);
     const [isFoldersCollapsed, setIsFoldersCollapsed] = React.useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('mobile_folders_collapsed') === 'true';
@@ -169,7 +172,7 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
 
     const sensors = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 10 } })
+        useSensor(TouchSensor, { activationConstraint: isFolderReordering ? { delay: 200, tolerance: 10 } : { distance: 1000 } }) // Effectively disable sensor if not reordering
     );
 
     const hasContent = visibleItems.length > 0 || orderedFolders.length > 0;
@@ -195,12 +198,43 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                     <Folder size={16} />
                                     <span>Folders</span>
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, letterSpacing: '0.05em' }}>
-                                    {isFoldersCollapsed ? (
-                                        <><span>EXPAND</span><ChevronDown size={14} /></>
-                                    ) : (
-                                        <><span>COLLAPSE</span><ChevronUp size={14} /></>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {isFolderReordering && (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsFolderReordering(false);
+                                                clearSelection();
+                                            }}
+                                            style={{
+                                                background: 'var(--accent)',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '4px 12px',
+                                                borderRadius: '100px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 700,
+                                                marginRight: '8px'
+                                            }}
+                                        >
+                                            DONE
+                                        </button>
                                     )}
+                                    <div 
+                                        style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, letterSpacing: '0.05em' }}
+                                        onClick={(e) => {
+                                            if (!isFolderReordering) {
+                                                e.stopPropagation();
+                                                setIsFolderReordering(true);
+                                            }
+                                        }}
+                                    >
+                                        {isFoldersCollapsed ? (
+                                            <><span>EXPAND</span><ChevronDown size={14} /></>
+                                        ) : (
+                                            <><span>COLLAPSE</span><ChevronUp size={14} /></>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             {!isFoldersCollapsed && (
@@ -217,13 +251,13 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                             strategy={rectSortingStrategy}
                                         >
                                             {orderedFolders.map(folder => (
-                                                <MobileFolderSortableItem
-                                                    key={folder.id}
-                                                    folder={folder}
-                                                    items={items}
-                                                    onFolderClick={onFolderClick}
-                                                />
-                                            ))}
+                                                 <MobileFolderSortableItem
+                                                     key={folder.id}
+                                                     folder={folder}
+                                                     items={items}
+                                                     onFolderClick={onFolderClick}
+                                                 />
+                                             ))}
                                         </SortableContext>
                                     </div>
                                     <DragOverlay dropAnimation={null}>
@@ -243,6 +277,8 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                                     <MobileCard
                                                         item={{ ...folder, type: 'folder', itemCount } as any}
                                                         isDragging={true}
+                                                        isReordering={isFolderReordering}
+                                                        onReorderModeChange={(val) => setIsFolderReordering(val)}
                                                     />
                                                 </div>
                                             );
@@ -262,7 +298,10 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                 </div>
                                 {isReordering && (
                                     <button 
-                                        onClick={() => setIsReordering(false)}
+                                        onClick={() => {
+                                            setIsReordering(false);
+                                            clearSelection();
+                                        }}
                                         style={{
                                             background: 'var(--accent)',
                                             color: 'white',

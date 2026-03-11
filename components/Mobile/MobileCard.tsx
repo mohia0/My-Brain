@@ -227,7 +227,21 @@ export default function MobileCard({
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
+                onContextMenu={(e) => isReordering && e.preventDefault()}
+                style={{
+                    ...style,
+                    zIndex: isReordering ? 10 : 1,
+                }}
             >
+                {isReordering && (
+                    <div 
+                        className={styles.reorderHandle}
+                        onPointerDown={(e) => dragControls?.start(e)}
+                        style={{ touchAction: 'none' }}
+                    >
+                        <GripVertical size={20} />
+                    </div>
+                )}
                 <div className={styles.obscuredBlur} />
                 <div className={styles.obscuredUI}>
                     <div className={styles.lockRing}>

@@ -40,28 +40,16 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
 
     // Auto-enrich stuck items
     React.useEffect(() => {
-        if (!hasAutoEnriched.current && localItem.type === 'link' && !localItem.metadata?.title) {
-            hasAutoEnriched.current = true;
-            // Delay slightly to wait for any initial capture to finish
+        if (localItem.type === 'link' && !localItem.metadata?.title && !isRefreshing) {
+            // Delay slightly to avoid spamming while user is actively looking
             const timer = setTimeout(() => {
                 enrichItem(localItem.id);
-            }, 5000);
+            }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [localItem.id, localItem.type, localItem.metadata?.title, enrichItem]);
+    }, [localItem.id, localItem.type, localItem.metadata?.title, enrichItem, isRefreshing]);
 
-    const handleRefresh = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (isRefreshing) return;
-        setIsRefreshing(true);
-        try {
-            await enrichItem(item.id, true);
-            // Show spinning for at least a second
-            setTimeout(() => setIsRefreshing(false), 1500);
-        } catch (e) {
-            setIsRefreshing(false);
-        }
-    };
+
 
     const getImageUrl = () => {
         if (localItem.type === 'image') return localItem.content;
@@ -108,11 +96,7 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         longPressTimer.current = setTimeout(() => {
-            if (inSelectionMode) {
-                toggleSelection(item.id);
-            } else {
-                toggleSelection(item.id); // Simple selection for Inbox
-            }
+            toggleSelection(item.id);
             if (window.navigator.vibrate) window.navigator.vibrate(50);
         }, 500);
     };
@@ -328,16 +312,7 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
             </div>
 
             <div className={styles.itemActions}>
-                {localItem.type === 'link' && (
-                    <button 
-                        className={clsx(styles.actionBtn, isRefreshing && styles.spin)} 
-                        onClick={handleRefresh} 
-                        data-tooltip="Refresh Metadata" 
-                        data-tooltip-pos="left"
-                    >
-                        <RefreshCw size={18} />
-                    </button>
-                )}
+
                 <button className={styles.actionBtn} onClick={handleMove} data-tooltip="Move to Canvas" data-tooltip-pos="left">
                     <ArrowRight size={18} />
                 </button>

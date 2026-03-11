@@ -99,31 +99,44 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
+    width: 32px;
     height: 100%;
     color: var(--accent);
     cursor: grab;
-    padding: 0 8px;
-    border-right: 1px dashed var(--card-border);
-    background: rgba(110, 86, 207, 0.05);
+    padding: 0;
+    opacity: 0.6;
+    transition: opacity 0.2s;
 }
 
 .reorderHandle:active {
     cursor: grabbing;
-    background: rgba(110, 86, 207, 0.15);
+    opacity: 1;
 }
 
 .card.reorderMode {
-    border-style: dashed;
-    border-color: var(--accent);
+    border-style: dashed !important;
+    border-color: var(--accent) !important;
+    padding-left: 4px;
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0;
+}
+
+.card.reorderMode .mainContent,
+.card.reorderMode .obscuredUI {
+    flex: 1;
 }
 
 .card.isDragging {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     z-index: 1000;
-    cursor: grabbing;
-    transform: scale(1.02);
+    cursor: grabbing !important;
+    transform: scale(1.04) !important;
+    border-style: solid !important;
 }
+
+
 
 .card.selected {
     background: var(--accent-glow);

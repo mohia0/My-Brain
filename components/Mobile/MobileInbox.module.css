@@ -106,6 +106,33 @@
     border-left: 1px solid var(--card-border);
 }
 
+.dragHandle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; /* Slightly wider for better touch */
+    height: 100%;
+    color: var(--accent); /* Use accent color for visibility */
+    cursor: grab;
+    padding: 0 8px;
+    border-right: 1px dashed var(--card-border);
+    opacity: 1; /* Full opacity */
+    transition: all 0.2s;
+    background: rgba(110, 86, 207, 0.05); /* Very subtle background */
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+    background: rgba(110, 86, 207, 0.15);
+}
+
+.itemCard.dragging {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    cursor: grabbing;
+    transform: scale(1.02);
+}
+
 .actionBtn {
     width: 36px;
     height: 36px;

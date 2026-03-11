@@ -168,8 +168,12 @@ export async function POST(req: NextRequest) {
             } catch (e) { }
         }
 
-        if (!metadata.title || /((https?:\/\/)|(www\.))[^\s]+/i.test(metadata.title) ||
-            /capturing|shared|moment/i.test(metadata.title)) {
+        // Improved Title Validation: Only use SiteName if we have absolutely no title OR if the title is just a URL
+        const isGenericTitle = !metadata.title || 
+                               /((https?:\/\/)|(www\.))[^\s]+/i.test(metadata.title) ||
+                               /capturing|shared|moment/i.test(metadata.title);
+
+        if (isGenericTitle) {
             metadata.title = metadata.siteName || "Captured Link";
         }
 

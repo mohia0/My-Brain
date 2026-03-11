@@ -165,18 +165,24 @@ export async function POST(req: NextRequest) {
         // --- Phase 4: Final Database Sync ---
         const currentMetadata = item.metadata || {};
 
-        // Final Title Cleanup: if title is just a URL, fix it
+        // Final Title Cleanup: if title is just a URL or placeholder, fix it
         let cleanTitle = pageTitle || currentMetadata.title;
+        
         const isPlaceholder = !cleanTitle ||
             /capturing|shared link|sharedlink/i.test(cleanTitle.toLowerCase());
+            
+        const isUrlTitle = cleanTitle && /((https?:\/\/)|(www\.))[^\s]+/i.test(cleanTitle);
+        
+        // SOCIAL ONLY filter: Only replace with domain if it's a social media site and title is generic
+        const isSocialGeneric = isSocial && cleanTitle && /Instagram|TikTok|Facebook|Twitter|X\.com|YouTube/i.test(cleanTitle);
 
-        if (isPlaceholder || (cleanTitle && (/((https?:\/\/)|(www\.))[^\s]+/i.test(cleanTitle) ||
-            /Instagram|TikTok|Facebook|Twitter|X\.com|YouTube/i.test(cleanTitle)))) {
+        if (isPlaceholder || isUrlTitle || isSocialGeneric) {
             try {
                 const domain = new URL(url).hostname.replace('www.', '');
+                // Only override if the current title is TRULY bad or if it's a social platform generic
                 cleanTitle = domain.charAt(0).toUpperCase() + domain.slice(1).split('.')[0];
             } catch (e) {
-                cleanTitle = "Captured Link";
+                cleanTitle = cleanTitle || "Captured Link";
             }
         }
 

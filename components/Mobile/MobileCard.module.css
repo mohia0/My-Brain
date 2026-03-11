@@ -95,8 +95,34 @@
     transform: scale(0.98);
 }
 
+.reorderHandle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 100%;
+    color: var(--accent);
+    cursor: grab;
+    padding: 0 8px;
+    border-right: 1px dashed var(--card-border);
+    background: rgba(110, 86, 207, 0.05);
+}
+
+.reorderHandle:active {
+    cursor: grabbing;
+    background: rgba(110, 86, 207, 0.15);
+}
+
+.card.reorderMode {
+    border-style: dashed;
+    border-color: var(--accent);
+}
+
 .card.isDragging {
-    transform: none !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    cursor: grabbing;
+    transform: scale(1.02);
 }
 
 .card.selected {

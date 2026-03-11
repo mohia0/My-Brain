@@ -45,3 +45,4 @@ next-env.d.ts
 *.apk
 build_output.txt
 temp_large_zip_check/
+CRITICAL_MOBILE_ARCHITECTURE.md

@@ -23,6 +23,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Item } from '@/types';
 
 interface MobileHomeProps {
     onItemClick: (id: string) => void;
@@ -64,8 +65,32 @@ const MobileFolderSortableItem = ({ folder, items, onFolderClick }: { folder: an
     );
 };
 
+import { Reorder, useDragControls } from 'framer-motion';
+
+const ReorderableCard = ({ item, onItemClick, isReordering, onReorderModeChange }: any) => {
+    const dragControls = useDragControls();
+    
+    return (
+        <Reorder.Item 
+            value={item} 
+            dragListener={false} 
+            dragControls={dragControls}
+            style={{ position: 'relative', listStyle: 'none' }}
+        >
+            <MobileCard
+                item={item}
+                onClick={() => onItemClick(item.id)}
+                isReordering={isReordering}
+                onReorderModeChange={onReorderModeChange}
+                dragControls={dragControls}
+            />
+        </Reorder.Item>
+    );
+};
+
 export default function MobileHome({ onItemClick, onFolderClick }: MobileHomeProps) {
-    const { items, folders, selectedIds } = useItemsStore();
+    const { items, folders, selectedIds, reorderInboxItems } = useItemsStore();
+    const [isReordering, setIsReordering] = React.useState(false);
     const [isFoldersCollapsed, setIsFoldersCollapsed] = React.useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('mobile_folders_collapsed') === 'true';
@@ -81,7 +106,12 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
     };
 
     const visibleItems = items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id && (i as any).type !== 'room' && (i as any).type !== 'project')
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        .sort((a, b) => {
+            if (a.position_y !== b.position_y) {
+                return (a.position_y || 0) - (b.position_y || 0);
+            }
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
 
     const visibleFolders = React.useMemo(() => {
         return folders.filter(f => f.status !== 'archived' && !f.parent_id)
@@ -225,18 +255,48 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
 
                     {visibleItems.length > 0 && (
                         <section className={styles.section}>
-                            <div className={styles.sectionHeader}>
-                                <LayoutGrid size={16} />
-                                <span>Canvas Ideas</span>
+                            <div className={styles.sectionHeader} style={{ justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <LayoutGrid size={16} />
+                                    <span style={{ marginLeft: 6 }}>{isReordering ? 'Reorder Ideas' : 'Canvas Ideas'}</span>
+                                </div>
+                                {isReordering && (
+                                    <button 
+                                        onClick={() => setIsReordering(false)}
+                                        style={{
+                                            background: 'var(--accent)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '4px 12px',
+                                            borderRadius: '100px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700
+                                        }}
+                                    >
+                                        DONE
+                                    </button>
+                                )}
                             </div>
                             <div className={styles.list}>
-                                {visibleItems.map(item => (
-                                    <MobileCard
-                                        key={item.id}
-                                        item={item}
-                                        onClick={() => onItemClick(item.id)}
-                                    />
-                                ))}
+                                <Reorder.Group 
+                                    axis="y" 
+                                    values={visibleItems} 
+                                    onReorder={(newOrder) => {
+                                        const newIds = newOrder.map(i => i.id);
+                                        reorderInboxItems(newIds);
+                                    }}
+                                    className={styles.list}
+                                >
+                                    {visibleItems.map(item => (
+                                        <ReorderableCard
+                                            key={item.id}
+                                            item={item}
+                                            onItemClick={onItemClick}
+                                            isReordering={isReordering}
+                                            onReorderModeChange={(val: boolean) => setIsReordering(val)}
+                                        />
+                                    ))}
+                                </Reorder.Group>
                             </div>
                         </section>
                     )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2, RefreshCw, AlertCircle, Play, Video, Lock, Unlock } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2, RefreshCw, AlertCircle, Play, Video, Lock, Unlock, GripVertical } from 'lucide-react';
 import styles from './MobileInbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
@@ -14,13 +14,16 @@ interface MobileInboxItemProps {
 }
 
 export default function MobileInboxItem({ item, onClick, style }: MobileInboxItemProps) {
-    const { updateItemContent, removeItem, toggleSelection, selectedIds, vaultedItemsRevealed } = useItemsStore();
+    const { updateItemContent, removeItem, toggleSelection, selectedIds, vaultedItemsRevealed, enrichItem } = useItemsStore();
     const { isVaultLocked, unlockedIds, setModalOpen } = useVaultStore();
     const [isDeleting, setIsDeleting] = React.useState(false);
     const [isRemoving, setIsRemoving] = React.useState(false);
     const [localItem, setLocalItem] = React.useState(item);
     const longPressTimer = React.useRef<NodeJS.Timeout | null>(null);
     const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
+    const hasAutoEnriched = React.useRef(false);
+    const [isRefreshing, setIsRefreshing] = React.useState(false);
+    const touchStartPos = React.useRef<{ x: number, y: number } | null>(null);
     const isSelected = selectedIds.includes(item.id);
     const inSelectionMode = selectedIds.length > 0;
     const isVideo = localItem.type === 'video' || localItem.metadata?.isVideo;
@@ -35,10 +38,30 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
         setLocalItem(item);
     }, [item]);
 
-    // Sync with store updates immediately
+    // Auto-enrich stuck items
     React.useEffect(() => {
-        setLocalItem(item);
-    }, [item]);
+        if (!hasAutoEnriched.current && localItem.type === 'link' && !localItem.metadata?.title) {
+            hasAutoEnriched.current = true;
+            // Delay slightly to wait for any initial capture to finish
+            const timer = setTimeout(() => {
+                enrichItem(localItem.id);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [localItem.id, localItem.type, localItem.metadata?.title, enrichItem]);
+
+    const handleRefresh = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        try {
+            await enrichItem(item.id, true);
+            // Show spinning for at least a second
+            setTimeout(() => setIsRefreshing(false), 1500);
+        } catch (e) {
+            setIsRefreshing(false);
+        }
+    };
 
     const getImageUrl = () => {
         if (localItem.type === 'image') return localItem.content;
@@ -46,6 +69,7 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
     };
 
     const getStatus = () => {
+        if (isRefreshing) return 'Refreshing...';
         if (localItem.type === 'link' && !localItem.metadata?.title) return 'Capturing...';
         if (localItem.type === 'image') {
             const isLocal = !localItem.content ||
@@ -81,15 +105,38 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
         setTimeout(() => removeItem(item.id), 300);
     };
 
-    const handleTouchStart = () => {
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         longPressTimer.current = setTimeout(() => {
-            toggleSelection(item.id);
+            if (inSelectionMode) {
+                toggleSelection(item.id);
+            } else {
+                toggleSelection(item.id); // Simple selection for Inbox
+            }
             if (window.navigator.vibrate) window.navigator.vibrate(50);
-        }, 600);
+        }, 500);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!touchStartPos.current) return;
+        const moveX = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
+        const moveY = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+        
+        // If they move more than 10px, cancel the long press
+        if (moveX > 10 || moveY > 10) {
+            if (longPressTimer.current) {
+                clearTimeout(longPressTimer.current);
+                longPressTimer.current = null;
+            }
+        }
     };
 
     const handleTouchEnd = () => {
-        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+        touchStartPos.current = null;
     };
 
     const handleClick = (e: React.MouseEvent) => {
@@ -182,7 +229,7 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
             onClick={handleClick}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchEnd}
+            onTouchMove={handleTouchMove}
             style={style}
         >
             <div className={styles.itemMain}>
@@ -281,6 +328,16 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
             </div>
 
             <div className={styles.itemActions}>
+                {localItem.type === 'link' && (
+                    <button 
+                        className={clsx(styles.actionBtn, isRefreshing && styles.spin)} 
+                        onClick={handleRefresh} 
+                        data-tooltip="Refresh Metadata" 
+                        data-tooltip-pos="left"
+                    >
+                        <RefreshCw size={18} />
+                    </button>
+                )}
                 <button className={styles.actionBtn} onClick={handleMove} data-tooltip="Move to Canvas" data-tooltip-pos="left">
                     <ArrowRight size={18} />
                 </button>

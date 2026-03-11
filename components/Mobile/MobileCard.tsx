@@ -12,12 +12,26 @@ import { toast } from 'sonner';
 interface MobileCardProps {
     item: Item;
     onClick?: () => void;
+    style?: React.CSSProperties;
     onDragStartRequested?: (e: React.PointerEvent) => void;
     isDragging?: boolean;
     dragHandleProps?: any;
+    isReordering?: boolean;
+    onReorderModeChange?: (val: boolean) => void;
+    dragControls?: any;
 }
 
-export default function MobileCard({ item, onClick, onDragStartRequested, isDragging, dragHandleProps }: MobileCardProps) {
+export default function MobileCard({ 
+    item, 
+    onClick, 
+    style,
+    onDragStartRequested, 
+    isDragging, 
+    dragHandleProps,
+    isReordering,
+    onReorderModeChange,
+    dragControls
+}: MobileCardProps) {
     const { items, duplicateItem, removeItem, archiveItem, removeFolder, selectedIds, toggleSelection, vaultedItemsRevealed, toggleVaultItem, toggleVaultFolder } = useItemsStore();
     const { isVaultLocked, unlockedIds, setModalOpen, lockItem, hasPassword } = useVaultStore();
     const [isDeleting, setIsDeleting] = useState(false);
@@ -119,19 +133,27 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
         }, 500);
     };
 
+    const handleLongPress = () => {
+        if (isReordering) {
+            onReorderModeChange?.(false);
+        } else if (inSelectionMode) {
+            toggleSelection(item.id);
+        } else {
+            if (onReorderModeChange) {
+                onReorderModeChange(true);
+                if (window.navigator.vibrate) window.navigator.vibrate(50);
+            } else {
+                toggleSelection(item.id);
+            }
+        }
+    };
+
     const handlePointerDown = (e: React.PointerEvent) => {
         // Only trigger on primary touch/mouse button
         if (e.button !== 0) return;
 
         pointerStartPos.current = { x: Math.round(e.clientX), y: Math.round(e.clientY) };
-        const nativeEvent = e.nativeEvent;
-
-        longPressTimer.current = setTimeout(() => {
-            if (!isSelected) {
-                toggleSelection(item.id);
-                if (window.navigator.vibrate) window.navigator.vibrate(50);
-            }
-        }, 300); // Reduced to 300ms for a more responsive "pick up" feel
+        longPressTimer.current = setTimeout(handleLongPress, 500); 
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
@@ -241,21 +263,29 @@ export default function MobileCard({ item, onClick, onDragStartRequested, isDrag
                 isRemoving && styles.removing,
                 isSelected && styles.selected,
                 isSelected && selectedIds.length === 1 && styles.singleSelected,
-                isDragging && styles.isDragging
+                isDragging && styles.isDragging,
+                isReordering && styles.reorderMode
             )}
             onClick={handleClick}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            style={isFolder ? {
-                ...(isFolder && (item as any).color ? {
-                    backgroundColor: isSelected ? `${(item as any).color}40` : `${(item as any).color}15`,
-                    borderColor: isSelected ? (item as any).color : `${(item as any).color}30`
-                } : {}),
-                touchAction: isSelected ? 'none' : 'pan-y'
-            } : {}}
+            onContextMenu={(e) => isReordering && e.preventDefault()}
+            style={{
+                ...style,
+                zIndex: isReordering ? 10 : 1,
+            }}
         >
+            {isReordering && (
+                <div 
+                    className={styles.reorderHandle}
+                    onPointerDown={(e) => dragControls?.start(e)}
+                    style={{ touchAction: 'none' }}
+                >
+                    <GripVertical size={20} />
+                </div>
+            )}
             {isFolder && isSelected && selectedIds.length === 1 && (!!onDragStartRequested || dragHandleProps) && (
                 <div
                     className={styles.dragHandle}

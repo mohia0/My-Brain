@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { generateId } from '@/lib/utils';
+import { generateId, getApiUrl } from '@/lib/utils';
 import { Item, Folder, Tag } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { useCanvasStore } from './canvasStore';
@@ -183,6 +183,8 @@ interface ItemsState {
     exitRoom: () => void;
     updateItemTags: (id: string, tags: Tag[]) => void;
     getSafePosition: (id: string, targetX: number, targetY: number, itemOrFolder: Partial<Item> | Folder, items: Item[], folders: Folder[], currentRoomId?: string | null) => { x: number, y: number };
+    enrichItem: (id: string, force?: boolean) => Promise<void>;
+    reorderInboxItems: (itemIds: string[]) => Promise<void>;
     hasLoadedOnce: boolean;
     session: any | null;
     setSession: (session: any | null) => void;
@@ -1437,6 +1439,80 @@ export const useItemsStore = create<ItemsState>()(
                     }
                 } catch (e) {
                     console.error('[Store] refreshItem failed:', e);
+                }
+            },
+
+            enrichItem: async (id: string, force: boolean = false) => {
+                const item = get().items.find(i => i.id === id);
+                if (!item || item.type !== 'link') return;
+
+                // Don't re-enrich if it already has a title, unless forced
+                if (item.metadata?.title && !force && !item.metadata?.title.includes('Capturing')) return;
+
+                const userId = item.user_id;
+                const url = item.content;
+                const metadataUrl = getApiUrl('/api/metadata');
+                const screenshotUrl = getApiUrl('/api/screenshot');
+
+                console.log(`[Store] Enriching item ${id}...`);
+
+                // 1. Metadata
+                fetch(metadataUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, itemId: id, userId, skipCapture: true })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) throw new Error(data.error);
+                        const currentItem = get().items.find(i => i.id === id);
+                        get().updateItemContent(id, { 
+                            metadata: { ...currentItem?.metadata, ...data, source: 'store-enrich-meta' } 
+                        });
+                    })
+                    .catch(e => console.error('[Store] Enrichment Metadata failed:', e));
+
+                // 2. Screenshot (Delay slightly)
+                setTimeout(() => {
+                    fetch(screenshotUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url, itemId: id, userId })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.metadata) {
+                                const currentItem = get().items.find(i => i.id === id);
+                                get().updateItemContent(id, { 
+                                    metadata: { ...currentItem?.metadata, ...data.metadata, source: 'store-enrich-screen' } 
+                                });
+                            }
+                        })
+                        .catch(e => console.error('[Store] Enrichment Screenshot failed:', e));
+                }, 2000);
+            },
+
+            reorderInboxItems: async (itemIds: string[]) => {
+                const now = new Date().toISOString();
+                
+                // Optimistically update local state
+                set(state => ({
+                    items: state.items.map(item => {
+                        const newIndex = itemIds.indexOf(item.id);
+                        if (newIndex !== -1) {
+                            return { ...item, position_y: newIndex, updated_at: now };
+                        }
+                        return item;
+                    })
+                }));
+
+                // Update DB in background
+                // We use position_y as a proxy for index in the inbox
+                for (let i = 0; i < itemIds.length; i++) {
+                    supabase.from('items')
+                        .update({ position_y: i, updated_at: now })
+                        .eq('id', itemIds[i])
+                        .then();
                 }
             },
 

@@ -139,6 +139,9 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
             if (prevItemId.current !== item.id) {
                 setContent(item.content);
                 prevItemId.current = item.id;
+                // Briefly reset initialization to trigger a fresh "entry" feel when switching items
+                setIsInitialized(false);
+                requestAnimationFrame(() => setIsInitialized(true));
             } else if (!content && item.content) {
                 setContent(item.content);
             }
@@ -573,9 +576,9 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
                                             <button
                                                 className={styles.backBtn}
                                                 onClick={onBack}
+                                                title="Go back"
                                             >
-                                                <ArrowLeft size={18} />
-                                                <span>Back</span>
+                                                <ArrowLeft size={20} />
                                             </button>
                                         )}
 
@@ -681,51 +684,54 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
                                 {item.metadata?.author && <div className={styles.authorBadge}>by {item.metadata.author}</div>}
                             </div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                {hasBackHistory && onBack && (
-                                    <button
-                                        className={styles.backBtn}
-                                        onClick={onBack}
-                                    >
-                                        <ArrowLeft size={18} />
-                                        <span>Back</span>
-                                    </button>
-                                )}
+
                                 <button className={styles.closeBtn} onClick={handleClose}><X size={20} /></button>
                             </div>
                         </div>
 
                         <div className={styles.scrollBody} ref={scrollBodyRef}>
                             {!isNote && (
-                                <div className={styles.captureTitleSection}>
-                                    {isEditingTitle ? (
-                                        <input
-                                            ref={titleInputRef}
-                                            autoFocus
-                                            className={styles.titleInputEdit}
-                                            value={title}
-                                            onChange={e => setTitle(e.target.value)}
-                                            onBlur={() => setIsEditingTitle(false)}
-                                            onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
-                                            placeholder="Capture Title"
-                                            dir="auto"
-                                        />
-                                    ) : (
-                                        <div
-                                            className={styles.captureTitleWrapper}
-                                            onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}
-                                        >
-                                            <h1
-                                                className={clsx(
-                                                    styles.captureTitle,
-                                                    title.split(' ').length > 7 && styles.titleLong
-                                                )}
-                                                dir="auto"
-                                            >
-                                                {title || "Untitled Capture"}
-                                            </h1>
+                                    <div className={styles.captureTitleSection}>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            {hasBackHistory && onBack && (
+                                                <button
+                                                    className={styles.backBtn}
+                                                    onClick={onBack}
+                                                    title="Go back"
+                                                >
+                                                    <ArrowLeft size={20} />
+                                                </button>
+                                            )}
+                                            {isEditingTitle ? (
+                                                <input
+                                                    ref={titleInputRef}
+                                                    autoFocus
+                                                    className={styles.titleInputEdit}
+                                                    value={title}
+                                                    onChange={e => setTitle(e.target.value)}
+                                                    onBlur={() => setIsEditingTitle(false)}
+                                                    onKeyDown={e => e.key === 'Enter' && setIsEditingTitle(false)}
+                                                    placeholder="Capture Title"
+                                                    dir="auto"
+                                                />
+                                            ) : (
+                                                <div
+                                                    className={styles.captureTitleWrapper}
+                                                    onClick={() => { setIsEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}
+                                                >
+                                                    <h1
+                                                        className={clsx(
+                                                            styles.captureTitle,
+                                                            title.split(' ').length > 7 && styles.titleLong
+                                                        )}
+                                                        dir="auto"
+                                                    >
+                                                        {title || "Untitled Capture"}
+                                                    </h1>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
                             )}
 
                             {isLink && (

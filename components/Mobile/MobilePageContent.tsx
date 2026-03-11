@@ -152,12 +152,16 @@ export default function MobilePageContent({ session }: { session: any }) {
             const item = state.items.find(i => i.id === id);
             const folder = state.folders.find(f => f.id === id);
             
+            const currentId = selectedItemIdRef.current;
+            if (currentId && currentId !== id) {
+                // If we're opening a new item from within another one, push to history
+                setModalHistory(prev => [...prev, currentId]);
+            }
+
             if (item) {
                 if (item.type === 'project' || item.type === 'room') {
                     setSelectedItemId(null);
                     setModalHistory([]);
-                    // Panning is handled differently or omitted for Mobile Home view natively,
-                    // but we can close the modal to return to the home screen.
                     setActiveTab('home');
                 } else {
                     setSelectedItemId(id);
@@ -168,10 +172,6 @@ export default function MobilePageContent({ session }: { session: any }) {
                 setModalHistory([]);
                 setActiveTab('home');
             } else {
-                const currentId = selectedItemIdRef.current;
-                if (currentId && currentId !== id) {
-                    setModalHistory(prev => [...prev, currentId]);
-                }
                 setSelectedItemId(id);
             }
         };

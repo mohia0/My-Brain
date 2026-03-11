@@ -21,7 +21,41 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    const cspHeader = `
+      default-src 'self' https://*.supabase.co wss://*.supabase.co;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      img-src 'self' blob: data: https:;
+      font-src 'self' https://fonts.gstatic.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    `;
+
     return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader.replace(/\n/g, "").replace(/\s+/g, " ").trim(),
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
       {
         source: "/api/:path*",
         headers: [

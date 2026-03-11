@@ -17,6 +17,11 @@ export async function GET() {
 export async function OPTIONS() {
     return new NextResponse(null, {
         status: 204,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        }
     });
 }
 
@@ -193,7 +198,11 @@ export async function POST(req: NextRequest) {
             console.error('[LinkTruth] Database update failed:', updateError.message);
         }
 
-        return NextResponse.json({ success: true, metadata: finalMetadata });
+        const response = NextResponse.json({ success: true, metadata: finalMetadata });
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return response;
 
     } catch (error: any) {
         console.error('[LinkTruth] Critical Error:', error);

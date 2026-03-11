@@ -25,7 +25,15 @@ export function getApiUrl(endpoint: string): string {
     const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
     if (isNative) {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://my-brain-sepia.vercel.app';
+        let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://app.brainia.space';
+        
+        // If the baseUrl is a local IP and we are in a production build, 
+        // it might be a mistake from .env.local. Fallback to production if needed.
+        if (baseUrl.includes('192.168.') || baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+            // Only fallback if we are not explicitly trying to debug local
+            console.warn(`[API] Local IP ${baseUrl} detected in native app. If fetch fails, check connectivity.`);
+        }
+        
         return `${baseUrl}${cleanEndpoint}`;
     }
 

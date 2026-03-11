@@ -29,11 +29,7 @@ export async function POST(req: NextRequest) {
     try {
         if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
             console.error('Missing Supabase environment variables');
-            const errRes = NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-            errRes.headers.set('Access-Control-Allow-Origin', '*');
-            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-            return errRes;
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -41,18 +37,10 @@ export async function POST(req: NextRequest) {
         const { url: rawUrl, itemId, userId } = await req.json();
 
         if (!rawUrl) {
-            const errRes = NextResponse.json({ error: 'URL is required' }, { status: 400 });
-            errRes.headers.set('Access-Control-Allow-Origin', '*');
-            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-            return errRes;
+            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
         if (!itemId || !userId) { // Added back itemId and userId check
-            const errRes = NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
-            errRes.headers.set('Access-Control-Allow-Origin', '*');
-            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-            return errRes;
+            return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
         // --- Tier 0: URL Cleaning ---
@@ -73,11 +61,7 @@ export async function POST(req: NextRequest) {
         // Fetch current item to see if it already has values
         const { data: item } = await supabase.from('items').select('*').eq('id', itemId).single();
         if (!item) {
-            const errRes = NextResponse.json({ error: 'Item not found' }, { status: 404 });
-            errRes.headers.set('Access-Control-Allow-Origin', '*');
-            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-            return errRes;
+            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
         }
 
         let pageTitle = '';
@@ -217,17 +201,10 @@ export async function POST(req: NextRequest) {
         }
 
         const response = NextResponse.json({ success: true, metadata: finalMetadata });
-        response.headers.set('Access-Control-Allow-Origin', '*');
-        response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
         return response;
 
     } catch (error: any) {
         console.error('[LinkTruth] Critical Error:', error);
-        const errRes = NextResponse.json({ error: error.message }, { status: 500 });
-        errRes.headers.set('Access-Control-Allow-Origin', '*');
-        errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-        return errRes;
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

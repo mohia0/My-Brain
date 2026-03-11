@@ -29,19 +29,11 @@ export async function POST(req: NextRequest) {
         const { url: rawUrl, itemId, userId, skipCapture } = body;
 
         if (!rawUrl) {
-            const errRes = NextResponse.json({ error: 'URL is required' }, { status: 400 });
-            errRes.headers.set('Access-Control-Allow-Origin', '*');
-            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-            return errRes;
+            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
         if (typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) {
-            const errRes = NextResponse.json({ error: 'Valid URL starting with http/https is required' }, { status: 400 });
-            errRes.headers.set('Access-Control-Allow-Origin', '*');
-            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-            return errRes;
+            return NextResponse.json({ error: 'Valid URL starting with http/https is required' }, { status: 400 });
         }
 
         let url = rawUrl;
@@ -254,21 +246,14 @@ export async function POST(req: NextRequest) {
         });
 
         const response = NextResponse.json(finalMetadataToSync);
-        response.headers.set('Access-Control-Allow-Origin', '*');
-        response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
         return response;
 
     } catch (error: any) {
         console.error('[SmartMetadata] Critical Processing Error:', error);
-        const errResponse = NextResponse.json({
+        return NextResponse.json({
             error: 'Process failed',
             details: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });
-        errResponse.headers.set('Access-Control-Allow-Origin', '*');
-        errResponse.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        errResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-        return errResponse;
     }
 }

@@ -6,6 +6,7 @@ try {
     if (Test-Path "app/robots.ts") { Move-Item "app/robots.ts" "app/_api_backup/" }
     if (Test-Path "app/sitemap.ts") { Move-Item "app/sitemap.ts" "app/_api_backup/" }
     if (Test-Path "middleware.ts") { Move-Item "middleware.ts" "_middleware_backup.ts" }
+    if (Test-Path ".env.local") { Move-Item ".env.local" "_env.local_backup" }
 
     Write-Host "Building Next.js app..."
     $env:IS_CAPACITOR_BUILD="true"
@@ -29,6 +30,7 @@ finally {
     if (Test-Path "app/_api_backup/robots.ts") { Move-Item "app/_api_backup/robots.ts" "app/" -Force }
     if (Test-Path "app/_api_backup/sitemap.ts") { Move-Item "app/_api_backup/sitemap.ts" "app/" -Force }
     if (Test-Path "_middleware_backup.ts") { Move-Item "_middleware_backup.ts" "middleware.ts" -Force }
+    if (Test-Path "_env.local_backup") { Move-Item "_env.local_backup" ".env.local" -Force }
     if (Test-Path "app/_api_backup") { 
         if ((Get-ChildItem "app/_api_backup").Count -eq 0) { Remove-Item "app/_api_backup" }
     }

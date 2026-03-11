@@ -1,0 +1,58 @@
+﻿--- NEXT CONFIG ---
+IS_CAPACITOR_BUILD (env): "true"
+VERCEL (env): undefined
+isCapacitorBuild (final bool): true
+Output Mode: export
+-------------------
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env.production
+
+  Creating an optimized production build ...
+--- NEXT CONFIG ---
+IS_CAPACITOR_BUILD (env): "true"
+VERCEL (env): [90mundefined[39m
+isCapacitorBuild (final bool): [33mtrue[39m
+Output Mode: export
+-------------------
+Γ£ô Compiled successfully in 17.8s
+  Skipping validation of types
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/14) ...
+  Generating static pages using 11 workers (3/14) 
+  Generating static pages using 11 workers (6/14) 
+  Generating static pages using 11 workers (10/14) 
+Γ£ô Generating static pages using 11 workers (14/14) in 1826.3ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /account
+Γö£ Γùï /account/extensions
+Γö£ Γùï /account/profile
+Γö£ Γùï /account/security
+Γö£ Γùï /auth/reset-password
+Γö£ Γùï /home
+Γö£ Γùï /icon.png
+Γö£ Γùï /mobile
+Γö£ Γùï /privacy
+Γö£ Γùï /terms
+Γöö Γùï /waitlist
+
+
+Γùï  (Static)  prerendered as static content
+
+ΓêÜ Copying web assets from out to android\app\src\main\assets\public in 210.64ms
+ΓêÜ Creating capacitor.config.json in android\app\src\main\assets in 2.34ms
+ΓêÜ copy android in 286.38ms
+ΓêÜ Updating Android plugins in 24.06ms
+[info] Found 5 Capacitor plugins for android:
+       @capacitor/app@8.0.0
+       @capacitor/camera@8.0.0
+       @capacitor/clipboard@8.0.1
+       @capacitor/preferences@8.0.0
+       capacitor-plugin-send-intent@0.0.2
+ΓêÜ update android in 424.72ms
+ΓêÜ copy web in 66.19ms
+ΓêÜ update web in 59.63ms
+[info] Sync finished in 1.055s

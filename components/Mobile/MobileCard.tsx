@@ -45,8 +45,10 @@ export default function MobileCard({
 
     // Auto-enrich if missing metadata
     React.useEffect(() => {
-        // Only for links that are missing both title and image
-        const hasSomeMetadata = !!(item.metadata?.title && !item.metadata.title.includes('Capturing')) || !!item.metadata?.image;
+        // Only for links that are missing both title and image, or if they were captured locally on mobile but the API failed to enrich them
+        const isLocallyCapturedRaw = item.metadata?.source === 'mobile-share' || item.metadata?.source === 'mobile-add';
+        const hasSomeMetadata = (!!(item.metadata?.title && !item.metadata.title.includes('Capturing')) || !!item.metadata?.image) && !isLocallyCapturedRaw;
+        
         if (item.type === 'link' && !hasSomeMetadata && !hasAutoEnriched.current) {
             const timer = setTimeout(() => {
                 if (!hasAutoEnriched.current) {
@@ -57,7 +59,7 @@ export default function MobileCard({
             }, 5000); // Longer delay for canvas items
             return () => clearTimeout(timer);
         }
-    }, [item.id, item.type, item.metadata?.title, item.metadata?.image, enrichItem]);
+    }, [item.id, item.type, item.metadata?.title, item.metadata?.image, item.metadata?.source, enrichItem]);
 
     // Vault Logic
     const isVaulted = item.is_vaulted;

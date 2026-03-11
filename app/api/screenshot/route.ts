@@ -171,7 +171,9 @@ export async function POST(req: NextRequest) {
         }
 
         // --- Phase 4: Final Database Sync ---
-        const currentMetadata = item.metadata || {};
+        // Re-fetch latest item to prevent race conditions with parallel /api/metadata requests
+        const { data: latestItem } = await supabase.from('items').select('metadata').eq('id', itemId).single();
+        const currentMetadata = latestItem?.metadata || item.metadata || {};
 
         // Final Title Cleanup: if title is just a URL or placeholder, fix it
         let cleanTitle = pageTitle || currentMetadata.title;

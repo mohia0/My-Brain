@@ -432,11 +432,8 @@ export default function MobilePageContent({ session }: { session: any }) {
                     })
                     .then(data => {
                         console.log('[MobileShare] Metadata Success:', data);
-                        // Merge with latest state
-                        const current = useItemsStore.getState().items.find(i => i.id === itemId);
-                        updateItemContent(itemId, {
-                            metadata: { ...current?.metadata, ...data, source: 'mobile-share-meta' }
-                        });
+                        // Fetch latest merged data back from DB to avoid race conditions
+                        useItemsStore.getState().refreshItem(itemId);
                     })
                     .catch(e => {
                         console.error("[MobileShare] Metadata fetch failed:", e.message);
@@ -460,10 +457,8 @@ export default function MobilePageContent({ session }: { session: any }) {
                         .then(data => {
                             if (data.metadata) {
                                 console.log('[MobileShare] Screenshot Success:', data.metadata);
-                                const current = useItemsStore.getState().items.find(i => i.id === itemId);
-                                updateItemContent(itemId, {
-                                    metadata: { ...current?.metadata, ...data.metadata, source: 'mobile-share-screen' }
-                                });
+                                // Fetch latest merged data back from DB to avoid race conditions
+                                useItemsStore.getState().refreshItem(itemId);
                             }
                         })
                         .catch(e => console.error("[MobileShare] Screenshot failed:", e));
@@ -578,7 +573,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                     })
                     .then(data => {
                         console.log('[MobileAdd] Metadata success:', data);
-                        updateItemContent(id, { metadata: { ...data, source: 'mobile-add' } });
+                        useItemsStore.getState().refreshItem(id);
                     })
                     .catch(err => console.error(`[MobileAdd] Metadata failed (${metadataUrl}):`, err));
 
@@ -596,9 +591,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                         .then(data => {
                             if (data.metadata) {
                                 console.log('[MobileAdd] Screenshot success:', data.metadata);
-                                // Start with current local item state
-                                const currentItem = useItemsStore.getState().items.find(i => i.id === id);
-                                updateItemContent(id, { metadata: { ...currentItem?.metadata, ...data.metadata, source: 'mobile-screenshot' } });
+                                useItemsStore.getState().refreshItem(id);
                             }
                         })
                         .catch(err => console.error(`[MobileAdd] Screenshot failed (${screenshotUrl}):`, err));

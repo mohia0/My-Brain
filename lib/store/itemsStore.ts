@@ -1446,8 +1446,9 @@ export const useItemsStore = create<ItemsState>()(
                 const item = get().items.find(i => i.id === id);
                 if (!item || item.type !== 'link') return;
 
-                // Don't re-enrich if it already has a title, unless forced
-                if (item.metadata?.title && !force && !item.metadata?.title.includes('Capturing')) return;
+                // Don't re-enrich if it already has a title, unless forced or if it's a raw local capture
+                const isLocallyCapturedRaw = item.metadata?.source === 'mobile-share' || item.metadata?.source === 'mobile-add';
+                if (item.metadata?.title && !force && !item.metadata?.title.includes('Capturing') && !isLocallyCapturedRaw) return;
 
                 const userId = item.user_id;
                 const url = item.content;
@@ -1473,9 +1474,7 @@ export const useItemsStore = create<ItemsState>()(
                         );
                         
                         if (Object.keys(cleanData).length > 0) {
-                            get().updateItemContent(id, { 
-                                metadata: { ...currentItem?.metadata, ...cleanData, source: 'store-enrich-meta' } 
-                            });
+                            get().refreshItem(id);
                         }
                     })
                     .catch(e => console.error('[Store] Enrichment Metadata failed:', e));
@@ -1497,9 +1496,7 @@ export const useItemsStore = create<ItemsState>()(
                                 );
                                 
                                 if (Object.keys(cleanData).length > 0) {
-                                    get().updateItemContent(id, { 
-                                        metadata: { ...currentItem?.metadata, ...cleanData, source: 'store-enrich-screen' } 
-                                    });
+                                    get().refreshItem(id);
                                 }
                             }
                         })

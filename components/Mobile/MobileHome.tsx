@@ -119,13 +119,34 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
         return () => homeEl?.removeEventListener('triggerFolderReorder', handleTrigger);
     }, []);
 
-    const visibleItems = items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id && (i as any).type !== 'room' && (i as any).type !== 'project')
-        .sort((a, b) => {
-            if (a.position_y !== b.position_y) {
-                return (a.position_y || 0) - (b.position_y || 0);
+    const visibleItems = React.useMemo(() => {
+        return items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id && (i as any).type !== 'room' && (i as any).type !== 'project')
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }, [items]);
+
+    const [orderedItems, setOrderedItems] = React.useState(visibleItems);
+
+    React.useEffect(() => {
+        const savedString = localStorage.getItem('mobile_item_order');
+        if (savedString) {
+            try {
+                const savedOrder = JSON.parse(savedString) as string[];
+                const newOrdered = [...visibleItems].sort((a, b) => {
+                    const aIndex = savedOrder.indexOf(a.id);
+                    const bIndex = savedOrder.indexOf(b.id);
+                    if (aIndex === -1 && bIndex === -1) return 0;
+                    if (aIndex === -1) return 1;
+                    if (bIndex === -1) return -1;
+                    return aIndex - bIndex;
+                });
+                setOrderedItems(newOrdered);
+            } catch (e) {
+                setOrderedItems(visibleItems);
             }
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
+        } else {
+            setOrderedItems(visibleItems);
+        }
+    }, [visibleItems]);
 
     const visibleFolders = React.useMemo(() => {
         return folders.filter(f => f.status !== 'archived' && !f.parent_id)
@@ -186,7 +207,7 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
         useSensor(TouchSensor, { activationConstraint: isFolderReordering ? { delay: 200, tolerance: 10 } : { distance: 1000 } }) // Effectively disable sensor if not reordering
     );
 
-    const hasContent = visibleItems.length > 0 || orderedFolders.length > 0;
+    const hasContent = orderedItems.length > 0 || orderedFolders.length > 0;
 
     return (
         <div className={styles.container} id="mobile-home-container" data-mobile-home>
@@ -301,7 +322,7 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                         </section>
                     )}
 
-                    {visibleItems.length > 0 && (
+                    {orderedItems.length > 0 && (
                         <section className={styles.section}>
                             <div className={styles.sectionHeader} style={{ justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -331,14 +352,14 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                             <div className={styles.list}>
                                 <Reorder.Group 
                                     axis="y" 
-                                    values={visibleItems} 
+                                    values={orderedItems} 
                                     onReorder={(newOrder) => {
-                                        const newIds = newOrder.map(i => i.id);
-                                        reorderInboxItems(newIds);
+                                        setOrderedItems(newOrder);
+                                        localStorage.setItem('mobile_item_order', JSON.stringify(newOrder.map(i => i.id)));
                                     }}
                                     className={styles.list}
                                 >
-                                    {visibleItems.map(item => (
+                                    {orderedItems.map(item => (
                                         <ReorderableCard
                                             key={item.id}
                                             item={item}

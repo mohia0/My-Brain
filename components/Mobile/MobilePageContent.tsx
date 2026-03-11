@@ -421,10 +421,13 @@ export default function MobilePageContent({ session }: { session: any }) {
                 fetch(metadataUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: finalUrl, itemId, userId })
+                    body: JSON.stringify({ url: finalUrl, itemId, userId, skipCapture: true })
                 })
                     .then(async res => {
-                        if (!res.ok) throw new Error(`Metadata HTTP ${res.status}`);
+                        if (!res.ok) {
+                            const errorText = await res.text();
+                            throw new Error(`Metadata Service Error (${res.status}): ${errorText.substring(0, 100)}`);
+                        }
                         return res.json();
                     })
                     .then(data => {
@@ -435,7 +438,12 @@ export default function MobilePageContent({ session }: { session: any }) {
                             metadata: { ...current?.metadata, ...data, source: 'mobile-share-meta' }
                         });
                     })
-                    .catch(e => console.error("[MobileShare] Metadata failed:", e));
+                    .catch(e => {
+                        console.error("[MobileShare] Metadata fetch failed:", e.message);
+                        toast.error("Metadata extraction failed", {
+                            description: "Content saved, but enrichment timed out."
+                        });
+                    });
 
                 // 2. Screenshot Fetch (Delayed)
                 setTimeout(() => {

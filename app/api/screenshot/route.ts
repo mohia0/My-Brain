@@ -163,7 +163,8 @@ export async function POST(req: NextRequest) {
         const isPlaceholder = !cleanTitle ||
             /capturing|shared link|sharedlink/i.test(cleanTitle.toLowerCase());
 
-        if (isPlaceholder || (cleanTitle && /((https?:\/\/)|(www\.))[^\s]+/i.test(cleanTitle))) {
+        if (isPlaceholder || (cleanTitle && (/((https?:\/\/)|(www\.))[^\s]+/i.test(cleanTitle) ||
+            /Instagram|TikTok|Facebook|Twitter|X\.com|YouTube/i.test(cleanTitle)))) {
             try {
                 const domain = new URL(url).hostname.replace('www.', '');
                 cleanTitle = domain.charAt(0).toUpperCase() + domain.slice(1).split('.')[0];

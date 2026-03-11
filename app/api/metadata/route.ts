@@ -204,6 +204,7 @@ export async function POST(req: NextRequest) {
         }
 
         // --- Tier 5: Database Auto-Update (Optional Sync) ---
+        let finalMetadataToSync = metadata;
         if (itemId && userId) {
             console.log(`[SmartMetadata] Attempting DB auto-sync for itemId: ${itemId}`);
             try {
@@ -217,28 +218,30 @@ export async function POST(req: NextRequest) {
                     const existingMetadata = item?.metadata || {};
 
                     // Smart Merge: Only keep existing description if it's longer than what we just found
-                    const finalMetadataToSync = {
+                    finalMetadataToSync = {
                         ...metadata,
                         ...existingMetadata,
-                        title: (metadata.title && !/Capturing|Shared Link/i.test(metadata.title)) ? metadata.title : existingMetadata.title,
-                        image: existingMetadata.image?.includes('supabase.co') ? existingMetadata.image : metadata.image,
-                        description: (existingMetadata.description?.length > metadata.description?.length) ? existingMetadata.description : metadata.description,
+                        title: (metadata.title && !/Capturing|Shared Link|Instagram|TikTok|Facebook|Twitter|X\.com|YouTube/i.test(metadata.title)) ? metadata.title : existingMetadata.title,
+                        image: (existingMetadata.image?.includes('supabase.co')) ? existingMetadata.image : (metadata.image || existingMetadata.image),
+                        description: (existingMetadata.description?.length > metadata.description?.length) ? existingMetadata.description : (metadata.description || existingMetadata.description),
                         source: 'api-metadata-auto-sync'
                     };
 
                     await supabase.from('items').update({ metadata: finalMetadataToSync }).eq('id', itemId);
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.warn('[SmartMetadata] DB sync failed:', e);
+            }
         }
 
         console.log('[SmartMetadata] Final Metadata Result:', {
-            title: metadata.title,
-            hasImage: !!metadata.image,
-            platform: metadata.platform,
-            author: metadata.author
+            title: finalMetadataToSync.title,
+            hasImage: !!finalMetadataToSync.image,
+            platform: finalMetadataToSync.platform,
+            author: finalMetadataToSync.author
         });
 
-        return NextResponse.json(metadata);
+        return NextResponse.json(finalMetadataToSync);
 
     } catch (error: any) {
         console.error('[SmartMetadata] Critical Processing Error:', error);

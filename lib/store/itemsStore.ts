@@ -1465,10 +1465,18 @@ export const useItemsStore = create<ItemsState>()(
                     .then(res => res.json())
                     .then(data => {
                         if (data.error) throw new Error(data.error);
+                        
+                        // Smart merge: only update fields that actually have values
                         const currentItem = get().items.find(i => i.id === id);
-                        get().updateItemContent(id, { 
-                            metadata: { ...currentItem?.metadata, ...data, source: 'store-enrich-meta' } 
-                        });
+                        const cleanData = Object.fromEntries(
+                            Object.entries(data).filter(([_, v]) => v !== null && v !== undefined && v !== '')
+                        );
+                        
+                        if (Object.keys(cleanData).length > 0) {
+                            get().updateItemContent(id, { 
+                                metadata: { ...currentItem?.metadata, ...cleanData, source: 'store-enrich-meta' } 
+                            });
+                        }
                     })
                     .catch(e => console.error('[Store] Enrichment Metadata failed:', e));
 
@@ -1482,10 +1490,17 @@ export const useItemsStore = create<ItemsState>()(
                         .then(res => res.json())
                         .then(data => {
                             if (data.metadata) {
+                                // Smart merge for screenshot as well
                                 const currentItem = get().items.find(i => i.id === id);
-                                get().updateItemContent(id, { 
-                                    metadata: { ...currentItem?.metadata, ...data.metadata, source: 'store-enrich-screen' } 
-                                });
+                                const cleanData = Object.fromEntries(
+                                    Object.entries(data.metadata).filter(([_, v]) => v !== null && v !== undefined && v !== '')
+                                );
+                                
+                                if (Object.keys(cleanData).length > 0) {
+                                    get().updateItemContent(id, { 
+                                        metadata: { ...currentItem?.metadata, ...cleanData, source: 'store-enrich-screen' } 
+                                    });
+                                }
                             }
                         })
                         .catch(e => console.error('[Store] Enrichment Screenshot failed:', e));

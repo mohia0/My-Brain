@@ -78,11 +78,11 @@ export async function POST(req: NextRequest) {
                     ...(isSocial ? {
                         'screenshot.viewport.isMobile': 'true',
                         'screenshot.viewport.width': '414',
-                        'screenshot.viewport.height': '2200',
+                        'screenshot.viewport.height': '2600',
                         'screenshot.animations': 'false',
-                        'screenshot.waitFor': '6000',
+                        'screenshot.waitFor': '8000',
                         'screenshot.scrollTo': 'true',
-                        'screenshot.hide': '[role="dialog"]'
+                        'screenshot.hide': 'nav, header, [role="dialog"], ._ab8w, ._aa61'
                     } : {})
                 });
                 const mlRes = await fetch(`https://api.microlink.io?${mlParams.toString()}`);
@@ -127,11 +127,11 @@ export async function POST(req: NextRequest) {
                         ...(isSocial ? {
                             'screenshot.viewport.isMobile': 'true',
                             'screenshot.viewport.width': '414',
-                            'screenshot.viewport.height': '2200',
+                            'screenshot.viewport.height': '2600',
                             'screenshot.animations': 'false',
-                            'screenshot.waitFor': '6000',
+                            'screenshot.waitFor': '8000',
                             'screenshot.scrollTo': 'true',
-                            'screenshot.hide': '[role="dialog"]'
+                            'screenshot.hide': 'nav, header, [role="dialog"], ._ab8w, ._aa61'
                         } : {})
                     });
                     const mlRes = await fetch(`https://api.microlink.io?${mlParams.toString()}`);

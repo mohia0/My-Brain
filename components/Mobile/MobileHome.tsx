@@ -103,10 +103,21 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
 
     const toggleFoldersCollapsed = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (isFolderReordering) return;
         const newState = !isFoldersCollapsed;
         setIsFoldersCollapsed(newState);
         localStorage.setItem('mobile_folders_collapsed', String(newState));
     };
+
+    React.useEffect(() => {
+        const handleTrigger = (e: any) => {
+            setIsFolderReordering(true);
+            setIsFoldersCollapsed(false);
+        };
+        const homeEl = document.getElementById('mobile-home-container');
+        if (homeEl) homeEl.addEventListener('triggerFolderReorder', handleTrigger);
+        return () => homeEl?.removeEventListener('triggerFolderReorder', handleTrigger);
+    }, []);
 
     const visibleItems = items.filter(i => i.status !== 'inbox' && i.status !== 'archived' && !i.folder_id && (i as any).type !== 'room' && (i as any).type !== 'project')
         .sort((a, b) => {
@@ -178,7 +189,7 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
     const hasContent = visibleItems.length > 0 || orderedFolders.length > 0;
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} id="mobile-home-container" data-mobile-home>
             {!hasContent ? (
                 <div className={styles.empty}>
                     <div className={styles.emptyIcon}><Inbox size={48} /></div>
@@ -197,8 +208,6 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Folder size={16} />
                                     <span>Folders</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     {isFolderReordering && (
                                         <button 
                                             onClick={(e) => {
@@ -210,22 +219,25 @@ export default function MobileHome({ onItemClick, onFolderClick }: MobileHomePro
                                                 background: 'var(--accent)',
                                                 color: 'white',
                                                 border: 'none',
-                                                padding: '4px 12px',
+                                                padding: '4px 10px',
                                                 borderRadius: '100px',
-                                                fontSize: '0.75rem',
+                                                fontSize: '0.7rem',
                                                 fontWeight: 700,
-                                                marginRight: '8px'
+                                                marginLeft: '4px'
                                             }}
                                         >
                                             DONE
                                         </button>
                                     )}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <div 
                                         style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, letterSpacing: '0.05em' }}
                                         onClick={(e) => {
                                             if (!isFolderReordering) {
                                                 e.stopPropagation();
-                                                setIsFolderReordering(true);
+                                                setIsFoldersCollapsed(!isFoldersCollapsed);
+                                                localStorage.setItem('mobile_folders_collapsed', String(!isFoldersCollapsed));
                                             }
                                         }}
                                     >

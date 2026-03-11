@@ -40,6 +40,24 @@ export default function MobileCard({
     const pointerStartPos = React.useRef<{ x: number, y: number } | null>(null);
     const isSelected = selectedIds.includes(item.id);
     const inSelectionMode = selectedIds.length > 0;
+    const { enrichItem } = useItemsStore();
+    const hasAutoEnriched = React.useRef(false);
+
+    // Auto-enrich if missing metadata
+    React.useEffect(() => {
+        // Only for links that are missing both title and image
+        const hasSomeMetadata = !!(item.metadata?.title && !item.metadata.title.includes('Capturing')) || !!item.metadata?.image;
+        if (item.type === 'link' && !hasSomeMetadata && !hasAutoEnriched.current) {
+            const timer = setTimeout(() => {
+                if (!hasAutoEnriched.current) {
+                    console.log(`[MobileCard] Auto-enriching ${item.id} (Canvas)`);
+                    hasAutoEnriched.current = true;
+                    enrichItem(item.id);
+                }
+            }, 5000); // Longer delay for canvas items
+            return () => clearTimeout(timer);
+        }
+    }, [item.id, item.type, item.metadata?.title, item.metadata?.image, enrichItem]);
 
     // Vault Logic
     const isVaulted = item.is_vaulted;
@@ -143,6 +161,14 @@ export default function MobileCard({
             if (onReorderModeChange) {
                 onReorderModeChange(true);
                 // Select the item so it shows its handle and actions
+                toggleSelection(item.id);
+                if (window.navigator.vibrate) window.navigator.vibrate(50);
+            } else if (isFolder) {
+                // If it's a folder, trigger folder reordering via event
+                const home = document.getElementById('mobile-home-container');
+                if (home) {
+                    home.dispatchEvent(new CustomEvent('triggerFolderReorder', { detail: { id: item.id } }));
+                }
                 toggleSelection(item.id);
                 if (window.navigator.vibrate) window.navigator.vibrate(50);
             } else {
@@ -305,7 +331,7 @@ export default function MobileCard({
                     <GripVertical size={20} />
                 </div>
             )}
-            {isFolder && isSelected && selectedIds.length === 1 && !isReordering && (!!onDragStartRequested || dragHandleProps) && (
+            {isFolder && isSelected && selectedIds.length === 1 && (!!onDragStartRequested || dragHandleProps) && (
                 <div
                     className={styles.dragHandle}
                     {...dragHandleProps}

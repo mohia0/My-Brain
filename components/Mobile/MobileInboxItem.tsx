@@ -40,14 +40,21 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
 
     // Auto-enrich stuck items
     React.useEffect(() => {
-        if (localItem.type === 'link' && !localItem.metadata?.title && !isRefreshing) {
+        // Only auto-enrich if NO metadata exists (no title AND no image)
+        const hasSomeMetadata = !!(localItem.metadata?.title && !localItem.metadata.title.includes('Capturing')) || !!localItem.metadata?.image;
+        
+        if (localItem.type === 'link' && !hasSomeMetadata && !isRefreshing && !hasAutoEnriched.current) {
             // Delay slightly to avoid spamming while user is actively looking
             const timer = setTimeout(() => {
-                enrichItem(localItem.id);
+                if (!hasAutoEnriched.current) {
+                    console.log(`[InboxItem] Auto-enriching ${localItem.id} (No title/image)`);
+                    hasAutoEnriched.current = true;
+                    enrichItem(localItem.id);
+                }
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [localItem.id, localItem.type, localItem.metadata?.title, enrichItem, isRefreshing]);
+    }, [localItem.id, localItem.type, localItem.metadata?.title, localItem.metadata?.image, enrichItem, isRefreshing]);
 
 
 
@@ -58,7 +65,7 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
 
     const getStatus = () => {
         if (isRefreshing) return 'Refreshing...';
-        if (localItem.type === 'link' && !localItem.metadata?.title) return 'Capturing...';
+        if (localItem.type === 'link' && !localItem.metadata?.title && !localItem.metadata?.image) return 'Capturing...';
         if (localItem.type === 'image') {
             const isLocal = !localItem.content ||
                 localItem.content.startsWith('content:') ||

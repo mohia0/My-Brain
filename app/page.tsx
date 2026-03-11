@@ -426,6 +426,12 @@ export default function Home() {
   };
 
   const [isNavigating, setIsNavigating] = useState(false);
+  const [modalHistory, setModalHistory] = useState<string[]>([]);
+  const selectedItemIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedItemIdRef.current = selectedItemId;
+  }, [selectedItemId]);
 
   useEffect(() => {
     const handleNavStart = () => setIsNavigating(true);
@@ -441,6 +447,7 @@ export default function Home() {
         if (item) {
             if (item.type === 'project' || item.type === 'room') {
                 setSelectedItemId(null); // Close current modal
+                setModalHistory([]); 
                 // Pan to it.
                 const cx = window.innerWidth / 2;
                 const cy = window.innerHeight / 2;
@@ -454,10 +461,15 @@ export default function Home() {
                     cy - itemCenter.y * scale
                 );
             } else {
+                const currentId = selectedItemIdRef.current;
+                if (currentId && currentId !== id) {
+                    setModalHistory(prev => [...prev, currentId]);
+                }
                 setSelectedItemId(id);
             }
         } else if (folder) {
             setSelectedItemId(null);
+            setModalHistory([]);
             const cx = window.innerWidth / 2;
             const cy = window.innerHeight / 2;
             const folderCenter = { x: folder.position_x + 100, y: folder.position_y + 60 };
@@ -608,6 +620,7 @@ export default function Home() {
                                   const isObscured = item.is_vaulted && !isRevealedLocal && !isUnlockedGlobal && !isUnlockedIndividual;
 
                                   if (!isObscured) {
+                                    setModalHistory([]);
                                     setSelectedItemId(item.id);
                                   }
                                 }}
@@ -643,7 +656,15 @@ export default function Home() {
                       itemId={selectedItemId}
                       onClose={() => {
                         setSelectedItemId(null);
+                        setModalHistory([]);
                         clearSelection();
+                      }}
+                      hasBackHistory={modalHistory.length > 0}
+                      onBack={() => {
+                        const prev = [...modalHistory];
+                        const last = prev.pop();
+                        setModalHistory(prev);
+                        setSelectedItemId(last || null);
                       }}
                     />
                   )}

@@ -195,9 +195,11 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
         if (initialContent !== currentJson) {
             const blocks = getInitialBlocks();
             if (blocks) {
-                // Use a non-destructive update if possible, but replaceBlocks is standard for major changes
-                editor.replaceBlocks(editor.document, blocks);
-                lastPushedContent.current = initialContent;
+                // Defer the update to avoid flushSync error during mount/lifecycle
+                requestAnimationFrame(() => {
+                    editor.replaceBlocks(editor.document, blocks);
+                    lastPushedContent.current = initialContent;
+                });
             }
         }
     }, [initialContent, editor]);

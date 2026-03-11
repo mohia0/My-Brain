@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile, PanelRightClose, PanelRightOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile, PanelRightClose, PanelRightOpen, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -21,9 +21,11 @@ const Picker = dynamic(() => import('@emoji-mart/react'), { ssr: false });
 interface ItemModalProps {
     itemId: string | null;
     onClose: () => void;
+    onBack?: () => void;
+    hasBackHistory?: boolean;
 }
 
-export default function ItemModal({ itemId, onClose }: ItemModalProps) {
+export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: ItemModalProps) {
     const { items, fetchData, updateItemContent, removeItem, archiveItem, updateItemTags } = useItemsStore();
     const item = items.find(i => i.id === itemId);
     const isLink = item?.type === 'link';
@@ -567,6 +569,16 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                             )}
                                         </div>
 
+                                        {hasBackHistory && onBack && (
+                                            <button
+                                                className={styles.backBtn}
+                                                onClick={onBack}
+                                            >
+                                                <ArrowLeft size={18} />
+                                                <span>Back</span>
+                                            </button>
+                                        )}
+
                                         <button
                                             className={styles.sidebarToggleBtn}
                                             onClick={toggleSidebar}
@@ -588,7 +600,7 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                     </div>
                                 </div>
                                 <div className={styles.editorWrapper}>
-                                    <BlockEditor initialContent={content} onChange={setContent} />
+                                    <BlockEditor key={itemId || 'none'} initialContent={content} onChange={setContent} />
                                 </div>
                             </div>
                         ) : (
@@ -653,7 +665,12 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                         <div className={styles.header}>
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div className={styles.timestamp}>
-                                    {item.metadata?.siteName || 'Shared'} • {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {((item.metadata?.siteName || (item.metadata?.source && ['mobile-share', 'api-metadata-auto-sync', 'api-screenshot-truth'].includes(item.metadata.source))) ? (
+                                        <>
+                                            {item.metadata?.siteName || 'Shared'} •{' '}
+                                        </>
+                                    ) : null)}
+                                    {new Date(item.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                                 {item.updated_at && item.updated_at !== item.created_at && (
                                     <div className={styles.timestamp} style={{ opacity: 0.6, fontSize: '0.7rem', marginTop: '2px' }}>
@@ -663,7 +680,18 @@ export default function ItemModal({ itemId, onClose }: ItemModalProps) {
                                 {(isSaving || item.syncStatus === 'syncing') && <div className={styles.savingIndicator}>Saving...</div>}
                                 {item.metadata?.author && <div className={styles.authorBadge}>by {item.metadata.author}</div>}
                             </div>
-                            <button className={styles.closeBtn} onClick={handleClose}><X size={20} /></button>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                {hasBackHistory && onBack && (
+                                    <button
+                                        className={styles.backBtn}
+                                        onClick={onBack}
+                                    >
+                                        <ArrowLeft size={18} />
+                                        <span>Back</span>
+                                    </button>
+                                )}
+                                <button className={styles.closeBtn} onClick={handleClose}><X size={20} /></button>
+                            </div>
                         </div>
 
                         <div className={styles.scrollBody} ref={scrollBodyRef}>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import MobileHeader from './MobileHeader';
 import MobileNav from './MobileNav';
 import MobileHome from './MobileHome';
@@ -39,15 +39,6 @@ export default function MobilePageContent({ session }: { session: any }) {
     const { isModalOpen, setModalOpen, checkVaultStatus } = useVaultStore();
     const { items, folders, selectedIds, addItem, addFolder, clearSelection, updateItemContent, fetchData, setSharing } = useItemsStore();
 
-    // Sync local share state with global store
-    useEffect(() => {
-        setSharing(shareState !== 'idle');
-    }, [shareState, setSharing]);
-
-    useEffect(() => {
-        checkVaultStatus();
-    }, []);
-
     // Modal states
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -58,6 +49,10 @@ export default function MobilePageContent({ session }: { session: any }) {
         title: string;
         mode: 'text' | 'file' | 'camera';
     }>({ isOpen: false, type: null, placeholder: '', title: '', mode: 'text' });
+
+    // History and Navigation
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [modalHistory, setModalHistory] = useState<string[]>([]);
 
     // State Refs for Back Button (to avoid stale closures)
     const selectedItemIdRef = React.useRef<string | null>(null);
@@ -160,6 +155,7 @@ export default function MobilePageContent({ session }: { session: any }) {
             if (item) {
                 if (item.type === 'project' || item.type === 'room') {
                     setSelectedItemId(null);
+                    setModalHistory([]);
                     // Panning is handled differently or omitted for Mobile Home view natively,
                     // but we can close the modal to return to the home screen.
                     setActiveTab('home');
@@ -169,8 +165,13 @@ export default function MobilePageContent({ session }: { session: any }) {
             } else if (folder) {
                 setSelectedItemId(null);
                 setSelectedFolderId(id);
+                setModalHistory([]);
                 setActiveTab('home');
             } else {
+                const currentId = selectedItemIdRef.current;
+                if (currentId && currentId !== id) {
+                    setModalHistory(prev => [...prev, currentId]);
+                }
                 setSelectedItemId(id);
             }
         };
@@ -690,7 +691,18 @@ export default function MobilePageContent({ session }: { session: any }) {
             {selectedItemId && (
                 <ItemModal
                     itemId={selectedItemId}
-                    onClose={() => { setSelectedItemId(null); clearSelection(); }}
+                    onClose={() => {
+                        setSelectedItemId(null);
+                        setModalHistory([]);
+                        clearSelection();
+                    }}
+                    hasBackHistory={modalHistory.length > 0}
+                    onBack={() => {
+                        const prev = [...modalHistory];
+                        const last = prev.pop();
+                        setModalHistory(prev);
+                        setSelectedItemId(last || null);
+                    }}
                 />
             )}
             <InputModal

@@ -666,6 +666,32 @@
     transform: scale(0.95);
 }
 
+.backBtn {
+    background: var(--accent-faint);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 750;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-right: 4px;
+}
+
+.backBtn:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.05);
+}
+
+.backBtn:active {
+    transform: scale(0.95);
+}
+
 .editorWrapper {
     flex: 1;
     width: 100%;

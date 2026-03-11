@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ogs from 'open-graph-scraper';
+import { createClient } from '@supabase/supabase-js';
 
 const MOBILE_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
 
@@ -28,11 +29,19 @@ export async function POST(req: NextRequest) {
         const { url: rawUrl, itemId, userId, skipCapture } = body;
 
         if (!rawUrl) {
-            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+            const errRes = NextResponse.json({ error: 'URL is required' }, { status: 400 });
+            errRes.headers.set('Access-Control-Allow-Origin', '*');
+            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+            return errRes;
         }
 
         if (typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) {
-            return NextResponse.json({ error: 'Valid URL starting with http/https is required' }, { status: 400 });
+            const errRes = NextResponse.json({ error: 'Valid URL starting with http/https is required' }, { status: 400 });
+            errRes.headers.set('Access-Control-Allow-Origin', '*');
+            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+            return errRes;
         }
 
         let url = rawUrl;
@@ -179,7 +188,6 @@ export async function POST(req: NextRequest) {
                 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
                 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
                 if (itemId && userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-                    const { createClient } = await import('@supabase/supabase-js');
                     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
                     const imgRes = await fetch(metadata.image);
@@ -213,7 +221,6 @@ export async function POST(req: NextRequest) {
         if (itemId && userId) {
             console.log(`[SmartMetadata] Attempting DB auto-sync for itemId: ${itemId}`);
             try {
-                const { createClient } = await import('@supabase/supabase-js');
                 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
                 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -254,10 +261,14 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('[SmartMetadata] Critical Processing Error:', error);
-        return NextResponse.json({
+        const errResponse = NextResponse.json({
             error: 'Process failed',
             details: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });
+        errResponse.headers.set('Access-Control-Allow-Origin', '*');
+        errResponse.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        errResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return errResponse;
     }
 }

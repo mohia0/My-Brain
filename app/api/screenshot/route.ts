@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
     try {
         if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
             console.error('Missing Supabase environment variables');
-            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+            const errRes = NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+            errRes.headers.set('Access-Control-Allow-Origin', '*');
+            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+            return errRes;
         }
 
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -37,10 +41,18 @@ export async function POST(req: NextRequest) {
         const { url: rawUrl, itemId, userId } = await req.json();
 
         if (!rawUrl) {
-            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+            const errRes = NextResponse.json({ error: 'URL is required' }, { status: 400 });
+            errRes.headers.set('Access-Control-Allow-Origin', '*');
+            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+            return errRes;
         }
         if (!itemId || !userId) { // Added back itemId and userId check
-            return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+            const errRes = NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+            errRes.headers.set('Access-Control-Allow-Origin', '*');
+            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+            return errRes;
         }
 
         // --- Tier 0: URL Cleaning ---
@@ -60,7 +72,13 @@ export async function POST(req: NextRequest) {
 
         // Fetch current item to see if it already has values
         const { data: item } = await supabase.from('items').select('*').eq('id', itemId).single();
-        if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+        if (!item) {
+            const errRes = NextResponse.json({ error: 'Item not found' }, { status: 404 });
+            errRes.headers.set('Access-Control-Allow-Origin', '*');
+            errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+            return errRes;
+        }
 
         let pageTitle = '';
         let pageDesc = '';
@@ -206,6 +224,10 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('[LinkTruth] Critical Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const errRes = NextResponse.json({ error: error.message }, { status: 500 });
+        errRes.headers.set('Access-Control-Allow-Origin', '*');
+        errRes.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        errRes.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return errRes;
     }
 }

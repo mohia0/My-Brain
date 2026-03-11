@@ -4,8 +4,7 @@
 import React, { useState } from 'react';
 import {
     DndContext,
-    MouseSensor,
-    TouchSensor,
+    PointerSensor,
     useSensor,
     useSensors,
     DragEndEvent,
@@ -39,13 +38,10 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     const isHandTool = currentTool === 'hand';
 
     const sensors = useSensors(
-        useSensor(MouseSensor, {
+        useSensor(PointerSensor, {
             activationConstraint: isHandTool ? { distance: 999999 } : {
                 distance: 3,
             },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: isHandTool ? { distance: 999999 } : undefined
         })
     );
 
@@ -60,7 +56,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         return { w: isFolder ? 200 : 280, h: 100 };
     };
 
-    const snapToGrid: Modifier = ({ transform, active, draggingNodeRect }) => {
+    const snapToGrid = React.useCallback<Modifier>(({ transform, active, draggingNodeRect }) => {
         const { scale, isSnappingEnabled } = useCanvasStore.getState();
         const { items, folders, selectedIds } = useItemsStore.getState();
 
@@ -215,7 +211,9 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
             x: finalDeltaX,
             y: finalDeltaY
         };
-    };
+    }, []);
+
+    const modifiers = React.useMemo(() => [snapToGrid], [snapToGrid]);
 
     const handleDragStart = (event: DragStartEvent) => {
         const id = event.active.id;
@@ -763,7 +761,7 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
     return (
         <DndContext
             sensors={sensors}
-            modifiers={[snapToGrid]}
+            modifiers={modifiers}
             collisionDetection={pointerWithin}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}

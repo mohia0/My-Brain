@@ -86,9 +86,6 @@
 
 .selected {
     z-index: 100 !important;
-    outline: 2px solid var(--accent) !important;
-    outline-offset: 4px;
-    box-shadow: 0 0 0 4px var(--accent-glow) !important;
 }
 
 .selected .tab, .selected .mainBody {
@@ -337,64 +334,4 @@
 .folder.obscured:hover {
     box-shadow: none;
 }
-
-.dragHandle {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 36px;
-    height: 36px;
-    background: var(--card-bg);
-    border: 1px solid var(--accent);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-    z-index: 100;
-    backdrop-filter: blur(12px);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    color: var(--accent);
-    box-shadow: 0 4px 12px var(--shadow-color);
-    animation: handlePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.dragHandle:hover {
-    transform: scale(1.1) translateY(-2px);
-    background: var(--accent);
-    color: white;
-    box-shadow: 0 8px 20px var(--accent-glow);
-}
-
-.dragHandle:active {
-    cursor: grabbing;
-    transform: scale(0.95);
-}
-
-@keyframes handlePop {
-    0% {
-        transform: scale(0) rotate(-45deg);
-        opacity: 0;
-    }
-
-    100% {
-        transform: scale(1) rotate(0);
-        opacity: 1;
-    }
-}
-
-.dragHandle svg {
-    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.1));
-}
-
-:global([data-theme='light']) .dragHandle {
-    background: white;
-    border-color: #e2e8f0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-:global([data-theme='light']) .dragHandle:hover {
-    background: black;
-    color: white;
-    border-color: black;
-}
+

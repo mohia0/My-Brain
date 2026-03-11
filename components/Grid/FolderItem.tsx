@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { Folder as FolderIcon, Archive, Copy, Trash2, Lock, Unlock, GripVertical } from 'lucide-react';
+import { Folder as FolderIcon, Archive, Copy, Trash2, Lock, Unlock } from 'lucide-react';
 import { Folder } from '@/types';
 import styles from './FolderItem.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
@@ -171,33 +171,14 @@ export const FolderItemView = forwardRef<HTMLDivElement, FolderItemViewProps>(({
         >
             {!isObscured && renderActions()}
 
-            {/* Grip Handle - Premium Desktop Look */}
-            {isSingleSelected && !isObscured && (
-                <div
-                    className={styles.dragHandle}
-                    {...listeners}
-                    {...attributes}
-                    onPointerDown={(e) => {
-                        e.stopPropagation();
-                        listeners?.onPointerDown?.(e);
-                    }}
-                    style={{
-                        opacity: isDragging ? 0 : 1,
-                        pointerEvents: isDragging ? 'none' : 'auto'
-                    }}
-                >
-                    <GripVertical size={16} />
-                </div>
-            )}
-
             <div className={styles.tab} style={{ background: folder.color || 'var(--card-bg)' }} />
             <div
                 className={styles.mainBody}
-                {...(!isSingleSelected ? listeners : {})}
-                {...(!isSingleSelected ? attributes : {})}
+                {...listeners}
+                {...attributes}
                 onPointerDown={(e) => {
                     e.stopPropagation();
-                    if (!isSingleSelected) listeners?.onPointerDown?.(e);
+                    listeners?.onPointerDown?.(e);
                 }}
                 onClick={onClick}
             >

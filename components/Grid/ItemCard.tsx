@@ -276,10 +276,10 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={e => e.stopPropagation()}
-                        className={styles.linkAction}
+                        data-tooltip="Open Link"
+                        data-tooltip-pos="bottom"
                     >
                         <ExternalLink size={12} />
-                        <span>Open Link</span>
                     </a>
                 )}
                 <ActionMoveMenu itemId={localItem.id} />

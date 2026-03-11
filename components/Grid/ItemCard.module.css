@@ -156,7 +156,8 @@
     transform: translateY(0) scale(var(--inv-scale, 1));
 }
 
-.actions button {
+.actions button,
+.actions a {
     background: transparent;
     border: none;
     color: var(--text-dim);
@@ -170,7 +171,8 @@
     /* Ensure clickable */
 }
 
-.actions button:hover {
+.actions button:hover,
+.actions a:hover {
     background: var(--card-hover);
     color: var(--foreground);
 }
@@ -402,32 +404,7 @@
     opacity: 1;
 }
 
-.linkAction {
-    color: var(--text-dim);
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 8px;
-    border-radius: 4px;
-    gap: 6px;
-    text-decoration: none;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.linkAction span {
-    display: none;
-}
-
-.linkAction:hover {
-    background: var(--accent-glow);
-    color: var(--accent);
-}
-
-.linkAction:hover span {
-    display: inline;
-}
+/* removed linkAction styles */
 
 .obscured {
     overflow: hidden;

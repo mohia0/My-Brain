@@ -441,7 +441,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                     .catch(e => {
                         console.error("[MobileShare] Metadata fetch failed:", e.message);
                         toast.error("Metadata extraction failed", {
-                            description: "Content saved, but enrichment timed out."
+                            description: `Error: ${e.message}`, // Show the REAL error to the user
                         });
                     });
 

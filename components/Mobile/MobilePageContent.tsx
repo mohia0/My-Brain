@@ -149,7 +149,31 @@ export default function MobilePageContent({ session }: { session: any }) {
 
         initCapacitor();
         
-        const handleOpenItem = (e: any) => setSelectedItemId(e.detail?.id);
+        const handleOpenItem = (e: any) => {
+            const id = e.detail?.id;
+            if (!id) return;
+            
+            const state = useItemsStore.getState();
+            const item = state.items.find(i => i.id === id);
+            const folder = state.folders.find(f => f.id === id);
+            
+            if (item) {
+                if (item.type === 'project' || item.type === 'room') {
+                    setSelectedItemId(null);
+                    // Panning is handled differently or omitted for Mobile Home view natively,
+                    // but we can close the modal to return to the home screen.
+                    setActiveTab('home');
+                } else {
+                    setSelectedItemId(id);
+                }
+            } else if (folder) {
+                setSelectedItemId(null);
+                setSelectedFolderId(id);
+                setActiveTab('home');
+            } else {
+                setSelectedItemId(id);
+            }
+        };
         window.addEventListener('openItem', handleOpenItem);
 
         return () => {

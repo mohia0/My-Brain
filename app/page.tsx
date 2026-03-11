@@ -429,7 +429,50 @@ export default function Home() {
 
   useEffect(() => {
     const handleNavStart = () => setIsNavigating(true);
-    const handleOpenItem = (e: any) => setSelectedItemId(e.detail?.id);
+    const handleOpenItem = (e: any) => {
+        const id = e.detail?.id;
+        if (!id) return;
+        
+        // Find if it's an item
+        const state = useItemsStore.getState();
+        const item = state.items.find(i => i.id === id);
+        const folder = state.folders.find(f => f.id === id);
+        
+        if (item) {
+            if (item.type === 'project' || item.type === 'room') {
+                setSelectedItemId(null); // Close current modal
+                // Pan to it.
+                const cx = window.innerWidth / 2;
+                const cy = window.innerHeight / 2;
+                const itemCenter = {
+                    x: item.position_x + (item.metadata?.width || 300) / 2,
+                    y: item.position_y + (item.metadata?.height || 200) / 2
+                };
+                const scale = useCanvasStore.getState().scale;
+                useCanvasStore.getState().setPosition(
+                    cx - itemCenter.x * scale,
+                    cy - itemCenter.y * scale
+                );
+            } else {
+                setSelectedItemId(id);
+            }
+        } else if (folder) {
+            setSelectedItemId(null);
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            const folderCenter = { x: folder.position_x + 100, y: folder.position_y + 60 };
+            const scale = useCanvasStore.getState().scale;
+            useCanvasStore.getState().setPosition(
+                cx - folderCenter.x * scale,
+                cy - folderCenter.y * scale
+            );
+
+            // Also open folder modal
+            useCanvasStore.getState().setOpenFolderId(id);
+        } else {
+            setSelectedItemId(id); // fallback
+        }
+    };
     
     window.addEventListener('navigatingToSettings', handleNavStart);
     window.addEventListener('openItem', handleOpenItem);

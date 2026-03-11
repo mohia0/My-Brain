@@ -262,6 +262,7 @@ export default function BlockEditor({ initialContent, onChange, editable = true 
                     />
                     <SuggestionMenuController
                         triggerCharacter={"@"}
+                        floatingUIOptions={{ useFloatingOptions: { strategy: 'fixed' } }}
                         getItems={async (query) => {
                             // Using a dynamic import or accessing window/store directly to avoid circular deps if any
                             const { useItemsStore } = await import('@/lib/store/itemsStore');

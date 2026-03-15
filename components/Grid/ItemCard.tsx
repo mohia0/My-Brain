@@ -9,7 +9,7 @@ import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { supabase } from '@/lib/supabase';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
-import { toast } from 'sonner';
+
 import clsx from 'clsx';
 import ActionMoveMenu from '@/components/ActionMoveMenu/ActionMoveMenu';
 import data from '@emoji-mart/data';
@@ -581,7 +581,7 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
             >
                 <div className={styles.innerCard} style={{ background: isDue ? 'rgba(var(--accent-rgb), 0.05)' : undefined, border: isDue ? '1px solid var(--accent)' : undefined }}>
                     <div className={styles.header}>
-                        <Bell size={16} />
+                        {localItem.metadata?.emoji ? <span style={{fontSize: '14px', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{localItem.metadata.emoji}</span> : <Bell size={16} />}
                         <span className={styles.title} onDoubleClick={(e) => { e.stopPropagation(); setIsEditingTitle(true); }}>
                             {isEditingTitle ? (
                                 <form onSubmit={handleTitleSave} onClick={e => e.stopPropagation()} className="w-full">

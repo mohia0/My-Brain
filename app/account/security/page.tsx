@@ -54,13 +54,15 @@ export default function SecurityPage() {
     };
 
     const handleRemoveVault = async () => {
-        const success = await removePassword(vaultRemovePassword);
-        if (success) {
-            toast.success("Master lock removed. Your vaulted items are now accessible.");
-            setVaultRemovePassword('');
-            setIsRemovingVault(false);
-        } else {
-            toast.error("Incorrect password");
+        if (vaultRemovePassword) {
+            const success = await removePassword(vaultRemovePassword);
+            if (success) {
+                toast.success("Master lock removed. Your vaulted items are now accessible.");
+                setVaultRemovePassword('');
+                setIsRemovingVault(false);
+            } else {
+                toast.error("Incorrect password");
+            }
         }
     };
 

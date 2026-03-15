@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import React from 'react';
+
 import { Toaster } from "sonner";
 import "./globals.css";
 import ClientLayout from "./client-layout";
@@ -51,7 +52,7 @@ export default function RootLayout({
       >
         <ClientLayout>
           {children}
-          <Toaster position="top-center" theme="dark" closeButton />
+          <Toaster position="top-center" richColors />
         </ClientLayout>
       </body>
     </html>

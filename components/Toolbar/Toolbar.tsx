@@ -31,7 +31,7 @@ export default function Toolbar() {
 
     const [isReminderOpen, setIsReminderOpen] = useState(false);
 
-    const handleReminderSubmit = (data: { name: string; date: string; type: 'push' | 'email' | 'both' }) => {
+    const handleReminderSubmit = (data: { name: string; date: string; type: 'push' | 'email' | 'both'; recurrence: string; emoji: string | null }) => {
         const viewportW = window.innerWidth;
         const viewportH = window.innerHeight;
         const cx = ((viewportW / 2) - position.x) / scale;
@@ -57,9 +57,11 @@ export default function Toolbar() {
             room_id: currentRoomId,
             metadata: {
                 title: data.name,
+                emoji: data.emoji,
                 reminder: {
                     date: data.date,
                     type: data.type,
+                    recurrence: data.recurrence,
                     notified: false
                 }
             }

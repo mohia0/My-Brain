@@ -11,6 +11,8 @@ interface MobileInboxProps {
     filterStatus?: 'inbox' | 'archived';
 }
 
+import { Reorder } from 'framer-motion';
+
 export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: MobileInboxProps) {
     const { items, fetchData, realtimeStatus, enrichItem } = useItemsStore();
     const [refreshing, setRefreshing] = useState(false);
@@ -20,16 +22,45 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
     const [isAutoEnriching, setIsAutoEnriching] = useState(false);
     const hasAutoEnrichedRef = React.useRef(false);
 
-    const inboxItems = items.filter(i => i.status === filterStatus && i.type !== 'project' && i.type !== 'room')
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const baseInboxes = React.useMemo(() => {
+        return items.filter(i => i.status === filterStatus && i.type !== 'project' && i.type !== 'room')
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }, [items, filterStatus]);
 
-    // Initial fetch is handled by the root Home component
-    // Real-time updates are handled by the items store subscription
+    const [orderedInbox, setOrderedInbox] = useState(baseInboxes);
+
+    // Load/Apply independent order
+    useEffect(() => {
+        const saved = localStorage.getItem(`mobile_${filterStatus}_order`);
+        if (saved) {
+            try {
+                const order = JSON.parse(saved) as string[];
+                const sorted = [...baseInboxes].sort((a, b) => {
+                    const ai = order.indexOf(a.id);
+                    const bi = order.indexOf(b.id);
+                    if (ai === -1 && bi === -1) return 0;
+                    if (ai === -1) return 1;
+                    if (bi === -1) return -1;
+                    return ai - bi;
+                });
+                setOrderedInbox(sorted);
+            } catch {
+                setOrderedInbox(baseInboxes);
+            }
+        } else {
+            setOrderedInbox(baseInboxes);
+        }
+    }, [baseInboxes, filterStatus]);
+
+    const handleReorder = (newOrder: typeof orderedInbox) => {
+        setOrderedInbox(newOrder);
+        localStorage.setItem(`mobile_${filterStatus}_order`, JSON.stringify(newOrder.map(i => i.id)));
+    };
 
     // Auto-enrich stuck items when inbox is viewed
     useEffect(() => {
-        if (!hasAutoEnrichedRef.current && inboxItems.length > 0) {
-            const stuckItems = inboxItems.filter(i => i.type === 'link' && !i.metadata?.title);
+        if (!hasAutoEnrichedRef.current && orderedInbox.length > 0) {
+            const stuckItems = orderedInbox.filter(i => i.type === 'link' && !i.metadata?.title);
             if (stuckItems.length > 0) {
                 console.log(`[MobileInbox] Found ${stuckItems.length} stuck items. Auto-enriching...`);
                 setIsAutoEnriching(true);
@@ -46,7 +77,7 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
                 });
             }
         }
-    }, [inboxItems, enrichItem]);
+    }, [orderedInbox, enrichItem]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         if (containerRef.current?.scrollTop === 0) {
@@ -113,7 +144,7 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
                 )}
             </div>
 
-            {inboxItems.length === 0 ? (
+            {orderedInbox.length === 0 ? (
                 <div className={styles.empty}>
                     <div className={styles.emptyIcon}><InboxIcon size={48} /></div>
                     <h3>{filterStatus === 'archived' ? 'Archive is empty' : 'Your mind is clear'}</h3>
@@ -154,16 +185,25 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
                                 flexShrink: 0
                             }} />
                         </div>
-                        <div className={styles.list}>
-                            {inboxItems.map((item, index) => (
-                                <div key={item.id} style={{ animationDelay: `${index * 0.05}s` }}>
+                        <Reorder.Group 
+                            axis="y" 
+                            values={orderedInbox} 
+                            onReorder={handleReorder}
+                            className={styles.list}
+                        >
+                            {orderedInbox.map((item) => (
+                                <Reorder.Item 
+                                    key={item.id} 
+                                    value={item}
+                                    style={{ listStyle: 'none' }}
+                                >
                                     <MobileInboxItem
                                         item={item}
                                         onClick={() => onItemClick(item.id)}
                                     />
-                                </div>
+                                </Reorder.Item>
                             ))}
-                        </div>
+                        </Reorder.Group>
                     </section>
                 </div>
             )}

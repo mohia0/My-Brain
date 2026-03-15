@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video, Lock, Unlock, GripVertical, GripHorizontal } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, Copy, Trash2, Archive, Folder, Clock, RefreshCw, CheckCircle2, AlertCircle, Play, Video, Lock, Unlock, GripVertical, GripHorizontal, Bell } from 'lucide-react';
 import styles from './MobileCard.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
@@ -42,6 +42,45 @@ export default function MobileCard({
     const inSelectionMode = selectedIds.length > 0;
     const { enrichItem } = useItemsStore();
     const hasAutoEnriched = React.useRef(false);
+
+    // Timer logic for Reminders
+    const [timeLeft, setTimeLeft] = useState<string | null>(null);
+    const [isDue, setIsDue] = useState(false);
+
+    React.useEffect(() => {
+        if (item.type === 'reminder' && item.metadata?.reminder?.date) {
+            const updateTimer = () => {
+                const now = new Date();
+                const due = new Date(item.metadata!.reminder!.date!);
+                const diff = due.getTime() - now.getTime();
+
+                if (diff <= 0) {
+                    setTimeLeft('DUE');
+                    setIsDue(true);
+                } else {
+                    setIsDue(false);
+                    const seconds = Math.floor(diff / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const hours = Math.floor(minutes / 60);
+
+                    if (hours > 24) {
+                        setTimeLeft(`${Math.floor(hours / 24)}d ${hours % 24}h`);
+                    } else if (hours > 0) {
+                        const mStr = (minutes % 60).toString().padStart(2, '0');
+                        setTimeLeft(`${hours}:${mStr}h`);
+                    } else {
+                        const mStr = minutes.toString().padStart(2, '0');
+                        const sStr = (seconds % 60).toString().padStart(2, '0');
+                        setTimeLeft(`${mStr}:${sStr}`);
+                    }
+                }
+            };
+
+            updateTimer();
+            const timer = setInterval(updateTimer, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [item.id, item.type, item.metadata?.reminder?.date]);
 
     // Auto-enrich if missing metadata
     React.useEffect(() => {
@@ -430,6 +469,7 @@ export default function MobileCard({
                                 {isObscured ? <Lock size={20} /> : (
                                     <>
                                         {item.type === 'text' && (item.metadata?.emoji ? <span style={{ fontSize: '22px' }}>{item.metadata.emoji}</span> : <FileText size={20} />)}
+                                        {item.type === 'reminder' && (item.metadata?.emoji ? <span style={{ fontSize: '22px' }}>{item.metadata.emoji}</span> : <Bell size={20} />)}
                                         {item.type === 'link' && !isFolder && (
                                             hostname(item.content) ? (
                                                 <img
@@ -478,6 +518,20 @@ export default function MobileCard({
                                 </div>
                                 <SyncIndicator />
                             </div>
+
+                            {item.type === 'reminder' && (
+                                <div className={styles.reminderContent}>
+                                    <div className={clsx(styles.reminderTimer, isDue && styles.dueTimer)}>
+                                        {timeLeft || '--:--'}
+                                    </div>
+                                    <div className={styles.reminderMeta}>
+                                        <span className={styles.metaPart}>
+                                            <Clock size={12} />
+                                            {item.metadata?.reminder?.date ? new Date(item.metadata.reminder.date).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : 'No date'}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
 
                             {!isFolder && !isObscured && item.type === 'text' && (item.metadata?.title ? getPlainText(item.content).length > 0 : getPlainText(item.content).length > 50) && (
                                 <div className={styles.bodyPreview}>

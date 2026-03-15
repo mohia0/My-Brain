@@ -418,3 +418,37 @@
         filter: blur(0);
     }
 }
+
+.inboxReminderInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    width: 100%;
+}
+
+.inboxReminderTimer {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.dueTimer {
+    color: var(--accent);
+    animation: flash 2s infinite;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.inboxReminderMeta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

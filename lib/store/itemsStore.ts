@@ -1425,13 +1425,20 @@ export const useItemsStore = create<ItemsState>()(
                             .map((it: any) => it.tags)
                             .filter(Boolean);
 
+                        const incomingMetadata = data.metadata || {};
+                        const cleanMetadata = Object.fromEntries(
+                            Object.entries(incomingMetadata).filter(([_, v]) => v !== null && v !== undefined && v !== '')
+                        );
+
                         set(state => ({
                             items: state.items.map(i => i.id === id ? {
                                 ...i,
                                 ...data,
                                 metadata: {
-                                    ...(data.metadata || {}),
-                                    tags: tags
+                                    ...(i.metadata || {}),
+                                    ...cleanMetadata,
+                                    // Preserve tags if they were already mapped
+                                    tags: tags.length > 0 ? tags : (i.metadata?.tags || [])
                                 },
                                 syncStatus: 'synced'
                             } : i)
@@ -1471,11 +1478,24 @@ export const useItemsStore = create<ItemsState>()(
                         
                         // Smart merge: only update fields that actually have values
                         const currentItem = get().items.find(i => i.id === id);
+                        if (!currentItem) return;
+
                         const cleanData = Object.fromEntries(
                             Object.entries(data).filter(([_, v]) => v !== null && v !== undefined && v !== '')
                         );
                         
                         if (Object.keys(cleanData).length > 0) {
+                            // Instead of just refreshing, we can optimistically merge right here
+                            // to avoid any flicker if refreshItem is slow
+                            set(state => ({
+                                items: state.items.map(i => i.id === id ? {
+                                    ...i,
+                                    metadata: {
+                                        ...(i.metadata || {}),
+                                        ...cleanData
+                                    }
+                                } : i)
+                            }));
                             get().refreshItem(id);
                         }
                     })

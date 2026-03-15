@@ -667,3 +667,48 @@
     width: 14px;
     height: 14px;
 }
+
+/* --- REMINDER STYLES --- */
+.reminderContent {
+    background: rgba(var(--accent-rgb, 110, 86, 207), 0.05);
+    border: 1px solid rgba(var(--accent-rgb, 110, 86, 207), 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 4px 0 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reminderTimer {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+.dueTimer {
+    color: var(--accent);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.reminderMeta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.metaPart {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Item } from '@/types';
-import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2, RefreshCw, AlertCircle, Play, Video, Lock, Unlock, GripVertical } from 'lucide-react';
+import { FileText, Link as LinkIcon, Image as ImageIcon, ArrowRight, Trash2, RefreshCw, AlertCircle, Play, Video, Lock, Unlock, GripVertical, Bell, Clock } from 'lucide-react';
 import styles from './MobileInbox.module.css';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useVaultStore } from '@/components/Vault/VaultAuthModal';
@@ -37,6 +37,45 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
     React.useEffect(() => {
         setLocalItem(item);
     }, [item]);
+
+    // Timer logic for Reminders
+    const [timeLeft, setTimeLeft] = React.useState<string | null>(null);
+    const [isDue, setIsDue] = React.useState(false);
+
+    React.useEffect(() => {
+        if (localItem.type === 'reminder' && localItem.metadata?.reminder?.date) {
+            const updateTimer = () => {
+                const now = new Date();
+                const due = new Date(localItem.metadata!.reminder!.date!);
+                const diff = due.getTime() - now.getTime();
+
+                if (diff <= 0) {
+                    setTimeLeft('DUE');
+                    setIsDue(true);
+                } else {
+                    setIsDue(false);
+                    const seconds = Math.floor(diff / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const hours = Math.floor(minutes / 60);
+
+                    if (hours > 24) {
+                        setTimeLeft(`${Math.floor(hours / 24)}d ${hours % 24}h`);
+                    } else if (hours > 0) {
+                        const mStr = (minutes % 60).toString().padStart(2, '0');
+                        setTimeLeft(`${hours}:${mStr}h`);
+                    } else {
+                        const mStr = minutes.toString().padStart(2, '0');
+                        const sStr = (seconds % 60).toString().padStart(2, '0');
+                        setTimeLeft(`${mStr}:${sStr}`);
+                    }
+                }
+            };
+
+            updateTimer();
+            const timer = setInterval(updateTimer, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [localItem.id, localItem.type, localItem.metadata?.reminder?.date]);
 
     // Auto-enrich stuck items
     React.useEffect(() => {
@@ -223,6 +262,9 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
             onTouchMove={handleTouchMove}
             style={style}
         >
+            <div className={styles.dragHandle}>
+                <GripVertical size={16} />
+            </div>
             <div className={styles.itemMain}>
                 {isVideo ? (
                     <div className={styles.verticalImageLayout}>
@@ -283,7 +325,8 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                 ) : (
                     <div className={styles.simpleLayout}>
                         <div className={styles.iconBox}>
-                            {localItem.type === 'text' && <FileText size={18} />}
+                            {localItem.type === 'text' && (localItem.metadata?.emoji ? <span style={{fontSize: '20px'}}>{localItem.metadata.emoji}</span> : <FileText size={18} />)}
+                            {localItem.type === 'reminder' && (localItem.metadata?.emoji ? <span style={{fontSize: '20px'}}>{localItem.metadata.emoji}</span> : <Bell size={18} />)}
                             {localItem.type === 'link' && <LinkIcon size={18} />}
                             {localItem.type === 'image' && <ImageIcon size={18} />}
                             {localItem.type === 'video' && <Video size={18} />}
@@ -294,6 +337,17 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                                 <SyncIndicator />
                             </div>
                             <div className={styles.subRow}>
+                                {localItem.type === 'reminder' && (
+                                    <div className={styles.inboxReminderInfo}>
+                                        <div className={clsx(styles.inboxReminderTimer, isDue && styles.dueTimer)}>
+                                            {timeLeft || '--:--'}
+                                        </div>
+                                        <div className={styles.inboxReminderMeta}>
+                                            <Clock size={10} />
+                                            {localItem.metadata?.reminder?.date ? new Date(localItem.metadata.reminder.date).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : 'No date'}
+                                        </div>
+                                    </div>
+                                )}
                                 {localItem.type === 'link' && (localItem.metadata?.siteName || hostname(localItem.content)) ? (
                                     <div className={styles.faviconRow}>
                                         <img

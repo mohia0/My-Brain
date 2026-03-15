@@ -607,10 +607,10 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <Clock size={12} />
-                                {rData?.date ? new Date(rData.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'No date'}
+                                {rData?.date ? new Date(rData.date).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : 'No date'}
                             </span>
                             <span style={{ margin: '0 2px', opacity: 0.5 }}>•</span>
-                            <span style={{ textTransform: 'capitalize' }}>{rData?.type === 'both' ? 'Push & Email' : rData?.type}</span>
+                            <span style={{ textTransform: 'capitalize' }}>{(!rData?.recurrence || rData?.recurrence === 'none') ? 'One-time' : rData.recurrence}</span>
                         </div>
                     </div>
 

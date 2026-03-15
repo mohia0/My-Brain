@@ -488,7 +488,7 @@ export default function MobileCard({
                             {isFolder ? null : (
                                 <div className={styles.metaRow}>
                                     <span className={styles.sub}>
-                                        {isVideo ? 'Video' : (item.type === 'link' ? (hostname(item.content) || 'Link') : (item.type === 'image' ? 'Image' : 'Idea'))}
+                                        {isVideo ? 'Video' : (item.type === 'link' ? (hostname(item.content) || 'Link') : (item.type === 'image' ? 'Image' : (item.type === 'reminder' ? (item.metadata?.reminder?.recurrence === 'none' || !item.metadata?.reminder?.recurrence ? 'One-time' : item.metadata.reminder.recurrence) : 'Idea')))}
                                     </span>
                                     <span className={styles.dot}>•</span>
                                     <span className={styles.time}>{getRelativeTime(item.created_at)}</span>

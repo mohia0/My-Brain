@@ -15,6 +15,7 @@ import FolderModal from '@/components/FolderModal/FolderModal';
 import InputModal from '@/components/InputModal/InputModal';
 import MobileSelectionBar from './MobileSelectionBar';
 import VaultAuthModal, { useVaultStore } from '@/components/Vault/VaultAuthModal';
+import ReminderModal from '@/components/ReminderModal/ReminderModal';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { supabase } from '@/lib/supabase';
 import { Capacitor } from '@capacitor/core';
@@ -44,11 +45,12 @@ export default function MobilePageContent({ session }: { session: any }) {
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
     const [inputModalConfig, setInputModalConfig] = useState<{
         isOpen: boolean;
-        type: 'text' | 'link' | 'image' | 'camera' | 'folder' | null;
+        type: 'text' | 'link' | 'image' | 'camera' | 'folder' | 'reminder' | null;
         placeholder: string;
         title: string;
         mode: 'text' | 'file' | 'camera';
     }>({ isOpen: false, type: null, placeholder: '', title: '', mode: 'text' });
+    const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
 
     // History and Navigation
     const [isNavigating, setIsNavigating] = useState(false);
@@ -497,7 +499,7 @@ export default function MobilePageContent({ session }: { session: any }) {
     };
 
 
-    const handleAddClick = (type: 'text' | 'link' | 'image' | 'folder' | 'camera') => {
+    const handleAddClick = (type: 'text' | 'link' | 'image' | 'folder' | 'camera' | 'reminder') => {
         setInputModalConfig({
             isOpen: true,
             type,
@@ -507,6 +509,10 @@ export default function MobilePageContent({ session }: { session: any }) {
             placeholder: type === 'folder' ? 'Folder Name' : type === 'text' ? 'Note Title' : 'example.com',
             mode: type === 'camera' ? 'camera' : (type === 'image' ? 'file' : 'text')
         });
+    };
+
+    const handleReminderAddClick = () => {
+        setIsReminderModalOpen(true);
     };
 
     const handleAddSubmit = async (value: string) => {
@@ -645,7 +651,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 <MobileNav
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
-                    onAdd={handleAddClick}
+                    onAdd={(type) => type === 'reminder' ? handleReminderAddClick() : handleAddClick(type)}
                 />
             )}
 
@@ -713,6 +719,33 @@ export default function MobilePageContent({ session }: { session: any }) {
                 title={inputModalConfig.title}
                 placeholder={inputModalConfig.placeholder}
                 mode={inputModalConfig.mode}
+            />
+            <ReminderModal
+                isOpen={isReminderModalOpen}
+                onClose={() => setIsReminderModalOpen(false)}
+                onSubmit={async (data) => {
+                    const id = generateId();
+                    const userId = sessionRef.current?.user?.id || 'unknown';
+                    await addItem({
+                        id,
+                        user_id: userId,
+                        type: 'reminder',
+                        content: data.name,
+                        status: activeTab === 'inbox' ? 'inbox' : 'active',
+                        position_x: 0,
+                        position_y: 0,
+                        created_at: new Date().toISOString(),
+                        metadata: {
+                            reminder: {
+                                name: data.name,
+                                date: data.date,
+                                type: data.type,
+                                recurrence: data.recurrence
+                            },
+                            emoji: data.emoji
+                        }
+                    });
+                }}
             />
 
             {isSharing && (

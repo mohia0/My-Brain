@@ -11,7 +11,7 @@ import MobileAddButton from './MobileAddButton';
 interface MobileNavProps {
     activeTab: 'home' | 'inbox' | 'archive';
     onTabChange: (tab: 'home' | 'inbox' | 'archive') => void;
-    onAdd: (type: 'text' | 'link' | 'image' | 'folder' | 'camera') => void;
+    onAdd: (type: 'text' | 'link' | 'image' | 'folder' | 'camera' | 'reminder') => void;
 }
 
 export default function MobileNav({ activeTab, onTabChange, onAdd }: MobileNavProps) {

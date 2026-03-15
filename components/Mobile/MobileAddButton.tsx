@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Plus, Type, Link, Image as ImageIcon, Camera, FolderPlus, X } from 'lucide-react';
+import { Plus, Type, Link, Image as ImageIcon, Camera, FolderPlus, Bell, X } from 'lucide-react';
 import styles from './MobileAddButton.module.css';
 import clsx from 'clsx';
 
 interface MobileAddButtonProps {
-    onAdd: (type: 'text' | 'link' | 'image' | 'camera' | 'folder') => void;
+    onAdd: (type: 'text' | 'link' | 'image' | 'camera' | 'folder' | 'reminder') => void;
 }
 
 export default function MobileAddButton({ onAdd }: MobileAddButtonProps) {
     const [isOpen, setIsOpen] = useState(false);
 
-    const handleAction = (type: 'text' | 'link' | 'image' | 'camera' | 'folder') => {
+    const handleAction = (type: 'text' | 'link' | 'image' | 'camera' | 'folder' | 'reminder') => {
         onAdd(type);
         setIsOpen(false);
     };
@@ -23,6 +23,9 @@ export default function MobileAddButton({ onAdd }: MobileAddButtonProps) {
                 <div className={styles.options}>
                     <button className={styles.optionBtn} onClick={() => handleAction('folder')} data-tooltip="Folder" data-tooltip-pos="top">
                         <FolderPlus size={20} />
+                    </button>
+                    <button className={styles.optionBtn} onClick={() => handleAction('reminder')} data-tooltip="Reminder" data-tooltip-pos="top">
+                        <Bell size={20} />
                     </button>
                     <button className={styles.optionBtn} onClick={() => handleAction('image')} data-tooltip="Gallery" data-tooltip-pos="top">
                         <ImageIcon size={20} />

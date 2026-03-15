@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { generateId, getApiUrl } from '@/lib/utils';
+import { scheduleReminderNotification, cancelReminderNotification } from '@/lib/notifications';
 import { Item, Folder, Tag } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { useCanvasStore } from './canvasStore';
@@ -421,6 +422,11 @@ export const useItemsStore = create<ItemsState>()(
                         set(state => ({
                             items: state.items.map(i => i.id === finalItem.id ? { ...i, user_id: finalUserId, syncStatus: 'synced' } : i)
                         }));
+
+                        // Schedule notification if it's a reminder
+                        if (finalItem.type === 'reminder') {
+                            scheduleReminderNotification(finalItem);
+                        }
                     }
                 } else {
                     console.error('[Store] Cannot persist item: user_id is missing');
@@ -721,6 +727,18 @@ export const useItemsStore = create<ItemsState>()(
                 set(state => ({
                     items: state.items.map(i => i.id === id ? { ...i, syncStatus: error ? 'error' : 'synced' } : i)
                 }));
+
+                // Handle notification rescheduling/cancellation
+                const updatedItem = get().items.find(i => i.id === id);
+                if (updatedItem) {
+                    if (updatedItem.type === 'reminder') {
+                        if (updatedItem.status === 'active' || updatedItem.status === 'inbox') {
+                            scheduleReminderNotification(updatedItem);
+                        } else {
+                            cancelReminderNotification(id);
+                        }
+                    }
+                }
             },
 
             toggleVaultItem: async (id) => {
@@ -973,6 +991,12 @@ export const useItemsStore = create<ItemsState>()(
                         future: []
                     }
                 }));
+
+                // Cancel notification
+                if (item.type === 'reminder') {
+                    cancelReminderNotification(id);
+                }
+
                 await supabase.from('items').delete().eq('id', id);
             },
 

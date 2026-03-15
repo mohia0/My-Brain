@@ -360,7 +360,9 @@ export default function MobileCard({
             style={{
                 ...style,
                 zIndex: isReordering ? 10 : 1,
-                '--folder-color': isFolder && (item as any).color ? (item as any).color : undefined
+                '--folder-color': isFolder && (item as any).color ? (item as any).color : undefined,
+                background: isDue ? 'rgba(var(--accent-rgb, 110, 86, 207), 0.05)' : undefined,
+                borderColor: isDue ? 'var(--accent)' : undefined
             } as any}
         >
             {isReordering && isSelected && (

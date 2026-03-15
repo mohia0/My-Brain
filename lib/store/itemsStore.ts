@@ -1446,9 +1446,11 @@ export const useItemsStore = create<ItemsState>()(
                 const item = get().items.find(i => i.id === id);
                 if (!item || item.type !== 'link') return;
 
-                // Don't re-enrich if it already has a title, unless forced or if it's a raw local capture
-                const isLocallyCapturedRaw = item.metadata?.source === 'mobile-share' || item.metadata?.source === 'mobile-add';
-                if (item.metadata?.title && !force && !item.metadata?.title.includes('Capturing') && !isLocallyCapturedRaw) return;
+                // Don't re-enrich if it already has a "real" title, unless forced.
+                // Mobile captures sometimes come in as generic "Capturing...", so we still want to enrich those
+                // if they are truly missing data, but ONLY if we haven't already fetched a real title.
+                const isGenericTitle = !item.metadata?.title || item.metadata.title.includes('Capturing');
+                if (!isGenericTitle && !force) return;
 
                 const userId = item.user_id;
                 const url = item.content;

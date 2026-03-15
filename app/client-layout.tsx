@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useReminders } from "@/lib/hooks/useReminders";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
+    useReminders();
+
     useEffect(() => {
         // Prevent default context menu globally
         const handleContextMenu = (e: MouseEvent) => {

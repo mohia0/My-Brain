@@ -421,6 +421,7 @@ export default function MobilePageContent({ session }: { session: any }) {
                 fetch(metadataUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
                     body: JSON.stringify({ url: finalUrl, itemId, userId, skipCapture: true })
                 })
                     .then(async res => {
@@ -442,27 +443,26 @@ export default function MobilePageContent({ session }: { session: any }) {
                         });
                     });
 
-                // 2. Screenshot Fetch (Delayed)
-                setTimeout(() => {
-                    console.log(`[MobileShare] Triggering Screenshot: ${screenshotUrl}`);
-                    fetch(screenshotUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: finalUrl, itemId, userId })
+                // 2. Screenshot Fetch (fire immediately so OS doesn't sleep the request, use keepalive)
+                console.log(`[MobileShare] Triggering Screenshot: ${screenshotUrl}`);
+                fetch(screenshotUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
+                    body: JSON.stringify({ url: finalUrl, itemId, userId })
+                })
+                    .then(async res => {
+                        if (!res.ok) throw new Error(`Screenshot HTTP ${res.status}`);
+                        return res.json();
                     })
-                        .then(async res => {
-                            if (!res.ok) throw new Error(`Screenshot HTTP ${res.status}`);
-                            return res.json();
-                        })
-                        .then(data => {
-                            if (data.metadata) {
-                                console.log('[MobileShare] Screenshot Success:', data.metadata);
-                                // Fetch latest merged data back from DB to avoid race conditions
-                                useItemsStore.getState().refreshItem(itemId);
-                            }
-                        })
-                        .catch(e => console.error("[MobileShare] Screenshot failed:", e));
-                }, 1500);
+                    .then(data => {
+                        if (data.metadata) {
+                            console.log('[MobileShare] Screenshot Success:', data.metadata);
+                            // Fetch latest merged data back from DB to avoid race conditions
+                            useItemsStore.getState().refreshItem(itemId);
+                        }
+                    })
+                    .catch(e => console.error("[MobileShare] Screenshot failed:", e));
             }
 
             setShareState('saved');

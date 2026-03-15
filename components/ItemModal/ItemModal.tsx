@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './ItemModal.module.css';
 import { Item, Tag } from '@/types';
 import { useItemsStore } from '@/lib/store/itemsStore';
-import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile, PanelRightClose, PanelRightOpen, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { X, Save, Trash2, Plus, ExternalLink, Image as ImageIcon, Link, Copy, Check, Archive, Maximize2, Sparkles, Smile, PanelRightClose, PanelRightOpen, ChevronDown, ChevronUp, ArrowLeft, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import clsx from 'clsx';
@@ -59,6 +59,7 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
     });
     const [isInitialized, setIsInitialized] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
+    const [isRefreshingMetadata, setIsRefreshingMetadata] = useState(false);
 
     // Initialize layout setup delay to prevent edge-case animation pops
     useEffect(() => {
@@ -70,6 +71,18 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
     const handleClose = () => {
         setIsClosing(true);
         setTimeout(() => onClose(), 200); // Wait for the 0.2s animation to finish
+    };
+
+    const handleRefreshMetadata = async () => {
+        if (!item || item.type !== 'link' || isRefreshingMetadata) return;
+        setIsRefreshingMetadata(true);
+        try {
+            await useItemsStore.getState().enrichItem(item.id, true);
+        } catch (error) {
+            console.error("Failed to refresh metadata:", error);
+        } finally {
+            setTimeout(() => setIsRefreshingMetadata(false), 2000);
+        }
     };
 
     const toggleSidebar = (e: React.MouseEvent) => {
@@ -684,7 +697,6 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
                                 {item.metadata?.author && <div className={styles.authorBadge}>by {item.metadata.author}</div>}
                             </div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-
                                 <button className={styles.closeBtn} onClick={handleClose}><X size={20} /></button>
                             </div>
                         </div>
@@ -738,7 +750,17 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
                                 <div className={styles.section}>
                                     <div className={styles.labelRow}>
                                         <span className={styles.label}>Source</span>
-                                        <button className={styles.copyBtn} onClick={handleCopy}>{copied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}</button>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button 
+                                                className={styles.copyBtn} 
+                                                onClick={handleRefreshMetadata}
+                                                data-tooltip={"Refresh Data"}
+                                                data-tooltip-pos="left"
+                                            >
+                                                <RefreshCw size={14} className={clsx(isRefreshingMetadata && styles.spin)} />
+                                            </button>
+                                            <button className={styles.copyBtn} onClick={handleCopy}>{copied ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}</button>
+                                        </div>
                                     </div>
                                     <div className={styles.linkInputWrapper}>
                                         <Link size={16} className={styles.inputIcon} />

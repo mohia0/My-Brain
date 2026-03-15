@@ -7,6 +7,7 @@ import Inbox from "@/components/Inbox/Inbox";
 import DragWrapper from "@/components/DragWrapper";
 import ItemCard from "@/components/Grid/ItemCard";
 import ItemModal from "@/components/ItemModal/ItemModal";
+import ReminderItemModal from "@/components/ReminderItemModal/ReminderItemModal";
 import { useItemsStore } from "@/lib/store/itemsStore";
 import { useState, useEffect, useRef } from "react";
 import clsx from 'clsx';
@@ -652,21 +653,38 @@ export default function Home() {
                     />
                   )}
                   {selectedItemId && (
-                    <ItemModal
-                      itemId={selectedItemId}
-                      onClose={() => {
-                        setSelectedItemId(null);
-                        setModalHistory([]);
-                        clearSelection();
-                      }}
-                      hasBackHistory={modalHistory.length > 0}
-                      onBack={() => {
-                        const prev = [...modalHistory];
-                        const last = prev.pop();
-                        setModalHistory(prev);
-                        setSelectedItemId(last || null);
-                      }}
-                    />
+                    (() => {
+                      const activeItem = items.find(i => i.id === selectedItemId);
+                      if (activeItem?.type === 'reminder') {
+                        return (
+                          <ReminderItemModal
+                            itemId={selectedItemId}
+                            onClose={() => {
+                              setSelectedItemId(null);
+                              setModalHistory([]);
+                              clearSelection();
+                            }}
+                          />
+                        );
+                      }
+                      return (
+                        <ItemModal
+                          itemId={selectedItemId}
+                          onClose={() => {
+                            setSelectedItemId(null);
+                            setModalHistory([]);
+                            clearSelection();
+                          }}
+                          hasBackHistory={modalHistory.length > 0}
+                          onBack={() => {
+                            const prev = [...modalHistory];
+                            const last = prev.pop();
+                            setModalHistory(prev);
+                            setSelectedItemId(last || null);
+                          }}
+                        />
+                      );
+                    })()
                   )}
                 </main>
               )}

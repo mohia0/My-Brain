@@ -3,9 +3,10 @@ import { useCanvasStore } from '@/lib/store/canvasStore';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { generateId, getApiUrl } from '@/lib/utils';
 import styles from './Toolbar.module.css';
-import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame, DoorClosed } from 'lucide-react';
+import { MousePointer2, Hand, Plus, FolderPlus, Image as ImageIcon, Link, FileText, Undo, Redo, Frame, DoorClosed, Bell } from 'lucide-react';
 import clsx from 'clsx';
 import InputModal from '@/components/InputModal/InputModal';
+import ReminderModal from '@/components/ReminderModal/ReminderModal';
 import { extractTagsFromText } from '@/lib/services/taggingService';
 
 export default function Toolbar() {
@@ -27,6 +28,43 @@ export default function Toolbar() {
         placeholder: '',
         mode: 'text'
     });
+
+    const [isReminderOpen, setIsReminderOpen] = useState(false);
+
+    const handleReminderSubmit = (data: { name: string; date: string; type: 'push' | 'email' | 'both' }) => {
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+        const cx = ((viewportW / 2) - position.x) / scale;
+        const cy = ((viewportH / 2) - position.y) / scale;
+
+        const w = 280;
+        const h = 180;
+        const finalX = cx - w / 2;
+        const finalY = cy - h / 2;
+
+        const id = generateId();
+        const currentRoomId = useItemsStore.getState().currentRoomId;
+
+        addItem({
+            id,
+            user_id: 'unknown',
+            type: 'reminder' as any,
+            content: '',
+            position_x: finalX,
+            position_y: finalY,
+            created_at: new Date().toISOString(),
+            status: 'active',
+            room_id: currentRoomId,
+            metadata: {
+                title: data.name,
+                reminder: {
+                    date: data.date,
+                    type: data.type,
+                    notified: false
+                }
+            }
+        });
+    };
 
     const toggleAddMenu = () => {
         setIsAddOpen(!isAddOpen);
@@ -211,6 +249,9 @@ export default function Toolbar() {
                         <button className={styles.addOption} onClick={() => { setIsAddOpen(false); setTool('area'); }} data-tooltip="Project Area" data-tooltip-pos="top">
                             <Frame size={16} />
                         </button>
+                        <button className={styles.addOption} onClick={() => { setIsAddOpen(false); setIsReminderOpen(true); }} data-tooltip="Reminder" data-tooltip-pos="top">
+                            <Bell size={16} />
+                        </button>
                         <button className={styles.addOption} onClick={() => handleAddItemClick('image')} data-tooltip="Image" data-tooltip-pos="top">
                             <ImageIcon size={16} />
                         </button>
@@ -242,6 +283,12 @@ export default function Toolbar() {
                 title={modalConfig.title}
                 placeholder={modalConfig.placeholder}
                 mode={modalConfig.mode}
+            />
+
+            <ReminderModal
+                isOpen={isReminderOpen}
+                onClose={() => setIsReminderOpen(false)}
+                onSubmit={handleReminderSubmit}
             />
         </>
     );

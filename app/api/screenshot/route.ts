@@ -176,20 +176,22 @@ export async function POST(req: NextRequest) {
         const currentMetadata = latestItem?.metadata || item.metadata || {};
 
         // Final Title Cleanup: if title is just a URL or placeholder, fix it
-        let cleanTitle = pageTitle || currentMetadata.title;
-        
-        const isPlaceholder = !cleanTitle ||
-            /capturing|shared link|sharedlink/i.test(cleanTitle.toLowerCase());
-            
-        const isUrlTitle = cleanTitle && /((https?:\/\/)|(www\.))[^\s]+/i.test(cleanTitle);
-        
-        // SOCIAL ONLY filter: Only replace with domain if it's a social media site and title is generic
-        const isSocialGeneric = isSocial && cleanTitle && /Instagram|TikTok|Facebook|Twitter|X\.com|YouTube/i.test(cleanTitle);
+        const isBadTitle = (t: string) => !t || /capturing|shared link|sharedlink/i.test(t.toLowerCase()) || (/((https?:\/\/)|(www\.))[^\s]+/i.test(t));
+        const isGenericPlatform = (t: string) => isSocial && t && /Instagram|TikTok|Facebook|Twitter|X\.com|YouTube/i.test(t);
 
-        if (isPlaceholder || isUrlTitle || isSocialGeneric) {
+        let cleanTitle = currentMetadata.title;
+        
+        // If the newly fetched pageTitle is good, and our current one is missing/bad OR if the current one is also just a generic platform name, we can use the new one.
+        if (pageTitle && !isBadTitle(pageTitle) && !isGenericPlatform(pageTitle)) {
+            if (!cleanTitle || isBadTitle(cleanTitle) || isGenericPlatform(cleanTitle)) {
+                cleanTitle = pageTitle;
+            }
+        }
+        
+        // Fallback: If we still have a bad or missing title, use the domain name
+        if (!cleanTitle || isBadTitle(cleanTitle) || isGenericPlatform(cleanTitle)) {
             try {
                 const domain = new URL(url).hostname.replace('www.', '');
-                // Only override if the current title is TRULY bad or if it's a social platform generic
                 cleanTitle = domain.charAt(0).toUpperCase() + domain.slice(1).split('.')[0];
             } catch (e) {
                 cleanTitle = cleanTitle || "Captured Link";

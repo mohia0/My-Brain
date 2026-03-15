@@ -37,6 +37,21 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
         return () => window.removeEventListener('resize', checkOverflow);
     }, [item.metadata?.title, item.content]);
 
+    const hasAttemptedAutoFetch = React.useRef(false);
+
+    React.useEffect(() => {
+        if (!item || item.type !== 'link' || hasAttemptedAutoFetch.current) return;
+        
+        const isMissingMeta = !item.metadata?.title || item.metadata.title.includes('Capturing') || !item.metadata?.image;
+        if (isMissingMeta) {
+            hasAttemptedAutoFetch.current = true;
+            // Delay slightly so we don't bombard immediately on load
+            setTimeout(() => {
+                useItemsStore.getState().enrichItem(item.id, false).catch(console.error);
+            }, 1000 + Math.random() * 2000);
+        }
+    }, [item]);
+
     // If it's being dragged in the Inbox list, we hide it (visuals move to Overlay)
     // If it's the Overlay itself, we show it fully opaque
     const opacity = isDragging && !isOverlay ? 0.3 : 1;
@@ -89,15 +104,9 @@ export default function InboxItem({ item, isOverlay, onClick }: InboxItemProps) 
     const isSelected = selectedIds.includes(item.id);
 
     const handleClick = (e: React.MouseEvent) => {
-        const { isSelectionMode, toggleSelection, selectItem } = useItemsStore.getState();
-        if (e.ctrlKey || e.metaKey || e.shiftKey || isSelectionMode) {
-            e.stopPropagation();
-            toggleSelection(item.id);
-        } else {
-            // Normal click opens the modal via the parent trigger, but let's also select
-            selectItem(item.id);
-            onClick?.();
-        }
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent('openItem', { detail: { id: item.id } }));
+        onClick?.();
     };
 
     const [imageError, setImageError] = React.useState(false);

@@ -22,8 +22,21 @@ export default function Inbox({ onItemClick }: InboxProps) {
         e.stopPropagation();
         if (isRefreshing) return;
         setIsRefreshing(true);
+        
+        // 1. Normal sync with DB
         await fetchData();
-        setTimeout(() => setIsRefreshing(false), 600);
+        
+        // 2. Also try enriching captured links that missed their metadata
+        const linksToEnrich = useItemsStore.getState().items.filter(i => 
+            i.status === 'inbox' && 
+            i.type === 'link' && 
+            (!i.metadata?.title || i.metadata.title.includes('Capturing') || !i.metadata?.image)
+        );
+        for (const link of linksToEnrich) {
+            useItemsStore.getState().enrichItem(link.id, true).catch(console.error);
+        }
+
+        setTimeout(() => setIsRefreshing(false), 1000); // give it a bit longer to show the spin
     };
 
     const { setNodeRef, isOver } = useDroppable({

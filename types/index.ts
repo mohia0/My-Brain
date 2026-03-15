@@ -1,4 +1,4 @@
-export type ItemType = 'text' | 'image' | 'link' | 'video' | 'file' | 'project' | 'room';
+export type ItemType = 'text' | 'image' | 'link' | 'video' | 'file' | 'project' | 'room' | 'reminder';
 
 export interface Item {
     id: string;

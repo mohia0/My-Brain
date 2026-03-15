@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 import styles from './ItemCard.module.css';
 import { Item } from '@/types';
-import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorClosed, ArrowRight, Unlock, Edit3, Check, ExternalLink } from 'lucide-react';
+import { FileText, Link, Image as ImageIcon, Copy, Trash2, Archive, Video, Play, Lock as LockIcon, DoorClosed, ArrowRight, Unlock, Edit3, Check, ExternalLink, Bell, Clock } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useCanvasStore } from '@/lib/store/canvasStore';
@@ -60,6 +60,8 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
     const [localItem, setLocalItem] = React.useState(item);
     const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
     const [editorTheme, setEditorTheme] = React.useState<'light' | 'dark' | 'auto'>('auto');
+    const [timeLeft, setTimeLeft] = React.useState('');
+    const [isDue, setIsDue] = React.useState(false);
     const pollTimer = React.useRef<any>(null);
     const { isVaultLocked, setModalOpen, hasPassword, lock, unlockedIds, lockItem } = useVaultStore();
     const { toggleVaultItem, duplicateItem, removeItem, archiveItem, vaultedItemsRevealed, reLockVaulted } = useItemsStore();
@@ -109,6 +111,41 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
 
         return () => { if (pollTimer.current) clearInterval(pollTimer.current); };
     }, [localItem.id, localItem.type, localItem.metadata?.image, localItem.metadata?.title]);
+
+    // Timer logic for Reminders
+    React.useEffect(() => {
+        if (localItem.type === 'reminder' && localItem.metadata?.reminder?.date) {
+            const updateTimer = () => {
+                const now = new Date();
+                const due = new Date(localItem.metadata.reminder.date);
+                const diff = due.getTime() - now.getTime();
+                
+                if (diff <= 0) {
+                    setIsDue(true);
+                    setTimeLeft('Due');
+                } else {
+                    setIsDue(false);
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    if (hours > 24) {
+                        setTimeLeft(`${Math.floor(hours/24)}d ${hours%24}h`);
+                    } else if (hours > 0) {
+                        const mStr = minutes.toString().padStart(2, '0');
+                        setTimeLeft(`${hours}:${mStr}h`);
+                    } else {
+                        const mStr = minutes.toString().padStart(2, '0');
+                        const sStr = seconds.toString().padStart(2, '0');
+                        setTimeLeft(`${mStr}:${sStr}`);
+                    }
+                }
+            };
+            
+            updateTimer();
+            const timer = setInterval(updateTimer, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [localItem.type, localItem.metadata?.reminder?.date]);
 
     const isVideo = localItem.type === 'video' || localItem.metadata?.isVideo;
     const isCapture = localItem.type === 'link' && localItem.metadata?.image;
@@ -510,6 +547,79 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                             </span>
                             <SyncIndicator />
                         </div>
+                    </div>
+                </div>
+                {isObscured && (
+                    <button
+                        className={styles.revealButton}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalOpen(true, localItem.id);
+                        }}
+                    >
+                        <Unlock size={14} /> UNLOCK
+                    </button>
+                )}
+                {!isObscured && renderActions()}
+            </div>
+        );
+    }
+
+    // Reminder Card
+    if (localItem.type === 'reminder') {
+        const rData = localItem.metadata?.reminder;
+        return (
+             <div
+                id={`draggable-item-${localItem.id}`}
+                ref={ref}
+                className={clsx(baseClassName, isEditingTitle && styles.isEditing)}
+                style={finalStyle}
+                {...listeners} {...attributes}
+                onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
+                onClick={onClick}
+                onContextMenu={isObscured ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
+            >
+                <div className={styles.innerCard} style={{ background: isDue ? 'rgba(var(--accent-rgb), 0.05)' : undefined, border: isDue ? '1px solid var(--accent)' : undefined }}>
+                    <div className={styles.header}>
+                        <Bell size={16} />
+                        <span className={styles.title} onDoubleClick={(e) => { e.stopPropagation(); setIsEditingTitle(true); }}>
+                            {isEditingTitle ? (
+                                <form onSubmit={handleTitleSave} onClick={e => e.stopPropagation()} className="w-full">
+                                    <input
+                                        autoFocus
+                                        className={styles.renameInput}
+                                        style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', width: '100%', padding: 0 }}
+                                        value={tempTitle}
+                                        onChange={e => setTempTitle(e.target.value)}
+                                        onBlur={() => handleTitleSave()}
+                                    />
+                                </form>
+                            ) : (
+                                localItem.metadata?.title || 'Reminder'
+                            )}
+                        </span>
+                    </div>
+
+                    <div className={styles.content}>
+                        <div style={{ fontSize: '24px', fontWeight: 700, color: isDue ? 'var(--accent)' : 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', margin: '4px 0 8px 0', letterSpacing: '-0.02em' }}>
+                            {timeLeft || '--:--'}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Clock size={12} />
+                                {rData?.date ? new Date(rData.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'No date'}
+                            </span>
+                            <span style={{ margin: '0 2px', opacity: 0.5 }}>•</span>
+                            <span style={{ textTransform: 'capitalize' }}>{rData?.type === 'both' ? 'Push & Email' : rData?.type}</span>
+                        </div>
+                    </div>
+
+                    <div className={styles.captureFooter} style={{ padding: '8px 12px' }}>
+                        <span className={styles.cardDate}>
+                            {localItem.updated_at && localItem.updated_at !== localItem.created_at ? 'Edited ' : 'Created '}
+                            {new Date(localItem.updated_at || localItem.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        <SyncIndicator />
                     </div>
                 </div>
                 {isObscured && (

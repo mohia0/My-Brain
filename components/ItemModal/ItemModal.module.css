@@ -345,10 +345,16 @@
     padding: 1px;
 }
 
-.replaceImageBtn {
+.imageActions {
     position: absolute;
     top: 12px;
     right: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 1000;
+}
+
+.replaceImageBtn {
     width: 32px;
     height: 32px;
     border-radius: 8px;
@@ -360,7 +366,6 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 1000;
     transition: all 0.2s ease;
 }
 
@@ -380,10 +385,13 @@
 }
 
 @media (max-width: 768px) {
-    .replaceImageBtn {
+    .imageActions {
         top: auto !important;
         bottom: 16px !important;
         right: 16px !important;
+    }
+
+    .replaceImageBtn {
         width: 44px !important;
         height: 44px !important;
         padding: 0 !important;

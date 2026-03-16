@@ -7,8 +7,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     useReminders();
 
     useEffect(() => {
-        // Prevent default context menu globally
+        // Prevent default context menu globally except for text inputs
         const handleContextMenu = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return; // Allow default context menu
+            }
             e.preventDefault();
         };
 

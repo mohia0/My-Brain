@@ -620,15 +620,79 @@ export default function ItemModal({ itemId, onClose, onBack, hasBackHistory }: I
                                 </div>
                             </div>
                         ) : (
-                            <div className={styles.visualContainer}>
+                            <div 
+                                className={styles.visualContainer}
+                                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    const file = e.dataTransfer.files?.[0];
+                                    if (file && file.type.startsWith('image/')) {
+                                        const reader = new FileReader();
+                                        reader.onload = (re) => {
+                                            const result = re.target?.result as string;
+                                            if (isLink) updateItemContent(item.id, { metadata: { ...item.metadata, image: result } });
+                                            else { updateItemContent(item.id, { content: result }); setContent(result); }
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }
+                                }}
+                            >
                                 {item.type !== 'video' && !item.metadata?.isVideo && (
-                                    <>
+                                    <div className={styles.imageActions}>
                                         <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageReplace} />
                                         <button className={styles.replaceImageBtn} onClick={() => fileInputRef.current?.click()}>
                                             <ImageIcon size={18} />
                                             <span>Replace Image</span>
                                         </button>
-                                    </>
+                                        <button 
+                                            className={styles.replaceImageBtn} 
+                                            onClick={async () => {
+                                                try {
+                                                    const imgUrl = isLink ? screenshotUrl : content;
+                                                    if (!imgUrl) return;
+                                                    
+                                                    // Handle data URLs and external URLs
+                                                    const res = await fetch(imgUrl);
+                                                    const blob = await res.blob();
+                                                    
+                                                    let clipboardBlob = blob;
+                                                    if (blob.type !== 'image/png') {
+                                                        clipboardBlob = await new Promise<Blob>((resolve, reject) => {
+                                                            const img = new window.Image();
+                                                            img.onload = () => {
+                                                                const canvas = document.createElement('canvas');
+                                                                canvas.width = img.width;
+                                                                canvas.height = img.height;
+                                                                const ctx = canvas.getContext('2d');
+                                                                ctx?.drawImage(img, 0, 0);
+                                                                canvas.toBlob((b) => {
+                                                                    if (b) resolve(b);
+                                                                    else reject(new Error('Canvas to Blob failed'));
+                                                                }, 'image/png');
+                                                            };
+                                                            img.onerror = reject;
+                                                            img.src = URL.createObjectURL(blob);
+                                                        });
+                                                    }
+                                                    
+                                                    await navigator.clipboard.write([
+                                                        new ClipboardItem({ 'image/png': clipboardBlob })
+                                                    ]);
+                                                    
+                                                    toast.success("Image copied to clipboard");
+                                                } catch(err: any) {
+                                                    console.error(err);
+                                                    toast.error("Failed to copy image: " + (err.message || "It might be blocked by CORS"));
+                                                }
+                                            }}
+                                            data-tooltip="Copy Image"
+                                            data-tooltip-pos="left"
+                                        >
+                                            <Copy size={18} />
+                                            <span>Copy Image</span>
+                                        </button>
+                                    </div>
                                 )}
 
                                 {isLink ? (

@@ -648,14 +648,11 @@ export const ItemCardView = forwardRef<HTMLDivElement, ItemCardViewProps>(({
                 style={finalStyle}
                 {...listeners}
                 {...attributes}
+                onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e); }}
                 onContextMenu={isObscured ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
             >
                 <div
                     className={styles.portalCard}
-                    onPointerDown={e => {
-                        e.stopPropagation();
-                        e.nativeEvent.stopImmediatePropagation();
-                    }}
                     onClick={(e) => {
                         e.stopPropagation();
                         // If it's locked (obscured), do NOTHING on the card click itself.

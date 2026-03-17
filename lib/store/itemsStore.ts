@@ -187,6 +187,8 @@ interface ItemsState {
     getSafePosition: (id: string, targetX: number, targetY: number, itemOrFolder: Partial<Item> | Folder, items: Item[], folders: Folder[], currentRoomId?: string | null) => { x: number, y: number };
     enrichItem: (id: string, force?: boolean) => Promise<void>;
     reorderInboxItems: (itemIds: string[]) => Promise<void>;
+    layoutAllItems: () => void;
+    layoutSelectedItems: () => void;
     hasLoadedOnce: boolean;
     session: any | null;
     setSession: (session: any | null) => void;
@@ -1503,6 +1505,90 @@ export const useItemsStore = create<ItemsState>()(
             },
             getSafePosition: (id, targetX, targetY, itemOrFolder, items, folders, currentRoomId) => {
                 return getSafePosition(id, targetX, targetY, itemOrFolder, items, folders, currentRoomId);
+            },
+
+            layoutAllItems: () => {
+                const state = get();
+                // Items on the active room canvas (root or specific room) that are NOT in folders
+                const activeItems = state.items.filter(i => i.status === 'active' && i.room_id === (state.currentRoomId || null) && !i.folder_id);
+                const activeFolders = state.folders.filter(f => f.status === 'active' && f.room_id === (state.currentRoomId || null) && !f.parent_id);
+
+                const all = [
+                    ...activeItems.map(i => ({ id: i.id, type: 'item' as const, position_x: i.position_x, position_y: i.position_y, status: i.status, metadata: i.metadata })),
+                    ...activeFolders.map(f => ({ id: f.id, type: 'folder' as const, position_x: f.position_x, position_y: f.position_y, status: f.status, name: f.name }))
+                ].sort((a, b) => (a.position_y - b.position_y) || (a.position_x - b.position_x));
+
+                if (all.length === 0) return;
+
+                const itemsPerRow = 4;
+                const columnWidth = 320;
+                const rowGap = 40;
+                const startX = 200;
+                const startY = 0;
+
+                const columnHeights = new Array(itemsPerRow).fill(startY);
+                const updates: { id: string, type: 'item' | 'folder', x: number, y: number }[] = [];
+
+                all.forEach((entity) => {
+                    let minHeightCol = 0;
+                    for (let i = 1; i < itemsPerRow; i++) {
+                        if (columnHeights[i] < columnHeights[minHeightCol]) minHeightCol = i;
+                    }
+
+                    const x = startX + (minHeightCol * columnWidth);
+                    const y = columnHeights[minHeightCol];
+
+                    updates.push({ id: entity.id, type: entity.type, x, y });
+
+                    const dims = getItemDimensions(entity as any);
+                    columnHeights[minHeightCol] += dims.h + rowGap;
+                });
+
+                state.updatePositions(updates);
+            },
+
+            layoutSelectedItems: () => {
+                const state = get();
+                const selectedIds = state.selectedIds;
+                if (selectedIds.length === 0) return;
+
+                const activeItems = state.items.filter(i => selectedIds.includes(i.id));
+                const activeFolders = state.folders.filter(f => selectedIds.includes(f.id));
+
+                const all = [
+                    ...activeItems.map(i => ({ id: i.id, type: 'item' as const, position_x: i.position_x, position_y: i.position_y, status: i.status, metadata: i.metadata })),
+                    ...activeFolders.map(f => ({ id: f.id, type: 'folder' as const, position_x: f.position_x, position_y: f.position_y, status: f.status, name: f.name }))
+                ].sort((a, b) => (a.position_y - b.position_y) || (a.position_x - b.position_x));
+
+                // Find the average/start position of the selection to keep it local
+                const avgX = all.reduce((sum, item) => sum + item.position_x, 0) / all.length;
+                const avgY = all.reduce((sum, item) => sum + item.position_y, 0) / all.length;
+
+                const itemsPerRow = Math.max(2, Math.ceil(Math.sqrt(all.length)));
+                const columnWidth = 320;
+                const rowGap = 40;
+                const startX = avgX - ((itemsPerRow * columnWidth) / 2);
+                const startY = avgY - 200;
+
+                const columnHeights = new Array(itemsPerRow).fill(startY);
+                const updates: { id: string, type: 'item' | 'folder', x: number, y: number }[] = [];
+
+                all.forEach((entity) => {
+                    let minHeightCol = 0;
+                    for (let i = 1; i < itemsPerRow; i++) {
+                        if (columnHeights[i] < columnHeights[minHeightCol]) minHeightCol = i;
+                    }
+
+                    const x = startX + (minHeightCol * columnWidth);
+                    const y = columnHeights[minHeightCol];
+
+                    updates.push({ id: entity.id, type: entity.type, x, y });
+
+                    const dims = getItemDimensions(entity as any);
+                    columnHeights[minHeightCol] += dims.h + rowGap;
+                });
+
+                state.updatePositions(updates);
             },
 
             subscribeToChanges: () => {

@@ -32,7 +32,7 @@ import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consist
 // If we re-use ItemCard, they might try to drag inside the modal which is tricky.
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
-function SortableItem({ id, children, isFolder = false }: { id: string, children: React.ReactNode, isFolder?: boolean }) {
+function SortableItem({ id, children, isFolder = false, activeId, isDraggingItem }: { id: string, children: React.ReactNode, isFolder?: boolean, activeId: string | null, isDraggingItem?: boolean }) {
     const {
         attributes,
         listeners,
@@ -40,6 +40,7 @@ function SortableItem({ id, children, isFolder = false }: { id: string, children
         transform,
         transition,
         isDragging,
+        isOver
     } = useSortable({ 
         id,
         data: {
@@ -55,8 +56,20 @@ function SortableItem({ id, children, isFolder = false }: { id: string, children
         cursor: 'grab'
     };
 
+    // Show drop target if we are dragging something over a folder (nesting)
+    // For items, we always highlight folders. 
+    // For folders, we only highlight if they are not the same (nesting subfolders)
+    // Note: Reordering is prioritized in SortableContext, but we can detect intent in handleDragEnd
+    const isHoveringFolderForNesting = isOver && isFolder && activeId !== id;
+
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            {...attributes} 
+            {...listeners} 
+            className={clsx(isHoveringFolderForNesting && styles.dropTarget)}
+        >
             {children}
         </div>
     );
@@ -305,9 +318,15 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
             const overIsFolder = subFolders.some(f => f.id === over.id);
 
             // 1. Move into subfolder logic
-            if (activeIsItem && overIsFolder) {
-                await updateItemContent(active.id as string, { folder_id: over.id as string });
-                return;
+            if (overIsFolder) {
+                if (activeIsItem) {
+                    await updateItemContent(active.id as string, { folder_id: over.id as string });
+                    return;
+                } else if (active.id !== over.id) {
+                    // Nested folder move
+                    await updateFolderContent(active.id as string, { parent_id: over.id as string });
+                    return;
+                }
             }
 
             // 2. Reorder logic
@@ -337,6 +356,8 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
 
     const canExpand = folderItems.length + subFolders.length > 5;
     const shouldExpand = isExpanded && canExpand;
+
+    const isDraggingItem = activeItem && !('name' in activeItem);
 
     return (
         <div
@@ -489,54 +510,82 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                 strategy={rectSortingStrategy}
                             >
                                 <div className={styles.grid}>
-                                    {subFolders.map(sf => (
-                                        <SortableItem key={sf.id} id={sf.id} isFolder={true}>
-                                            <div
-                                                className={clsx(
-                                                    styles.itemWrapper,
-                                                    styles.folderItem,
-                                                    selectedIds.includes(sf.id) && styles.selected,
-                                                    selectedIds.includes(sf.id) && selectedIds.length === 1 && styles.singleSelected
-                                                )}
-                                                onClick={(e) => handleSubFolderClick(sf.id, e)}
-                                                onTouchStart={() => handleTouchStart(sf.id)}
-                                                onTouchEnd={handleTouchEnd}
-                                                onTouchMove={handleTouchEnd}
-                                            >
+                                    {subFolders.map(sf => {
+                                        const sfItems = items.filter(i => i.folder_id === sf.id && i.status !== 'archived');
+                                        return (
+                                            <SortableItem key={sf.id} id={sf.id} isFolder={true} activeId={activeId} isDraggingItem={isDraggingItem}>
                                                 <div
-                                                    onClick={e => e.stopPropagation()}
-                                                    onTouchStart={e => e.stopPropagation()}
-                                                    onTouchEnd={e => e.stopPropagation()}
-                                                    onTouchMove={e => e.stopPropagation()}
-                                                    onPointerDown={e => e.stopPropagation()}
-                                                    onPointerUp={e => e.stopPropagation()}
+                                                    className={clsx(
+                                                        styles.itemWrapper,
+                                                        styles.folderItem,
+                                                        selectedIds.includes(sf.id) && styles.selected,
+                                                        selectedIds.includes(sf.id) && selectedIds.length === 1 && styles.singleSelected
+                                                    )}
+                                                    onClick={(e) => handleSubFolderClick(sf.id, e)}
+                                                    onTouchStart={() => handleTouchStart(sf.id)}
+                                                    onTouchEnd={handleTouchEnd}
+                                                    onTouchMove={handleTouchEnd}
                                                 >
-                                                    <button
-                                                        className={styles.removeBtn}
-                                                        onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
+                                                    <div
+                                                        onClick={e => e.stopPropagation()}
                                                         onTouchStart={e => e.stopPropagation()}
                                                         onTouchEnd={e => e.stopPropagation()}
                                                         onTouchMove={e => e.stopPropagation()}
-                                                        data-tooltip="Move out of folder"
-                                                        data-tooltip-pos="bottom"
+                                                        onPointerDown={e => e.stopPropagation()}
+                                                        onPointerUp={e => e.stopPropagation()}
                                                     >
-                                                        <LogOut size={14} style={{ transform: 'rotate(180deg)' }} />
-                                                    </button>
-                                                </div>
-                                                <div className={styles.itemPreview} style={{ color: sf.color || 'var(--accent)' }}>
-                                                    <FolderOpen size={32} />
-                                                </div>
-                                                <div className={styles.itemInfo}>
-                                                    <span className={styles.itemTitle}>{sf.name}</span>
-                                                    <div className={styles.itemMeta}>
-                                                        <span>Folder</span>
+                                                        <button
+                                                            className={styles.removeBtn}
+                                                            onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
+                                                            onTouchStart={e => e.stopPropagation()}
+                                                            onTouchEnd={e => e.stopPropagation()}
+                                                            onTouchMove={e => e.stopPropagation()}
+                                                            data-tooltip="Move out of folder"
+                                                            data-tooltip-pos="bottom"
+                                                        >
+                                                            <LogOut size={14} style={{ transform: 'rotate(180deg)' }} />
+                                                        </button>
+                                                    </div>
+                                                    <div className={styles.itemPreview} style={{ color: sf.color || 'var(--accent)' }}>
+                                                        {sfItems.length > 0 ? (
+                                                            <div className={clsx(
+                                                                styles.previewGrid,
+                                                                sfItems.length === 1 && styles.grid1,
+                                                                sfItems.length === 2 && styles.grid2,
+                                                                sfItems.length === 3 && styles.grid3,
+                                                                sfItems.length >= 4 && styles.grid4
+                                                            )}>
+                                                                {sfItems.slice(0, 4).map(item => {
+                                                                    if (item.type === 'image' || item.metadata?.image) {
+                                                                        return <img key={item.id} src={item.type === 'image' ? item.content : item.metadata?.image} className={styles.miniImage} />;
+                                                                    }
+                                                                    if (item.type === 'link') {
+                                                                        return <div key={item.id} className={styles.miniItem}><div className={styles.miniIcon}>🔗</div></div>;
+                                                                    }
+                                                                    return (
+                                                                        <div key={item.id} className={styles.miniItem}>
+                                                                            <div className={styles.miniTextLine} />
+                                                                            <div className={styles.miniTextLine} style={{ width: '60%' }} />
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        ) : (
+                                                            <FolderOpen size={32} />
+                                                        )}
+                                                    </div>
+                                                    <div className={styles.itemInfo}>
+                                                        <span className={styles.itemTitle}>{sf.name}</span>
+                                                        <div className={styles.itemMeta}>
+                                                            <span>Folder</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </SortableItem>
-                                    ))}
+                                            </SortableItem>
+                                        );
+                                    })}
                                     {folderItems.map(item => (
-                                        <SortableItem key={item.id} id={item.id}>
+                                        <SortableItem key={item.id} id={item.id} activeId={activeId} isDraggingItem={isDraggingItem}>
                                             <div
                                                 className={clsx(
                                                     styles.itemWrapper,
@@ -637,10 +686,39 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                                         {'name' in activeItem ? (
                                             <>
                                                 <div className={styles.itemPreview} style={{ color: activeItem.color || 'var(--accent)' }}>
-                                                    <FolderOpen size={32} />
+                                                    {(() => {
+                                                        const sfItems = items.filter(i => i.folder_id === (activeItem as any).id && i.status !== 'archived');
+                                                        if (sfItems.length > 0) {
+                                                            return (
+                                                                <div className={clsx(
+                                                                    styles.previewGrid,
+                                                                    sfItems.length === 1 && styles.grid1,
+                                                                    sfItems.length === 2 && styles.grid2,
+                                                                    sfItems.length === 3 && styles.grid3,
+                                                                    sfItems.length >= 4 && styles.grid4
+                                                                )}>
+                                                                    {sfItems.slice(0, 4).map(item => {
+                                                                        if (item.type === 'image' || item.metadata?.image) {
+                                                                            return <img key={item.id} src={item.type === 'image' ? item.content : item.metadata?.image} className={styles.miniImage} />;
+                                                                        }
+                                                                        if (item.type === 'link') {
+                                                                            return <div key={item.id} className={styles.miniItem}><div className={styles.miniIcon}>🔗</div></div>;
+                                                                        }
+                                                                        return (
+                                                                            <div key={item.id} className={styles.miniItem}>
+                                                                                <div className={styles.miniTextLine} />
+                                                                                <div className={styles.miniTextLine} style={{ width: '60%' }} />
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return <FolderOpen size={32} />;
+                                                    })()}
                                                 </div>
                                                 <div className={styles.itemInfo}>
-                                                    <span className={styles.itemTitle}>{activeItem.name}</span>
+                                                    <span className={styles.itemTitle}>{(activeItem as any).name}</span>
                                                 </div>
                                             </>
                                         ) : (

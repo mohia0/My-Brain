@@ -17,9 +17,8 @@ export default function FloatingBar() {
         removeFolder,
         addFolder,
         items,
-        folders, /**/
-        updateItemContent,/* */
-        layoutSelectedItems,/* */
+        folders,
+        updateItemContent,
         archiveSelected,
         currentRoomId
     } = useItemsStore();
@@ -320,7 +319,7 @@ export default function FloatingBar() {
                         if (view === 'inbox') {
                             return (
                                 <button
-                                    className={`${styles.actionBtn} ${styles.moveCanvasBtn}`}
+                                    className={styles.actionBtn}
                                     onClick={() => {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'active', folder_id: null })); // Move to root canvas
                                         clearSelection();
@@ -329,22 +328,20 @@ export default function FloatingBar() {
                                     data-tooltip-pos="top"
                                 >
                                     <CircleArrowOutUpRight size={18} />
-                                    <span className={styles.btnText}>To Canvas</span>
                                 </button>
                             );
                         } else {
                             return (
                                 <button
-                                    className={`${styles.actionBtn} ${styles.moveInboxBtn}`}
+                                    className={styles.actionBtn}
                                     onClick={() => {
                                         selectedIds.forEach(id => updateItemContent(id, { status: 'inbox', folder_id: null }));
                                         clearSelection();
                                     }}
-                                    data-tooltip="Move to Captures"
+                                    data-tooltip="Back to Captures Panel"
                                     data-tooltip-pos="top"
                                 >
                                     <Inbox size={18} />
-                                    <span className={styles.btnText}>To Captures</span>
                                 </button>
                             );
                         }
@@ -352,13 +349,6 @@ export default function FloatingBar() {
                     return null;
                 })()
             }
-
-            <div className={styles.divider} />
-
-            <button className={`${styles.actionBtn} ${styles.organizeBtn}`} onClick={layoutSelectedItems} data-tooltip="Clean up layout" data-tooltip-pos="top">
-                <Sparkles size={18} />
-                <span className={styles.btnText}>Organize</span>
-            </button>
 
             <div className={styles.divider} />
 
@@ -374,7 +364,7 @@ export default function FloatingBar() {
                 {isDeleting ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={18} />}
             </button>
 
-            <button className={styles.closeBtn} onClick={clearSelection} data-tooltip="Clear selection" data-tooltip-pos="top">
+            <button className={styles.closeBtn} onClick={clearSelection}>
                 <X size={16} />
             </button>
 

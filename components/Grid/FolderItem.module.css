@@ -95,20 +95,32 @@
 
 .isOver {
     z-index: 9999 !important;
-    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.8));
     transform: scale(1.02);
 }
 
-.isOver .tab {
-    border-color: var(--accent);
-    background: var(--accent-glow);
+.isOver::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 3px dashed var(--accent);
+    border-radius: 20px;
+    animation: dropPulse 1.5s infinite;
+    pointer-events: none;
+    z-index: 5;
 }
 
 .isOver .mainBody {
     border-color: var(--accent);
     border-width: 2px;
-    background: var(--card-hover);
+    background: var(--accent-glow) !important;
     margin-top: -2px;
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+@keyframes dropPulse {
+    0% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 0.4; transform: scale(1); }
 }
 
 .dimmed {

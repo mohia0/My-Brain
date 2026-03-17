@@ -39,7 +39,7 @@ Your brain should be available everywhere, instantly.
 
 ## 🛠️ Technical Stack
 
-- **Frontend**: Next.js 15 (App Router)
+- **Frontend**: Next.js 16 (App Router)
 - **State Management**: Zustand (Multi-store architecture: `itemsStore`, `canvasStore`)
 - **Backend/Database**: Supabase (PostgreSQL + Realtime)
 - **Styling**: Vanilla CSS Modules (Premium aesthetics with Glassmorphism)

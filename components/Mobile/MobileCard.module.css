@@ -230,11 +230,19 @@
 }
 
 .socialThumb {
-    aspect-ratio: 4 / 5 !important;
+    width: 100%;
+    aspect-ratio: 4 / 5;
     height: auto !important;
-    max-height: 520px;
-    object-position: top;
-    /* Show the face/main content of posts */
+    max-height: 500px;
+    object-fit: cover !important;
+    object-position: top !important;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+}
+
+.socialThumb.isScreenshot {
+    object-fit: contain !important;
+    background: #000;
 }
 
 .videoThumb {

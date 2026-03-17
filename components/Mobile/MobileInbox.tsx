@@ -11,7 +11,25 @@ interface MobileInboxProps {
     filterStatus?: 'inbox' | 'archived';
 }
 
-import { Reorder } from 'framer-motion';
+import { Reorder, useDragControls } from 'framer-motion';
+
+const ReorderItem = ({ item, onItemClick }: { item: any; onItemClick: (id: string) => void }) => {
+    const controls = useDragControls();
+    return (
+        <Reorder.Item 
+            value={item} 
+            dragListener={false} 
+            dragControls={controls}
+            style={{ listStyle: 'none' }}
+        >
+            <MobileInboxItem
+                item={item}
+                onClick={() => onItemClick(item.id)}
+                dragControls={controls}
+            />
+        </Reorder.Item>
+    );
+};
 
 export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: MobileInboxProps) {
     const { items, fetchData, realtimeStatus, enrichItem } = useItemsStore();
@@ -192,16 +210,11 @@ export default function MobileInbox({ onItemClick, filterStatus = 'inbox' }: Mob
                             className={styles.list}
                         >
                             {orderedInbox.map((item) => (
-                                <Reorder.Item 
-                                    key={item.id} 
-                                    value={item}
-                                    style={{ listStyle: 'none' }}
-                                >
-                                    <MobileInboxItem
-                                        item={item}
-                                        onClick={() => onItemClick(item.id)}
-                                    />
-                                </Reorder.Item>
+                                <ReorderItem
+                                    key={item.id}
+                                    item={item}
+                                    onItemClick={onItemClick}
+                                />
                             ))}
                         </Reorder.Group>
                     </section>

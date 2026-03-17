@@ -11,9 +11,10 @@ interface MobileInboxItemProps {
     item: Item;
     onClick?: () => void;
     style?: React.CSSProperties;
+    dragControls?: any;
 }
 
-export default function MobileInboxItem({ item, onClick, style }: MobileInboxItemProps) {
+export default function MobileInboxItem({ item, onClick, style, dragControls }: MobileInboxItemProps) {
     const { updateItemContent, removeItem, toggleSelection, selectedIds, vaultedItemsRevealed, enrichItem } = useItemsStore();
     const { isVaultLocked, unlockedIds, setModalOpen } = useVaultStore();
     const [isDeleting, setIsDeleting] = React.useState(false);
@@ -254,7 +255,8 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                 styles.itemCard,
                 isRemoving && styles.removing,
                 isDeleting && styles.deleting,
-                isSelected && styles.selected
+                isSelected && styles.selected,
+                inSelectionMode && styles.inSelection
             )}
             onClick={handleClick}
             onTouchStart={handleTouchStart}
@@ -262,7 +264,7 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
             onTouchMove={handleTouchMove}
             style={style}
         >
-            <div className={styles.dragHandle}>
+            <div className={styles.dragHandle} onPointerDown={(e) => dragControls?.start(e)}>
                 <GripVertical size={16} />
             </div>
             <div className={styles.itemMain}>
@@ -288,7 +290,10 @@ export default function MobileInboxItem({ item, onClick, style }: MobileInboxIte
                             <img
                                 src={getImageUrl()!}
                                 alt=""
-                                className={styles.fullThumb}
+                                className={clsx(
+                                    styles.fullThumb,
+                                    (getImageUrl()?.includes('_media.jpg') || getImageUrl()?.includes('microlink.io')) && styles.isScreenshot
+                                )}
                                 onError={() => setImageError(true)}
                             />
                         ) : (

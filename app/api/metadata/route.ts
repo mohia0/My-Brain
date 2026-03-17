@@ -131,7 +131,14 @@ export async function POST(req: NextRequest) {
                 if (mlData.status === 'success') {
                     const data = mlData.data;
                     metadata.title = metadata.title || data.title;
-                    metadata.description = metadata.description || data.description;
+                    
+                    // TikTok specific description logic: Microlink often gets it better
+                    if (url.includes('tiktok.com')) {
+                        metadata.description = data.description || metadata.description;
+                    } else {
+                        metadata.description = metadata.description || data.description;
+                    }
+
                     metadata.image = data.image?.url || (!skipCapture ? data.screenshot?.url : null) || metadata.image;
                     metadata.favicon = metadata.favicon || data.logo?.url;
                     metadata.author = metadata.author || data.author;
@@ -203,8 +210,8 @@ export async function POST(req: NextRequest) {
             } catch (e) { }
         }
 
-        // Normalize description check
-        if (metadata.description) {
+        // Normalize description check: Don't clear it if it's TikTok (might be useful)
+        if (metadata.description && !url.includes('tiktok.com')) {
             const cleanDesc = metadata.description.toLowerCase().trim();
             const cleanUrl = url.toLowerCase().trim().replace(/\/$/, "");
             if (cleanDesc === cleanUrl || cleanDesc === cleanUrl.replace(/^https?:\/\//, "")) {
@@ -226,11 +233,14 @@ export async function POST(req: NextRequest) {
                     const existingMetadata = item?.metadata || {};
 
                     // Smart Merge: Only keep existing description if it's longer than what we just found
+                    const isMicrolinkScreenshot = existingMetadata.image?.includes('microlink.io') || existingMetadata.image?.includes('supabase.co');
+                    const isCarouselWithIndex = metadata.platform === 'instagram' && url.includes('img_index=');
+
                     finalMetadataToSync = {
                         ...metadata,
                         ...existingMetadata,
                         title: (metadata.title && !/Capturing|Shared Link|Instagram|TikTok|Facebook|Twitter|X\.com|YouTube/i.test(metadata.title)) ? metadata.title : existingMetadata.title,
-                        image: (existingMetadata.image?.includes('supabase.co')) ? existingMetadata.image : (metadata.image || existingMetadata.image),
+                        image: (isMicrolinkScreenshot && isCarouselWithIndex) ? existingMetadata.image : ((existingMetadata.image?.includes('supabase.co')) ? existingMetadata.image : (metadata.image || existingMetadata.image)),
                         description: (existingMetadata.description?.length > metadata.description?.length) ? existingMetadata.description : (metadata.description || existingMetadata.description),
                         source: 'api-metadata-auto-sync'
                     };

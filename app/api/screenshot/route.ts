@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         console.log('[LinkTruth] Processing:', url);
 
         const isSocial = /instagram\.com|tiktok\.com|facebook\.com|twitter\.com|x\.com|youtube\.com|linkedin\.com/i.test(url);
-        const forceMicrolink = url.includes('instagram.com') || url.includes('tiktok.com');
+        const forceMicrolink = (url.includes('instagram.com') && url.includes('img_index=')) || url.includes('tiktok.com');
 
         // Fetch current item to see if it already has values
         const { data: item } = await supabase.from('items').select('*').eq('id', itemId).single();
@@ -78,11 +78,11 @@ export async function POST(req: NextRequest) {
                     ...(isSocial ? {
                         'screenshot.viewport.isMobile': 'true',
                         'screenshot.viewport.width': '414',
-                        'screenshot.viewport.height': '2600',
+                        'screenshot.viewport.height': '1000',
                         'screenshot.animations': 'false',
                         'screenshot.waitFor': '8000',
                         'screenshot.scrollTo': 'true',
-                        'screenshot.hide': 'nav, header, [role="dialog"], ._ab8w, ._aa61'
+                        'screenshot.hide': '[data-e2e="video-controls"], nav, header, [role="dialog"], ._ab8w, ._aa61'
                     } : {})
                 });
                 const mlRes = await fetch(`https://api.microlink.io?${mlParams.toString()}`);
@@ -92,7 +92,16 @@ export async function POST(req: NextRequest) {
                     const d = mlData.data;
                     pageTitle = d.title;
                     pageDesc = d.description;
-                    finalImageUrl = d.image?.url || d.screenshot?.url;
+                    
+                    // If it's an Instagram carousel pointing to a specific index, og:image will incorrectly be the first image.
+                    // We must use the screenshot to visually capture the correct image.
+                    const isSpecificIndex = url.includes('instagram.com') && url.includes('img_index=');
+                    
+                    if (isSpecificIndex) {
+                        finalImageUrl = d.screenshot?.url || d.image?.url;
+                    } else {
+                        finalImageUrl = d.image?.url || d.screenshot?.url;
+                    }
                 }
             } catch (e) {
                 console.error('[LinkTruth] Microlink pre-fetch failed:', e);
@@ -127,11 +136,11 @@ export async function POST(req: NextRequest) {
                         ...(isSocial ? {
                             'screenshot.viewport.isMobile': 'true',
                             'screenshot.viewport.width': '414',
-                            'screenshot.viewport.height': '2600',
+                            'screenshot.viewport.height': '1000',
                             'screenshot.animations': 'false',
                             'screenshot.waitFor': '8000',
                             'screenshot.scrollTo': 'true',
-                            'screenshot.hide': 'nav, header, [role="dialog"], ._ab8w, ._aa61'
+                            'screenshot.hide': '[data-e2e="video-controls"], nav, header, [role="dialog"], ._ab8w, ._aa61'
                         } : {})
                     });
                     const mlRes = await fetch(`https://api.microlink.io?${mlParams.toString()}`);
@@ -140,7 +149,13 @@ export async function POST(req: NextRequest) {
                         const d = mlData.data;
                         pageTitle = pageTitle || d.title || '';
                         pageDesc = pageDesc || d.description || '';
-                        finalImageUrl = d.image?.url || d.screenshot?.url || '';
+                        
+                        const isSpecificIndex = url.includes('instagram.com') && url.includes('img_index=');
+                        if (isSpecificIndex) {
+                            finalImageUrl = d.screenshot?.url || d.image?.url || '';
+                        } else {
+                            finalImageUrl = d.image?.url || d.screenshot?.url || '';
+                        }
                     }
                 } catch (e) {
                     console.error('[LinkTruth] Microlink fallback failed:', e);

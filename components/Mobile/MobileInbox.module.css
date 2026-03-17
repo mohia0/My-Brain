@@ -110,15 +110,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px; /* Slightly wider for better touch */
-    height: 100%;
-    color: var(--accent); /* Use accent color for visibility */
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    color: var(--accent);
     cursor: grab;
-    padding: 0 8px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(110, 86, 207, 0.05);
+    border-right: none;
+}
+
+.itemCard.inSelection .dragHandle {
+    width: 44px;
+    opacity: 1;
     border-right: 1px dashed var(--card-border);
-    opacity: 1; /* Full opacity */
-    transition: all 0.2s;
-    background: rgba(110, 86, 207, 0.05); /* Very subtle background */
 }
 
 .dragHandle:active {
@@ -181,9 +186,15 @@
     width: 100%;
     height: auto;
     max-height: 500px;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: top;
     border-radius: 12px;
     background: rgba(0, 0, 0, 0.2);
+}
+
+.fullThumb.isScreenshot {
+    object-fit: contain;
+    background: #000;
 }
 
 .noSnapshotFull {

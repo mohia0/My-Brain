@@ -437,7 +437,8 @@ export default function MobileCard({
                                 alt=""
                                 className={clsx(
                                     styles.thumb,
-                                    (item.metadata?.isSocial || item.metadata?.platform === 'instagram') && styles.socialThumb
+                                    (item.metadata?.isSocial || item.metadata?.platform === 'instagram') && styles.socialThumb,
+                                    (imageUrl.includes('_media.jpg') || imageUrl.includes('microlink.io')) && styles.isScreenshot
                                 )}
                                 onError={() => setImageError(true)}
                             />

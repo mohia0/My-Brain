@@ -706,6 +706,21 @@ export const useItemsStore = create<ItemsState>()(
                 const item = state.items.find(i => i.id === id);
                 if (!item) return;
 
+                // Restriction Check: Prevent project, room, and reminder from going to folders or inbox
+                const isRestrictedType = ['project', 'room', 'reminder'].includes(item.type);
+                if (isRestrictedType) {
+                    if (updates.folder_id !== undefined) updates.folder_id = null;
+                    if (updates.status === 'inbox') updates.status = item.status;
+                }
+
+                // Restriction Check: Prevent folders from going to inbox
+                // (Handled in updateFolderContent usually, but safety first)
+
+                // Restriction Check: Prevent items in inbox from moving to folders 
+                if (item.status === 'inbox' && updates.folder_id) {
+                    updates.folder_id = null;
+                }
+
                 // Add updated_at to track last edit
                 let finalUpdates = {
                     ...updates,
@@ -906,6 +921,10 @@ export const useItemsStore = create<ItemsState>()(
                 for (const id of selectedIds) {
                     const item = items.find(i => i.id === id);
                     if (item) {
+                        // Restriction Check: Prevent project, room, reminder, and inbox items from moving to folder
+                        const isRestricted = ['project', 'room', 'reminder'].includes(item.type) || item.status === 'inbox';
+                        if (isRestricted) continue;
+
                         const prev = { folder_id: item.folder_id, room_id: item.room_id, status: item.status, updated_at: item.updated_at };
                         const next = { folder_id: targetFolderId, room_id: null, status: 'active' as const, updated_at: now };
                         batchUpdates.push({ id, type: 'item', prev, new: next });

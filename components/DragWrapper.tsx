@@ -382,7 +382,15 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         if (!activeData) return;
 
         // 1. Handle dropping an item or folder INTO a folder
-        if (over && over.data.current?.type === 'folder' && activeData.type !== 'project' && activeData.itemType !== 'room') {
+        const isRestrictedForFolder = 
+            activeData.type === 'project' || 
+            activeData.itemType === 'room' || 
+            activeData.type === 'room' || 
+            activeData.itemType === 'reminder' ||
+            activeData.origin === 'inbox' ||
+            activeData.status === 'inbox'; // Extra safety
+
+        if (over && over.data.current?.type === 'folder' && !isRestrictedForFolder) {
             const targetFolderId = over.id as string;
             
             const movingIds = currentSelectedIds.includes(active.id as string)
@@ -435,8 +443,15 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
 
         // 3. Handle Dropping ONTO Inbox
         if (over && over.id === 'inbox-area') {
-            // Prevent rooms, project areas, and folders from being moved to inbox
-            if (activeData.type === 'project' || activeData.itemType === 'room' || activeData.type === 'room' || activeData.type === 'folder') {
+            // Prevent rooms, project areas, folders, and reminders from being moved to inbox
+            const isRestrictedForInbox = 
+                activeData.type === 'project' || 
+                activeData.itemType === 'room' || 
+                activeData.type === 'room' || 
+                activeData.itemType === 'reminder' ||
+                activeData.type === 'folder';
+
+            if (isRestrictedForInbox) {
                 return;
             }
 

@@ -315,31 +315,35 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
 
         if (active.id !== over.id) {
             const activeIsItem = folderItems.some(i => i.id === active.id);
+            const overIsItem = folderItems.some(i => i.id === over.id);
+            const activeIsFolder = subFolders.some(f => f.id === active.id);
             const overIsFolder = subFolders.some(f => f.id === over.id);
 
-            // 1. Move into subfolder logic
-            if (overIsFolder) {
-                if (activeIsItem) {
-                    await updateItemContent(active.id as string, { folder_id: over.id as string });
-                    return;
-                } else if (active.id !== over.id) {
-                    // Nested folder move
-                    await updateFolderContent(active.id as string, { parent_id: over.id as string });
-                    return;
-                }
-            }
-
-            // 2. Reorder logic
-            if (activeIsItem && folderItems.some(i => i.id === over.id)) {
+            // 1. Reorder logic (Priority: if both are same type and siblings)
+            if (activeIsItem && overIsItem) {
                 const oldIndex = folderItems.findIndex(i => i.id === active.id);
                 const newIndex = folderItems.findIndex(i => i.id === over.id);
                 const newOrder = arrayMove([...folderItems], oldIndex, newIndex).map(i => i.id);
                 updateFolderItemsOrder(newOrder);
-            } else if (!activeIsItem && subFolders.some(f => f.id === over.id)) {
+                return;
+            } else if (activeIsFolder && overIsFolder) {
                 const oldIndex = subFolders.findIndex(f => f.id === active.id);
                 const newIndex = subFolders.findIndex(f => f.id === over.id);
                 const newOrder = arrayMove([...subFolders], oldIndex, newIndex).map(f => f.id);
                 updateSubFoldersOrder(newOrder);
+                return;
+            }
+
+            // 2. Move INTO logic
+            if (overIsFolder) {
+                if (activeIsItem) {
+                    await updateItemContent(active.id as string, { folder_id: over.id as string });
+                    return;
+                } else if (activeIsFolder) {
+                    // Nested folder move (if they weren't siblings, but here they are, so reorder is hit first)
+                    await updateFolderContent(active.id as string, { parent_id: over.id as string });
+                    return;
+                }
             }
         }
     };

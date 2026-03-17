@@ -103,11 +103,13 @@ export default function ProjectArea({ item }: ProjectAreaProps) {
         transform: transform ? `translate3d(${transform.x / scale}px, ${transform.y / scale}px, 0)` : undefined,
         zIndex: (isDragging || showDeleteConfirm || showColorPicker) ? 500 : 2, // Boost z-index when interacting with menus so they appear above contents
         backgroundColor: (item.metadata?.color && item.metadata.color !== 'default')
-            ? `${item.metadata.color}0D`
-            : 'var(--project-area-bg, rgba(128, 128, 128, 0.05))',
+            ? `${item.metadata.color}0A`
+            : 'var(--project-area-bg, rgba(128, 128, 128, 0.04))',
         borderColor: (item.metadata?.color && item.metadata.color !== 'default')
-            ? item.metadata.color
-            : 'var(--border)', // Adaptive border
+            ? `${item.metadata.color}33` // 20% opacity border
+            : 'var(--border-light, rgba(128, 128, 128, 0.15))', 
+        borderStyle: 'solid',
+        borderWidth: '1px',
         cursor: item.metadata?.locked ? 'default' : (isDragging ? 'grabbing' : 'grab')
     };
 

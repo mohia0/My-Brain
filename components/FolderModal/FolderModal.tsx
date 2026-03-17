@@ -6,17 +6,91 @@ import { X, FolderOpen, LogOut, Check, CheckCircle2, Archive, Copy, Trash2, Arro
 import clsx from 'clsx';
 import { useItemsStore } from '@/lib/store/itemsStore';
 import { useSwipeDown } from '@/lib/hooks/useSwipeDown';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+    defaultDropAnimationSideEffects,
+    DropAnimation
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    rectSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import ItemCard from '@/components/Grid/ItemCard'; // Reuse ItemCard for consistency? 
 // Actually ItemCard is Draggable, we might just want a static view or re-use logic.
 // If we re-use ItemCard, they might try to drag inside the modal which is tricky.
 // Let's make a simple static view for now, or allow "Unfolder" action.
 
+function SortableItem({ id, children, isFolder = false }: { id: string, children: React.ReactNode, isFolder?: boolean }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ 
+        id,
+        data: {
+            type: isFolder ? 'folder' : 'item'
+        }
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging ? 100 : 1,
+        cursor: 'grab'
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            {children}
+        </div>
+    );
+}
+
 export default function FolderModal({ folderId: initialFolderId, onClose, onItemClick, onFolderClick, isChildOpen }: { folderId: string, onClose: () => void, onItemClick: (id: string) => void, onFolderClick?: (id: string) => void, isChildOpen?: boolean }) {
-    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection, duplicateItem, archiveItem, removeItem, isSelectionMode, setSelectionMode } = useItemsStore();
+    const { items, folders, updateItemContent, removeFolder, updateFolderPosition, updateFolderContent, selectedIds, toggleSelection, clearSelection, duplicateItem, archiveItem, removeItem, isSelectionMode, setSelectionMode, updateFolderItemsOrder, updateSubFoldersOrder } = useItemsStore();
     const [currentFolderId, setCurrentFolderId] = React.useState(initialFolderId);
     const folder = folders.find(f => f.id === currentFolderId);
-    const folderItems = items.filter(i => i.folder_id === currentFolderId && i.status !== 'archived');
-    const subFolders = folders.filter(f => f.parent_id === currentFolderId && f.status !== 'archived');
+
+    const sortFn = (a: any, b: any) => {
+        const aIndex = a.metadata?.sort_index ?? 0;
+        const bIndex = b.metadata?.sort_index ?? 0;
+        if (aIndex !== bIndex) return aIndex - bIndex;
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    };
+
+    const folderItems = items.filter(i => i.folder_id === currentFolderId && i.status !== 'archived').sort(sortFn);
+    const subFolders = folders.filter(f => f.parent_id === currentFolderId && f.status !== 'archived').sort(sortFn);
+
+    const [activeId, setActiveId] = React.useState<string | null>(null);
+    const [activeItem, setActiveItem] = React.useState<any>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
     const [isOverflowing, setIsOverflowing] = React.useState(false);
     const titleRef = React.useRef<HTMLDivElement>(null);
     const scrollContentRef = React.useRef<HTMLDivElement>(null);
@@ -127,7 +201,7 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
     const handleRemoveFolderFromFolder = (subFolderId: string, e: React.MouseEvent) => {
         e.stopPropagation();
         updateFolderContent(subFolderId, {
-            parent_id: undefined,
+            parent_id: null as any,
             position_x: folder.position_x + 80,
             position_y: folder.position_y + 80
         });
@@ -159,14 +233,14 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
         // Confirmed Delete
         folderItems.forEach(item => {
             updateItemContent(item.id, {
-                folder_id: undefined,
+                folder_id: null as any,
                 position_x: folder.position_x + 50,
                 position_y: folder.position_y + 50
             });
         });
         subFolders.forEach(sf => {
             updateFolderContent(sf.id, {
-                parent_id: undefined,
+                parent_id: null as any,
                 position_x: folder.position_x + 80,
                 position_y: folder.position_y + 80
             });
@@ -209,6 +283,56 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
 
     const handleTouchEnd = () => {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    };
+
+    const handleDragStart = (event: DragStartEvent) => {
+        const { active } = event;
+        setActiveId(active.id as string);
+        const item = folderItems.find(i => i.id === active.id);
+        const subf = subFolders.find(f => f.id === active.id);
+        setActiveItem(item || subf);
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+        setActiveItem(null);
+
+        if (!over) return;
+
+        if (active.id !== over.id) {
+            const activeIsItem = folderItems.some(i => i.id === active.id);
+            const overIsFolder = subFolders.some(f => f.id === over.id);
+
+            // 1. Move into subfolder logic
+            if (activeIsItem && overIsFolder) {
+                await updateItemContent(active.id as string, { folder_id: over.id as string });
+                return;
+            }
+
+            // 2. Reorder logic
+            if (activeIsItem && folderItems.some(i => i.id === over.id)) {
+                const oldIndex = folderItems.findIndex(i => i.id === active.id);
+                const newIndex = folderItems.findIndex(i => i.id === over.id);
+                const newOrder = arrayMove([...folderItems], oldIndex, newIndex).map(i => i.id);
+                updateFolderItemsOrder(newOrder);
+            } else if (!activeIsItem && subFolders.some(f => f.id === over.id)) {
+                const oldIndex = subFolders.findIndex(f => f.id === active.id);
+                const newIndex = subFolders.findIndex(f => f.id === over.id);
+                const newOrder = arrayMove([...subFolders], oldIndex, newIndex).map(f => f.id);
+                updateSubFoldersOrder(newOrder);
+            }
+        }
+    };
+
+    const dropAnimation: DropAnimation = {
+        sideEffects: defaultDropAnimationSideEffects({
+            styles: {
+                active: {
+                    opacity: '0.4',
+                },
+            },
+        }),
     };
 
     const canExpand = folderItems.length + subFolders.length > 5;
@@ -354,144 +478,191 @@ export default function FolderModal({ folderId: initialFolderId, onClose, onItem
                             <span>No ideas here yet</span>
                         </div>
                     ) : (
-                        <div className={styles.grid}>
-                            {subFolders.map(sf => (
-                                <div
-                                    key={sf.id}
-                                    className={clsx(
-                                        styles.itemWrapper,
-                                        styles.folderItem,
-                                        selectedIds.includes(sf.id) && styles.selected,
-                                        selectedIds.includes(sf.id) && selectedIds.length === 1 && styles.singleSelected
-                                    )}
-                                    onClick={(e) => handleSubFolderClick(sf.id, e)}
-                                    onTouchStart={() => handleTouchStart(sf.id)}
-                                    onTouchEnd={handleTouchEnd}
-                                    onTouchMove={handleTouchEnd}
-                                >
-                                    <div
-                                        onClick={e => e.stopPropagation()}
-                                        onTouchStart={e => e.stopPropagation()}
-                                        onTouchEnd={e => e.stopPropagation()}
-                                        onTouchMove={e => e.stopPropagation()}
-                                        onPointerDown={e => e.stopPropagation()}
-                                        onPointerUp={e => e.stopPropagation()}
-                                    >
-                                        <button
-                                            className={styles.removeBtn}
-                                            onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
-                                            onTouchStart={e => e.stopPropagation()}
-                                            onTouchEnd={e => e.stopPropagation()}
-                                            onTouchMove={e => e.stopPropagation()}
-                                            data-tooltip="Move out of folder"
-                                            data-tooltip-pos="bottom"
-                                        >
-                                        </button>
-                                    </div>
-                                    <div className={styles.itemPreview} style={{ color: sf.color || 'var(--accent)' }}>
-                                        <FolderOpen size={32} />
-                                    </div>
-                                    <div className={styles.itemInfo}>
-                                        <span className={styles.itemTitle}>{sf.name}</span>
-                                        <div className={styles.itemMeta}>
-                                            <span>Folder</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {folderItems.map(item => (
-                                <div
-                                    key={item.id}
-                                    className={clsx(
-                                        styles.itemWrapper,
-                                        selectedIds.includes(item.id) && styles.selected,
-                                        selectedIds.includes(item.id) && selectedIds.length === 1 && styles.singleSelected
-                                    )}
-                                    onClick={(e) => handleItemClick(item.id, e)}
-                                    onTouchStart={() => handleTouchStart(item.id)}
-                                    onTouchEnd={handleTouchEnd}
-                                    onTouchMove={handleTouchEnd}
-                                >
-                                    <div
-                                        className={styles.itemActions}
-                                        onClick={e => e.stopPropagation()}
-                                        onTouchStart={e => { e.stopPropagation(); }}
-                                        onTouchEnd={e => { e.stopPropagation(); }}
-                                        onTouchMove={e => e.stopPropagation()}
-                                        onPointerDown={e => e.stopPropagation()}
-                                        onPointerUp={e => e.stopPropagation()}
-                                    >
-                                        <button
-                                            className={styles.itemActionBtn}
-                                            onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}
-                                            data-tooltip="Archive"
-                                            data-tooltip-pos="bottom"
-                                        >
-                                            <Archive size={14} />
-                                        </button>
-                                        <button
-                                            className={styles.itemActionBtn}
-                                            onClick={(e) => { e.stopPropagation(); duplicateItem(item.id); }}
-                                            data-tooltip="Duplicate"
-                                            data-tooltip-pos="bottom"
-                                        >
-                                            <Copy size={14} />
-                                        </button>
-                                        <button
-                                            className={styles.itemActionBtn}
-                                            onClick={(e) => handleRemoveFromFolder(item.id, e)}
-                                            data-tooltip="Move back to Canvas"
-                                            data-tooltip-pos="bottom"
-                                        >
-                                            <ArrowUpRight size={14} />
-                                        </button>
-                                        <button
-                                            className={clsx(styles.itemActionBtn, styles.deleteActionBtn, isDeletingItem === item.id && styles.confirmDelete)}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (isDeletingItem === item.id) {
-                                                    removeItem(item.id);
-                                                    setIsDeletingItem(null);
-                                                } else {
-                                                    setIsDeletingItem(item.id);
-                                                }
-                                            }}
-                                            onMouseLeave={() => setIsDeletingItem(null)}
-                                            data-tooltip={isDeletingItem === item.id ? "Confirm?" : "Delete"}
-                                            data-tooltip-pos="bottom"
-                                        >
-                                            {isDeletingItem === item.id ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={14} />}
-                                        </button>
-                                    </div>
-
-                                    <div className={styles.itemPreview}>
-                                        {item.type === 'image' || item.metadata?.image ? (
-                                            <img src={item.type === 'image' ? item.content : item.metadata?.image} className={styles.previewImg} />
-                                        ) : (
-                                            <div className={styles.genericIcon}>
-                                                {item.type === 'link' ? '🔗' : '📝'}
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={[...subFolders.map(f => f.id), ...folderItems.map(i => i.id)]}
+                                strategy={rectSortingStrategy}
+                            >
+                                <div className={styles.grid}>
+                                    {subFolders.map(sf => (
+                                        <SortableItem key={sf.id} id={sf.id} isFolder={true}>
+                                            <div
+                                                className={clsx(
+                                                    styles.itemWrapper,
+                                                    styles.folderItem,
+                                                    selectedIds.includes(sf.id) && styles.selected,
+                                                    selectedIds.includes(sf.id) && selectedIds.length === 1 && styles.singleSelected
+                                                )}
+                                                onClick={(e) => handleSubFolderClick(sf.id, e)}
+                                                onTouchStart={() => handleTouchStart(sf.id)}
+                                                onTouchEnd={handleTouchEnd}
+                                                onTouchMove={handleTouchEnd}
+                                            >
+                                                <div
+                                                    onClick={e => e.stopPropagation()}
+                                                    onTouchStart={e => e.stopPropagation()}
+                                                    onTouchEnd={e => e.stopPropagation()}
+                                                    onTouchMove={e => e.stopPropagation()}
+                                                    onPointerDown={e => e.stopPropagation()}
+                                                    onPointerUp={e => e.stopPropagation()}
+                                                >
+                                                    <button
+                                                        className={styles.removeBtn}
+                                                        onClick={(e) => handleRemoveFolderFromFolder(sf.id, e)}
+                                                        onTouchStart={e => e.stopPropagation()}
+                                                        onTouchEnd={e => e.stopPropagation()}
+                                                        onTouchMove={e => e.stopPropagation()}
+                                                        data-tooltip="Move out of folder"
+                                                        data-tooltip-pos="bottom"
+                                                    >
+                                                        <LogOut size={14} style={{ transform: 'rotate(180deg)' }} />
+                                                    </button>
+                                                </div>
+                                                <div className={styles.itemPreview} style={{ color: sf.color || 'var(--accent)' }}>
+                                                    <FolderOpen size={32} />
+                                                </div>
+                                                <div className={styles.itemInfo}>
+                                                    <span className={styles.itemTitle}>{sf.name}</span>
+                                                    <div className={styles.itemMeta}>
+                                                        <span>Folder</span>
+                                                    </div>
+                                                </div>
                                             </div>
+                                        </SortableItem>
+                                    ))}
+                                    {folderItems.map(item => (
+                                        <SortableItem key={item.id} id={item.id}>
+                                            <div
+                                                className={clsx(
+                                                    styles.itemWrapper,
+                                                    selectedIds.includes(item.id) && styles.selected,
+                                                    selectedIds.includes(item.id) && selectedIds.length === 1 && styles.singleSelected
+                                                )}
+                                                onClick={(e) => handleItemClick(item.id, e)}
+                                                onTouchStart={() => handleTouchStart(item.id)}
+                                                onTouchEnd={handleTouchEnd}
+                                                onTouchMove={handleTouchEnd}
+                                            >
+                                                <div
+                                                    className={styles.itemActions}
+                                                    onClick={e => e.stopPropagation()}
+                                                    onTouchStart={e => { e.stopPropagation(); }}
+                                                    onTouchEnd={e => { e.stopPropagation(); }}
+                                                    onTouchMove={e => e.stopPropagation()}
+                                                    onPointerDown={e => e.stopPropagation()}
+                                                    onPointerUp={e => e.stopPropagation()}
+                                                >
+                                                    <button
+                                                        className={styles.itemActionBtn}
+                                                        onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}
+                                                        data-tooltip="Archive"
+                                                        data-tooltip-pos="bottom"
+                                                    >
+                                                        <Archive size={14} />
+                                                    </button>
+                                                    <button
+                                                        className={styles.itemActionBtn}
+                                                        onClick={(e) => { e.stopPropagation(); duplicateItem(item.id); }}
+                                                        data-tooltip="Duplicate"
+                                                        data-tooltip-pos="bottom"
+                                                    >
+                                                        <Copy size={14} />
+                                                    </button>
+                                                    <button
+                                                        className={styles.itemActionBtn}
+                                                        onClick={(e) => handleRemoveFromFolder(item.id, e)}
+                                                        data-tooltip="Move back to Canvas"
+                                                        data-tooltip-pos="bottom"
+                                                    >
+                                                        <ArrowUpRight size={14} />
+                                                    </button>
+                                                    <button
+                                                        className={clsx(styles.itemActionBtn, styles.deleteActionBtn, isDeletingItem === item.id && styles.confirmDelete)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (isDeletingItem === item.id) {
+                                                                removeItem(item.id);
+                                                                setIsDeletingItem(null);
+                                                            } else {
+                                                                setIsDeletingItem(item.id);
+                                                            }
+                                                        }}
+                                                        onMouseLeave={() => setIsDeletingItem(null)}
+                                                        data-tooltip={isDeletingItem === item.id ? "Confirm?" : "Delete"}
+                                                        data-tooltip-pos="bottom"
+                                                    >
+                                                        {isDeletingItem === item.id ? <span className={styles.sureText}>Sure?</span> : <Trash2 size={14} />}
+                                                    </button>
+                                                </div>
+
+                                                <div className={styles.itemPreview}>
+                                                    {item.type === 'image' || item.metadata?.image ? (
+                                                        <img src={item.type === 'image' ? item.content : item.metadata?.image} className={styles.previewImg} />
+                                                    ) : (
+                                                        <div className={styles.genericIcon}>
+                                                            {item.type === 'link' ? '🔗' : '📝'}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className={styles.itemInfo}>
+                                                    <span className={styles.itemTitle}>{item.metadata?.title || 'Untitled'}</span>
+                                                    <div className={styles.itemMeta}>
+                                                        <span>
+                                                            {item.type === 'link' ? (() => {
+                                                                try { return new URL(item.content).hostname; }
+                                                                catch { return 'Link'; }
+                                                            })() :
+                                                                item.type === 'text' ? 'Idea' : 'Image'}
+                                                        </span>
+                                                        <span className={styles.itemDate}>
+                                                            {getRelativeTime(item.created_at)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </SortableItem>
+                                    ))}
+                                </div>
+                            </SortableContext>
+
+                            <DragOverlay dropAnimation={dropAnimation}>
+                                {activeId && activeItem ? (
+                                    <div className={clsx(styles.itemWrapper, styles.draggingOverlay)}>
+                                        {'name' in activeItem ? (
+                                            <>
+                                                <div className={styles.itemPreview} style={{ color: activeItem.color || 'var(--accent)' }}>
+                                                    <FolderOpen size={32} />
+                                                </div>
+                                                <div className={styles.itemInfo}>
+                                                    <span className={styles.itemTitle}>{activeItem.name}</span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className={styles.itemPreview}>
+                                                    {activeItem.type === 'image' || activeItem.metadata?.image ? (
+                                                        <img src={activeItem.type === 'image' ? activeItem.content : activeItem.metadata?.image} className={styles.previewImg} />
+                                                    ) : (
+                                                        <div className={styles.genericIcon}>
+                                                            {activeItem.type === 'link' ? '🔗' : '📝'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className={styles.itemInfo}>
+                                                    <span className={styles.itemTitle}>{activeItem.metadata?.title || 'Untitled'}</span>
+                                                </div>
+                                            </>
                                         )}
                                     </div>
-
-                                    <div className={styles.itemInfo}>
-                                        <span className={styles.itemTitle}>{item.metadata?.title || 'Untitled'}</span>
-                                        <div className={styles.itemMeta}>
-                                            <span>
-                                                {item.type === 'link' ? (() => {
-                                                    try { return new URL(item.content).hostname; }
-                                                    catch { return 'Link'; }
-                                                })() :
-                                                    item.type === 'text' ? 'Idea' : 'Image'}
-                                            </span>
-                                            <span className={styles.itemDate}>
-                                                {getRelativeTime(item.created_at)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ) : null}
+                            </DragOverlay>
+                        </DndContext>
                     )}
                 </div>
             </div>

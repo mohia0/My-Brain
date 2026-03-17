@@ -34,6 +34,7 @@ export interface Folder {
     created_at: string;
     updated_at?: string;      // New
     color?: string;
+    metadata?: any;
     syncStatus?: 'synced' | 'syncing' | 'error';
 }
 

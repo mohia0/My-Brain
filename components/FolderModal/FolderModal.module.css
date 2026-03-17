@@ -838,3 +838,13 @@
         background: rgba(110, 86, 207, 0.15) !important;
         box-shadow: 0 0 0 2px var(--accent-glow);
     }
+
+    .draggingOverlay {
+        transform: scale(1.05) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+        pointer-events: none;
+        background: var(--card-hover) !important;
+        border-color: var(--accent) !important;
+        opacity: 0.9 !important;
+        z-index: 20002 !important;
+    }

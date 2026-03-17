@@ -76,6 +76,9 @@ export default function Home() {
   const [isSmallScreenWeb, setIsSmallScreenWeb] = useState(false);
   const [isAuthExiting, setIsAuthExiting] = useState(false);
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   const isInitializingRef = useRef(initializing);
   const showLoadingRef = useRef(showLoading);
   const isRunningInitRef = useRef(false);
@@ -496,13 +499,15 @@ export default function Home() {
     };
   }, []);
 
+  const safeShowLoading = !isMounted ? true : showLoading;
+
   return (
     <DragWrapper>
       {/* Loading Screen: Only visible during initial load OR fading out */}
-      {((showLoading || isFading) && !isSharing) && <LoadingScreen isFading={isFading} />}
+      {((safeShowLoading || isFading) && !isSharing) && <LoadingScreen isFading={isFading} />}
 
       {/* Main Content: Rendered when loading is finished OR currently fading in OR exiting auth */}
-      {(!showLoading || isFading || isAuthExiting) && (
+      {(!safeShowLoading || isFading || isAuthExiting) && (
         <>
           {(!session || shouldShowAuth || isAuthExiting) ? (
             <AuthModal onLogin={() => {

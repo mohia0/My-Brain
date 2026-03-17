@@ -381,19 +381,31 @@ export default function DragWrapper({ children }: { children: React.ReactNode })
         const activeData = active.data.current as any;
         if (!activeData) return;
 
-        // 1. Handle dropping an item INTO a folder
-        if (activeData.type !== 'folder' && over && over.data.current?.type === 'folder' && activeData.type !== 'project' && activeData.itemType !== 'room') {
+        // 1. Handle dropping an item or folder INTO a folder
+        if (over && over.data.current?.type === 'folder' && activeData.type !== 'project' && activeData.itemType !== 'room') {
+            const targetFolderId = over.id as string;
+            
             const movingIds = currentSelectedIds.includes(active.id as string)
                 ? currentSelectedIds
                 : [active.id as string];
 
             movingIds.forEach(id => {
-                // Prevent dropping folders or project areas into folders
-                const activeItem = useItemsStore.getState().items.find(i => i.id === id);
+                // Prevent dropping a folder into itself
+                if (id === targetFolderId) return;
+
+                const state = useItemsStore.getState();
+                const activeItem = state.items.find(i => i.id === id);
+                const activeFolder = state.folders.find(f => f.id === id);
+
                 if (activeItem && activeItem.type !== 'room') {
                     updateItemContent(id, {
-                        folder_id: over.id as string,
+                        folder_id: targetFolderId,
                         status: 'active',
+                        room_id: over.data.current?.room_id || null
+                    });
+                } else if (activeFolder) {
+                    state.updateFolderContent(id, {
+                        parent_id: targetFolderId,
                         room_id: over.data.current?.room_id || null
                     });
                 }

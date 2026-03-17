@@ -143,6 +143,8 @@ interface ItemsState {
     archiveFolder: (id: string) => void;
     unarchiveFolder: (id: string) => void;
     archiveSelected: () => void;
+    updateFolderItemsOrder: (itemIds: string[]) => Promise<void>;
+    updateSubFoldersOrder: (folderIds: string[]) => Promise<void>;
     isArchiveOpen: boolean;
     setArchiveOpen: (open: boolean) => void;
 
@@ -335,7 +337,7 @@ export const useItemsStore = create<ItemsState>()(
 
                     if (itemsRes.data) {
                         set(state => {
-                            const localSyncing = state.items.filter(i => i.syncStatus === 'syncing');
+                            const localSyncing = state.items.filter(i => i.syncStatus === 'syncing' || i.syncStatus === 'error');
                             const rawItems = itemsRes.data as any[];
 
                             // Map item_tags to metadata.tags for consistency with search/UI
@@ -353,11 +355,34 @@ export const useItemsStore = create<ItemsState>()(
                                 };
                             });
 
-                            const filteredRemote = remoteItems.filter(ri => !localSyncing.find(li => li.id === ri.id));
-                            return { items: [...filteredRemote, ...localSyncing] };
+                            const now = Date.now();
+                            // Keep recently created items that might not have reached the read replica yet
+                            const recentLocalItems = state.items.filter(i => {
+                                if (i.syncStatus === 'syncing' || i.syncStatus === 'error') return false;
+                                const age = now - new Date(i.updated_at || i.created_at || now).getTime();
+                                return age < 15000;
+                            });
+
+                            const filteredRemote = remoteItems.filter(ri => !localSyncing.find(li => li.id === ri.id) && !recentLocalItems.find(li => li.id === ri.id));
+                            return { items: [...filteredRemote, ...localSyncing, ...recentLocalItems] };
                         });
                     }
-                    if (foldersRes.data) set({ folders: foldersRes.data as Folder[] });
+                    if (foldersRes.data) {
+                        set(state => {
+                            const localSyncingFolders = state.folders.filter(f => f.syncStatus === 'syncing' || f.syncStatus === 'error');
+                            const rawFolders = foldersRes.data as Folder[];
+                            
+                            const now = Date.now();
+                            const recentLocalFolders = state.folders.filter(f => {
+                                if (f.syncStatus === 'syncing' || f.syncStatus === 'error') return false;
+                                const age = now - new Date(f.updated_at || f.created_at || now).getTime();
+                                return age < 15000;
+                            });
+
+                            const filteredRemoteFolders = rawFolders.filter(rf => !localSyncingFolders.find(lf => lf.id === rf.id) && !recentLocalFolders.find(lf => lf.id === rf.id));
+                            return { folders: [...filteredRemoteFolders, ...localSyncingFolders, ...recentLocalFolders] };
+                        });
+                    }
                 } catch (err: any) {
                     // Silence AbortError as it's typically an intentional cancellation by the browser/Next.js
                     if (err.name === 'AbortError') return;
@@ -1574,6 +1599,62 @@ export const useItemsStore = create<ItemsState>()(
                 }
             },
 
+            updateFolderItemsOrder: async (itemIds: string[]) => {
+                const now = new Date().toISOString();
+                set(state => ({
+                    items: state.items.map(i => {
+                        const index = itemIds.indexOf(i.id);
+                        if (index !== -1) {
+                            return {
+                                ...i,
+                                metadata: { ...(i.metadata || {}), sort_index: index },
+                                updated_at: now
+                            };
+                        }
+                        return i;
+                    })
+                }));
+
+                // Update DB in background
+                for (let i = 0; i < itemIds.length; i++) {
+                    const item = get().items.find(it => it.id === itemIds[i]);
+                    if (item) {
+                        supabase.from('items')
+                            .update({ metadata: item.metadata, updated_at: now })
+                            .eq('id', itemIds[i])
+                            .then();
+                    }
+                }
+            },
+
+            updateSubFoldersOrder: async (folderIds: string[]) => {
+                const now = new Date().toISOString();
+                set(state => ({
+                    folders: state.folders.map(f => {
+                        const index = folderIds.indexOf(f.id);
+                        if (index !== -1) {
+                            return {
+                                ...f,
+                                metadata: { ...(f.metadata || {}), sort_index: index },
+                                updated_at: now
+                            };
+                        }
+                        return f;
+                    })
+                }));
+
+                // Update DB 
+                for (let i = 0; i < folderIds.length; i++) {
+                    const folder = get().folders.find(fd => fd.id === folderIds[i]);
+                    if (folder) {
+                        supabase.from('folders')
+                            .update({ metadata: (folder as any).metadata || {}, updated_at: now })
+                            .eq('id', folderIds[i])
+                            .then();
+                    }
+                }
+            },
+
             updateItemTags: (id: string, tags: Tag[]) => {
                 set(state => ({
                     items: state.items.map(i => i.id === id ? {
@@ -1601,6 +1682,17 @@ export const useItemsStore = create<ItemsState>()(
 
                         set(state => {
                             const exists = state.items.find(i => i.id === data.id);
+                            
+                            if (exists) {
+                                const localTime = new Date(exists.updated_at || exists.created_at || 0).getTime();
+                                const remoteTime = new Date(data.updated_at || data.created_at || 0).getTime();
+                                
+                                // Ignore stale updates and do not interrupt active syncing
+                                if (exists.syncStatus === 'syncing' || localTime >= remoteTime) {
+                                    return state;
+                                }
+                            }
+
                             let finalItem = { ...data, syncStatus: 'synced' as const };
 
                             // Collision prevention for remote arrivals on canvas
@@ -1634,6 +1726,16 @@ export const useItemsStore = create<ItemsState>()(
                         const data = payload.new;
                         set(state => {
                             const exists = state.folders.find(f => f.id === data.id);
+                            
+                            if (exists) {
+                                const localTime = new Date(exists.updated_at || exists.created_at || 0).getTime();
+                                const remoteTime = new Date(data.updated_at || data.created_at || 0).getTime();
+                                
+                                if (exists.syncStatus === 'syncing' || localTime >= remoteTime) {
+                                    return state;
+                                }
+                            }
+
                             let finalFolder = { ...data, syncStatus: 'synced' as const };
 
                             // Collision prevention for remote folders
@@ -1679,7 +1781,9 @@ export const useItemsStore = create<ItemsState>()(
             partialize: (state) => ({
                 currentRoomId: state.currentRoomId,
                 currentRoomTitle: state.currentRoomTitle,
-                roomHistory: state.roomHistory
+                roomHistory: state.roomHistory,
+                items: state.items.map(i => ({ ...i, syncStatus: 'synced' as const })),
+                folders: state.folders.map(f => ({ ...f, syncStatus: 'synced' as const }))
             })
         }
     )
